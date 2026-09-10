@@ -1,0 +1,140 @@
+# Constantes de custo — procedência por valor, não por bloco.
+# Regra: valor com status NAO_CONFIRMADO tem `valor: null` e lista o que ele bloqueia.
+# Um cálculo que dependa de valor bloqueado RECUSA-SE a rodar.
+
+macro:
+  cdi_aa:      {valor: 0.1390,   status: COMPLETO, fonte: "BCB/SGS 4389", acesso: 2026-08-28, expira: 2026-09-04}
+  selic_aa:    {valor: 0.1400,   status: COMPLETO, fonte: "BCB/SGS 432",  acesso: 2026-08-31, expira: 2026-09-07}
+  poupanca_am: {valor: 0.006455, status: COMPLETO, fonte: "BCB/SGS 25",   acesso: 2026-08-28, expira: 2026-09-28}
+
+b3:
+  vista_total_pct:
+    valor: 0.000300
+    status: COMPLETO
+    fonte: "b3.com.br/.../tarifas-de-acoes-e-fundos-de-investimento/a-vista/"
+    acesso: 2026-08-31
+    expira: 2026-11-29
+    nota: "ADTV < R$3mi; Negociacao+CCP+TTA; PIS/COFINS/ISS inclusos; cobrada na COMPRA E NA VENDA"
+  custodia_rv_isencao:
+    valor: 26471.77
+    status: COMPLETO
+    fonte: "b3.com.br/.../tarifas-de-servicos-de-custodia/"
+    acesso: 2026-08-31
+    nota: "texto literal: 'Investidores com posicoes ate R$ 26.471,77 sao isentos desta taxa'"
+  custodia_rv_interpretacao:
+    valor: "deducao"
+    status: PARCIAL
+    nota: "a fonte admite duas leituras: LIMIAR (acima do valor cobra sobre a carteira inteira) ou DEDUCAO (so sobre o excedente). Adotamos deducao e DECLARAMOS a escolha. Diferenca ~R$160 em 20a a R$200/mes."
+  custodia_rv_faixas:            # progressiva, pro rata mes, sobre o valor em custodia
+    status: COMPLETO
+    fonte: "b3.com.br/.../tarifas-de-servicos-de-custodia/ — tabela literal de 10 faixas"
+    acesso: 2026-08-31
+    valor:
+      - {ate:      115000, taxa_aa: 0.000500}
+      - {ate:      230000, taxa_aa: 0.000400}
+      - {ate:      345000, taxa_aa: 0.000200}
+      - {ate:     1950000, taxa_aa: 0.000130}
+      - {ate:    19500000, taxa_aa: 0.000072}
+      - {ate:   195000000, taxa_aa: 0.000032}
+      - {ate:  1950000000, taxa_aa: 0.000025}
+      - {ate: 19500000000, taxa_aa: 0.000020}
+      - {ate: 50000000000, taxa_aa: 0.000015}
+      - {ate:        null, taxa_aa: 0.000005}
+  quem_paga_custodia:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "a pagina da B3 nao diz se o responsavel e o participante ou o investidor final"
+    nota: "Itau, Safra, Caixa, C6, Inter, XP, Rico, Toro e modalmais DECLARAM absorver. Ver cenario custodia_absorvida."
+tesouro:
+  custodia_aa:      {valor: 0.002000, status: COMPLETO, fonte: "b3.com.br/.../tarifas-de-tesouro-direto/", acesso: 2026-08-31}
+  isencao_selic:    {valor: 10000.00, status: COMPLETO, fonte: idem, nota: "so Tesouro Selic/Reserva; acima cobra so sobre o excedente"}
+  periodicidade:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "B3 descreve provisao diaria; Safra publica cobranca semestral. OC 014-2024-VPC nao obtido"
+    bloqueia: []                 # afeta precisao, nao direcao
+
+etf:
+  # taxa de administracao a.a. — status por ticker
+  PIBB11: {valor: 0.00059, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28}
+  DIVO11: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28}
+  IMAB11: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28}
+  B5P211: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28}
+  BOVA11: {valor: 0.00100, status: COMPLETO, fonte: "BlackRock Brasil", acesso: 2026-08-28}
+  BRAX11: {valor: 0.00200, status: COMPLETO, fonte: "BlackRock Brasil", acesso: 2026-08-28}
+  IVVB11: {valor: 0.00230, status: COMPLETO, fonte: "BlackRock Brasil, pagina do produto", acesso: 2026-08-28}
+  SMAL11: {valor: 0.00500, status: COMPLETO, fonte: "BlackRock Brasil", acesso: 2026-08-28}
+  NASD11: {valor: 0.00300, status: COMPLETO, fonte: "XP Vista Asset", acesso: 2026-08-28}
+  AREA11: {valor: 0.00300, status: COMPLETO, fonte: "gestor", acesso: 2026-08-28}
+  ACWI11:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "a propria pagina do gestor traz 0,30% numa secao e 0,75-0,95% em outra"
+    bloqueia: ["comparacao_global_amplo"]
+  HASH11:
+    valor: 0.01300
+    status: COMPLETO
+    fonte: "Hashdex — 'taxa maxima global incluindo fundo alvo: 1,3% a.a.'"
+    acesso: 2026-08-28
+    nota: "existe tambem 0,3% que e SO a camada brasileira. 1,3% e o numero comparavel."
+  BOVV11:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "site do gestor bloqueia acesso automatizado; 3o maior ETF do pais por PL"
+    bloqueia: ["tabela_etf_rv_completa"]
+  IVV:  {valor: 0.00030, status: COMPLETO, fonte: "ishares.com — net assets US$886,7bi", acesso: 2026-08-28}
+  VOO:  {valor: 0.00030, status: PARCIAL,  fonte: "advisors.vanguard.com — taxa e AUM sim, inception nao", acesso: 2026-08-31}
+  VTI:  {valor: null, status: NAO_CONFIRMADO, motivo: "nao obtido", bloqueia: []}
+
+corretagem:
+  zero:        {valor: 0.00, status: COMPLETO, fonte: "Itau, C6, Inter, Rico, Clear, Santander, modalmais, Toro", acesso: 2026-08-31}
+  safra_terra: {valor: 4.50, status: COMPLETO, fonte: "safra.com.br / terrainvestimentos.com.br", acesso: 2026-08-31}
+  caixa_fixa:  {valor: 4.49, status: COMPLETO, fonte: "caixa.gov.br", acesso: 2026-08-31}
+  caixa_pct:   {valor: 0.0002, status: COMPLETO, fonte: idem}
+  xp_etf_pct:  {valor: 0.0050, status: COMPLETO, fonte: "xpi.com.br — corretagem de ETF", acesso: 2026-09-01, nota: "cobrada na entrada E na saida"}
+  xp_swing:
+    valor: 4.90
+    status: PARCIAL
+    motivo: "leitura da pagina oficial pode ter falhado na extracao; confirmar antes de usar em veredito"
+    bloqueia: ["ranking_corretoras"]
+
+exterior:
+  iof_investimento: {valor: 0.0110, status: COMPLETO, fonte: "Decreto 6.306/2007 art. 15-B, XXI-A (red. 12.499/2025)", acesso: 2026-08-31}
+  iof_conta:        {valor: 0.0350, status: COMPLETO, fonte: "idem, XXI"}
+  iof_repatriacao:  {valor: 0.0038, status: COMPLETO, fonte: "idem, XXV"}
+  spread_avenue_melhor: {valor: 0.0050, status: COMPLETO, fonte: "avenue.us — degrau regressivo", acesso: 2026-08-31}
+  spread_avenue_inicial: {valor: 0.0195, status: COMPLETO, fonte: idem}
+  spread_nomad_n1:      {valor: 0.0200, status: COMPLETO, fonte: "nomadglobal.com — niveis Nomad Pass", acesso: 2026-08-31}
+  spread_nomad_n5:      {valor: 0.0100, status: COMPLETO, fonte: idem}
+  spread_wise:          {valor: 0.007253, status: COMPLETO, fonte: "medicao ao vivo conferida contra PTAX", acesso: 2026-08-31}
+  vest_stablecoin:
+    spread: {valor: 0.0140, status: COMPLETO, fonte: "vest — tabela oficial datada AUGUST 2026"}
+    iof:
+      valor: null
+      status: NAO_CONFIRMADO
+      motivo: "'nao se aplica' e POSICAO JURIDICA DA PLATAFORMA sobre remessa via stablecoin, nao fato tributario confirmado"
+      bloqueia: ["ordenacao_rotas_exterior"]
+      nota: "se o IOF de 1,10% se aplicar, a rota vai a 2,50% e passa a ser PIOR que a Avenue"
+
+tributacao:
+  ir_acao:            {valor: 0.15, status: COMPLETO, fonte: "Lei 11.033/2004 art. 2o"}
+  isencao_mensal:     {valor: 20000.00, status: COMPLETO, fonte: "Lei 11.033/2004 art. 3o, I + IN RFB 1.585 art. 59",
+                       nota: "SO acao, ouro e acao de PME. ETF, BDR e FII NAO tem."}
+  ir_fii:             {valor: 0.20, status: COMPLETO, fonte: "IN RFB 1.585/2015 art. 56 — sem isencao"}
+  ir_rf_faixas:
+    status: COMPLETO
+    fonte: "Lei 11.033/2004 art. 1o"
+    valor:                        # CORRECAO: o texto do relatorio de cofrinhos §6.1 listou faixas erradas
+      - {ate_dias: 180,  aliquota: 0.225}
+      - {ate_dias: 360,  aliquota: 0.200}
+      - {ate_dias: 720,  aliquota: 0.175}
+      - {ate_dias: null, aliquota: 0.150}
+  ir_etf_rf_faixas:
+    status: COMPLETO
+    fonte: "Lei 13.043/2014 art. 2o; IN 1.585 art. 28 — por PRAZO MEDIO da carteira, nao do investidor"
+    valor:
+      - {prazo_medio_ate: 180,  aliquota: 0.25}
+      - {prazo_medio_ate: 720,  aliquota: 0.20}
+      - {prazo_medio_ate: null, aliquota: 0.15}
+  ir_exterior:        {valor: 0.15, status: COMPLETO, fonte: "Lei 14.754/2023 art. 2o, §1o — apuracao ANUAL, sem deducao"}
+  come_cotas_etf:     {valor: false, status: COMPLETO, fonte: "Lei 14.754/2023 art. 18, II e art. 24, §1o"}

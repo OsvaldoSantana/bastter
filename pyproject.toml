@@ -1,0 +1,169 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# pyproject.toml — pendencia P-15
+#
+# POR QUE ISTO NAO E HIGIENE.
+#
+# O pre-registro deste projeto promete que um resultado de backtest e reproduzivel.
+# Ate 05/09/2026 essa promessa estava protegida pela metade: `.gitattributes` impedia
+# o CRLF de mudar o arquivo, e `test_fonte_e_exatamente_a_serie_pre_registrada` fixava
+# o sha256 da serie do NEFIN. O DADO estava selado.
+#
+# O AMBIENTE nao estava. `alfa_contra_fatores()` resolve um sistema por
+# `numpy.linalg.lstsq`; `mensal()` compoe retornos com `pandas.groupby`. As versoes
+# dessas duas bibliotecas que produziram os numeros registrados nao existiam em lugar
+# nenhum do repositorio. Um clone em outra maquina rodaria com outras versoes,
+# produziria numeros possivelmente diferentes, e o pre-registro nao teria como dizer.
+#
+# Fonte com hash rodando em ambiente nao declarado e meio pre-registro.
+#
+# ESTE ARQUIVO E A FONTE UNICA DAS VERSOES.
+# `politica.yaml -> fontes.ambiente_de_execucao` NAO as repete: guarda so a impressao
+# digital calculada a partir daqui. Repetir os numeros nos dois lugares seria o achado
+# N-01 de novo — dois arquivos que concordam, e editar um nao muda nada.
+# ─────────────────────────────────────────────────────────────────────────────
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bastter"
+version = "1.18.0"                 # acompanha politica.yaml -> meta.versao
+description = "Sistema pessoal de analise e aporte — motor de alocacao, custos com procedencia e backtest pre-registrado"
+requires-python = "==3.11.*"
+# A faixa e FECHADA de proposito. Nao e conservadorismo: 3.12 mudou o comportamento
+# de `datetime.date` em alguns caminhos de comparacao e o projeto compara datas de
+# `expira` em quase todo `val()`. Abrir a faixa sem medir seria supor.
+
+# ── PINOS EXATOS, e a razao e a mesma do resto do projeto ───────────────────
+# Isto nao e uma biblioteca que outros importam: e um sistema que produz numeros que
+# alguem vai defender. Faixa (>=) permite que um `pip install` amanha mude um
+# resultado registrado hoje sem nada avisar. `==` transforma essa mudanca num evento
+# visivel: o teste do ambiente falha e alguem decide.
+dependencies = [
+  "numpy==2.4.4",     # alfa_contra_fatores -> linalg.lstsq. MUDA NUMERO.
+  "pandas==3.0.2",    # mensal(), premios(), janelas_moveis(). MUDA NUMERO.
+  "PyYAML==6.0.3",    # todo o carregamento de politica/custos/estado/teses.
+]
+# Atencao ao nome: o pacote se chama PyYAML e o import se chama `yaml`. O teste
+# `test_P15_toda_dependencia_de_terceiro_esta_declarada` carrega esse mapa
+# explicitamente porque e a armadilha classica de "esqueci de declarar".
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",    # nao muda numero nenhum: so decide se o teste roda.
+]
+# P-40. Fora da impressao do ambiente de proposito — ver o bloco de comentario
+# no fim deste arquivo. `ambiente.declarado()` le apenas `dependencies` e `dev`.
+lint = [
+  "ruff==0.15.11",
+  "mypy==1.20.2",
+  "types-PyYAML",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["alocacao"]
+python_files = ["test_*.py"]
+addopts = "-q"
+
+# ── Classificacao das dependencias por CONSEQUENCIA ─────────────────────────
+# O que separa as duas listas nao e importancia, e o tipo de estrago:
+#   numerica   trocar a versao pode mudar um numero ja registrado. Divergencia aqui
+#              invalida a reproducao do backtest, e `ambiente.conferir()` avisa.
+#   ferramenta trocar a versao muda como o trabalho e feito, nunca o resultado.
+#              Divergencia aqui nao diz nada sobre a validade de nenhum numero.
+[tool.bastter.dependencias]
+numericas = ["numpy", "pandas"]
+ferramentas = ["PyYAML", "pytest"]
+# PyYAML e ferramenta e nao numerica porque ele so transporta valores: um YAML lido
+# por duas versoes diferentes do parser entrega os mesmos floats, ou entrega erro.
+
+# ═════════════════════════════════════════════════════════════════════════════
+# P-40 — lint e tipos. A regra da casa vale aqui tambem: TODA DISPENSA TEM
+# MOTIVO ESCRITO. Uma regra silenciada sem justificativa e uma decisao que
+# ninguem consegue revisar depois — e a mesma regra que governa o .gitignore.
+#
+# POR QUE SO AGORA. Tipos e lint nao fecham furo de VERACIDADE, e este projeto
+# promete veracidade. Enquanto havia furo real na frente deles (P-15 ambiente,
+# P-36 catalogo em codigo, P-37 funcao de 300 linhas, P-38 estado compartilhado),
+# subir lint teria sido arrumar a prateleira com a parede caindo. Agora nao ha
+# mais furo na frente, e eles passam a valer.
+#
+# O QUE O LINT ACHOU DE VERDADE, e vale registrar porque foi pouco e foi bom:
+#   25 imports mortos, 5 f-strings sem placeholder, 2 nomes ambiguos (`I`),
+#   1 variavel morta cuja CHAMADA contradizia a docstring da funcao (achado
+#   T-01, e o ruff so viu a variavel — o defeito estava na chamada), e
+#   1 `None * float` que o mypy provou impossivel de descartar (nao era bug em
+#   execucao, era um tipo que nao dava para provar; o codigo ficou melhor).
+# ═════════════════════════════════════════════════════════════════════════════
+
+# ── O grupo `lint`, declarado junto de `dev` mais abaixo neste arquivo ──────
+# FORA da impressao do ambiente DE PROPOSITO — `ambiente.declarado()` le apenas
+# `dependencies` e `dev`. Duas razoes:
+#   1. ferramenta de lint NAO muda numero nenhum, entao nao pertence a impressao
+#      que serve a reproducao de um resultado pre-registrado;
+#   2. exigi-las instaladas faria a suite ficar vermelha na maquina de quem so
+#      quer rodar o motor. O teste de lint PULA quando a ferramenta falta, e diz
+#      isso em voz alta.
+
+[tool.ruff]
+line-length = 100          # o projeto ja escreve em ~92; 100 da folga sem convidar a linha longa
+target-version = "py311"
+exclude = ["out_*.txt"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+# I001 (ordenacao de imports) NAO entra, e o motivo e coerencia: ele quer quebrar
+# `import os, sys, math` em tres linhas para poder ordena-las, e o E401 esta dispensado
+# logo abaixo justamente para permitir essa forma. Ligar uma regra que exige o que a
+# outra dispensa e pedir para o lint brigar consigo mesmo.
+
+ignore = [
+  # ── Convencao da casa, e ela e deliberada ─────────────────────────────────
+  # E701/E702: `if not ok: return []` e `D, notas = {}, []` numa linha so.
+  # Sao 228 ocorrencias e NENHUMA e descuido. Este codigo tem docstrings longas
+  # de proposito — elas carregam o achado, a fonte e o porque. Espalhar o corpo
+  # em tres vezes mais linhas afastaria o codigo da explicacao que o justifica,
+  # que e o oposto do que este repositorio otimiza. Quem discordar: a mudanca e
+  # uma linha aqui, e o diff sera de 228 lugares.
+  "E701", "E702",
+  # E401: `import os, sys, math` no topo. Mesma logica, e a lista de imports
+  # deste projeto e curta o suficiente para caber numa linha legivel.
+  "E401",
+  # E402: `sys.path.insert(...)` ANTES dos imports do projeto, em conftest.py,
+  # impacto.py e nos testes. Nao e estilo: sem isso o modulo nao e encontrado.
+  # A alternativa seria empacotar de verdade (`pip install -e .`), que e uma
+  # mudanca de estrutura, nao de lint. Fica registrado como a razao pela qual
+  # esta linha existe.
+  "E402",
+  # E731: `rota = lambda x: x[0] if isinstance(x, tuple) else x` em g5_status.
+  # Sao duas ocorrencias, ambas adaptadores de UMA linha usados logo abaixo.
+  # Vira-las em `def` afastaria o adaptador do uso sem ganhar nada.
+  "E731",
+  # ── E501 fica LIGADO, e isto e uma escolha ao contrario das de cima ───────
+  # As 39 linhas longas foram medidas antes de decidir: seis delas eu mesmo criei na
+  # P-37, ao passar `P`, `pesos` e `alertas` explicitamente para `espalhar`. Viraram
+  # uma tabela (BLOCOS_A_ESPALHAR), que e melhor codigo e cabe. Nao ha dispensa aqui:
+  # linha longa neste projeto costuma ser sintoma de assinatura que cresceu demais.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Testes montam cenarios: nome curto e repeticao sao a linguagem deles.
+"test_*.py" = ["E741"]
+"conftest.py" = ["E741"]
+
+[tool.mypy]
+python_version = "3.11"
+# `ignore_missing_imports` esta LIGADO e isso e uma escolha, nao preguica: os
+# stubs de terceiros nao sao problema deste repositorio, e o container tem duas
+# instalacoes de mypy e duas de PyYAML, o que produz nove falsos "Library stubs
+# not installed" que nao dizem nada sobre o codigo.
+ignore_missing_imports = true
+# NAO e `strict`. Tipagem completa aqui custaria um diff enorme para um ganho
+# que este projeto ja obtem de outra forma: o que protege as fronteiras sao as
+# dataclasses tipadas, os 265 testes e as guardas de contrato (P-28, R-01).
+# O nivel escolhido pega o que importa — variavel sem tipo que vira `Any` e se
+# espalha, e operacao impossivel entre tipos.
+check_untyped_defs = false
+warn_unused_ignores = true
+warn_redundant_casts = true

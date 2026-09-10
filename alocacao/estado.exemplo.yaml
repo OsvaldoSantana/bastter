@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# estado.exemplo.yaml — o CADASTRO MINIMO de qualquer usuario. Pendencia P-48.
+#
+# POR QUE ESTE ARQUIVO EXISTE.
+#
+# Ate 06/09/2026 havia UM `estado.yaml`, e ele era do Osvaldo. A separacao L-01 tirou
+# as escolhas dele da `politica.yaml` e as pos no `perfil.yaml` — mas o ESTADO
+# FINANCEIRO ficou sem modelo. Um segundo usuario nao tinha de onde partir, e pior:
+# nao havia como saber o que e OBRIGATORIO e o que e opcional sem ler o validador.
+#
+# A correcao veio dele: "o sistema tem que existir e funcionar independente do input
+# do usuario". Funciona — `test_usuario_novo.py` prova que patrimonio zero recebe
+# resposta completa. Mas "independente do PATRIMONIO" nao e "independente de TUDO":
+# ha um punhado de fatos que o sistema legitimamente precisa perguntar, e a diferenca
+# entre os dois grupos e o que este arquivo torna visivel.
+#
+#   OBRIGATORIO  fatos sobre a VIDA da pessoa. Sem eles nao ha o que dimensionar.
+#                Sao quatro, e um cadastro de produto perguntaria exatamente isso.
+#   OPCIONAL     PATRIMONIO e COMPROMISSOS. Comecam vazios em todo cliente novo, e
+#                o sistema responde sem eles.
+#
+# COMO USAR: copie para `estado.yaml`, preencha os quatro obrigatorios, e deixe o
+# resto como esta. O `estado_io.carregar()` recusa com a lista do que falta.
+# ─────────────────────────────────────────────────────────────────────────────
+
+meta:
+  status: MODELO          # troque para REAL quando os numeros forem seus de verdade.
+                          # Enquanto for MODELO, o motor trata tudo como cenario e
+                          # RECUSA-SE a servir de base para decisao. E deliberado:
+                          # numero de exemplo que vaza para decisao e o pior defeito
+                          # que este projeto pode ter.
+  preenchido_em: null     # AAAA-MM-DD. Nao use texto: o YAML entende data.
+
+# ══ OBRIGATORIO — os quatro que um cadastro perguntaria ══════════════════════
+
+despesa_mensal: null
+# Quanto voce gasta por mes, em media, para viver. NAO e a sua renda.
+# Dimensiona a reserva de emergencia inteira: o alvo e um multiplo disto.
+
+estabilidade_renda: null
+# alta | media | baixa. Multiplica os meses de reserva (0,75 / 1,0 / 1,5).
+#   alta   CLT com estabilidade, ou varias fontes independentes
+#   media  CLT comum, ou PJ com mais de um contrato
+#   baixa  contrato unico, autonomo, renda variavel
+# NAO ha default. Um sistema que adivinha isto esta escolhendo o risco por voce.
+
+aporte_mensal: null
+# Quanto voce consegue guardar por mes, de verdade. Se ainda nao guarda nada,
+# escreva 0.0 — o sistema responde, e a resposta vai ser sobre isso.
+# Achado M-01: este e o numero de maior alavancagem do sistema inteiro. Trocar o
+# DESTINO do aporte move 3 meses; trocar o VALOR move 33.
+
+horizonte_anos: null
+# Em quantos anos voce pretende usar este dinheiro. Decide a fracao em renda
+# variavel. Horizonte curto com muita bolsa e a forma mais comum de perder dinheiro
+# em investimento de longo prazo.
+
+# ══ OPCIONAL — tudo abaixo comeca vazio em cliente novo ══════════════════════
+
+dependentes: 0            # cada um soma meses a reserva
+caixa: 0.0                # dinheiro parado, sem destino declarado
+reserva_atual: 0.0        # quanto ja existe de reserva de emergencia
+reserva_por_rota: {}      # onde ela esta. `{}` AFIRMA que nao ha; omitir a chave
+                          # diria outra coisa — que ninguem sabe onde ela esta.
+posicoes: {}              # rota -> valor investido
+dividas: []               # - {nome: ..., saldo: ..., taxa_am: 0.0}
+objetivos: []             # - {nome: ..., valor: ..., prazo_anos: ...}
+
+# match_empregador: previdencia com contrapartida do empregador. Ausente significa
+# DESCONHECIDO e nao inexistente — o portao G0 abre uma pendencia pedindo que voce
+# pergunte ao RH, porque contrapartida e a unica coisa que domina pagar divida.
+match_empregador: null
+match_verificado: false

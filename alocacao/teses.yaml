@@ -1,0 +1,177 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# REGISTROS DO USUARIO — bloco K (teses) e compromissos de carrego.
+#
+# Nenhum dado publico preenche este arquivo. E o unico do projeto assim, e e por
+# isso que ele vem antes de qualquer campo calculado: nao depende da CVM, do
+# COTAHIST nem do pipeline, e e o unico que muda comportamento hoje.
+#
+# DOIS registros, porque sao DOIS modos de falha:
+#
+#   teses:     para posicao especulativa (funcao APOSTA, portao G7).
+#              Modo de falha: manter indefinidamente o que era para ser temporario.
+#              Antidoto: prazo com data e condicao de falsificacao.
+#
+#   carregos:  para posicao com marcacao a mercado carregada ate o vencimento
+#              (funcao PROTECAO_REAL, portao G8).
+#              Modo de falha: comprar para carregar, ver a marcacao abrir e vender
+#              no pior momento. Antidoto: a condicao de venda antecipada escrita
+#              ANTES da compra, e o custo de quebrar estimado por voce.
+#
+# O sistema nao exclui ativo por falta de regra. Ele exige que o PAPEL do ativo
+# seja nomeado — sem isso nao ha como saber quanto dele e demais.
+#
+# TETO DE COMPROMISSO: 10 anos (politica.yaml, secao `compromissos`, decidido por
+# voce em 03/09/2026). Vale para K03_prazo e para C01_horizonte_de_carrego.
+#
+# COMO PREENCHER: apague a linha `exemplo: true`, troque os campos, rode
+# `python tese.py` e cole a impressao que ele calcular.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+meta:
+  versao: "1.1.0"
+  emissao: 2026-09-03
+  regra: >
+    Pre-registro. A condicao de encerramento e escrita antes de a posicao existir,
+    pelo mesmo motivo que os criterios do backtest sao escritos antes do backtest:
+    depois de ver o resultado, qualquer tese parece ter sido a original.
+
+# ══ TESES — posicao especulativa (G7) ═══════════════════════════════════════
+teses:
+  hash11:
+    exemplo: true          # <- APAGUE quando o conteudo for seu
+    ativo_id: hash11
+    funcao: APOSTA
+    catalogo: ESPECULATIVO
+    dt_classificacao: 2026-09-03
+    K01_perda_maxima_aceita: 1.0
+
+    # K02 — o teste real nao e o validador: e voce conseguir responder "aconteceu"
+    # ou "nao aconteceu" na data do prazo, sem discutir. Tres formas que passam:
+    #
+    #   A (sobre o veiculo)  "ate <data>, existe na B3 ETF de cripto com taxa abaixo
+    #                         de <X>% a.a., e a posicao migra para ele"
+    #   B (sobre a adocao)   "ate <data>, <metrica publica com fonte> atinge <valor>"
+    #   C (sobre o papel)    "a exposicao de <X>% se justifica ate <data> como aposta
+    #                         assimetrica, revisada anualmente contra o custo de
+    #                         <Y>% a.a. do veiculo"
+    #
+    # A forma C e a mais honesta para quem NAO tem tese de conteudo: ela declara que
+    # a posicao e um experimento com prazo, e isso e uma tese valida. Inventar
+    # conviccao que voce nao tem e pior que assumir que a posicao e um experimento.
+    # RASCUNHO de 05/09/2026, forma C. Nao e sua tese ate voce apagar o
+    # `exemplo: true` — assentimento e o que separa tese de texto.
+    K02_tese: >
+      A exposicao maxima de 3% do patrimonio investido em HASH11 se justifica ate
+      31/12/2031 como aposta assimetrica de perda limitada a 100% do alocado e
+      ganho nao limitado, e nao como reserva de valor. A posicao e revisada todo
+      mes de janeiro contra o custo de 1,30% a.a. do veiculo; se em 3 revisoes
+      consecutivas nao houver aporte novo, a tese esta encerrada por desuso.
+
+    K03_prazo: 2031-12-31
+    # Curto demais (2 anos) transforma a aposta em trade e faz 1,30% a.a. de taxa
+    # virar fracao enorme do resultado. Longo demais esvazia o pre-registro. Com o
+    # teto de 10 anos, a faixa util e 2031-2036.
+
+    # K04 — o erro mais comum esta aqui. Com K01 = 100%, "o preco caiu" NAO pode ser
+    # a condicao: a queda ja esta dentro da perda aceita, e a posicao se encerraria
+    # exatamente quando a tese exigiria paciencia. O validador rejeita condicao de
+    # preco. Tres tipos que funcionam:
+    #   estrutura   a taxa subir acima de X; o fundo mudar de politica; surgir
+    #               veiculo equivalente materialmente mais barato
+    #   regime      mudanca tributaria ou regulatoria que altere a economia da posicao
+    #   disciplina  a exposicao passar de X% por N revisoes seguidas sem novo aporte
+    # O terceiro e o menos obvio e o mais util: encerra a posicao quando ela da
+    # certo demais, que e o cenario para o qual ninguem tem regra pronta.
+    # RASCUNHO. Tres eventos, nenhum deles de preco — os tres tipos que o
+    # comentario acima descreve: estrutura, regime e disciplina.
+    K04_falsificacao: >
+      A tese esta invalidada se ocorrer qualquer um: (a) surgir na B3 veiculo de
+      exposicao equivalente a cripto com taxa total igual ou inferior a 0,65% a.a.,
+      metade da atual, e a posicao nao migrar para ele em 90 dias; (b) mudanca
+      tributaria ou regulatoria que elimine a negociacao do veiculo em bolsa ou
+      altere sua tributacao acima de 20% sobre o ganho; (c) a exposicao ultrapassar
+      3% do patrimonio investido em 3 revisoes anuais seguidas sem aporte novo —
+      encerramento por a posicao ter dado certo demais, cenario para o qual ninguem
+      tem regra pronta.
+
+    K05_liquidez_saida_dias: 2
+    K06_insiders: NAO_APLICAVEL   # e um ETF, nao uma empresa: nao ha lock-up nem FRE
+    K07_quanto_o_preco_ja_contem:
+      estimativa: NAO_OBTIDO
+      premissas: ["exige modelo de precificacao que o projeto nao tem"]
+    L_teste_de_classificacao:
+      rodado_em: 2026-09-03
+      reprova: ["A-06 (nao ha fundamento contabil: e um fundo de indice de cripto)",
+                "C-01 a C-05 (solvencia indefinida: nao ha demonstracao financeira de emissor operacional)",
+                "B-01 a B-07 (nao ha lucro, receita nem capital investido a medir)"]
+      nao_aplicavel: ["A-03 free float", "A-04 segmento de listagem", "A-05 tag along"]
+      nota: >
+        Reprova ou e inaplicavel em todos os portoes do catalogo buy & hold. Isso NAO
+        impede a compra — impede que ela seja reclassificada como investimento depois.
+    impressao: PENDENTE
+
+# ══ CARREGOS — compromisso de carrego ate o vencimento (G8) ═════════════════
+carregos:
+  td_ipca:
+    exemplo: true          # <- APAGUE quando o conteudo for seu
+    ativo_id: td_ipca
+    funcao: PROTECAO_REAL
+    catalogo: BUY_AND_HOLD
+    dt_registro: 2026-09-05
+
+    # ACHADO G-01 (05/09/2026). Este registro NAO pode ser preenchido hoje, e a
+    # razao nao e falta de conviccao — e o calendario. C02 exige o juro real
+    # TRAVADO, que so existe no dia da compra; C04 depende do papel efetivamente
+    # comprado. O usuario esta na Fase A ate ~2030 e nao tem conta em corretora.
+    # Preencher C02 com a taxa de hoje seria registrar compromisso com um numero
+    # que ele nao vai obter — ficcao com hash, que e pior que campo vazio.
+    #
+    # Entao o registro sela AGORA o que e decidivel agora (as REGRAS) e declara em
+    # voz alta o que espera a compra. Pre-registrar regra antes da posicao existir
+    # e exatamente quando pre-registro tem valor.
+    estado: REGRA_DECIDIDA
+
+    # C01 — o vencimento do papel que voce escolher. Com o teto de 10 anos decidido
+    # em 03/09/2026, o limite e 2036-09-01. Isso EXCLUI o NTN-B Principal 2045/2060,
+    # que e o papel que a versao 1.0.0 alocava com 17% sem nenhum prazo a casar.
+    C01_horizonte_de_carrego: 2035-05-15
+
+    # Preencher NO DIA DA COMPRA, com a taxa efetivamente contratada, e entao
+    # trocar `estado` para COMPROMISSO_ATIVO e recalcular a impressao.
+    C02_compromisso: AGUARDA_COMPRA
+
+    # C03 — o modo de falha desta funcao e vender quando a marcacao abre. Uma condicao
+    # de PRECO aqui autoriza exatamente o erro que o registro existe para impedir; o
+    # validador a rejeita. Tem de ser um EVENTO.
+    # RASCUNHO, decidivel hoje porque e regra sobre o comportamento dele, nao
+    # sobre o mercado. Dois eventos, nenhum de preco.
+    C03_condicao_de_venda_antecipada: >
+      A venda antes do vencimento fica autorizada apenas em dois eventos, ambos
+      verificaveis por fato consumado e nenhum deles por cotacao: (a) necessidade
+      de caixa por despesa ja incorrida que a reserva de emergencia de 9 meses nao
+      cobrir, esgotada a reserva primeiro; (b) encerramento do contrato de
+      prestacao de servicos sem recolocacao em 6 meses, situacao em que o papel
+      passa a ser reserva e nao protecao. Em qualquer outro cenario o compromisso
+      e carregar ate o vencimento.
+
+    C04_custo_de_quebrar:
+      estado: AGUARDA_COMPRA        # depende do papel e da duracao efetivamente comprados
+      cenario: "+2 p.p. de juro real"
+      perda_estimada_pct: null
+      fonte_da_estimativa: null
+      # Ordem de grandeza para a decisao, NAO o registro: num papel com ~7 anos de
+      # duracao, +2 p.p. de juro real derruba o preco em torno de 13%. Compare com
+      # os ~47% do vencimento 2060 que a versao 1.0.0 alocava sem prazo a casar:
+      # e essa diferenca que o teto de 10 anos compra.
+
+    C05_teto_da_funcao: 0.15        # SUBSTITUA se quiser. Fracao do patrimonio que voce
+                                    # aceita travar. Marcacao a mercado exige limite, e o
+                                    # limite e seu, nao da politica: quem assume a trava
+                                    # declara quanto dela aceita.
+    # DEIXADO EM false DE PROPOSITO. E o unico campo que eu nao posso preencher
+    # por voce: e assinatura. Trocar para true significa "entendo que a marcacao
+    # pode abrir e que isso nao e perda se eu carregar ate o vencimento".
+    C06_reconhecimento: false
+    impressao: PENDENTE
+
+historico: []   # registros substituidos entram aqui, com a impressao antiga preservada

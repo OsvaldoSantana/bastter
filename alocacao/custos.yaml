@@ -1,0 +1,639 @@
+# Constantes de custo — procedência por valor, não por bloco.
+# Regra: valor com status NAO_CONFIRMADO tem `valor: null` e lista o que ele bloqueia.
+# Um cálculo que dependa de valor bloqueado RECUSA-SE a rodar.
+#
+# ── VALIDADE (política de 05/09/2026) ────────────────────────────────────────
+# `expira` é uma DATA quando a fonte tem ciclo de revisão; é `null` quando não tem.
+# Data inventada é pior que ausência: dá sensação de controle sobre um valor que
+# ninguém está vigiando.
+#
+#   tarifa de bolsa   90 dias — a B3 republica sem aviso, e a deriva já foi medida
+#                     (R$24.164,73 no OC 041/2024 -> R$26.471,77 na v5.0)
+#   taxa de fundo     365 dias — regulamento muda em assembleia, ciclo anual
+#   indicador macro   dias — série diária do BCB
+#   tabela comercial  90 dias — corretora muda quando quer
+#   LEI               expira: null + `revisar_se`. Uma lei não vence no aniversário,
+#                     vence quando é alterada. Vários .md já registram "Vide MP
+#                     1.303/2025": a pressão de alteração é real e não tem data fixa.
+#                     `revisar_se` nomeia o gatilho. Para lei, quem avisa é a leitura
+#                     da fonte, não o calendário.
+#
+# ── CONFERÊNCIA DE TRECHO (MAPA-CONSTANTES.md) ──────────────────────────────
+# `trecho_conferido: false` marca constante cujo `fonte` cita documento e artigo
+# reais cujo TRECHO não está em nenhum .md de docs/fontes. Não é divergência de
+# valor nem ausência de fonte: é citação que parece procedência e não é verificável.
+# O status NÃO foi rebaixado — isso é decisão do usuário (pendência P-03).
+
+macro:
+  cdi_aa:
+    valor: 0.139
+    status: COMPLETO
+    fonte: BCB/SGS 4389
+    acesso: '2026-09-05'
+    expira: '2026-12-04'
+    nota: 'reconferido em 05/09/2026: 13,90 em 03/09/2026, valor inalterado desde 28/08. Nao
+      era numero errado, era prazo vencido.'
+  selic_aa:
+    valor: 0.14
+    status: COMPLETO
+    fonte: BCB/SGS 432 (meta Copom)
+    acesso: '2026-09-05'
+    expira: '2026-12-04'
+    nota: 'reconferido em 05/09/2026: meta de 14,00 vigente.'
+  poupanca_am: {valor: 0.006455, status: COMPLETO, fonte: "BCB/SGS 25",   acesso: 2026-08-28, expira: 2026-09-28}
+
+b3:
+  vista_total_pct:
+    bloqueia: ["decomposicao_do_atrito_de_bolsa_por_componente"]
+    valor: 0.000300
+    status: PARCIAL
+    fonte: "b3.com.br/.../tarifas-de-acoes-e-fundos-de-investimento/a-vista/"
+    acesso: 2026-08-31
+    expira: 2026-11-29
+    divergencia:
+      valor_alternativo: 0.000274
+      fonte_alternativa: "Tarifacao_Equities_V5.0_PT.pdf, item 1.2.3 — OC 037/2026-PRE, vigente desde 01/09/2026"
+      componentes_da_fonte_primaria: "negociacao 0,00500% + CCP 0,02240% = 0,02740%"
+      motivo_de_nao_trocar: >
+        A pagina da B3 lida em 31/08 declarava "Negociacao+CCP+TTA, com PIS/COFINS/ISS
+        inclusos" e somava 0,0300%. O PDF v5.0, item 1.2.3, lista APENAS negociacao e
+        CCP e soma 0,0274%. A diferenca de 0,0026 p.p. e compativel com a TTA e os
+        tributos, que o item 1.2.3 nao cobre — ou seja, os dois numeros provavelmente
+        medem coisas DIFERENTES e nao se contradizem. Mantenho 0,0300% por ser o
+        CONSERVADOR e por incluir os componentes que o investidor de fato paga.
+      bloqueia: []
+      como_fechar: "achar no v5.0 (ou em OC especifico) a linha de TTA e a de tributos"
+  manutencao_conta_inativa:
+    valor: 3.82
+    status: COMPLETO
+    fonte: "Tarifacao_Equities_V5.0_PT.pdf, item 4.2.2"
+    acesso: 2026-09-03
+    unidade: "R$/mes a partir do 61o mes"
+    nota: >
+      Conta sem movimentacao OU sem posicao por mais de 60 meses. Nao dispara no plano
+      atual (reserva fecha no mes 42 e o aporte e mensal), mas dispara em quem abre
+      conta e nao usa. Nao estava modelado.
+  custodia_rv_isencao:
+    valor: 26471.77
+    status: COMPLETO
+    fonte: "Tarifacao_Equities_V5.0_PT.pdf, item 4.2.3 — DOCUMENTO PRIMARIO"
+    acesso: 2026-09-03
+    nota: >
+      Confirmado no PDF vigente: "Estao isentas da tarifa sobre o valor em custodia as
+      contas com valor inferior a R$26.471,77." O OC 041/2024-PRE (revogado) trazia
+      R$24.164,73 e 9 faixas; a diferenca e reajuste por IPCA, nao erro de fonte.
+  custodia_rv_interpretacao:
+    bloqueia: ["custodia_rv_faixa_marginal"]
+    nota_do_bloqueio: >
+      Nao e dado: e ESCOLHA de interpretacao entre deducao e faixa marginal. O motor
+      usa `deducao`. Enquanto a B3 nao disser qual e a certa, a leitura marginal fica
+      bloqueada — nao porque falte numero, mas porque escolher as duas seria incoerente.
+    valor: "deducao"
+    status: PARCIAL
+    nota: "a fonte admite duas leituras: LIMIAR (acima do valor cobra sobre a carteira inteira) ou DEDUCAO (so sobre o excedente). Adotamos deducao e DECLARAMOS a escolha. Diferenca ~R$160 em 20a a R$200/mes."
+  custodia_rv_faixas:            # progressiva, pro rata mes, sobre o valor em custodia
+    status: COMPLETO
+    fonte: "Tarifacao_Equities_V5.0_PT.pdf, item 4.2.3 — DOCUMENTO PRIMARIO, 10 faixas"
+    acesso: 2026-09-03
+    verificado: "as 10 faixas e os valores batem exatamente com o motor.py"
+    nota_de_calculo: >
+      O documento detalha o metodo no item 4.2.3.1: tarifa mensal = anual/12 arredondada
+      em 12 casas; valor distribuido PROGRESSIVAMENTE por faixa; taxa por faixa truncada
+      em 2 casas SEM arredondar. O motor usa progressividade, que e o essencial, mas nao
+      reproduz o truncamento por faixa — diferenca de centavos, registrada.
+    valor:
+      - {ate:      115000, taxa_aa: 0.000500}
+      - {ate:      230000, taxa_aa: 0.000400}
+      - {ate:      345000, taxa_aa: 0.000200}
+      - {ate:     1950000, taxa_aa: 0.000130}
+      - {ate:    19500000, taxa_aa: 0.000072}
+      - {ate:   195000000, taxa_aa: 0.000032}
+      - {ate:  1950000000, taxa_aa: 0.000025}
+      - {ate: 19500000000, taxa_aa: 0.000020}
+      - {ate: 50000000000, taxa_aa: 0.000015}
+      - {ate:        null, taxa_aa: 0.000005}
+  quem_paga_custodia:
+    bloqueia: ["atribuicao_de_quem_paga_a_custodia"]
+    nota_do_bloqueio: >
+      Achado F-05/P-04: este valor nao entra em nenhuma conta — o motor sempre supoe
+      que QUEM PAGA e o investidor, que e a hipotese conservadora. O que ele bloqueia
+      nao e um calculo, e uma AFIRMACAO: nao da para dizer ao usuario "voce paga isso"
+      com procedencia. Manter no custos.yaml so se justifica com o bloqueio nomeado;
+      sem isso era insumo que ninguem le e que nada protege.
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "a pagina da B3 nao diz se o responsavel e o participante ou o investidor final"
+    nota: "Itau, Safra, Caixa, C6, Inter, XP, Rico, Toro e modalmais DECLARAM absorver. Ver cenario custodia_absorvida."
+tesouro:
+  custodia_aa:
+    expira: 2026-12-04   # tarifa de bolsa: 90 dias — a B3 republica sem aviso
+    valor: 0.002000
+    status: COMPLETO
+    fonte: "OC 014/2024-VPC da B3 — DOCUMENTO PRIMARIO"
+    acesso: 2026-09-03
+    nota: "0,20% ao ano, provisionada DIARIAMENTE a partir da liquidacao em D+1"
+  isencao_selic:
+    expira: 2026-12-04   # tarifa de bolsa: 90 dias — a B3 republica sem aviso
+    valor: 10000.00
+    status: COMPLETO
+    fonte: "OC 014/2024-VPC, item 1.1"
+    nota: >
+      Texto literal: "O titulo Tesouro Selic possui isencao da taxa de custodia ate o
+      estoque de R$10.000,00 por investidor (CPF)."
+    ressalva_da_fonte: >
+      O documento NAO afirma que IPCA+ e Prefixado ficam de fora da isencao — ele
+      simplesmente nao trata deles. O extrator registrou isso como NAO_CONFIRMADO em vez
+      de presumir, e a presuncao do projeto (isencao so para Selic) segue sendo
+      presuncao. Mantida por ser a leitura conservadora.
+  periodicidade:
+    expira: 2026-12-04   # tarifa de bolsa: 90 dias — a B3 republica sem aviso
+    valor: "netting pro rata"
+    status: COMPLETO          # <- era NAO_CONFIRMADO; fechado pelo OC 014/2024-VPC
+    fonte: "OC 014/2024-VPC, vigente desde 31/12/2024; revoga o OC 137/2023-PRE"
+    acesso: 2026-09-03
+    nota: >
+      MUDOU em 31/12/2024 e o projeto nao sabia. Nao ha mais cobranca semestral em
+      janeiro e julho: a taxa e provisionada diariamente e COBRADA pro rata no que
+      ocorrer primeiro entre (a) evento de custodia/pagamento de juros, (b) venda
+      antecipada, (c) vencimento.
+    consequencia_de_modelagem: >
+      Para Tesouro Selic sem cupom carregado por anos, a taxa NAO sai do saldo mes a
+      mes — ela e provisionada e so debitada no resgate. O motor deduz mensalmente, o
+      que SUBESTIMA levemente o saldo do investidor (o dinheiro provisionado continua
+      rendendo ate ser cobrado). Erro conservador e pequeno; registrado, nao corrigido.
+
+etf:
+  # taxa de administracao a.a. — status por ticker
+  PIBB11: {valor: 0.00059, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28,
+         expira: 2027-09-05}
+  DIVO11: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28,
+         expira: 2027-09-05}
+  IMAB11:
+    valor: 0.0025
+    status: PARCIAL
+    fonte: itnow.com.br/imab11/caracteristicas — pagina do gestor (Itau Asset), 05/09/2026
+    acesso: '2026-09-05'
+    expira: '2027-09-05'
+    bloqueia:
+    - comparacao_definitiva_imab11_vs_td_ipca
+    motivo: a pagina do gestor nao diz se 0,25% e TETO de regulamento ou taxa efetiva
+    nota: Administrador Itau Unibanco S.A., gestor Itau Unibanco Asset Management, benchmark
+      IMA-B. PARCIAL e nao COMPLETO porque as outras taxas de ETF do catalogo vieram de REGULAMENTO,
+      que declara o teto; esta veio de pagina de produto. Fechar exige o regulamento do fundo.
+  B5P211: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28,
+         expira: 2027-09-05}
+  BOVA11:
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: 0.00100
+    status: COMPLETO
+    fonte: "Regulamento iShares Ibovespa, vigencia 21/05/2026, item 5.1 do Anexo — PRIMARIO"
+    acesso: 2026-09-03
+    nota: "0,10% a.a. base 252, cobranca mensal sobre o PL da Classe"
+  BRAX11:
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: 0.00200
+    status: COMPLETO
+    fonte: "Regulamento iShares IBrX-100, vigencia 21/05/2026 — PRIMARIO"
+    acesso: 2026-09-03
+  CAPE11: {valor: 0.00300, status: COMPLETO, fonte: "Regulamento iShares, vigencia 21/05/2026 — PRIMARIO", acesso: 2026-09-03,
+         expira: 2027-09-05}
+  EWBZ11: {valor: 0.00300, status: COMPLETO, fonte: "Regulamento iShares, vigencia 21/05/2026 — PRIMARIO", acesso: 2026-09-03,
+         expira: 2027-09-05}
+  custodia_interna_ishares:
+    bloqueia: ["custo_interno_efetivo_do_etf"]
+    nota_do_bloqueio: >
+      O regulamento declara o TETO de 0,025% a.a., nao o efetivo. O motor usa o teto,
+      que e conservador. O efetivo so sai do demonstrativo financeiro do fundo.
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: 0.00025
+    status: PARCIAL
+    fonte: "Regulamentos iShares BOVA11/BRAX11/CAPE11/EWBZ11/SMAL11, vigencia 21/05/2026"
+    acesso: 2026-09-03
+    nota: >
+      TAXA MAXIMA de custodia DO FUNDO — 0,025% a.a., identica nos cinco regulamentos.
+      E um custo ADICIONAL a taxa de administracao, cobrado dentro do fundo, e o projeto
+      NAO o modelava. Em BOVA11 eleva o custo interno de 0,100% para ate 0,125% a.a.,
+      25% a mais. PARCIAL porque o regulamento declara o TETO, nao o efetivo.
+    aplica_a: [BOVA11, BRAX11, CAPE11, EWBZ11, SMAL11]
+  IVVB11: {valor: 0.00230, status: COMPLETO, fonte: "BlackRock Brasil, pagina do produto", acesso: 2026-08-28,
+         expira: 2027-09-05}
+  SMAL11: {valor: 0.00500, status: COMPLETO, fonte: "Regulamento iShares Small Cap, vigencia 21/05/2026 — PRIMARIO", acesso: 2026-09-03,
+         expira: 2027-09-05}
+  NASD11: {valor: 0.00300, status: COMPLETO, fonte: "XP Vista Asset", acesso: 2026-08-28,
+         expira: 2027-09-05}
+  AREA11: {valor: 0.00300, status: COMPLETO, fonte: "gestor", acesso: 2026-08-28,
+         expira: 2027-09-05}
+  ACWI11:
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "a propria pagina do gestor traz 0,30% numa secao e 0,75-0,95% em outra"
+    bloqueia: ["comparacao_global_amplo"]
+  HASH11:
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: 0.01300
+    status: COMPLETO
+    fonte: "Hashdex — 'taxa maxima global incluindo fundo alvo: 1,3% a.a.'"
+    acesso: 2026-08-28
+    nota: "existe tambem 0,3% que e SO a camada brasileira. 1,3% e o numero comparavel."
+  BOVV11:
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "site do gestor bloqueia acesso automatizado; 3o maior ETF do pais por PL"
+    bloqueia: ["tabela_etf_rv_completa"]
+  # F-03: rota CANDIDATA descoberta na leitura das fontes, ainda sem insumo.
+  # ETF de renda fixa indexado ao IMA-B: mesma exposicao do td_ipca (juro real),
+  # tributacao de 15% por prazo medio de repactuacao > 720 dias (Lei 13.043/2014
+  # art. 2o, III), IR SO no resgate/alienacao/distribuicao — sem come-cotas — e
+  # IOF zero (Decreto 6.306/2007 art. 32 par. 2o, VII). Diferencas materiais frente
+  # ao Tesouro IPCA+: paga taxa de administracao em vez da custodia de 0,20% a.a.
+  # da B3, e negocia em bolsa (o Tesouro so recompra em D+1). NAO entra no catalogo
+  # enquanto a taxa nao vier do regulamento — nao inventar o insumo.
+  IMAB11:
+    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "taxa de administracao nao obtida; regulamento do fundo ainda nao baixado"
+    bloqueia: ["rota_etf_renda_fixa_protecao_real"]
+    nota: >
+      Lei 13.043/2014 art. 2o e IN RFB 1.585/2015 art. 28 dao a mesma regra de
+      aliquota; Lei 14.754/2023 art. 22 exclui expressamente o ETF de renda fixa da
+      definicao geral de ETF, entao ele segue a regra propria. Fontes lidas; falta
+      so o numero da taxa.
+  IVV:  {valor: 0.00030, status: COMPLETO, fonte: "iShares Fact Sheet 30/06/2026 — PRIMARIO", acesso: 2026-09-03,
+         nota: "Expense Ratio 0,03% = Management Fee 0,03% + Acquired Fund 0,00% + Other 0,00%",
+         expira: 2027-09-05}
+  VOO:  {valor: 0.00030, status: COMPLETO, fonte: "Vanguard Fact Sheet F0968_062026 — PRIMARIO", acesso: 2026-09-03,
+         nota: "inception 2010-09-07, confirmado; era PARCIAL por falta desse dado",
+         expira: 2027-09-05}
+  VTI:  {valor: 0.00030, status: COMPLETO, fonte: "Vanguard Fact Sheet F0970_062026 — PRIMARIO", acesso: 2026-09-03,
+         nota: "era NAO_CONFIRMADO. 3.531 acoes; indice muda de CRSP para Morningstar em jul/2026",
+         expira: 2027-09-05}
+
+# ══ RENDA FIXA ISENTA E FII — rotas catalogadas em 05/09/2026 ═══════════════
+# Entram no catalogo com a ESTRUTURA confirmada em fonte primaria e os NUMEROS
+# bloqueados. E a doutrina do projeto aplicada: "investimento nao sai por nao ter
+# regra; define-se a regra para o que nao tem". A rota existir e visivel e bloqueada
+# e diferente de a rota nao existir — a segunda esconde a decisao.
+# ══ O QUE O USUARIO DE FATO TEM ═════════════════════════════════════════════
+cofrinho:
+  turbinado_pct_cdi:
+    valor: 1.21
+    status: COMPLETO
+    fonte: "capturas do app PicPay, Cofrinho Turbinado, 05/09/2026 15:56"
+    acesso: 2026-09-05
+    expira: 2026-12-04
+    nota: >
+      "Rentabilidade de 121% do CDI em todos os dias uteis" e "Seu dinheiro livre para
+      voce resgatar quando quiser". Resgate LIVRE — nao empenhado. A tela tem "Usar
+      como garantia" como BOTAO opcional, o que responde a pergunta aberta da decisao
+      J01: no Turbinado o empenho e escolha, nao natureza do produto.
+  turbinado_teto:
+    valor: 10000.00
+    status: COMPLETO
+    fonte: "mesma captura: 'Voce escolhe quanto guardar: de R$1,00 ate R$10.000'"
+    acesso: 2026-09-05
+    expira: 2026-12-04
+    nota: >
+      TETO DO PRODUTO, nao do FGC. O catalogo nao tinha campo para isso — `emissor`
+      cuida do teto do FGC por conglomerado, teto de PRODUTO nao existia. Ver
+      limitacoes_declaradas.rota_com_teto_de_saldo. A reserva-alvo de R$36.000 NAO
+      CABE: o produto comporta 28% dela.
+  turbinado_mensalidade:
+    valor: 23.99
+    status: COMPLETO
+    fonte: "mesma captura: 'Mensalidade Gratuita*  R$23,99/mes' (riscado)"
+    acesso: 2026-09-05
+    expira: 2026-12-04
+    nota: >
+      ACHADO K-01, e e o mais importante das tres capturas. A vantagem de 19 p.p. do
+      CDI (121% - 102%) vale 2,113% a.a. liquido de IR. A mensalidade de R$287,88/ano
+      so se paga a partir de R$13.625,52 de saldo. O TETO DO PRODUTO E R$10.000.
+      LOGO: PAGANDO A MENSALIDADE, O TURBINADO NUNCA SE PAGA — nem com o saldo maximo
+      que ele aceita. No teto, PERDE R$76,60 por ano contra o cofrinho de 102%.
+      O produto so faz sentido com a mensalidade ISENTA, e a isencao e mensal.
+  turbinado_condicao_de_isencao:
+    valor: MISSOES MENSAIS
+    status: PARCIAL
+    motivo: 'As missoes deste mes foram GASTOS NO CARTAO e TRAZER UMA CHAVE PIX. Nao e nenhuma
+      das duas condicoes que a tela lista (R$2.500 em 3 meses, ou R$20 mil investidos): e uma
+      terceira via, por tarefas que O BANCO ESCOLHE e que MUDAM todo mes. PARCIAL e nao COMPLETO
+      porque a condicao do mes que vem e desconhecida por construcao — nao ha valor estavel
+      a registrar.'
+    bloqueia:
+    - custo_efetivo_da_rota_cofrinho_turbinado
+    - projecao_de_custo_do_turbinado_alem_do_mes_corrente
+    nota: 'As duas condicoes escritas tem problemas proprios. R$20 MIL INVESTIDOS: o produto
+      aceita no maximo R$10 mil. Seria preciso ter o dobro do teto aplicado em OUTRA coisa no
+      PicPay para liberar a isencao daqui. R$2.500 EM 3 MESES: sao ~R$833/mes de gasto no cartao.
+      So e de graca se ele gastaria isso de qualquer forma. Se induzir R$100/mes de gasto extra,
+      custa R$1.200/ano para economizar R$287,88 — gastar para poupar.'
+    fonte: relato do usuario em 05/09/2026
+    acesso: '2026-09-05'
+    expira: '2026-10-05'
+    achado_K03_a_isencao_nao_e_gratuita: 'A mensalidade de R$23,99 nao foi DISPENSADA — foi
+      paga em outra moeda. Gasto no cartao alimenta a fatura que prende o cofrinho, e a chave
+      Pix e tornar o PicPay o banco principal. Os R$287,88/ano da conta do K-01 sao o PISO do
+      custo, nao o total: falta o gasto marginal induzido pela missao, que ninguem mediu e que
+      so o usuario pode medir olhando se comprou algo que nao compraria.
+
+      E o custo se repete: missao cumprida este mes nao isenta o mes que vem.'
+  cashback_cartao:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "0,5% no Gold e 0,8% no Platinum; nao sei qual cartao ele tem"
+    bloqueia: ["retorno_total_da_relacao_picpay"]
+    nota: >
+      "O valor do cashback vai para o Cofrinho e rende 102% do CDI diariamente" — ou
+      seja, o cashback cai no cofrinho EMPENHADO, nao no Turbinado.
+
+
+  picpay_pct_cdi:
+    valor: 1.02
+    status: COMPLETO
+    fonte: "captura de tela do app PicPay, Cofrinho do Cartao, 05/09/2026 15:34"
+    acesso: 2026-09-05
+    expira: 2026-12-04
+    nota: >
+      Selo "102% DO CDI" na propria tela. E a UNICA posicao que o usuario possui.
+      Bate o rdb_100 do catalogo por 2 p.p. do CDI: R$17,06 por ano liquidos de IR
+      sobre R$7.671. Por RENDIMENTO nao ha o que mover — ver `garantia_de_limite`.
+  picpay_garantia_de_limite:
+    valor: true
+    status: COMPLETO
+    fonte: 'mesma captura: ''Usado como limite: R$7.671,01 / Disponivel para resgate: R$0,00'''
+    acesso: 2026-09-05
+    expira: 2026-12-04
+    nota: 'ACHADO J-01, CORRIGIDO em 05/09/2026 pelo usuario: o bloqueio NAO E PERMANENTE, e
+      CICLICO. ''O dinheiro esta bloqueado ate eu pagar a fatura, que sera dia 10.'' O saldo
+      destrava ao pagar e volta a travar conforme ele usa o cartao.
+
+      Isso NAO salva a funcao LIQUIDEZ, e por um motivo que a media esconde: emergencia nao
+      escolhe o dia. Pela data em que ela cair, a espera vai de 0 dias (dia 10) a 29 dias (dia
+      11), com media perto de 15. A funcao exige resgate em ate 1 dia, e o que importa para
+      reserva de emergencia e o PIOR caso, nao o medio — ''o dinheiro volta dia 10'' nao e resposta
+      para um problema que aconteceu dia 11.
+
+      NAO declara `bloqueia`: o valor existe e e conhecido, ele muda o numero em vez de impedir
+      conta. O efeito esta em estado.yaml -> reserva_disponivel.'
+    liquidez_pior_caso_dias: 29
+    liquidez_media_dias: 15
+    vencimento_da_fatura: dia 10
+renda_fixa_isenta:
+  lci_isencao_ir:
+    valor: true
+    status: COMPLETO
+    fonte: "Lei 11.033/2004 art. 3o, II — docs/fontes/lei-11033-2004-planalto.md"
+    acesso: 2026-09-04
+    expira: null
+    revisar_se: "alteracao da Lei 11.033/2004 art. 3o"
+    nota: >
+      Literal: "isentos ... na fonte e na declaracao de ajuste anual das pessoas
+      fisicas, a remuneracao produzida por letras hipotecarias, certificados de
+      recebiveis imobiliarios e letras de credito imobiliario". Confirmado de forma
+      independente pela Lei 15.270/2025 art. 16-A par. 1o, V, "b".
+  lca_isencao_ir:
+    valor: true
+    status: COMPLETO
+    fonte: "Lei 11.033/2004 art. 3o, IV (red. Lei 11.311/2006) — lei-11033-2004-planalto.md"
+    acesso: 2026-09-04
+    expira: null
+    revisar_se: "alteracao da Lei 11.033/2004 art. 3o"
+    nota: "Confirmado tambem pela Lei 15.270/2025 art. 16-A par. 1o, VI."
+  lca_iof_zero:
+    valor: 0.0
+    status: COMPLETO
+    fonte: "Decreto 6.306/2007 art. 32 par. 2o, V — decreto-6306-2007-planalto.md"
+    acesso: 2026-09-04
+    expira: null
+    revisar_se: "alteracao do Decreto 6.306/2007"
+  lci_iof:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: >
+      O art. 32 par. 2o do Decreto 6.306 lista LCA no inciso V e CRI/LF no VI. A LCI
+      NAO aparece nominalmente em nenhum dos dois. Nao presumi que o tratamento seja
+      o mesmo do CRI so por serem ambos imobiliarios.
+    bloqueia: ["custo_de_entrada_da_rota_lci"]
+  carencia_minima_dias:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: >
+      O prazo minimo de carencia de LCI e LCA e fixado por Resolucao do CMN e mudou em
+      2024. Nenhuma resolucao do CMN sobre isso esta em docs/fontes — as duas que
+      estao (5.238 e 5.295) tratam de contribuicao ao FGC, outro assunto.
+    bloqueia: ["funcao_da_rota_lci", "funcao_da_rota_lca", "liquidez_das_rotas_isentas"]
+  percentual_do_cdi:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "taxa comercial, varia por emissor, prazo e volume; nao ha valor de catalogo"
+    bloqueia: ["retorno_liquido_das_rotas_isentas"]
+    nota: >
+      A isencao de IR faz uma LCI a 90% do CDI empatar com um CDB a ~106% do CDI na
+      faixa de 15% de IR. E por isso que a rota precisa existir mesmo bloqueada: sem
+      ela a comparacao nem acontece.
+
+fii:
+  rendimento_isento:
+    valor: true
+    status: COMPLETO
+    fonte: "Lei 11.033/2004 art. 3o, par. 1o a 4o (red. Lei 14.754/2023) — lei-11033-2004-planalto.md"
+    acesso: 2026-09-04
+    expira: null
+    revisar_se: "alteracao da Lei 11.033/2004 art. 3o"
+    nota: "Exige no minimo 100 COTISTAS. Ver custos.yaml -> tributacao.fii_isencao_rendimento."
+  ganho_de_capital:
+    valor: 0.2
+    status: COMPLETO
+    fonte: Lei 8.668/1993 art. 18 (red. Lei 9.779/1999) — mesma base do tributacao.ir_fii
+    acesso: '2026-09-05'
+    expira: null
+    revisar_se: alteracao da IN RFB 1.585/2015
+    trecho_conferido: true
+    nota: 'As duas metades agora tem procedencia: o RENDIMENTO e isento para PF com >=100 cotistas
+      (Lei 11.033/2004 art. 3o) e o GANHO e tributado a 20% (Lei 8.668/1993 art. 18), sem a
+      isencao mensal de R$20 mil. Ver limitacoes_declaradas: o campo isento_ir do RotaAloc e
+      booleano e nao consegue expressar isso.'
+  regime_fechado:
+    valor: true
+    status: COMPLETO
+    fonte: "Resolucao CVM 175, Anexo Normativo III, art. 3o — cvm-resolucao-175-anexo-iii-fii.md"
+    acesso: 2026-09-04
+    expira: null
+    revisar_se: "alteracao da Resolucao CVM 175"
+    nota: >
+      Literal: "As classes de cotas dos FII devem ser constituidas em regime fechado".
+      NAO EXISTE RESGATE. A unica saida e vender no mercado secundario, e portanto a
+      liquidez de um FII nao e propriedade do fundo — e profundidade de book naquele
+      papel naquele dia. O art. 11 par. 1o ainda proibe taxa de saida.
+  taxa_administracao:
+    valor: null
+    status: NAO_CONFIRMADO
+    motivo: "varia por fundo; nao existe taxa de catalogo para a classe"
+    bloqueia: ["custo_interno_da_rota_fii", "comparacao_fii_vs_etf"]
+
+corretagem:
+  zero:        {valor: 0.00, status: COMPLETO, fonte: "Itau, C6, Inter, Rico, Clear, Santander, modalmais, Toro", acesso: 2026-08-31,
+         expira: 2026-12-04}
+  safra_terra: {valor: 4.50, status: COMPLETO, fonte: "safra.com.br / terrainvestimentos.com.br", acesso: 2026-08-31,
+         expira: 2026-12-04}
+  caixa_fixa:  {valor: 4.49, status: COMPLETO, fonte: "caixa.gov.br", acesso: 2026-08-31,
+         expira: 2026-12-04}
+  caixa_pct:   {valor: 0.0002, status: COMPLETO, fonte: idem,
+         expira: 2026-12-04}
+  xp_etf_pct:  {valor: 0.0050, status: COMPLETO, fonte: "xpi.com.br — corretagem de ETF", acesso: 2026-09-01, nota: "cobrada na entrada E na saida",
+         expira: 2026-12-04}
+  xp_swing:
+    expira: 2026-12-04   # tabela comercial: muda sem aviso
+    valor: 4.90
+    status: PARCIAL
+    motivo: "leitura da pagina oficial pode ter falhado na extracao; confirmar antes de usar em veredito"
+    bloqueia: ["ranking_corretoras"]
+
+exterior:
+  iof_investimento:
+    valor: 0.011
+    status: COMPLETO
+    fonte: Decreto 6.306/2007 art. 15-B, XXI-A (red. Decreto 12.499/2025, de 11/06/2025)
+    acesso: '2026-09-05'
+    expira: null
+    revisar_se: alteracao da Decreto 6.306/2007 art. 15-B
+    trecho_conferido: true
+    trecho: 'literal: "nas liquidacoes de operacoes de cambio para transferencia de recursos
+      ao exterior, com vistas a colocacao de disponibilidade de residente no Pais com finalidade
+      de INVESTIMENTO: 1,10%"'
+  iof_conta:
+    valor: 0.035
+    status: COMPLETO
+    fonte: Decreto 6.306/2007 art. 15-B, XXI (red. Decreto 12.499/2025, de 11/06/2025)
+    expira: null
+    revisar_se: alteracao da Decreto 6.306/2007 art. 15-B
+    trecho_conferido: true
+    acesso: '2026-09-05'
+    trecho: 'literal: "...colocacao de disponibilidade de residente no Pais, ou de seu conjuge,
+      companheiro ou parente ... observado o disposto no inciso XXI-A: 3,5%". O XXI-A recorta
+      o investimento; este inciso e o resto.'
+  iof_repatriacao:
+    valor: 0.0038
+    status: COMPLETO
+    fonte: Decreto 6.306/2007 art. 15-B, XXV (red. Decreto 12.499/2025, de 11/06/2025)
+    expira: null
+    revisar_se: alteracao da Decreto 6.306/2007 art. 15-B
+    trecho_conferido: true
+    acesso: '2026-09-05'
+    trecho: 'literal: "nas demais operacoes de cambio realizadas de ENTRADA de recursos do exterior,
+      nao isentas e nao abarcadas nos incisos I a XXIV: 0,38%". Entrada de recursos = repatriacao:
+      a semantica confere.'
+  spread_avenue_melhor: {valor: 0.0050, status: COMPLETO, fonte: "avenue.us — degrau regressivo", acesso: 2026-08-31,
+         expira: 2026-12-04}
+  spread_avenue_inicial: {valor: 0.0195, status: COMPLETO, fonte: idem,
+         expira: 2026-12-04}
+  spread_nomad_n1:      {valor: 0.0200, status: COMPLETO, fonte: "nomadglobal.com — niveis Nomad Pass", acesso: 2026-08-31,
+         expira: 2026-12-04}
+  spread_nomad_n5:      {valor: 0.0100, status: COMPLETO, fonte: idem,
+         expira: 2026-12-04}
+  spread_wise:          {valor: 0.007253, status: COMPLETO, fonte: "medicao ao vivo conferida contra PTAX", acesso: 2026-08-31,
+         expira: 2026-12-04}
+  vest_stablecoin:
+    spread: {valor: 0.0140, status: COMPLETO, fonte: "vest — tabela oficial datada AUGUST 2026"}
+    iof:
+      valor: null
+      status: NAO_CONFIRMADO
+      motivo: "'nao se aplica' e POSICAO JURIDICA DA PLATAFORMA sobre remessa via stablecoin, nao fato tributario confirmado"
+      bloqueia: ["ordenacao_rotas_exterior"]
+      nota: "se o IOF de 1,10% se aplicar, a rota vai a 2,50% e passa a ser PIOR que a Avenue"
+
+tributacao:
+  ir_acao:            {valor: 0.15, status: COMPLETO, fonte: "Lei 11.033/2004 art. 2o",
+         expira: null, revisar_se: "alteracao da Lei 11.033/2004 art. 2o"}
+  isencao_mensal:     {valor: 20000.00, status: COMPLETO, fonte: "Lei 11.033/2004 art. 3o, I + IN RFB 1.585 art. 59",
+                       nota: "SO acao, ouro e acao de PME. ETF, BDR e FII NAO tem.",
+         expira: null, revisar_se: "alteracao da Lei 11.033/2004 art. 3o, I"}
+  ir_fii:
+    valor: 0.2
+    status: COMPLETO
+    fonte: Lei 8.668/1993 art. 18 (red. Lei 9.779/1999) — CITACAO CORRIGIDA em 05/09/2026
+    expira: null
+    revisar_se: alteracao da IN RFB 1.585/2015
+    trecho_conferido: true
+    acesso: '2026-09-05'
+    trecho: 'literal: "Os ganhos de capital e rendimentos auferidos na alienacao ou no resgate
+      de quotas dos fundos de investimento imobiliario, por qualquer beneficiario, inclusive
+      por pessoa juridica isenta, sujeitam-se a incidencia do imposto de renda a aliquota de
+      VINTE POR CENTO."'
+    correcao: 'A fonte anterior dizia "IN RFB 1.585/2015 art. 56 — sem isencao". O art. 56 ESTA
+      transcrito em docs/fontes e NAO menciona 20%: ele define o ambito dos ganhos liquidos.
+      Os 20% do arquivo sao do art. 28, que trata de ETF de renda fixa, outro assunto. Nao era
+      lacuna de leitura, era citacao errada — o unico dos seis casos do MAPA-CONSTANTES em que
+      a fonte apontava para o lugar errado. A base real e a Lei 8.668/1993, e o art. 17 da mesma
+      lei traz os 20% na fonte sobre o RENDIMENTO, que e justamente o que a Lei 11.033 art.
+      3o depois isenta para PF com >=100 cotistas.'
+  fii_isencao_rendimento:
+    expira: null   # lei nao vence por data
+    revisar_se: "alteracao da Lei 11.033/2004 art. 3o (red. 14.754/2023)"
+    status: COMPLETO           # <- fecha a pendencia 12, aberta desde 02/09
+    fonte: "Lei 11.033/2004 art. 3o, III e paragrafos 1o a 4o (red. Lei 14.754/2023) — PRIMARIO"
+    acesso: 2026-09-03
+    cotistas_minimos: 100
+    nota: >
+      A divergencia 50 x 100 esta RESOLVIDA em favor de 100. O texto do Planalto traz os
+      paragrafos 1o a 4o do art. 3o com "numero minimo de 100 cotistas" e limites de
+      concentracao de 10% e 30%, incluidos pela Lei 14.754/2023. A fonte anterior que
+      dizia 50 refletia a Lei 11.196/2005, superada.
+    condicoes: "cotas negociadas exclusivamente em bolsa ou balcao organizado; PF com menos de 10% das cotas"
+  irrf_dedo_duro:
+    expira: null   # lei nao vence por data
+    revisar_se: "alteracao da Lei 11.033/2004 art. 2o, §1o"
+    valor: 0.00005
+    status: COMPLETO
+    fonte: "Lei 11.033/2004 art. 2o, paragrafo 1o, IV — PRIMARIO"
+    acesso: 2026-09-03
+    nota: >
+      0,005% retido na fonte sobre o VALOR DA ALIENACAO em operacoes a vista — o
+      "dedo-duro". Dispensada a retencao quando o valor for igual ou inferior a R$1,00
+      no mes. Nao estava no catalogo. E deduzivel do IR sobre ganhos liquidos, entao
+      nao e custo liquido — e sim fluxo de caixa e obrigacao acessoria.
+    e_custo_liquido: false
+  ir_rf_faixas:
+    expira: null   # lei nao vence por data
+    revisar_se: "alteracao da Lei 11.033/2004 art. 1o"
+    status: COMPLETO
+    fonte: "Lei 11.033/2004 art. 1o"
+    valor:                        # CORRECAO: o texto do relatorio de cofrinhos §6.1 listou faixas erradas
+      - {ate_dias: 180,  aliquota: 0.225}
+      - {ate_dias: 360,  aliquota: 0.200}
+      - {ate_dias: 720,  aliquota: 0.175}
+      - {ate_dias: null, aliquota: 0.150}
+  ir_etf_rf_faixas:
+    expira: null   # lei nao vence por data
+    revisar_se: "alteracao da Lei 13.043/2014 art. 2o"
+    status: COMPLETO
+    fonte: "Lei 13.043/2014 art. 2o; IN 1.585 art. 28 — por PRAZO MEDIO da carteira, nao do investidor"
+    valor:
+      - {prazo_medio_ate: 180,  aliquota: 0.25}
+      - {prazo_medio_ate: 720,  aliquota: 0.20}
+      - {prazo_medio_ate: null, aliquota: 0.15}
+  ir_exterior:
+    valor: 0.15
+    status: COMPLETO
+    fonte: Lei 14.754/2023 art. 2o, par. 1o — planalto, conferido em 05/09/2026
+    expira: null
+    revisar_se: alteracao da Lei 14.754/2023
+    trecho_conferido: true
+    acesso: '2026-09-05'
+    trecho: 'literal: "Os rendimentos de que trata o caput deste artigo ficarao sujeitos a incidencia
+      do IRPF, no ajuste anual, a aliquota de 15% sobre a parcela ANUAL dos rendimentos, hipotese
+      em que NAO sera aplicada nenhuma deducao da base de calculo."'
+  come_cotas_etf:
+    valor: false
+    status: COMPLETO
+    fonte: Lei 14.754/2023 art. 18, II c/c art. 24, par. 1o — conferido em 05/09/2026
+    expira: null
+    revisar_se: alteracao da Lei 14.754/2023
+    trecho_conferido: true
+    acesso: '2026-09-05'
+    trecho: 'art. 18, II: "Fundo de Investimento em Indice de Mercado (ETF), com excecao dos
+      ETFs de Renda Fixa". art. 24, par. 1o: "Os fundos de que trata este artigo NAO ficarao
+      sujeitos a tributacao periodica nas datas previstas no inciso I do caput do art. 17".
+      Os dois juntos e que fecham: o 18 diz QUEM, o 24 par. 1o diz que nao ha come-cotas.'

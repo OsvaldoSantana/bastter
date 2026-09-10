@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .gitattributes
+#
+# Achado F-04 (04/09/2026). O git no Windows converte LF em CRLF no checkout por
+# padrao (core.autocrlf=true). Para codigo isso e inofensivo. Para a serie do
+# NEFIN nao e: sao 6.322 bytes a mais (um por pregao), e o sha256 que
+# fatores.hash_fonte() publica muda de 619991c2192c para 421b3b3b753e.
+#
+# O pre-registro do backtest promete que um resultado e reproduzivel. Essa
+# promessa e falsa se a serie que o produziu nao for byte a byte a mesma. Um
+# clone novo em outra maquina Windows produziria numeros iguais mas com
+# procedencia diferente — e ninguem perceberia.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Normalizacao padrao: o repositorio guarda LF, sempre.
+* text=auto
+
+# ── A serie de fatores: NUNCA tocar ──────────────────────────────────────────
+# `-text` = trate como binario. Sem conversao de fim de linha em nenhuma
+# direcao, em nenhum sistema operacional.
+alocacao/dados/*.csv -text
+
+# ── Convencao da casa: codigo e configuracao em LF ───────────────────────────
+# O projeto escreve .py e .yaml em ASCII com LF (ver CLAUDE.md, secao 5).
+# Fixar aqui mantem a convencao em qualquer maquina e elimina o diff fantasma
+# de fim de linha, que polui o historico sem mudar uma linha de logica.
+*.py    text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+# ── Binarios, se algum dia entrarem ──────────────────────────────────────────
+*.pdf  binary
+*.xls  binary
+*.xlsx binary
+*.zip  binary
+*.png  binary
+*.jpg  binary

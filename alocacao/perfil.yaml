@@ -1,0 +1,304 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# PERFIL — as escolhas e decisoes DE UM usuario.
+#
+# Criado em 05/09/2026, quando o usuario lembrou que escalabilidade inclui SERVIR
+# MAIS PESSOAS e o projeto estava construido em cima das preferencias dele.
+#
+# A fronteira: `politica.yaml` guarda o que vale INDEPENDENTE de quem usa — funcoes,
+# portoes, doutrinas, regimes de analise, pre-registro. Aqui mora o que muda de
+# pessoa para pessoa. Um segundo usuario e um segundo arquivo deste, nunca uma
+# edicao no politica.yaml.
+#
+# Medido antes de separar: 109 chaves de motor contra 13 de usuario, no mesmo
+# arquivo. Nao era muito — e por isso foi a hora de separar. Depois da Fase 0 e dos
+# blocos de analise seria muito mais.
+#
+# `carregar_politica()` funde os dois na carga, entao NENHUM consumidor mudou. Os
+# seis arquivos que liam `compromissos` e `decisoes` continuam lendo igual.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+meta:
+  usuario: "osvaldo"
+  criado_em: 2026-09-05
+  nota: >
+    Um perfil descreve UMA pessoa. Nada aqui deve ser lido como regra do sistema —
+    se uma chave daqui parecer valer para todo mundo, ela esta no arquivo errado.
+
+compromissos:
+  maximo_anos: 10
+  decidido_em: 2026-09-03
+  decidido_por: "usuario"
+  justificativa: >
+    Escolha declarada, nao derivada. O documento bloco-k-definicoes oferecia tres
+    posturas para casar duracao com prazo (horizonte cheio, horizonte com folga, ou
+    objetivo datado obrigatorio); o usuario respondeu com uma quarta, mais simples e
+    mais rigida que as tres: "nenhum compromisso maior que 10 anos". E um teto ABSOLUTO,
+    independente do horizonte declarado, e por isso nao herda a fragilidade das outras
+    tres — nenhuma delas sobrevive a uma revisao do horizonte, e esta sobrevive.
+  aplica_a:
+    - "K03_prazo das teses (bloco K, portao G7)"
+    - "C01_horizonte_de_carrego dos compromissos (portao G8)"
+  nao_aplica_a:
+    - "horizonte_anos do estado — e intencao de uso, nao compromisso"
+    - "funcao CRESCIMENTO — nao ha data para quebrar"
+
+
+decisoes:
+  A05_nucleo_indexado_vs_selecao_ativa:
+    status: PENDENTE
+    pergunta: >
+      A parcela de renda variavel deve ser um NUCLEO INDEXADO (ETF amplo) ou uma
+      SELECAO ATIVA de empresas escolhidas por criterio?
+    resolvida_por: "backtest reduzido com pre-registro — NAO por argumento"
+    bloqueia: ["selecao_ativa_de_acoes", "score_de_qualidade"]
+    evidencia_ate_agora:
+      contra_selecao:
+        - "Bessembinder (2018): 55-58% das acoes individuais perdem da T-bill"
+        - "Bessembinder et al. (2023): fora dos EUA, 1,41% das empresas geram toda a riqueza liquida"
+        - "Statman se retratou em 2004: diversificacao adequada 'excede 300' acoes, nao 30-40"
+        - "SPIVA: 90,8% dos fundos de acoes brasileiros perderam do indice em 10 anos"
+        - "UFRGS: o fator RMW (qualidade/lucratividade) NAO e estatisticamente significativo no Brasil"
+      a_favor_de_selecao:
+        - "acao individual e a rota mais BARATA do universo: 0,021% a.a. contra 0,097%
+           do BOVA11 em 10 anos a R$500/mes (F-01: o BOVA11 subiu ao entrar a custodia
+           interna de 0,025% a.a. do regulamento, antes nao modelada)"
+        - "acao tem a isencao de R$20 mil/mes na venda (IN RFB 1.585/2015, art. 59, I);
+           o ETF NAO tem — art. 59, par. 2o, II exclui expressamente as negociacoes de
+           cotas de fundo de indice de acoes. FONTE PRIMARIA CONFIRMADA em 04/09/2026;
+           antes era afirmacao sem citacao"
+        - "o Ibovespa e um indice por volume, nao por fundamento — pode conter empresas ruins"
+        - "HML (valor) e dos poucos fatores robustos no mercado brasileiro"
+    nota: >
+      Enquanto PENDENTE, o motor aloca para a sleeve de acoes mas RECUSA-SE a nomear
+      empresas. Nomear empresas hoje seria escolher com a informacao de hoje o que
+      deveria ter sido escolhido com a informacao da epoca — que e exatamente o erro
+      do grafico das 8 empresas vencedoras do Bastter.
+
+  J01_reserva_empenhada:
+    status: RESOLVIDA
+    decidida_em: 2026-09-05
+    pergunta: 'O cofrinho do PicPay garante 100% do limite do cartao e a tela declara resgate
+      disponivel de R$ 0,00. A reserva de emergencia deve ser contada pelo saldo nominal (R$
+      7.671,01) ou pelo disponivel (R$ 0,00)?
+
+      '
+    resposta: REGISTRAR COMO ZERO. O empenho fica; a reserva efetiva e 0,00.
+    decidida_por: usuario
+    justificativa: 'Escolha do usuario. E a leitura honesta: reserva que nao pode ser sacada
+      nao cobre emergencia, e contar 1,9 mes ali seria o motor mentindo para ele com numero
+      certo — o saldo existe, so nao serve para o que a funcao promete.
+
+      '
+    custo_medido_da_decisao:
+      alvo_da_reserva: 36000.0
+      meses_ate_o_alvo_se_o_saldo_contasse: 42
+      meses_ate_o_alvo_partindo_de_zero: 56
+      custo_em_meses: 14
+      premissa: aporte de R$500/mes, rendimento de 102% do CDI liquido de IR (~11,3% a.a.)
+      nota: 'Quatorze meses a mais de Fase A. Nao e o custo do empenho em si — e o custo de
+        reconhece-lo. O empenho ja existia; o sistema e que contava errado.
+
+        '
+    PORQUE_SO_PARCIALMENTE_RESOLVIDA: 'O calculo de 56 meses supoe que o aporte novo VIRA reserva
+      disponivel. A propria tela sugere que nao: "Usado como limite: R$7.671,01" e CEM POR CENTO
+      do saldo, e "voce ganhou limite extra de R$530,00 PELO VALOR GUARDADO" diz que o limite
+      e funcao do saldo. SE o empenho for automatico e proporcional, aportar no cofrinho NAO
+      CONSTROI RESERVA — constroi limite de cartao. O saldo sobe, o disponivel continua zero,
+      e o alvo nao chega em 56 meses nem nunca. A Fase A ficaria num laco: o unico portao ativo
+      dirigindo 100% do aporte para um destino que, por construcao, nunca cumpre a funcao que
+      justifica o portao.
+
+      '
+    pergunta_aberta_que_so_o_usuario_responde: 'No app do PicPay, o empenho do Cofrinho do Cartao
+      e OBRIGATORIO e proporcional ao saldo, ou da para guardar sem usar como limite? Existe
+      um cofrinho SEM vinculo ao cartao? O produto se chama literalmente "Cofrinho do Cartao",
+      o que sugere que o vinculo e a natureza dele e nao uma opcao — mas isso e leitura do nome,
+      NAO confirmada, e nao vira constante enquanto ele nao olhar.
+
+      '
+    porque_isso_nao_e_detalhe: 'Se a resposta for "obrigatorio", a decisao de hoje muda: nao
+      adianta registrar zero e seguir aportando no mesmo lugar. O destino do aporte precisaria
+      mudar, e ai o G2 escolheria entre td_reserva, rdb_100 e poupanca — que e exatamente a
+      comparacao que ele ja sabe fazer e que hoje nao roda porque o dinheiro nunca chega nele.
+
+      '
+    reabertura: 'Poucas horas depois de decidir ''registrar como 0'', o usuario trouxe capturas
+      de um SEGUNDO produto: o Cofrinho Turbinado, 121% do CDI, com ''seu dinheiro livre para
+      voce resgatar quando quiser'' e ''Usar como garantia'' como BOTAO OPCIONAL. Isso responde
+      a pergunta aberta: o empenho NAO e a natureza do cofrinho, e uma escolha do produto do
+      cartao. Existe onde guardar sem empenhar, rendendo MAIS.'
+    o_que_a_reabertura_muda: 'A decisao de ontem foi tomada sobre um universo de duas opcoes
+      ruins — empenhar ou aceitar 102% — e havia uma terceira melhor nas duas pontas: 121% E
+      liquida. O registro de zero continua CORRETO para o saldo que esta no cofrinho do cartao;
+      o que muda e o DESTINO do aporte e a pergunta de mover o saldo atual.'
+    mas_ha_um_pedagio: ACHADO K-01. O Turbinado cobra R$23,99/mes, isento sob condicao. A vantagem
+      de 19 p.p. do CDI so cobre a mensalidade a partir de R$13.625 de saldo, e o TETO DO PRODUTO
+      E R$10.000. Pagando, ele nunca se paga — no teto perde R$76,60/ano contra o cofrinho de
+      102%. So vale com a isencao, e a isencao e mensal e nao esta confirmada (ver custos.yaml
+      -> cofrinho.turbinado_condicao_de_isencao).
+    as_duas_perguntas_que_sobraram: (1) O que exatamente o isenta da mensalidade hoje, e isso
+      se repete todo mes? A tela diz 'Tarefas concluidas — ativo ESTE MES', o que sugere requalificacao
+      mensal e nao um status permanente. (2) O saldo do cofrinho do cartao pode ser movido para
+      o Turbinado, ou esta preso enquanto garantir o limite? Se estiver preso, a decisao passa
+      a ser sobre o APORTE NOVO, nao sobre o saldo.
+    correcao_de_05_09_o_bloqueio_e_ciclico: 'O usuario esclareceu: ''o dinheiro esta bloqueado
+      ate eu pagar a fatura, que sera dia 10''. Nao e travamento permanente, e o ciclo do cartao.
+      Isso torna o achado MENOS grave em um aspecto e MAIS grave em outro, e o segundo domina.'
+    menos_grave: 'O saldo nao esta perdido: ele volta a ficar disponivel a cada pagamento de
+      fatura. Registrar `reserva_disponivel: 0.00` continua correto para HOJE, mas nao descreve
+      um estado permanente.'
+    MAIS_grave_o_acoplamento: 'ACHADO J-02. O cofrinho e garantia da fatura do CARTAO. Logo
+      a reserva de emergencia e colateral de uma divida de CONSUMO do proprio usuario.
+
+      No cenario para o qual a reserva existe — perda do contrato unico com a Volga, com estabilidade
+      de renda ja medida como BAIXA (6 de 6) — ele teria simultaneamente renda zero, uma fatura
+      aberta, e a reserva empenhada NESSA fatura. A reserva nao so fica indisponivel: ela e
+      CONSUMIDA pela divida que a prendia.
+
+      Reserva e divida nao sao independentes aqui. E o mesmo dinheiro contado duas vezes: uma
+      como seguranca, outra como limite de gasto. O G1 (divida) e o G2 (reserva) tratam os dois
+      como coisas separadas, e neste arranjo eles nao sao.'
+    por_que_o_ciclo_nao_salva_a_funcao: 'Emergencia nao escolhe o dia. Medido: a espera vai
+      de 0 dias (se cair no dia 10) a 29 dias (se cair no dia 11), media ~15. A funcao LIQUIDEZ
+      exige resgate em ate 1 dia, e para reserva o que conta e o PIOR caso — ''o dinheiro volta
+      dia 10'' nao responde a um problema que aconteceu dia 11.'
+    resolucao_final_05_09_2026: 'O usuario desfez o no com uma frase: ''e so considerar que
+      aquele valor nao e uma reserva''. Eu vinha modelando os R$7.671 como reserva-que-esta-empenhada
+      e inventei `reserva_disponivel` para descrever isso. O modelo certo e mais simples: aquele
+      dinheiro NUNCA FOI RESERVA. E caucao de um meio de pagamento — ele deposita porque nao
+      tinha cartao com bom limite. O rendimento de 102% do CDI e consolo, nao objetivo.
+
+      estado.yaml passou a ter `reserva_atual: 0.00` e um bloco `deposito_garantia` separado,
+      com proposito declarado. A reserva de emergencia dele e zero — nao ''zero porque travada'',
+      mas zero porque nunca foi constituida.'
+    correcao_do_assistente_J02: 'EU DRAMATIZEI. Escrevi que a reserva seria ''consumida pela
+      divida que a prendia'' e que havia ''correlacao -1 com a propria necessidade''. Com o
+      proposito declarado isso cai: o cartao dele e GARANTIDO, e uma divida coberta 14,5x pelo
+      proprio deposito nao e risco de credito, e pagamento antecipado. Nao ha alavancagem nem
+      rotativo possivel acima do colateral.
+
+      O principio do J-02 continua valido em geral — reserva empenhada em divida e reserva com
+      correlacao negativa com a necessidade. Ele so NAO SE APLICA a este caso, porque o valor
+      nao e reserva. Deduzir risco de uma estrutura sem perguntar o proposito dela foi o erro.'
+    o_que_sobra_e_e_mensuravel: 'ACHADO J-03, e este continua de pe. Se o proposito do deposito
+      e LIMITE, a troca e ruim: R$7.671,01 depositados para R$530,00 de limite extra — 14,5
+      para 1, ou 6,9% do deposito virando limite. Se o limite fosse proporcional, R$7.671 renderiam
+      muito mais; ou o vinculo tem teto, ou a maior parte do saldo esta parada sem comprar limite
+      nenhum. Nos dois casos ha capital ocioso preso a um proposito que ele ja cumpriu.'
+    achado_J03_REFUTADO: 'Eu havia escrito que o deposito comprava limite na razao de 14,5 para
+      1 e que havia ''capital ocioso''. ERRADO, e o erro foi de metodo: li ''limite EXTRA de
+      R$530'' como se fosse o retorno inteiro do deposito, sem perguntar o limite TOTAL.
+
+      O usuario informou: limite total de R$9.551. A conta fecha ao centavo — base de R$1.349,99
+      (sem cofrinho) + R$7.671,01 (cofrinho, 1 PARA 1) + R$530,00 (bonus de 6,9%) = R$9.551,00.
+      O cofrinho vira limite 1:1 e ainda paga bonus. Nao ha capital ocioso, e nao ha o que liberar
+      sem perder limite na mesma medida.
+
+      Terceira vez em dois dias que deduzi a situacao dele de um fragmento em vez de perguntar
+      — ver CLAUDE.md secao 6.'
+  V01_desempate_de_horizonte:
+    status: RESOLVIDA
+    decidida_em: 2026-09-03
+    pergunta: >
+      Quando duas rotas de mesma exposicao invertem de ordem conforme o horizonte,
+      o portao deve escolher uma, manter as duas, ou pedir decisao?
+    resposta: "menor_arrasto_no_horizonte"
+    justificativa: >
+      Escolha do usuario. Preserva o comportamento anterior, mas agora DECLARADO: a
+      rota perdedora sai rotulada PREFERENCIA_DE_HORIZONTE, nao DOMINADA, e a tabela
+      de inversao por horizonte aparece no output. A diferenca entre a versao 1.1.0 e
+      esta nao e o resultado — e que o resultado agora tem um nome honesto e um
+      parametro que o troca sem tocar em codigo.
+    nota_de_interacao: >
+      O G3 roda antes do G4, entao rotas de custo percentual alto (Avenue, Nomad, Vest,
+      conta estrangeira) sao eliminadas por atrito e nunca chegam ao G4 — a tabela de
+      inversao nunca aparece em uso real. Isso e conhecido e aceito (achado V-02); em
+      troca, o output passa a REPORTAR quando uma rota eliminada por atrito venceria o
+      G4 em algum horizonte testado, para que a interacao entre os dois portoes fique
+      visivel em vez de silenciosa.
+
+  EST01_estabilidade_de_renda:
+    status: RESOLVIDA
+    decidida_em: 2026-09-04
+    respostas_do_usuario:
+      n_clientes: 1
+      contrato: "prestador de servico na Volga, R$7.000 fixos"
+      parte_variavel: "bonus por meta, valor variavel, pode nao ser recebido em alguns meses"
+      aviso_previo: "nao ha — basta um documento escrito"
+      meses_de_receita_contratada_a_frente: 0
+    classificacao: baixa
+    pontuacao: "6 de 6 — o maximo de instabilidade da escala"
+    justificativa: >
+      As tres perguntas objetivas do estado.yaml tem resposta verificavel, e as tres
+      apontam para o mesmo lado: cliente unico, sem aviso previo, parte variavel que
+      pode nao vir. Nao ha componente de opiniao nesta classificacao. O arquivo estava
+      preenchido com "media", que e o default de um CLT e foi o valor que EU usei em
+      todos os cenarios anteriores — a divergencia entre o campo e as respostas foi
+      encontrada pelo validador `coerencia_da_estabilidade`, nao por leitura.
+    consequencia: >
+      Reserva-alvo passa de 6 para 9 meses: com despesa de R$4.000, de R$24.000 para
+      R$36.000. Fracao em renda variavel cai de 50% para 41% no horizonte de 10 anos.
+    nota_de_desenho: >
+      Esta e a unica classificacao do sistema que descreve uma vulnerabilidade real e
+      presente. Ela nao e um julgamento sobre a Volga nem sobre o usuario: e a
+      constatacao de que uma unica assinatura encerra 100% da receita, e de que a
+      reserva de emergencia e a unica coisa que compra tempo nesse cenario.
+
+  RES01_exclusividade_da_reserva:
+    status: RESOLVIDA
+    decidida_em: 2026-09-04
+    resposta: 1.0
+    pergunta: >
+      Com aporte de R$500 e alvo de R$36.000, o G2 dirige 100% do aporte para a reserva
+      por 42 meses. A regra do tudo-ou-nada esta certa, ou um split (80/20, 60/40, 50/50)
+      seria melhor?
+    metodo: "reserva.py — simulacao mes a mes, 120 meses, com o estado REAL do usuario"
+    achado_central: >
+      Com a MESMA taxa nos dois potes, o patrimonio total em 10 anos e IDENTICO ate o
+      centavo nas quatro regras. Mover aporte da reserva para investimento nao cria
+      valor — troca o rotulo. O split so passa a valer alguma coisa se a renda variavel
+      render mais que o CDI, e ai a questao inteira depende de um numero que a serie
+      brasileira nao consegue distinguir de zero.
+    sensibilidade:
+      premio_medido_nefin_2001_2026: "+0,96% a.a., t = 0,74"
+      ganho_do_50_50_nesse_premio: "R$1.294 em 10 anos — 2,2% do total aportado"
+      custo_do_50_50: "reserva completa 25 meses depois; 6 meses a mais abaixo de 3 meses de cobertura"
+    justificativa: >
+      Trocar um custo CERTO (25 meses a mais sem reserva completa, com contrato unico e
+      sem aviso previo) por um beneficio de R$1.294 que depende de um premio que a serie
+      nao mede e uma aposta ruim — e seria uma aposta ruim mesmo se o premio fosse o
+      dobro do medido. A regra permanece 1.0, agora por medicao e nao por heranca.
+    reentra: >
+      Quando a reserva atingir o alvo a decisao perde objeto. Se a estabilidade subir
+      para media ou alta — segundo cliente, contrato com aviso previo —, o alvo cai e a
+      questao muda de tamanho: vale recalcular, nao repetir esta conclusao.
+
+  HOR01_horizonte:
+    status: RESOLVIDA
+    decidida_em: 2026-09-04
+    resposta: 10
+    nota: >
+      Os 25 anos usados em todos os cenarios anteriores eram MEUS, nao dele — o
+      usuario apontou isso. Com 10 anos, o horizonte declarado passa a coincidir com
+      o teto de compromissos, e as duas coisas continuam sendo distintas: horizonte e
+      intencao revisavel, compromisso e trava. A coincidencia numerica e acidente.
+
+  A04_duracao_maxima_de_compromisso:
+    status: RESOLVIDA
+    decidida_em: 2026-09-03
+    pergunta: >
+      Para o Tesouro IPCA+ voltar via PROTECAO_REAL, a duracao deve casar com um
+      objetivo datado, com o horizonte declarado, ou com um teto absoluto?
+    resposta: "teto absoluto de 10 anos — ver secao `compromissos`"
+    justificativa: >
+      Resposta do usuario, e ela e melhor que as tres posturas oferecidas. As duas
+      primeiras (horizonte cheio, horizonte com folga) amarram o compromisso a um
+      numero que o proprio usuario pode revisar, o que e circular. A terceira mantinha
+      o ativo fora. Um teto absoluto e verificavel, nao depende do horizonte, e nao
+      precisa ser revisado quando a vida muda.
+    consequencia: >
+      Com teto de 10 anos e a data de hoje, so entra papel com vencimento ate 2036.
+      O NTN-B Principal 2060 — que a versao 1.0.0 alocava com 17% sob DATADO, sem
+      prazo nenhum a casar — fica fora, e agora fica fora por uma REGRA declarada,
+      nao por uma lacuna do modelo.
+

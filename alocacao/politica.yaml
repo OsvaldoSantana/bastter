@@ -1,0 +1,1829 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# POLITICA DE ALOCACAO — regras como dados (P3 do blueprint)
+# Trocar politica e um commit neste arquivo, nunca um deploy.
+# Todo parametro aqui e uma ESCOLHA DECLARADA, nao um otimo derivado.
+# A distincao importa: DeMiguel, Garlappi & Uppal (2009) testaram 14 modelos de
+# otimizacao e nenhum bateu 1/N fora da amostra; para 25 ativos seriam necessarios
+# ~3.000 meses de dados. Temos 16 anos. Logo: regra declarada e testavel, nao otimizacao.
+#
+# REGRA DE MANUTENCAO (achado A-03 da auditoria de 02/09/2026):
+#   toda chave sob funcoes / portoes / crescimento / tetos DEVE ser lida pelo codigo.
+#   `test_cobertura_yaml` falha se alguma nao for. Chave nao lida e mentira documental:
+#   quem le o YAML acredita que o sistema faz algo que ele nao faz.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+meta:
+  versao: "1.18.0"
+  emissao: 2026-09-05
+  base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
+  changelog:
+    "1.18.0": >
+      ACHADO U-01, e ele e uma correcao do usuario sobre o ROTEIRO, nao sobre o codigo.
+      Eu vinha listando "aporte realizado zero" e "teses nao assinadas" como bloqueios
+      de DESENVOLVIMENTO. Ele apontou que, se isto fosse um produto vendido, um cliente
+      novo teria exatamente isso — zero de tudo — e o sistema teria de responder mesmo
+      assim. Esta certo, e o motor JA se comporta assim: patrimonio zero e nada
+      assinado recebem resposta completa e acionavel. O defeito era do plano.
+      E a L-01 num nivel acima: a L-01 separou politica.yaml (motor) de perfil.yaml
+      (usuario) na CONFIGURACAO, e o PLANO nunca recebeu essa separacao.
+      Tres consequencias. (1) test_usuario_novo.py: 13 testes que medem a PRIMEIRA
+      EXPERIENCIA como comportamento do sistema, nenhum deles lendo o estado.yaml de
+      uma pessoa — ha uma guarda estrutural que recusa `estado_io.carregar()` naquele
+      arquivo, e ela pegou o proprio autor. (2) estado.exemplo.yaml: o cadastro minimo,
+      que torna visivel a fronteira entre os QUATRO fatos de vida que o sistema
+      legitimamente pergunta e o PATRIMONIO, que comeca vazio em todo cliente novo.
+      (3) toda pendencia passa a declarar CLASSE — BLOQUEIA_O_SISTEMA (22),
+      DECISAO_DE_DESENHO (5) ou DADO_DE_UM_USUARIO (2). So duas de 29 eram dado do
+      usuario, e eu tinha as duas no caminho critico. 282 testes.
+    "1.17.0": >
+      P-40 fechada: ruff e mypy configurados, em ZERO, e ligados a suite. Zero e nao
+      "poucos" — barreira com baseline conhecida nao e barreira, a violacao seguinte se
+      esconde no ruido. Toda dispensa de regra tem MOTIVO ESCRITO no pyproject, e um
+      teste conta as linhas de justificativa para que nao se possa acrescentar um
+      codigo de regra em silencio. E701/E702 sao convencao da casa (228 ocorrencias,
+      nenhuma descuido); E501 ficou LIGADO ao contrario, porque linha longa aqui era
+      sintoma de assinatura que cresceu — seis delas eu criei na P-37 e viraram a
+      tabela BLOCOS_A_ESPALHAR. As ferramentas ficam no grupo `lint`, FORA da impressao
+      do ambiente: nao mudam numero, e exigi-las instaladas deixaria vermelha a maquina
+      de quem so quer rodar o motor; os testes PULAM com o comando que as liga.
+      O que o lint achou de real: 25 imports mortos, 5 f-strings vazias, 2 nomes
+      ambiguos, 1 `None * float` que o mypy provou improvavel de descartar (nao era bug
+      em execucao — era tipo nao provavel, e o codigo ficou melhor), e o ACHADO T-01.
+      ACHADO T-01: `motor.montar_rotas` e um TERCEIRO CATALOGO, paralelo ao
+      catalogo.yaml — 22 rotas contra 25, com 13 nomes que so existem la. A P-36 disse
+      "os dois catalogos" e havia tres. Nenhum modulo de producao o chama; so o
+      test_motor.py. Nao foi apagado (P-43): apagar codigo com teste proprio sem medir
+      o que os testes guardam e como se perde uma rede. Uma linha morta dentro dele foi
+      removida: a atribuicao era copia, e a CHAMADA contradizia a docstring da funcao —
+      ela abortaria num lugar que promete capturar o bloqueio como marcador. 269 testes.
+    "1.16.0": >
+      Sessao de performance, escalabilidade e rastreabilidade.
+      ACHADO S-01: `hash_custos()` era chamada 73 vezes por `alocar()` — uma por
+      consulta ao cache de arrasto, que a usava na chave — e RELIA e RE-HASHEAVA os
+      33 KB do custos.yaml a cada vez. 37% do tempo do motor era gasto hasheando um
+      arquivo para decidir se podia usar um valor ja calculado. Memoizado por
+      (caminho, mtime_ns, tamanho).
+      ACHADO S-02, e este e da familia do F-02 e do N-01: o cache global de
+      `arrasto_anualizado` tinha na chave o hash do ARQUIVO, mas o custo vem do `C`
+      que chega como PARAMETRO. Passar um `C` alterado em memoria — o que TODO teste
+      faz — devolvia o valor do `C` original, em silencio. Qualquer teste que
+      alterasse um custo e conferisse arrasto ou dominancia estava testando nada.
+      Nasceu a distincao que faltava: `hash_custos()` e do ARQUIVO e serve a
+      PROCEDENCIA; `impressao_de_custos()` e do CONTEUDO e serve a CORRECAO DE CACHE.
+      Resultado: alocar() de 9,79 ms para 2,75 ms E correto, que antes nao era.
+      P-38 fechada: conftest.py com fixtures `custos`/`politica` e uma guarda que
+      acusa o teste que suja estado compartilhado, nomeia o objeto e restaura para que
+      so o culpado fique vermelho. A escolha foi DETECTAR e nao copiar sempre —
+      esconder defeito atras de copia e o padrao que este projeto rejeita.
+      P-39 nova e fechada: impacto.py, o mapa de quem alcanca o que. Ele existe porque
+      a resposta honesta a "como voce rastreia o alcance de uma alteracao" era: suite,
+      grep e instantaneo dourado — nenhum deles um MAPA. Reporta os PONTOS CEGOS junto,
+      porque mapa que finge completude e pior que grep. 265 testes.
+    "1.15.0": >
+      P-37 fechada: `alocar()` tinha 300 linhas e virou seis passos de 16 a 51. A
+      quebra segue as fases que ja existiam no YAML, nao um criterio novo. GARANTIA:
+      38 cenarios de estado foram serializados campo a campo antes — pesos, cada
+      string de alerta, cada pendencia, cada rota em cada lista de rejeicao — e
+      comparados depois; a UNICA diferenca em toda a matriz e o proprio
+      `politica_hash`, que mudou porque este arquivo mudou. Zero desvio de
+      comportamento.
+      ACHADO R-01, e ele so foi encontravel DEPOIS da quebra, porque so entao deu
+      para chamar `fase_universo` sozinha com uma politica alterada: a P-07 declarou
+      a ordem dos portoes como dado e afirmou que troca-la e um commit no YAML. Isso
+      e falso para 102 das 120 ordens — so 18 rodam. Os portoes mudam a FORMA do que
+      trafega (o G3 transforma rota em par (rota, custo); G4, G7 e G8 consomem pares),
+      e qualquer um deles antes do G3 estourava com TypeError no fundo de uma funcao
+      de portao. Declarar a ordem como dado sem declarar o CONTRATO e declarar uma
+      liberdade que nao existe — mesma familia do F-05 e do N-01. Cada portao da fase
+      universo passou a declarar `consome`/`produz`, e `conferir_ordem_do_universo`
+      recusa a ordem invalida ANTES de rodar: das 102 que nao rodam, 90 agora dizem
+      por que, e as outras 12 ja diziam (e o guarda do F-02 disparando, nao defeito).
+      A cadeia de `elif` da fase universo virou a tabela PORTOES_DO_UNIVERSO — a lista
+      de portoes implementados existia so escondida naqueles ramos, e duas validacoes
+      precisavam dela. 249 testes.
+    "1.14.0": >
+      P-36 fechada nas duas metades: o catalogo saiu do Python. `alocacao.catalogo()`
+      (183 linhas, 25 rotas) virou catalogo.yaml e um carregador de 39 linhas;
+      `corretoras.catalogo_instituicoes()` (136 linhas, 24 casas) virou
+      instituicoes.yaml e um carregador de 32. As duas migracoes foram conferidas
+      campo a campo contra o objeto anterior: ZERO diferencas. Valor que vem do
+      custos.yaml ficou como REFERENCIA e nao copia — mexer na constante mexe na rota,
+      e um teste prova isso —, senao seria o N-01 em escala de catalogo. Toda rota e
+      todo grupo de campos declaram procedencia.
+      ACHADO Q-01: o tratamento de insumo bloqueado era inconsistente. Rotas de ETF
+      degradavam com o motivo escrito; todas as outras derrubavam o CATALOGO INTEIRO —
+      uma constante NAO_CONFIRMADO em corretagem.safra_terra apagaria as 25 rotas,
+      inclusive as 24 que nao dependem dela, que e o oposto da doutrina P6. Regra
+      unica agora: insumo bloqueado bloqueia A ROTA.
+      ACHADO Q-02: `confirmacao` era uma letra por instituicao e o motor a aplica como
+      multiplicador de TUDO, mas ela sempre significou "os CUSTOS podem ser lidos em
+      fonte oficial" — a propria regra em corretora.multiplicador_de_confirmacao diz
+      isso. BTG e Bradesco tem N e balanco vindo do Banco Central. O comportamento
+      estava certo; o registro e que achatava tudo numa letra. Procedencia passou a
+      ser por GRUPO DE CAMPOS e `confirmacao` virou DERIVADA. 239 testes.
+    "1.13.0": >
+      P-15 fechada, e ela era maior que o rotulo. O pre-registro promete que um
+      resultado de backtest e reproduzivel; o .gitattributes e o sha256 selavam o DADO
+      e o AMBIENTE nao estava selado — as versoes de numpy e pandas que produziram os
+      numeros nao existiam no repositorio, e alfa_contra_fatores passa por
+      numpy.linalg.lstsq, que e implementacao e nao teorema. Novo pyproject.toml com
+      pinos exatos como fonte UNICA das versoes, e novo modulo ambiente.py. Esta secao
+      guarda so a impressao digital calculada de la (fontes.ambiente_de_execucao) —
+      repetir as versoes nos dois arquivos seria o N-01 de novo. Tres regras com
+      severidades deliberadamente diferentes: dependencia indeclarada e erro duro,
+      impressao fora de sincronia e erro duro, versao instalada diferente e AVISO,
+      porque quem carrega o alarme e o resultado e nao a suite. Dependencias
+      classificadas por CONSEQUENCIA: numpy e pandas mudam numero, PyYAML e pytest
+      nao. Sem requirements.txt de proposito; o comando sai de `ambiente.py
+      --instalar`. 224 testes.
+    "1.12.0": >
+      P-24 fechada, e o conserto encontrou um defeito maior. ACHADO O-01: o G2 avaliava
+      cada rota de liquidez no ALVO INTEIRO e ordenava pela media — e o retorno do
+      Tesouro Selic DEPENDE DO SALDO (isento de custodia ate R$10.000), entao a media
+      nao descreve nenhum real. Com retorno dependente de saldo, ordenar pela media e
+      encher a primeira nao da o melhor resultado. `criterio_escolha_rota` passou a
+      `retorno_liquido_marginal` e o valor antigo agora levanta erro em vez de ser
+      aceito em silencio. ACHADO K-02 agravado: com o Turbinado desbloqueado o portao
+      antigo prometia R$4.692/ano sobre um produto que aceita R$10.000 — retorno sobre
+      dinheiro recusado, R$580/ano de ficcao. O G2 devolve COMPOSICAO; RotaAloc ganhou
+      `teto_de_saldo` (que NAO e o teto do FGC: um limita a garantia, o outro limita o
+      que o produto aceita). Estado ganhou `reserva_por_rota`, opcional, com o motor
+      avisando quando nao sabe. Duas rotas novas no catalogo pela doutrina P6:
+      picpay_cofrinho (a UNICA posicao do usuario, que nao existia no catalogo, e que
+      entra SEM a funcao LIQUIDEZ pelo achado J-01) e picpay_turbinado (bloqueado: a
+      isencao depende de missoes que mudam todo mes). 216 testes.
+    "1.11.0": >
+      Achado N-01: a secao `corretora` declarava tres regras de pontuacao que so o
+      Python decidia — multiplicador de confirmacao, escala de reclamacoes e escala de
+      corretagem (esta ultima nem existia no YAML, era o literal 0.01 num comentario).
+      Os numeros CONCORDAVAM, que e pior que discordar: editar o arquivo nao mudava
+      nada. Mesmo defeito do F-05. Agora sao lidos, `reclame_aqui.pontua: true` levanta
+      excecao em vez de ser ignorado em silencio, e `exibe: true` finalmente exibe.
+      P-28: o test_cobertura_yaml varria 6 das 19 secoes lendo 3 dos 11 modulos. Agora
+      varre tudo, exige regime declarado por secao (OPERACIONAL / REGISTRO /
+      ESPECIFICACAO) com motivo escrito, quebra em secao nova sem regime, e mantem a
+      divida num inventario que nao pode apodrecer. A varredura completa revelou tres
+      secoes especificadas e nunca ligadas ao motor: bloco_C_solvencia,
+      regime_instituicao_financeira e estrategias_pre_registradas (P-29 a P-31), e
+      mais tres blocos de divida menor (P-32 a P-34). 205 testes.
+    "1.10.0": >
+      Leitura dos 32 arquivos de docs/fontes. Tres achados de motor: F-01 (custodia
+      interna de 0,025% a.a. dos ETF iShares, nunca modelada — muda o ranking de
+      CRESCIMENTO, BOVA11 cai abaixo de acao_450); F-02 (rota bloqueada simulava com
+      custo ZERO e aparecia como a mais barata do catalogo; G5 movido para antes do
+      G3 e simular_custo passa a recusar rota bloqueada); F-03 (ETF de renda fixa
+      como concorrente do td_ipca na funcao PROTECAO_REAL, tributacao fechada por
+      tres fontes primarias, taxa ainda NAO_CONFIRMADO). Nova secao
+      limitacoes_declaradas. Correcao da evidencia da A05 e do motivo do
+      fora_de_escopo.ETF_renda_fixa, cujo "0,04%" era prosa sem fonte.
+    "1.9.0": >
+      Critica do usuario em 04/09/2026: opiniao dos clientes, facilidade de operacao,
+      home broker, atividades promocionais, solucao de problemas e custo por operacao
+      ficaram de fora. Tres eram mensuraveis e eu nao busquei — a mais importante tem
+      fonte PRIMARIA e OFICIAL que eu ignorei: o Ranking de Reclamacoes do Banco
+      Central, ja normalizado por milhao de clientes. Uma e fraca por construcao
+      (Reclame Aqui) e passa a ser exibida sem pontuar. Uma deve pesar ZERO por
+      decisao declarada (promocoes).
+    "1.8.0": >
+      Acrescenta a secao `corretora` com os pesos declarados do ranking de instituicoes.
+      O laudo de 04/09 recusou-se a ordenar as oito corretoras de corretagem zero
+      alegando falta de criterio; era preguica, nao honestidade — a pesquisa de 31/08
+      tem quatro dimensoes que separam, e a mais decisiva (sobrevivencia societaria)
+      nao era nem custo.
+    "1.7.0": >
+      Responde a critica do usuario de 04/09/2026: "o sistema nao deve considerar o meu
+      aporte mensal uma verdade em pedra". O aporte deixa de ser escalar e passa a ser
+      piso + extraordinario, com regra propria para o segundo. A data da reserva vira
+      FAIXA. O G3 passa a ser avaliado sobre o valor aportado no mes, nao sobre o campo
+      do estado — o que muda o universo elegivel em mes de bonus.
+    "1.6.0": >
+      Estado do usuario passa a REAL: aporte planejado de R$500, horizonte de 10 anos,
+      estabilidade baixa. Acrescenta G2_reserva.exclusividade como parametro declarado
+      e a decisao RES01, que o mede em vez de assumi-lo. A fase de reserva passa a ser
+      a fase que o sistema de fato atravessa nos proximos 42 meses.
+    "1.5.0": >
+      Registra as respostas do usuario de 04/09/2026 (contrato unico com a Volga,
+      R$7.000 fixos, bonus variavel que pode nao vir, sem aviso previo, horizonte de
+      10 anos, zero dependentes) e a critica dele a leitura de Bessembinder, que
+      muda a ordem de execucao do backtest. Acrescenta a decisao EST-01.
+    "1.4.0": >
+      Fecha o G0: o usuario e PJ na Volga e nao tem previdencia de nenhum tipo — nao
+      ha contrapartida a capturar, e a pendencia sai de todo output. Fecha a pendencia
+      19 com a serie do NEFIN em maos, e CORRIGE o pre-registro contra o dado primario:
+      o premio de HML de 0,05% ao mes que a literatura reportava NAO se reproduz em
+      nenhuma janela de 2001 a 2026. O valor pago 0,688% ao mes com t = 2,60.
+    "1.3.0": >
+      Acrescenta `estrategias_pre_registradas` — o pre-registro do backtest, aberto
+      desde o laudo Rev. 03. Conteudo vindo de escopo-acoes-on e estrategias-acoes-brasil
+      (02/09/2026). Acrescenta ao fora_de_escopo o regime de analise de instituicoes
+      financeiras (pendencia 20) e a declaracao de que a sleeve de acao nao tem criterio
+      de selecao — as duas ausencias que o laudo-alocacao-v2 §8 apontou.
+    "1.2.0": >
+      Responde ao laudo-alocacao-v2 e ao bloco-k-definicoes (03/09/2026), e a objecao
+      do usuario: "investimentos nao devem sair por nao ter regras; devem ser definidas
+      regras para os que nao tem". Cria a funcao PROTECAO_REAL e o registro CARREGO, que
+      trazem o Tesouro IPCA+ de volta ao universo pela regra que faltava — nao afrouxando
+      a que existe. Declara compromissos.maximo_anos = 10 (escolha do usuario, 03/09).
+      Declara o desempate de preferencia de horizonte, que era default silencioso (V-01).
+      Traz horizonte_ir_dias do G2 e k_max do motor para o YAML (V-03).
+    "1.1.0": >
+      Responde a auditoria da camada de alocacao (02/09/2026): A-01 dominancia
+      robusta a horizonte; A-02 G3 separa custo fixo de percentual; A-03 cobertura
+      do YAML; A-04 funcao LASTRO criada e DATADO passa a exigir objetivo;
+      A-05 G1 compara liquido com liquido; A-06 gatilho de deriva sobre deficit.
+      Acrescenta G0 (match do empregador), G6 (coerencia funcao-rota),
+      G7 (tese registrada) e o bloco fora_de_escopo.
+
+# ── FUNCOES ───────────────────────────────────────────────────────────────────
+# Substitui a taxonomia do Bastter (que funde tres coisas em "reserva de valor").
+# Um ativo pertence a uma FUNCAO DE RISCO, nao a uma classe de produto.
+funcoes:
+  LIQUIDEZ:
+    nome: "Liquidez de emergencia"
+    descricao: "Dinheiro que pode ser preciso amanha. Nao e investimento."
+    exige_liquidez_dias: 1           # resgate em ate 1 dia util
+    exige_perda_maxima: "nominal_zero"
+    prioridade: 1
+  DATADO:
+    nome: "Objetivo com data"
+    descricao: "Dinheiro com destino e prazo conhecidos. Duracao casada com o prazo."
+    regra: "duracao_do_instrumento <= prazo_do_objetivo"
+    exige_objetivo: true             # A-04: sem objetivo datado, o bloco fica VAZIO
+    exige_liquidez_dias: 30
+    exige_perda_maxima: "limitada"
+    prioridade: 2
+  PROTECAO_REAL:
+    nome: "Protecao do poder de compra, com carrego"
+    descricao: >
+      Juro real travado na compra, entregue integralmente apenas se carregado ate o
+      vencimento. Nao e LASTRO (ha marcacao a mercado no caminho), nao e DATADO (nao
+      exige objetivo, exige COMPROMISSO), nao e CRESCIMENTO (o retorno e contratado).
+      Criada em 03/09/2026 porque o modelo nao tinha nome para isto e o empurrava para
+      DATADO — o que excluia o instrumento quando nao havia objetivo a casar. A exclusao
+      era consequencia de uma lacuna do modelo, nao um juizo sobre o ativo.
+    regra: "duracao_do_compromisso <= compromissos.maximo_anos"
+    exige_compromisso_de_carrego: true    # registro tipo CARREGO em teses.yaml — ver G8
+    exige_liquidez_dias: null             # NAO e fonte de liquidez. Nunca.
+    exige_perda_maxima: "limitada"        # marcacao a mercado se vendido antes
+    conta_como_liquidez: false
+    prioridade: 3
+    nota: >
+      O modo de falha desta funcao nao e "esperanca sem prazo" — e QUEBRA DE COMPROMISSO:
+      comprar para carregar, ver a marcacao abrir e vender no pior momento. O IPCA+ 2060
+      caindo ~47% com +2 p.p. de juro real e exatamente a tentacao. Por isso o registro
+      exige a condicao de venda ANTECIPADA declarada antes da compra, e o custo dela.
+  LASTRO:
+    nome: "Estabilidade sem data"
+    descricao: >
+      Dinheiro que nao e liquidez de emergencia, nao tem data e nao e crescimento.
+      Criada pela auditoria de 02/09/2026 (achado A-04): o modelo anterior nao tinha
+      nome para isso e o empurrava para DATADO, alocando 17% em Tesouro IPCA+ sob uma
+      funcao que exige casamento de duracao, sem nenhum prazo a casar. O IPCA+ 2060
+      cai ~47% com +2 p.p. de juro real: chamar isso de "objetivo com data" quando nao
+      ha data e exatamente o erro de taxonomia que a taxonomia existe para evitar.
+    regra: "sem marcacao a mercado — instrumento pos-fixado carregavel indefinidamente"
+    exige_liquidez_dias: 5
+    exige_perda_maxima: "nominal_zero"
+    prioridade: 4
+  CRESCIMENTO:
+    nome: "Crescimento de longo prazo"
+    descricao: "Sem data. Suporta queda porque nao sera vendido em queda."
+    horizonte_minimo_anos: 10
+    exige_liquidez_dias: 10
+    exige_perda_maxima: "limitada"
+    prioridade: 5
+  SEGURO_CAUDA:
+    nome: "Protecao de jurisdicao"
+    descricao: >
+      Seguro contra confisco, colapso institucional, hiperinflacao. NAO e reserva
+      de valor no sentido economico: o proprio Bastter admite que ouro e dolar perdem
+      poder de compra no longo prazo. O criterio e estar fora do alcance, nao render.
+    exige_liquidez_dias: 30
+    exige_perda_maxima: "limitada"
+    prioridade: 6
+  APOSTA:
+    nome: "Aposta assimetrica"
+    descricao: >
+      Perda pode ser total, ganho ilimitado. Cripto vai AQUI, nao em SEGURO_CAUDA:
+      Choi & Shin mostram que bitcoin e hedge de inflacao mas NAO safe haven — cai
+      mais de 7% nos 3 meses seguintes a um choque de VIX, que e o oposto do que se
+      quer de um seguro. O teto existe porque a perda pode ser 100%, nao porque
+      "3 a 5% e o ideal".
+    exige_liquidez_dias: 30
+    exige_perda_maxima: "total"
+    exige_tese_registrada: true      # bloco K do escopo de campos — ver G7
+    prioridade: 7
+
+# ── COMPROMISSOS ──────────────────────────────────────────────────────────────
+# Um teto sobre PRAZO DE COMPROMISSO, nao sobre horizonte. Sao coisas distintas:
+# o horizonte de acumulacao (25 anos) e uma intencao revisavel sobre quando o dinheiro
+# sera usado; um compromisso e uma trava que voce assume HOJE e que so se cumpre no fim.
+# Renda variavel nao tem prazo de compromisso — pode ser vendida a qualquer momento sem
+# quebrar promessa nenhuma. Um NTN-B 2060 tem: sao 34 anos em que vender e assumir a
+# marcacao. O teto abaixo limita o segundo e nao toca no primeiro.
+# ── PORTOES DUROS ─────────────────────────────────────────────────────────────
+# Avaliados em ordem. Nenhum e opiniao: todos sao aritmetica ou restricao legal.
+# ── P3: a SEQUENCIA dos portoes tambem e dado (P-07, fechada em 05/09/2026) ──
+# Ate esta data cada portao tinha `ativo` como dado e a ORDEM vivia no codigo. O
+# achado F-02 provou que a sequencia e regra com consequencia material: com o G3
+# antes do G5, uma rota de custo NAO_CONFIRMADO era ranqueada por custo tratando o
+# desconhecido como zero, e zero ganha de todo mundo.
+#
+# ACHADO I-01, encontrado ao fechar esta divida: a ordem real NUNCA foi G0..G8.
+# Sempre foi G6, G0, G1, G2, G5, G3, G7, G8, G4 — o G6 roda antes de tudo e o G4
+# por ultimo. A numeracao sugeria uma sequencia que o codigo nao executa, e quem
+# lesse a tabela do CLAUDE.md de cima para baixo construia um modelo errado.
+# Agora o campo `ordem` diz a verdade e o motor ITERA por ele.
+#
+# Duas fases, porque sao dois tipos de decisao:
+#   fase `aporte`   — decide QUANTO dinheiro segue. Pode encerrar o pipeline.
+#   fase `universo` — decide QUAIS rotas seguem. Nunca encerra, so filtra.
+# Trocar a ordem DENTRO de uma fase e um commit neste arquivo. Trocar um portao de
+# fase nao e reordenacao, e redesenho: o motor recusa.
+portoes:
+  G0_match_empregador:
+    ativo: false
+    desativado_em: 2026-09-04
+    motivo_da_desativacao: 'O usuario e PJ na Volga e nao tem previdencia de nenhum tipo. Nao
+      existe contrapartida de empregador a capturar. O portao permanece no arquivo, com `ativo:
+      false`, porque desativar e diferente de nunca ter existido — se o vinculo mudar para CLT,
+      ou se surgir plano com match, a rota volta ligando uma linha. E porque a resposta em si
+      e um dado: foi verificada, nao presumida.
+
+      '
+    regra: 'Se o empregador oferece contrapartida (match) em previdencia, o aporte ate o limite
+      casado tem retorno IMEDIATO E CERTO igual a taxa de match — 50% a 100% num unico mes.
+      Nenhuma divida de cartao chega perto. E a unica rota do universo que domina o pagamento
+      de divida, e por isso vem ANTES do G1. Estado desconhecido NAO e estado ausente: enquanto
+      `match_empregador` for None, o sistema emite PENDENCIA em todo output e nao finge que
+      a rota nao existe.
+
+      '
+    pergunta: A Volga oferece plano de previdencia com contrapartida? Qual o % e o teto?
+    custo_de_ignorar: 'match de 50% sobre 5% do salario e ~2,5% da renda bruta por ano, capitalizado.
+      Se existir e nao for usado, e a maior perda unitaria de todo o sistema.
+
+      '
+    ordem: 2
+    fase: aporte
+  G1_divida:
+    ativo: true
+    regra: 'Se existe divida cujo custo mensal efetivo supera o retorno LIQUIDO mensal da melhor
+      rota disponivel, TODO o aporte vai para a divida. Comparacao liquido contra liquido: a
+      divida nao paga IR sobre a economia que gera, o investimento paga sobre o rendimento.
+      Comparar divida efetiva com retorno bruto (versao 1.0.0) deixava passar toda divida entre
+      0,84% e 1,09% ao mes — boa parte do consignado e do credito pessoal de banco grande. Achado
+      A-05.
+
+      '
+    tolerancia_pp_am: 0.0
+    horizonte_ir_dias: 180
+    nota_ir: 'A aliquota de referencia sai de custos.yaml:tributacao.ir_rf_faixas pelo horizonte
+      declarado acima. 180 dias porque o dinheiro que compete com a divida e o mesmo que pode
+      ser preciso amanha; travar por 2 anos para cair a 15% e uma decisao diferente, e nao esta
+      em teste aqui.
+
+      '
+    ordem: 3
+    fase: aporte
+  G2_reserva:
+    ativo: true
+    meses_base: 6
+    ajuste_estabilidade:
+      alta: 0.75
+      media: 1.0
+      baixa: 1.5
+    ajuste_dependentes_por_pessoa: 0.5
+    teto_meses: 18
+    exclusividade: 1.0
+    criterio_escolha_rota: retorno_liquido_marginal
+    devolve: COMPOSICAO
+    horizonte_ir_dias: 180
+    regra: 'Enquanto reserva < alvo, todo aporte vai para as rotas de funcao LIQUIDEZ com
+      maior RETORNO MARGINAL (rendimento do indexador, menos IR da faixa, menos custo de
+      custodia), respeitando o TETO DE SALDO de cada uma. As tres rotas de liquidez tem taxa
+      zero; na versao 1.0.0 o desempate caia no id em ordem alfabetica e o RDB vencia por
+      acidente. A poupanca rende 57% do CDI e so perde por rendimento — um criterio de custo
+      nunca a elimina.
+
+      '
+    por_que_MARGINAL_e_nao_medio: 'Achado O-01 (05/09/2026). O valor anterior deste campo
+      era `retorno_liquido`, e significava: avalie cada rota no ALVO INTEIRO, ordene pela
+      media, mande tudo para a primeira. Duas coisas quebram nisso. (1) O retorno de alguns
+      produtos DEPENDE DO SALDO — o Tesouro Selic e isento de custodia ate R$10.000 —, e a
+      media no alvo inteiro nao descreve nenhum real: os dez mil primeiros rendem mais do que
+      ela diz e os vinte e seis mil seguintes, menos. (2) Com retorno dependente de saldo,
+      ordenar pela media e encher a primeira NAO da o melhor resultado.
+
+      Medido no caso do usuario (alvo R$36.000): a rota unica escolhia o RDB e rendia
+      R$3.878,10 por ano com os R$36.000 num emissor privado. A composicao poe R$10.000 no
+      Tesouro e R$26.000 no RDB, rende R$3.885,85 e tira R$10.000 do risco de credito
+      privado. O ganho em reais e pequeno; o que muda de verdade e que a rota unica OBRIGAVA
+      a escolher entre o melhor retorno e o melhor credito, e a composicao nao precisa
+      escolher.
+
+      '
+    por_que_COMPOSICAO_e_nao_rota_unica: 'Achado K-02, e aqui o erro nao e de otimizacao, e
+      de veracidade. Com a isencao do Cofrinho Turbinado confirmada, o portao antigo o
+      elegeria avaliando-o no alvo inteiro: R$36.000 a 13,03% = R$4.692 por ano. O produto
+      aceita R$10.000. O numero nao era otimista — era retorno sobre dinheiro que o produto
+      RECUSA, e o portao continuaria mandando aporte para la indefinidamente. Mesma familia
+      do F-02: resposta bem formada sobre uma premissa que deixou de valer. A composicao
+      devolve R$4.112, que e o que existe.
+
+      '
+    o_que_o_teto_de_saldo_NAO_e: 'Nao e o teto do FGC, e confundir os dois inverte a
+      consequencia. O FGC limita a GARANTIA: passar dele deixa o excedente sem seguro, um
+      risco que se pode escolher aceitar. O teto de saldo limita quanto o produto ACEITA:
+      passar dele nao e arriscado, e impossivel — o deposito e recusado.
+
+      '
+    se_os_tetos_nao_cobrirem_o_alvo: 'Alerta, nunca truncamento silencioso. Uma composicao
+      parcial entregue sem aviso e a mesma falha que ela existe para corrigir.
+
+      '
+    ordem: 4
+    fase: aporte
+  G3_atrito:
+    consome: qualquer
+    produz: pares
+    # ACHADO R-01. O G3 e o unico portao da fase que TRANSFORMA a forma do que
+    # trafega: entra rota, sai (rota, custo_de_entrada). Isso cria uma dependencia
+    # de ORDEM que a P-07 nao tinha declarado.
+    ativo: true
+    teto_custo_entrada_pct: 0.01
+    regra: "Uma rota fica INELEGIVEL enquanto o custo de entrada consumir mais que teto_custo_entrada_pct\
+      \ do aporte. O custo de entrada tem DUAS partes e elas se comportam de forma oposta:\n\
+      \  - parte FIXA (corretagem por ordem): dilui com o aporte. A rota volta sozinha\n   \
+      \ quando o aporte cresce, e o sistema calcula em qual aporte isso ocorre.\n  - parte PERCENTUAL\
+      \ (spread de cambio, IOF, corretagem ad valorem): NAO dilui.\n    A rota nunca volta,\
+      \ com aporte nenhum. Dizer que ela \"volta sozinha\" —\n    como fazia a versao 1.0.0\
+      \ — e falso para Avenue, Nomad, Vest e conta\n    estrangeira, que sao justamente as rotas\
+      \ que o portao elimina. Achado A-02.\nO output declara, por rota eliminada, qual dos dois\
+      \ casos e o seu.\n"
+    ordem: 6
+    fase: universo
+  G4_dominancia:
+    consome: pares
+    produz: pares
+    ativo: true
+    horizontes_teste:
+    - 5
+    - 15
+    - 30
+    desempate_preferencia_horizonte: menor_arrasto_no_horizonte
+    regra: 'Rota A e eliminada se existe rota B com a MESMA exposicao (mesmo ativo-objeto) e
+      custo total estritamente menor em TODOS os horizontes de horizontes_teste. A qualificacao
+      "em todos" e o achado A-01: IVVB11 (0,23% a.a. de administracao) bate a Avenue (1,60%
+      de entrada por aporte) ate 10 anos e PERDE dela a partir de 15 — porque um custo por aporte
+      se dilui no tempo e uma taxa anual nao. Ordem que inverte com o horizonte nao e dominancia,
+      e preferencia de horizonte: o sistema mantem a escolha do horizonte do usuario mas ROTULA
+      a eliminacao de outro modo, porque a justificativa "dominancia e logica, nao juizo" nao
+      vale nesse caso. Ex. de dominancia verdadeira: BOVA11 via corretora que cobra 0,50% e
+      dominado por BOVA11 via corretora zero em qualquer horizonte. SMAL11 NAO e dominado por
+      BOVA11 — exposicao diferente.
+
+      '
+    ordem: 9
+    fase: universo
+  G5_status:
+    consome: qualquer
+    produz: mesma_forma
+    # Polimorfico de proposito (ver docstring de g5_status): aceita rota nua ou
+    # par, e devolve o que recebeu. E o que permite ele rodar antes OU depois do
+    # G3 — foi assim que o F-02 pode ser corrigido movendo-o para a frente.
+    ativo: true
+    regra: 'Rota com qualquer insumo NAO_CONFIRMADO nao entra em ordenacao nem recebe alocacao.
+      Aparece separada, com o motivo. (Achado K-07 do laudo de 01/09.)
+
+      '
+    ordem: 5
+    fase: universo
+  G6_coerencia_funcao:
+    ativo: true
+    regra: 'Uma rota so pode ocupar uma funcao se satisfizer as exigencias declaradas dela:
+      exige_liquidez_dias e exige_perda_maxima. Estes campos existiam no YAML desde a versao
+      1.0.0 e nunca eram lidos (achado A-03). Sem este portao, uma rota podia ser posta em LIQUIDEZ
+      com resgate em 3 dias e ninguem notaria.
+
+      '
+    ordem_perda:
+    - nominal_zero
+    - limitada
+    - total
+    ordem: 1
+    fase: universo
+  G7_tese_registrada:
+    consome: pares
+    produz: pares
+    ativo: true
+    regra: 'Rota de funcao com exige_tese_registrada nao recebe alocacao sem uma tese registrada
+      em teses.yaml contendo os campos K-02 (frase falsificavel), K-03 (data, nao "longo prazo")
+      e K-04 (condicao de falsificacao). E o bloco K do escopo de campos de analise, e a aplicacao
+      do mesmo pre-registro que a politica ja adota para o backtest: escreva a condicao antes
+      de ver o resultado. Sem tese, a posicao nao e especulacao — e esperanca sem prazo.
+
+      '
+    ordem: 7
+    fase: universo
+  G8_compromisso_de_carrego:
+    consome: pares
+    produz: pares
+    ativo: true
+    regra: 'Rota de funcao com `exige_compromisso_de_carrego` nao recebe alocacao sem um registro
+      CARREGO valido em teses.yaml. Gemeo do G7, para o outro modo de falha. A DURACAO da rota
+      vem do registro, nao do catalogo: qual papel voce carrega e uma escolha sua, e supor uma
+      duracao seria supor um compromisso que ninguem assumiu. Sem registro, a rota nao e excluida
+      — ela aparece como PENDENCIA, com a instrucao exata do que preencher e ate qual vencimento
+      o teto de compromissos permite ir.
+
+      '
+    ordem: 8
+    fase: universo
+# ── ESCOLHA DE CORRETORA ──────────────────────────────────────────────────────
+# Pesos do ranking. Sao ESCOLHA DECLARADA e nao otimizacao — como todo o resto.
+# A ordem deles carrega a tese do laudo: com horizonte de 10 anos e corretagem zero
+# em oito instituicoes, o que separa nao e preco.
+corretora:
+  aporte_de_referencia: 500.0
+  pesos:
+    sobrevivencia: 25      # a instituicao vai existir daqui a 10 anos?
+    solidez: 20            # PL e resultado, do BCB IF.data
+    reclamacoes: 20        # Ranking do BC — resolucao de problemas, normalizada
+    custodia: 15           # absorve a taxa de custodia da B3?
+    corretagem: 12         # custo por ordem — a dimensao que quase todos zeram
+    tesouro: 8             # taxa PROPRIA no Tesouro Direto
+  justificativa_da_ordem: >
+    Corretagem em ultimo lugar entre as dimensoes de custo, e sobrevivencia em
+    primeiro, porque a pesquisa mediu a taxa-base: das 25 marcas levantadas, SETE
+    deixaram de existir como entidade independente em 6 anos (Rico, Clear, modalmais,
+    Necton, Orama, Guide, Vitreo) e UMA foi reposicionada (Toro). O BC liquidou 17
+    instituicoes em 2025-2026, das quais ao menos 6 corretoras e DTVMs. Num horizonte
+    de 10 anos, a probabilidade de evento societario na instituicao escolhida nao e
+    residual — e a corretagem, na maioria delas, e literalmente zero. Ordenar por
+    preco quando o preco e zero em oito casas e ordenar por ruido.
+  multiplicador_de_confirmacao:
+    C: 1.00
+    P: 0.75
+    N: 0.00
+    regra: >
+      E o G5 do sistema aplicado a uma decisao de vida real: instituicao cujo custo
+      nao pode ser lido em fonte oficial NAO entra em ordenacao, por melhor que
+      pareca pelo balanco. BTG e Bradesco tem balanco enorme e site que nao serve
+      conteudo — ficam fora, e o motivo aparece.
+  corretagem:
+    custo_do_aporte_para_nota_zero: 0.01
+    # N-01. Extraida de corretoras.py, onde era o literal 0.01 num comentario
+    # ("1% do aporte = nota zero"). NAO e um numero de fonte externa: e uma escolha
+    # deste projeto, e por isso mesmo tinha de estar aqui e nao la.
+    o_que_ela_decide: >
+      Uma ordem que consome 1% do aporte zera a dimensao corretagem. Com aporte de
+      R$500 isso e R$5 por ordem. O numero e o que separa "caro" de "inviavel" e
+      muda o ranking; deixa-lo no codigo tornava a decisao invisivel.
+  reclamacoes:
+    fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+    indice: "reclamacoes reguladas PROCEDENTES por milhao de clientes"
+    formula_verificada: >
+      Recalculei o indice a partir das colunas publicadas: procedentes/clientes x 1e6
+      reproduz o valor divulgado com erro maximo de 0,023, compativel com
+      arredondamento. A formula NAO precisou ser suposta.
+    escala: "indice 0 = 100 pontos; indice 100 = 0 pontos"
+    escala_indice_para_nota_zero: 100
+    # ACHADO N-01 (05/09/2026). A linha `escala` acima e prosa: descrevia uma regra que
+    # so existia como o literal `1 - bc_indice/100` dentro de corretoras.py. Os dois
+    # concordavam, o que e pior que discordar — mudar o YAML nao mudava nada e ninguem
+    # descobriria. `escala_indice_para_nota_zero` E lida. A prosa fica como explicacao.
+    limitacao_que_viaja_com_o_dado: >
+      O ranking do BC mede servico BANCARIO — cartao, conta, credito, tarifa —, nao
+      corretagem. Um banco com operacao gigante de cartao acumula reclamacoes que nada
+      tem a ver com custodia de acoes. E o melhor dado objetivo disponivel sobre
+      resolucao de problemas, e e um PROXY, nao a medida. Usar sem esta ressalva seria
+      o mesmo erro de atribuir a uma empresa o desempenho do setor dela.
+    por_que_normalizada_importa: >
+      E o defeito que invalida quase toda comparacao de reclamacao publicada: numero
+      absoluto premia o pequeno. A Caixa tem 3.737 procedentes e 160 milhoes de
+      clientes; o C6 tem 2.103 e 35 milhoes. Em numero absoluto a Caixa parece pior;
+      por milhao de clientes o C6 e 2,6 vezes pior.
+
+  reclame_aqui:
+    pontua: false
+    exibe: true
+    motivo_de_nao_pontuar: >
+      Tres defeitos estruturais, e nenhum e sobre a seriedade do site: (1) amostra
+      autosselecionada — so aparece quem reclama, e quem reclama no canal certo;
+      (2) NAO e normalizada por numero de clientes, entao empresa grande parece pior;
+      (3) o "indice de solucao" mede quanto a empresa INVESTE em responder naquele
+      canal especifico, o que e uma escolha de marketing, nao de servico. O Ranking do
+      BC mede a mesma dimensao melhor: e obrigatorio, normalizado, e "procedente" e
+      julgado pelo regulador e nao pela empresa.
+    nota_de_coerencia: >
+      Vale exibir justamente porque as duas fontes DIVERGEM: o Itau tem nota 8,1 e
+      85,2% de solucao no Reclame Aqui, e e o 3o mais reclamado do Brasil no ranking
+      do BC. Quando duas medidas do mesmo conceito discordam, a divergencia e
+      informacao — e a fonte com metodologia declarada e obrigatoria ganha.
+
+  facilidade:
+    pontua: false
+    motivo: >
+      So proxies objetivos poderiam pontuar (home broker web alem do app, exportacao
+      em CSV, ordem programada, API), e a pesquisa de 31/08 obteve quase nenhum deles
+      em fonte oficial. O que o usuario chamou de "facilidade de realizacao de
+      operacoes" — quantos cliques, se a tela e clara, se o app trava — exige TESTE
+      PRATICO, e nao ha fonte publica disso.
+    o_que_so_o_usuario_pode_fazer: >
+      Abrir conta em duas e comprar R$100 de um ETF em cada. E o unico teste valido, e
+      custa menos que os R$0,03 de tarifa da B3. Mas ha um viés a declarar: a
+      instituicao onde ele ja e cliente vence esse teste por familiaridade, nao por
+      qualidade.
+    por_que_importa_mais_do_que_o_peso_sugere: >
+      Nao pelo tempo — sao ~120 ordens em 10 anos. Pelo comportamento: friccao e o
+      mecanismo do risco R-01, o de maior probabilidade registrada no projeto. Uma
+      interface que da preguica nao custa minutos, custa o aporte inteiro do mes.
+
+  promocional:
+    peso: 0
+    e_uma_decisao_nao_uma_omissao: true
+    justificativa: >
+      Num horizonte de 120 meses, uma taxa promocional com validade vale
+      aproximadamente zero — e escolher instituicao por promocao e o mecanismo pelo
+      qual as pessoas acabam no lugar errado, porque a promocao acaba e o custo de
+      trocar de casa permanece. A propria pesquisa mediu o padrao: a Caixinha Turbo do
+      Nubank exige R$900/mes movimentados OU assinatura e tem VALIDADE declarada; os
+      140% do CDI do Mercado Pago foram campanha de UM mes para assinantes.
+    argumento_para_peso_negativo: >
+      Ha um argumento, e nao o adotei: taxa promocional agressiva e sinal de necessidade
+      de captacao, e necessidade de captacao precedeu todas as quebras recentes — o
+      Banco Master pagava muito acima do mercado. Nao adotei porque o sinal e ambiguo
+      (promocao tambem e so aquisicao de cliente) e porque punir por promocao com um
+      peso negativo exigiria uma calibracao que eu nao tenho como fazer. Fica
+      registrado como hipotese, nao como regra.
+
+  cobertura_e_penalidade: true
+  nota_cobertura: >
+    Dimensao ausente NAO e neutra: a nota e multiplicada pela fracao de peso que pode
+    ser avaliada. Quem nao publica custodia ou taxa de Tesouro perde pontos por nao
+    publicar. O contrario premiaria a opacidade.
+  fora_do_ranking:
+    - "research e conteudo: nao ha metrica objetiva, e para buy-and-hold o valor e duvidoso"
+    - "spread de renda fixa, rebate de fundos e float: nenhuma instituicao publica — lacuna estrutural do setor"
+    - "facilidade de uso testada na pratica: nao ha fonte publica; exige o teste dos R$100"
+
+# ── APORTE EXTRAORDINARIO ─────────────────────────────────────────────────────
+# O aporte tem duas partes de naturezas diferentes e elas NAO se somam numa media:
+#   piso            promessa contratual; existe todo mes
+#   extraordinario  bonus, 13o, restituicao, venda de algo — EVENTO, nao renda
+#
+# Por que a media mensal e pior que inutil neste caso: o bonus do usuario depende de
+# meta, e meta falha no ano ruim da empresa — que e o mesmo ano em que o contrato
+# unico esta mais em risco. As duas incertezas sao CORRELACIONADAS, entao a media e
+# otimista exatamente no cenario em que ela precisaria ser conservadora.
+#
+# REGRA: todo plano se constroi sobre o piso; todo extraordinario acelera e nunca
+# e planejado. Ter a regra escrita ANTES vale mais que a regra em si — a decisao
+# sobre o bonus tomada no mes em que ele cai na conta e a pior decisao possivel.
+aporte_extraordinario:
+  antes_da_reserva_completa:
+    destino: "100% para a reserva"
+    justificativa: >
+      A reserva e a unica coisa que compra tempo num arranjo de contrato unico sem
+      aviso previo, e o extraordinario e, por definicao, o dinheiro cuja ausencia o
+      orcamento ja provou suportar. A decisao RES01 mediu que dividir o aporte entre
+      reserva e investimento nao cria patrimonio enquanto as duas pontas rendem
+      igual — logo o extraordinario para investimento compraria exposicao a bolsa em
+      troca de meses a mais de exposicao a desemprego, sem ganho medido.
+  apos_reserva_completa:
+    destino: "aporte unico, com o G3 avaliado sobre o PROPRIO valor"
+    justificativa: >
+      Um aporte de R$3.000 nao e seis aportes de R$500: o custo fixo por ordem dilui
+      seis vezes mais, e rotas inelegiveis no piso passam a ser elegiveis. Avaliar o
+      atrito sobre o campo `aporte_mensal` em vez de sobre o valor do mes eliminaria
+      rotas que, naquele mes, sao perfeitamente viaveis.
+    nota_de_lote: >
+      Em compensacao, um aporte grande de uma vez concentra o preco de entrada num
+      unico dia. O sistema NAO tem opiniao sobre isso — nao ha, nos dados deste
+      projeto, nada que sustente uma regra de parcelamento de entrada, e inventar uma
+      seria opiniao disfarcada de calculo.
+  registro: >
+    Quando um extraordinario ocorrer, registre-o em estado.yaml como um evento datado,
+    nao somando ao `base`. O historico e o que transforma `extraordinarios_por_ano` de
+    NAO_CONFIRMADO em dado — e, ate la, toda projecao que dependa dele e cenario.
+
+# ── MOTOR DE APORTE ───────────────────────────────────────────────────────────
+motor_aporte:
+  k_max: 2                     # V-03: numero maximo de ordens por aporte. Era default
+                               # na assinatura da funcao, e e decisao de politica pura:
+                               # friccao operacional contra velocidade de convergencia.
+  nota: >
+    k_max baixo concentra o aporte no maior deficit e converge mais devagar, com menos
+    ordens e menos custo fixo. k_max alto espalha e converge mais rapido, pagando mais
+    corretagem por ordem em corretora que cobra por ordem. Com corretagem zero o
+    argumento de custo desaparece e sobra o operacional.
+
+# ── ALOCACAO DENTRO DE CRESCIMENTO ────────────────────────────────────────────
+# ATENCAO: esta e a unica secao que contem uma PREFERENCIA, e ela esta declarada
+# como tal. Nao e derivada de otimizacao. E o parametro que o backtest deve atacar.
+crescimento:
+  metodo: "capacidade_de_suportar_queda"
+  justificativa: >
+    Nao uso questionario de perfil de risco (que mede opiniao sobre risco, nao
+    capacidade). Uso o que e observavel: quantos meses de despesa a reserva cobre e
+    quao estavel e a renda. Isso determina por quantos meses a carteira pode ficar
+    submersa sem forcar venda — que e o unico risco que importa para quem nao vende.
+  base_rv: 0.50                # ponto de partida da fracao em renda variavel
+  ajuste_meses_reserva:        # (meses_cobertos - 6) * este fator, somado a base
+    por_mes_extra: 0.02
+  ajuste_estabilidade:
+    alta:  +0.10
+    media:  0.00
+    baixa: -0.15
+  ajuste_horizonte:            # (horizonte_anos - base_anos) * fator
+    base_anos: 10              # A-03: estava fixo no Python via .get(..., 10)
+    por_ano_extra: 0.01
+  piso_rv: 0.20
+  teto_rv: 0.80
+  nota: >
+    Piso e teto existem porque nem 0% nem 100% em renda variavel sao defensaveis
+    para quem tem horizonte longo e nao tem certeza sobre o futuro. Esta e a unica
+    parte do Bastter que sobrevive intacta a auditoria da Parte I.
+
+  dentro_da_classe:
+    metodo: "1/N"
+    justificativa: >
+      DeMiguel, Garlappi & Uppal (2009): nenhum dos 14 modelos de otimizacao testados
+      bateu consistentemente 1/N fora da amostra. Peso igual e o default ate que o
+      backtest demonstre o contrario NESTA carteira, com pre-registro.
+    permite_score: false       # liga so depois que o backtest justificar
+
+# ── TETOS DUROS ───────────────────────────────────────────────────────────────
+tetos:
+  por_ativo_pct_patrimonio: 0.05       # teto por PAPEL individual dentro de uma sleeve.
+                                       # Nao os 2% do Bastter — parametrizado e testavel.
+                                       # Vira requisito de diversificacao: n_min = ceil(peso/teto)
+  banda_sobre_alvo_pp: 0.03            # freio de aporte: rota sai da fila quando passa do
+                                       # alvo + 3 p.p. Isto e sobre a ROTA, nao sobre o papel.
+                                       # Confundir os dois barrava a carteira inteira.
+  por_emissor_credito_privado: 250000  # limite do FGC POR CONGLOMERADO, nao por marca
+  por_conglomerado: true               # licao Banco Master / Will Bank
+  seguro_cauda_pct: 0.05
+  aposta_pct: 0.03
+  aposta_perda_total_aceita: true      # o teto existe porque a perda pode ser 100%.
+                                       # false zera o bloco APOSTA inteiro.
+  custo_maximo_classe_aa: 0.010        # arrasto acima do qual a rota e LIMITADA
+  custo_maximo_classe_peso: 0.10       # ...limitada a este peso, nao excluida.
+                                       # A versao 1.0.0 excluia (`baratas or bloco`),
+                                       # contrariando o proprio YAML. Achado A-03.
+
+# ── REVISAO ───────────────────────────────────────────────────────────────────
+# Secao DOCUMENTAL: nao e lida pelo codigo e esta fora do teste de cobertura.
+revisao:
+  cadencia: anual
+  mes: 4
+  gatilhos_extraordinarios:
+  - 'mudanca de estado financeiro: divida nova, perda de renda, dependente'
+  - aporte anual < maior deficit relativo (deriva estrutural)
+  - constante de custo expirada no custos.yaml
+  _ACHADO_L02: >
+    SECAO DECLARADA E NUNCA LIDA. Nenhum .py referencia `revisao`. Ou vira comportamento
+    (cadencia de revisao implementada em algum lugar), ou sai do arquivo. Pendencia P-28.
+  _CORRECAO_05_09_2026: >
+    O DEFEITO DE FUNDO foi fechado. O test_cobertura_yaml varria seis das dezenove
+    secoes deste arquivo lendo tres dos onze modulos — media o proprio escopo, nao a
+    cobertura, e foi por esse vao que esta secao entrou. Agora toda secao precisa de
+    regime declarado (OPERACIONAL, REGISTRO ou ESPECIFICACAO) com motivo escrito, secao
+    nova sem regime quebra a suite, e a divida conhecida vive num inventario que nao
+    pode apodrecer. As tres chaves daqui continuam na divida — mas agora sao contadas.
+fora_de_escopo:
+  # NOTA: nem Tesouro IPCA+ nem cripto estao aqui. Os dois tem regra propria
+  # (PROTECAO_REAL + G8, e APOSTA + G7) e entram no universo assim que o registro
+  # correspondente for preenchido. Ativo sem regra ganha regra; nao vira ausencia.
+  LCI_LCA:
+    motivo: >
+      SAIU DO FORA DE ESCOPO em 05/09/2026 — agora sao rotas do catalogo (`lci`, `lca`),
+      bloqueadas no G5 por insumo. A isencao de IR esta CONFIRMADA em fonte primaria
+      (Lei 11.033/2004 art. 3o, II para LCI e IV para LCA, com confirmacao independente
+      na Lei 15.270/2025 art. 16-A). O que falta e comercial e regulatorio: quanto do
+      CDI o emissor paga, e a carencia minima fixada pelo CMN.
+    ver_tambem: "limitacoes_declaradas.datado_cobra_liquidez_onde_deveria_cobrar_vencimento"
+    reentra: JA_REENTROU
+  FII:
+    motivo: >
+      SAIU DO FORA DE ESCOPO em 05/09/2026 — agora e rota do catalogo (`fii`), bloqueada
+      no G5 pela taxa de administracao, que varia por fundo e nao tem valor de classe.
+      Estrutura confirmada: regime FECHADO (CVM 175 Anexo III art. 3o — nao existe
+      resgate, a liquidez e a do book), rendimento isento com >=100 cotistas, ganho a
+      20% sem isencao mensal.
+    ver_tambem: "limitacoes_declaradas.isento_ir_e_booleano_e_o_fii_nao_e"
+    reentra: JA_REENTROU
+  match_empregador:
+    motivo: >
+      VERIFICADO E INEXISTENTE (04/09/2026): o usuario e PJ na Volga e nao tem
+      previdencia de nenhum tipo. Nao e ausencia por falta de pesquisa — e ausencia
+      de fato. A rota de maior retorno unitario do universo nao esta disponivel.
+    reentra: "se o vinculo virar CLT com plano, ou se a Volga criar plano para PJ"
+  PGBL_como_PJ:
+    motivo: >
+      Consequencia direta de ser PJ: o PGBL deduz ate 12% da renda bruta TRIBUTAVEL
+      na declaracao completa, e PJ que se remunera por pro-labore + distribuicao de
+      lucros tem base tributavel pequena — a distribuicao de lucros e isenta na
+      pessoa fisica ate o limite da nova regra. O beneficio de entrada do PGBL, que e
+      a unica caracteristica que ele tem e nenhuma outra rota tem, encolhe junto com
+      a base. Nao avaliado numericamente: exige saber a composicao pro-labore x
+      distribuicao, que e dado do usuario.
+    reentra: "quando a composicao da remuneracao for declarada"
+  PGBL:
+    motivo: "ver PGBL_como_PJ — a condicao de PJ muda a avaliacao, nao so adia"
+    reentra: "3a passada — exige levantar taxa de administracao de planos concretos"
+  cofrinho_acima_de_100_cdi:
+    motivo: "898 linhas de pesquisa e uma unica rota generica rdb_100 no catalogo. Ofertas de 110-120% do CDI ficaram fora"
+    reentra: "prioridade 1 — a pesquisa quantificou R$58,91 sobre R$1.000 em 2 anos e mediu o custo (62 dias sem acesso, caso Master)"
+  ouro_e_dolar:
+    motivo: "SEGURO_CAUDA tem uma unica rota e ela e eliminada por atrito em todos os cenarios: a funcao esta morta na pratica"
+    reentra: "prioridade 1 — OZ1D, GOLD11, cambio direto"
+  bitcoin_custodia_propria:
+    motivo: "juridicamente distinto de HASH11, que e um ETF na B3 com o mesmo risco jurisdicional do resto da carteira. O argumento de Choi & Shin e sobre o ATIVO, nao sobre a custodia"
+    reentra: "3a passada"
+  ETF_renda_fixa:
+    motivo: >
+      IMAB11/B5P211/IRFM11. CORRECAO 04/09/2026: a taxa de 0,04% que estava aqui NAO
+      tem fonte — e prosa, nao constante com procedencia. O valor de registro foi
+      movido para custos.yaml como IMAB11 NAO_CONFIRMADO, ate vir do regulamento.
+      A TRIBUTACAO, essa sim, fechou com fonte primaria: 15% quando o prazo medio de
+      repactuacao da carteira passa de 720 dias, IR so no resgate/alienacao/distribuicao
+      (sem come-cotas), IOF zero. Lei 13.043/2014 art. 2o, III e par. 4o; IN RFB
+      1.585/2015 art. 28; Decreto 6.306/2007 art. 32 par. 2o, VII. A Lei 14.754/2023
+      art. 22 exclui o ETF de renda fixa da definicao geral de ETF — regra propria.
+    por_que_isso_importa: >
+      E a unica rota conhecida que disputa a funcao PROTECAO_REAL com o td_ipca sem
+      pagar a custodia de 0,20% a.a. da B3 e sem depender da recompra do Tesouro.
+    resultado_medido_em_05_09_2026: >
+      A TAXA CHEGOU E A HIPOTESE CAIU. IMAB11 cobra 0,25% a.a. (pagina do gestor,
+      status PARCIAL). Eu havia escrito que "se a taxa for menor que a custodia, a
+      comparacao inverte" — ela nao e menor: 0,25% > 0,20%. O Tesouro IPCA+ vence em
+      TODAS as faixas de patrimonio testadas, e por margem que cresce:
+      R$7.667 -> 19,17 contra 15,33 | R$40 mil -> 106,76 contra 80,00 |
+      R$300 mil -> 854,26 contra 600,00 (custo anual em reais).
+      E o ETF ainda paga 0,0300% de atrito por ponta na entrada, que o Tesouro nao tem.
+      A isencao de custodia da B3 ate R$26.471,77 nao salva: ela apaga a custodia, nao
+      a taxa de administracao, e a adm sozinha ja e maior que os 0,20% do Tesouro.
+    o_que_isso_NAO_decide: >
+      O ETF perde em CUSTO, que e o criterio deste motor. Ele tem propriedades que o
+      criterio nao mede: negocia em bolsa sem depender da recompra do Tesouro, e
+      diversifica vencimentos do IMA-B em vez de travar um papel so. Quem escolher o
+      ETF paga por isso, e agora sabe quanto — que era o ponto de catalogar a rota.
+    reentra: "quando a taxa vier do regulamento e a lacuna de liquidez fechar"
+  debentures_CRI_CRA:
+    motivo: "isentas de IR e SEM FGC — a pesquisa as chama de credito puro. Exclusao deliberada enquanto nao houver criterio de analise de credito"
+    reentra: "depois do catalogo de campos"
+  BDR:
+    motivo: "secao inteira na pesquisa de ETFs, nenhuma rota. Sem isencao de R$20 mil e com taxa de custodia do emissor"
+    reentra: "3a passada"
+  fundos_DI_e_multimercado:
+    motivo: excluidos por custo (taxa de administracao + come-cotas). A exclusao e deliberada
+      e agora esta escrita
+    reentra: nao previsto
+    fundamento: CRITERIO_MEDIDO
+  imovel_consorcio_COE_previdencia_sem_match:
+    motivo: 'Fora por custo e iliquidez. RESSALVA DE 05/09/2026, ao escrever a P6: o motivo
+      dizia tambem ''nao avaliados individualmente'', que NAO e fundamento legitimo — descreve
+      o estado do projeto, nao o ativo. Consorcio e COE tem custo estruturalmente alto e documentado,
+      e isso sustenta a exclusao; ''previdencia sem match'' e caso resolvido por outro motivo
+      (o usuario e PJ e nao tem previdencia). Imovel direto e o elo fraco: foi excluido por
+      argumento geral, sem medicao. Ver pendencia P-19.'
+    reentra: 'imovel direto: quando houver regua. Os demais: nao previsto, por criterio medido'
+    fundamento: CRITERIO_MEDIDO (parcial) — ver ressalva
+  opcoes:
+    motivo: 'CORRIGIDO em 05/09/2026. O motivo anterior era ''o usuario declarou que nao opera;
+      sem operacao, nao ha o que catalogar''. Ele apontou o defeito: NAO OPERAR NAO E PREFERENCIA,
+      E ESTADO. Alem do cofrinho no PicPay ele nao tem investimento nenhum, entao ''nao opero
+      opcoes'' nao diz nada sobre opcoes — diz que a carteira esta vazia. Usar isso como fundamento
+      de exclusao permanente foi converter resposta factual em decisao de escopo, que e o mesmo
+      erro do banco (P-14) com outra roupa.'
+    reentra: 'familia coberta: quando houver pesquisa de custo. Descoberta: quando houver degrau
+      na escala'
+    fundamento: null
+    o_que_falta: 'Para a familia coberta: pesquisa de custo (corretagem de opcoes, taxa da B3
+      no exercicio — o Tarifacao_Equities_V5.0 item 1.3.1.4 ja esta em docs/fontes e cobre exercicio
+      de opcoes) e a taxa de aluguel (BTB). Para a descoberta: um degrau `ilimitada` na escala
+      `perda_maxima`, e a decisao de se o projeto quer isso.'
+    contexto_novo_05_09_2026: O usuario lembrou que, no periodo em que acompanhava o Bastter,
+      opcoes e ALUGUEL DE ACOES eram apresentados como formas de RENTABILIZAR a carteira — nao
+      como aposta direcional. Isso muda o objeto e resolve metade do problema de modelagem.
+    duas_familias_que_nao_podem_compartilhar_regua: 'COBERTA (venda de call sobre acao que voce
+      ja tem; aluguel de acao ja detida): a perda maxima e o custo de oportunidade da alta acima
+      do strike, mais o risco de contraparte no aluguel. Cabe em `perda_maxima: limitada`. A
+      escala do catalogo JA representa isso. DESCOBERTA (venda de call sem ter a acao): a perda
+      pode EXCEDER o capital aplicado, e a escala nominal_zero/limitada/total nao tem degrau
+      acima de total. Essa e a que o catalogo nao consegue representar honestamente.'
+    consequencia: 'A exclusao generica de ''opcoes'' era grossa demais: juntava duas coisas
+      com perfis de perda opostos. A familia COBERTA e catalogavel hoje; a DESCOBERTA exige
+      um degrau novo na escala de perda antes de qualquer coisa.'
+  instituicoes_financeiras:
+    motivo: >
+      ESPECIFICADO em 05/09/2026, ainda BLOQUEADO. Nao e classe de ativo: e regime de
+      analise ausente. Ver `regime_instituicao_financeira` abaixo — o bloco substituto
+      agora existe, com fonte por metrica, mas depende de uma fonte de dados que a
+      Fase 0 NAO cobre.
+    reentra: "quando a fonte de dados prudenciais entrar no pipeline (P-14)"
+  sleeve_de_acao_sem_criterio_de_selecao:
+    motivo: >
+      A rota `acao_zero` recebe peso e o requisito de diversificacao e calculado, mas
+      NAO ha criterio nenhum de escolha dos papeis — nem portao, nem campo, nem score.
+      O sistema aloca a um recipiente cujo conteudo e indefinido. Isso e coerente com
+      `permite_score: false` e com a decisao A05 em aberto, mas merecia a mesma
+      declaracao explicita que as demais ausencias tem (laudo-alocacao-v2 §8).
+    reentra: "quando A05 for resolvida pelo backtest pre-registrado abaixo"
+
+# ── FONTES DE BENCHMARK ───────────────────────────────────────────────────────
+# ══ P6 — AUSENCIA DE CRITERIO NAO E CRITERIO DE EXCLUSAO ═════════════════════
+# Promovida a doutrina em 05/09/2026, depois de a mesma correcao ter sido necessaria
+# TRES vezes. Nao e preferencia do usuario: e a regra fundadora do projeto, e ela
+# precisa estar escrita onde a proxima sessao tropece nela antes de propor o contrario.
+doutrina_P6:
+  regra: 'Ativo, classe ou empresa NAO sai do universo por o projeto ainda nao ter regua para
+    ele. Falta de criterio e tarefa aberta, nao veredito. O que sai por falta de dado e o
+    PESO, nunca a presenca no catalogo — a rota fica visivel, bloqueada e com o motivo escrito,
+    para que a decisao de nao considerar seja uma decisao e nao uma omissao.
+
+    '
+  as_tres_vezes:
+  - '01/09: eu tirei Tesouro IPCA+ e cripto do catalogo porque nao havia regra para eles.
+    Correcao do usuario: ''os investimentos nao devem sair por nao ter regras, devem ser definidas
+    regras para os que nao tem''. Nasceram a funcao PROTECAO_REAL e o registro CARREGO.'
+  - '05/09: LCI, LCA e FII estavam em fora_de_escopo. Entraram no catalogo bloqueadas por
+    insumo, com a estrutura confirmada em fonte primaria.'
+  - '05/09: eu ofereci TRES variantes de excluir banco do universo e recomendei uma. Correcao
+    do usuario: ''as maiores acoes do Brasil de empresas privadas sao Itau, Bradesco e Ambev,
+    duas delas sao bancos; nao faz o menor sentido excluir. De novo estamos cometendo o erro
+    de excluir um investimento por falta de criterio. Nao deve ser excluido, deve ser encontrado
+    o criterio.'''
+  o_que_ela_proibe: 'Oferecer "fora de escopo" como resposta a "nao sabemos medir". A pergunta
+    correta nunca e SE o ativo fica, e sim QUAL a regua e QUANTO custa construi-la.
+
+    '
+  o_que_ela_NAO_proibe: 'Peso zero. Uma rota pode ficar em zero indefinidamente por insumo
+    bloqueado ou tese ausente — isso e o sistema funcionando. A diferenca entre peso zero
+    e exclusao e que o primeiro e visivel, contavel e reversivel por um numero que chega.
+
+    '
+  teste_pratico: 'Antes de escrever "fora de escopo" ou "excluir", responda: qual regua falta,
+    quanto custa, e o que se perde sem ela. Se as tres respostas existirem, e pendencia. Se
+    voce nao souber responder, e porque nao investigou o bastante para excluir.
+
+    '
+  fundamentos_legitimos_de_exclusao_permanente:
+  - DECISAO_DO_USUARIO — ele decidiu que NAO QUER aquilo, podendo ter. E preferencia declarada,
+    e sobrevive a carteira mudar.
+  - 'CRITERIO_MEDIDO — a regua existe, foi aplicada, e o ativo reprovou. Ex.: fundos DI e
+    multimercado, reprovados por custo (taxa de administracao + come-cotas).'
+  o_que_NAO_e_fundamento: '''Ainda nao temos regua'', ''nao avaliados individualmente'', ''complexo
+    demais'' — os tres descrevem o estado do PROJETO. E, acrescentado em 05/09/2026 por correcao
+    do usuario: ''o usuario nao opera aquilo'' — isso descreve o estado da CARTEIRA DELE,
+    que hoje e um cofrinho no PicPay e mais nada. Numa carteira vazia, ''nao opero X'' e verdade
+    para TODO X, e portanto nao distingue nada.'
+  a_armadilha_da_pergunta_factual: 'Eu perguntei ''voce opera opcoes?'' e tratei o ''nao''
+    como decisao de escopo. A pergunta media um FATO e eu li como PREFERENCIA. A forma certa
+    e ''voce quer que X fique fora, podendo te-lo?'' — essa pergunta tem resposta que sobrevive
+    a carteira mudar. Vale para toda sessao futura: resposta factual nao autoriza exclusao.'
+# ══ FASE A RECALCULADA — achado M-01 (05/09/2026) ════════════════════════════
+# Todo o planejamento citava "reserva completa em ~mar/2030". Aquele numero foi
+# calculado com R$7.671 de reserva inicial. A reserva e ZERO — nao travada, nunca
+# constituida. As datas estavam erradas em todo documento do projeto.
+fase_A_recalculada:
+  data_do_calculo: 2026-09-05
+  premissas: "alvo R$36.000 (9 meses x R$4.000, estabilidade baixa), CDI 13,90%, IR 20%"
+  reserva_inicial: 0.00
+  antes_dizia: {meses: 42, conclusao: "mar/2030", premissa_de_reserva: 7671.01}
+  verdade:     {meses: 56, conclusao: "mai/2031", premissa_de_reserva: 0.00}
+  atraso_em_meses: 14
+
+  ACHADO_M01_o_portao_ativo_e_o_que_menos_importa: >
+    Medido nesta mesma passada, e e o achado que vale mais que a data.
+    Trocar o DESTINO do aporte move o prazo em 3 meses: 56 no cofrinho de 102%, 56 no
+    td_reserva, 54 no Turbinado a 121%, 62 na poupanca. Trocar o APORTE move 33: 56
+    meses a R$500, 43 a R$700, 32 a R$1.000, 22 a R$1.500, 17 a R$2.000.
+    O G2 e o unico portao com trabalho a fazer na Fase A, e ele decide a alavanca de
+    3 meses. A alavanca de 33 meses — quanto entra — nao passa por portao nenhum: e
+    entrada do usuario, e hoje o realizado e ZERO contra um piso planejado de R$500.
+  o_que_isso_NAO_significa: >
+    Nao e argumento para desligar o G2 nem para parar de medir custo. Na Fase B e C os
+    valores sao maiores, o horizonte e longo e a diferenca de custo COMPOE — 0,10% a.a.
+    sobre 20 anos nao e ruido. O achado vale para a FASE A especificamente: aqui, o
+    aparato inteiro de comparacao de rotas esta otimizando a menor das duas alavancas.
+  consequencia_pratica: >
+    Se o usuario perguntar "onde ponho a reserva", a resposta honesta comeca por: o
+    destino muda 3 meses, e quase qualquer um serve; o que muda 33 e voce comecar a
+    aportar. Dizer so a primeira metade seria tecnicamente correto e praticamente inutil.
+
+# ══ BLOCO C — SOLVENCIA (regime de exclusao) ═════════════════════════════════
+# Especificado em 05/09/2026. Especifica o REGIME: quando o bloco se aplica, quando
+# recusa, em que ordem, e o que decide um corte. NAO redefine a lista de campos —
+# ela ja existe em auditoria/escopo-campos-de-analise.md. Ver `lacuna_declarada`.
+bloco_C_solvencia:
+  status: REGIME_ESPECIFICADO
+  papel: >
+    E o portao de EXCLUSAO do universo de acoes. Ele nao escolhe o que comprar: ele
+    tira do universo o que nao deveria ser considerado. Essa diferenca e a razao de
+    ele vir antes de qualquer bloco de qualidade ou de preco.
+
+  por_que_este_bloco_antes_dos_outros: >
+    Achado do backtest de 05/09: o premio de valor (HML) tem alfa de 0,766% ao mes,
+    mas 73% dele vive em 12 dos 306 meses, e a mesma cirurgia que o mata deixa o WML
+    vivo. Ou seja, a logica de SELECAO depende de um premio concentrado e fragil.
+    A logica de EXCLUSAO nao depende de premio nenhum: ela nao afirma que a empresa
+    excluida vai cair, afirma que o risco dela nao e mensuravel com o que temos.
+    E a unica parte do catalogo que sobrevive ao resultado do H1.
+    Esta e tambem a leitura do usuario sobre Bessembinder: num mercado onde a maioria
+    das empresas e ruim, o valor esta em excluir, nao em prever.
+
+  # ── 1. QUANDO O BLOCO RECUSA, em vez de calcular ──────────────────────────
+  recusa_em_vez_de_calcular:
+    regra: >
+      Se a empresa for instituicao financeira ou seguradora, o bloco C NAO produz
+      numero — levanta recusa e encaminha para `regime_instituicao_financeira`.
+      Divida liquida/EBITDA aplicado a um banco DEVOLVE UM NUMERO, e esse e o perigo:
+      metrica que nao se aplica mas nao falha e o modo de falha do F-02, onde insumo
+      ausente virava zero e zero ganhava de todo mundo.
+    como_identificar:
+      fonte: "CVM, cadastro de companhias abertas, campo SETOR_ATIV"
+      status: PARCIAL
+      motivo: >
+        O campo existe e foi conferido (docs/fontes/cvm-cadastro-companhias-abertas.md),
+        mas a lista completa de valores de SETOR_ATIV nao foi contada no dado real —
+        so dois exemplos foram vistos. Antes de codificar o corte, contar os valores
+        distintos como foi feito com ORDEM_EXERC/ESCALA_MOEDA (status OBSERVADO).
+      bloqueia: ["classificacao_automatica_de_instituicao_financeira"]
+
+  # ── 2. O QUE OS CORTES SAO, e o que eles nao sao ──────────────────────────
+  natureza_dos_cortes:
+    nenhum_corte_tem_ancora_legal: true
+    comparacao_com_o_bloco_de_banco: 'O regime de instituicao financeira tem UMA metrica com
+      piso LEGAL: o indice de Basileia. Reprovar nele e reprovar contra a autoridade. O bloco
+      C NAO TEM NENHUMA. "Divida liquida/EBITDA abaixo de 3" e costume de mercado, nao norma
+      — ninguem impoe, e o proprio 3 varia por setor e por ciclo.
+
+      '
+    consequencia_doutrinaria: 'Todo corte deste bloco e ESCOLHA DECLARADA, no mesmo sentido
+      em que a fracao de renda variavel e escolha declarada. Portanto: o valor mora no YAML,
+      nunca no codigo; vem acompanhado do custo de discordar (quantas empresas entram ou saem
+      do universo se o corte mudar); e o motor deve conseguir rodar com o corte diferente sem
+      alterar uma linha, do mesmo jeito que `horizontes_teste` faz no G4.
+
+      '
+    o_que_isso_proibe: 'Apresentar um corte como derivado. Se o sistema disser "empresa reprovada
+      em C-02" sem dizer "contra o corte X, que voce escolheu, e que muda o universo em N empresas",
+      ele repete exatamente o erro do metodo que este projeto corrige.
+
+      '
+  # ── 3. NIVEL ou TENDENCIA — a decisao de desenho que falta ────────────────
+  nivel_ou_tendencia:
+    status: RESOLVIDA
+    pergunta: 'O corte olha o NIVEL na ultima demonstracao, ou a TRAJETORIA entre demonstracoes?
+
+      '
+    porque_importa: 'Uma empresa a 3,2x que estava em 5,0x ha dois anos esta desalavancando.
+      Outra a 2,8x que estava em 1,5x esta se alavancando. Um corte de nivel aprova a segunda
+      e reprova a primeira, e a segunda e a que preocupa. Risco de cauda mora em deterioracao,
+      nao em nivel — e e a deterioracao que o balanco anuncia com antecedencia.
+
+      '
+    custo_de_cada_escolha: 'NIVEL e simples, reprodutivel e cego a direcao. TENDENCIA exige
+      serie historica alinhada por dt_disponivel (Fase 0), multiplica o custo do pipeline, e
+      introduz escolha nova: quantos trimestres, e o que fazer com empresa jovem sem historico.
+
+      '
+    recomendacao: 'Comecar por NIVEL, declarar a cegueira em `limitacoes_declaradas`, e so ir
+      para TENDENCIA se a Fase 0 entregar a serie alinhada. Nao e a melhor regra: e a que nao
+      trava o resto do sistema esperando uma que talvez nunca venha.
+
+      '
+    decide: usuario
+    decidida_em: '2026-09-05'
+    resposta: HIBRIDO — o nivel corta, a tendencia marca sem poder de veto
+    decidida_por: usuario
+    justificativa: 'Escolha do usuario contra a minha recomendacao, que era so nivel. O argumento
+      dele e o mesmo da P-16b e da P-14: direcao e informacao real e descartá-la por conveniencia
+      de implementacao seria perder sinal de proposito.'
+    degradacao_declarada: 'A metade que CORTA (nivel) roda hoje, so com a DFP mais recente.
+      A metade que MARCA (tendencia) exige serie alinhada por dt_disponivel e fica em AGUARDA_SERIE
+      ate a Fase 0 — mesmo padrao do REGRA_DECIDIDA em teses.yaml: o que e decidivel hoje vale
+      hoje, o que espera dado espera EM VOZ ALTA. O bloco NAO fica bloqueado esperando a tendencia;
+      ele roda cego a direcao e diz que esta cego.'
+    o_que_ainda_falta_decidir: Quantos trimestres a tendencia olha, e o que fazer com empresa
+      jovem sem historico. Nao decidido agora porque so morde quando a serie existir.
+  # ── 3-B. Dado ausente: admitir com marcacao (P-16b, decidida em 05/09) ────
+  empresa_sem_dado:
+    status: RESOLVIDA
+    decidida_em: 2026-09-05
+    resposta: "ADMITIR COM MARCACAO — nao exclui, sinaliza"
+    decidida_por: usuario
+    justificativa: >
+      Escolha do usuario contra a minha recomendacao, que era rotular como
+      nao-analisavel. O argumento dele e a doutrina P6: ausencia de criterio nao e
+      criterio de exclusao. Reconsiderando, ele esta certo e eu estava sobre-cauteloso:
+      admitir com marcacao NAO inventa numero nenhum, e portanto nao fere a P1. Excluir
+      por falta de dado seria pior — no backtest isso e vies de sobrevivencia pela porta
+      dos fundos, selecionando empresa por ter reportado bem.
+    diferenca_para_o_caso_BOVV11: >
+      Nao e incoerencia com o F-02, e a distincao importa. A BOVV11 foi BLOQUEADA porque
+      o custo dela era insumo de ORDENACAO: sem o numero, ranquear so seria possivel
+      inventando zero. Solvencia e criterio de EXCLUSAO, nao de ordenacao — deixar de
+      excluir nao produz numero falso, produz apenas nao-exclusao. Ausencia vira valor
+      inventado num caso e nao vira no outro.
+    custo_aceito: >
+      Entra no universo empresa cuja solvencia ninguem mediu. A marca precisa viajar
+      ate o relatorio final e ser contavel: "N empresas no universo sem C-01 medido".
+
+  # ── 4. O VINCULO COM A FASE 0 que ninguem pode contornar ──────────────────
+  bitemporalidade_nao_e_opcional:
+    regra: >
+      Uma exclusao so pode usar informacao que ESTAVA DISPONIVEL na data da decisao.
+      No backtest isso e a diferenca entre medir uma estrategia e medir o futuro.
+    o_erro_concreto: >
+      A DFP do exercicio de 2023 e publicada em 2024. Excluir uma empresa em marco de
+      2024 "porque a alavancagem de 2023 estava alta" so e legitimo se a DFP ja tinha
+      sido protocolada — e o campo que responde isso e DT_RECEB do indice da CVM,
+      confirmado no dicionario de dados (docs/fontes/cvm-dfp-dicionario-dados.md).
+      Usar DT_REFER no lugar de DT_RECEB vaza meses de futuro para dentro do teste.
+    por_que_e_irreversivel: >
+      A CVM SOBRESCREVE os arquivos anuais. Quem nao capturou a safra nao reconstroi
+      DT_RECEB depois. Cada mes sem ingestao e um mes de historico que nao existira —
+      e sem ele o bloco C nao pode ser testado honestamente, so aplicado ao presente.
+    consequencia: >
+      O bloco C pode ser ESPECIFICADO sem a Fase 0 (esta secao e a prova), aplicado ao
+      presente sem ela, e VALIDADO so com ela.
+
+  # ── 5. Ordem de aplicacao ─────────────────────────────────────────────────
+  ordem:
+    - "0. recusa se instituicao financeira -> regime proprio"
+    - "1. C-01 cobertura de juros — o mais proximo de uma condicao de falencia:
+          empresa que nao paga o juro do que deve nao continua existindo"
+    - "2. C-02 divida liquida/EBITDA — nivel de alavancagem"
+    - "3. C-03 perfil de vencimento — quando a divida vence, nao so quanto e"
+    - "4. C-04 e C-05 — VER LACUNA DECLARADA ABAIXO"
+  nota_da_ordem: >
+    C-01 primeiro porque e o unico proximo de uma condicao objetiva de insolvencia; os
+    demais graduam risco em quem ja passou. Mesma logica do B01 no regime de banco.
+
+  # ── 6. O que esta faltando, dito em voz alta ──────────────────────────────
+  lacuna_declarada:
+    o_que_falta: "a identidade de C-04 e C-05"
+    por_que: >
+      A lista de campos do bloco C vive em auditoria/escopo-campos-de-analise.md, na
+      maquina do usuario. A ponte estava fora do ar em 05/09/2026 e o arquivo nao pode
+      ser lido. C-01 a C-03 sao conhecidos por referencia cruzada dentro do proprio
+      politica.yaml (secao fora_de_escopo.instituicoes_financeiras); C-04 e C-05 sao
+      citados como existentes e nunca nomeados ali.
+    o_que_NAO_foi_feito: >
+      Nao inventei os dois campos. Um bloco de exclusao com criterio inventado excluiria
+      empresas por uma regra que ninguem escolheu, e seria pior que bloco nenhum.
+    para_fechar: >
+      Ler auditoria/escopo-campos-de-analise.md na proxima sessao de desktop e
+      reconciliar: se C-04/C-05 ja estiverem definidos la, esta secao so os cita; se
+      estiverem em aberto, sao decisao do usuario com o mesmo tratamento dos demais
+      (corte declarado, sem ancora legal, com custo de discordar).
+
+# ══ REGIME DE ANALISE: INSTITUICAO FINANCEIRA (pendencia 20) ═════════════════
+# Especificado em 05/09/2026. Fecha a ESPECIFICACAO da pendencia 20; nao fecha a
+# execucao, que depende de dado que a Fase 0 nao traz.
+regime_instituicao_financeira:
+  status: ESPECIFICADO_EM_CONSTRUCAO
+  por_que_existe: '`especies_permitidas` inclui PN justamente para reter bancos, e banco e
+    cerca de metade do Ibovespa. Sem regime proprio, ou o universo perde metade do indice
+    sem dizer por que, ou analisa banco com regua de industria — e a segunda e pior.
+
+    '
+  por_que_o_bloco_C_nao_serve: 'Nao e que C-01 a C-03 sejam imprecisos para banco: sao ERRO
+    DE CATEGORIA. Para uma industria, divida e risco assumido para financiar ativo. Para um
+    banco, o passivo E O PRODUTO: deposito e captacao, e captar mais e operar mais, nao se
+    endividar mais. Divida liquida/EBITDA aplicado ao Itau DEVOLVE UM NUMERO — e esse e exatamente
+    o perigo. Metrica que nao se aplica mas nao falha e o pior modo de falha do projeto: e
+    o mesmo do F-02, onde insumo ausente virava zero e zero ganhava de todo mundo. A regra
+    aqui e a mesma: se a empresa for instituicao financeira, o bloco C RECUSA, nunca calcula.
+
+    '
+  bloco_substituto:
+    B01_indice_de_basileia:
+      mede: capital regulatorio sobre ativos ponderados pelo risco
+      tem_piso_legal: true
+      piso:
+        valor: null
+        status: NAO_CONFIRMADO
+        motivo: 'Basileia III no Brasil e Resolucao CMN/BCB, e nenhuma esta em docs/fontes
+          — as duas que estao (5.238 e 5.295) tratam de contribuicao ao FGC. O minimo tem
+          camadas (requisito minimo + conservacao + contraciclico) e nao invento nenhuma.
+
+          '
+        bloqueia:
+        - corte_de_solvencia_de_banco
+      nota: 'E a unica metrica deste bloco com piso LEGAL, nao convencao. Isso a torna qualitativamente
+        diferente de tudo no bloco C, onde "divida liquida/EBITDA < 3" e costume de mercado.
+        Aqui existe um numero que a autoridade impoe.
+
+        '
+    B02_indice_de_inadimplencia:
+      mede: operacoes vencidas acima de 90 dias sobre carteira total
+      tem_piso_legal: false
+      corte:
+        valor: null
+        status: NAO_CONFIRMADO
+        motivo: convencao, nao norma — e escolha do usuario, nao dado
+    B03_custo_do_credito:
+      mede: despesa de provisao sobre carteira media
+      tem_piso_legal: false
+      nota: e o B02 visto pelo resultado em vez do balanco; os dois juntos separam banco que
+        provisiona cedo de banco que adia
+    B04_indice_de_eficiencia:
+      mede: despesa operacional sobre receita operacional
+      tem_piso_legal: false
+    B05_roe_ajustado_a_risco:
+      mede: retorno sobre patrimonio confrontado com a alavancagem que o produziu
+      tem_piso_legal: false
+      nota: 'ROE alto em banco pode ser eficiencia ou alavancagem. Sozinho ele nao separa
+        as duas, e e por isso que entra AJUSTADO e depois do B01 na ordem.
+
+        '
+  ordem_de_aplicacao:
+  - B01_indice_de_basileia
+  - B02_indice_de_inadimplencia
+  - B03_custo_do_credito
+  - B04_indice_de_eficiencia
+  - B05_roe_ajustado_a_risco
+  nota_da_ordem: 'B01 primeiro porque e o unico com piso legal: reprovar nele e reprovar contra
+    a autoridade, nao contra uma opiniao. Os demais so fazem sentido em quem passou.
+
+    '
+  decisao_P14:
+    status: RESOLVIDA
+    decidida_em: 2026-09-05
+    resposta: "CONSTRUIR A FONTE DO BCB. Banco NAO sai do universo."
+    decidida_por: usuario
+    justificativa_do_usuario: >
+      "As maiores acoes do Brasil de empresas privadas sao Itau, Bradesco e Ambev, duas
+      delas sao bancos; nao faz o menor sentido excluir. De novo estamos cometendo o erro
+      de excluir um investimento por falta de criterio. Nao deve ser excluido, deve ser
+      encontrado o criterio."
+    correcao_do_assistente: >
+      Eu havia oferecido tres variantes de excluir e RECOMENDADO uma delas ("declarar
+      fora agora, reversivel"). Isso contradiz a regra fundadora do projeto, agora
+      escrita como `doutrina_P6`. O argumento que usei — "se a A05 der nucleo indexado,
+      o bloco nunca roda" — e verdadeiro e irrelevante: ele justifica ADIAR a construcao,
+      nunca EXCLUIR o ativo. Confundi ordem de trabalho com escopo.
+    consequencia_para_a_fase_0: >
+      A Fase 0 passa a ter DUAS esteiras, nao uma: CVM (societaria, alimenta o bloco C) e
+      BCB (prudencial, alimenta o bloco de banco). Isso aumenta o escopo e e a decisao
+      que o achado H-02 exigia — tomada agora, antes de construir, que era o ponto.
+    o_que_isso_nao_decide: >
+      A ORDEM. Construir a esteira do BCB antes ou depois da CVM continua aberto, e ai
+      sim o argumento da A05 vale: enquanto a A05 estiver pendente, a esteira da CVM
+      serve aos dois caminhos e a do BCB so serve a um.
+
+  achado_H02_a_fase_0_nao_alimenta_este_bloco:
+    o_que_e: 'DESCOBERTO ao especificar este regime. Indice de Basileia, inadimplencia acima
+      de 90 dias e custo do credito NAO ESTAO nos formularios DFP/ITR da CVM. Sao informacao
+      PRUDENCIAL, reportada ao Banco Central (IF.data e documentos da serie 4010), nao contabil-societaria.
+
+      '
+    por_que_importa: 'A Fase 0 do pipeline foi desenhada sobre CVM DFP/ITR e COTAHIST. Ela
+      alimenta o bloco C, para empresa nao-financeira. Ela NAO alimenta este bloco. Quem terminar
+      a Fase 0 achando que destravou a analise inteira vai descobrir, no fim, que metade do
+      Ibovespa continua sem regua.
+
+      '
+    consequencia: 'Ou entra uma segunda fonte no pipeline (BCB), ou banco fica declaradamente
+      fora do universo de selecao — e "fora declarado" e resposta legitima, "fora por omissao"
+      nao e. A escolha e do usuario: pendencia P-14.
+
+      '
+fontes:
+  ambiente_de_execucao:
+    arquivo: "pyproject.toml"
+    impressao: "7565df1381e2c1ed"
+    status: COMPLETO
+    fonte: "pyproject.toml, secao [project].dependencies com pinos exatos"
+    acesso: 2026-09-05
+    expira: null
+    revisar_se: "qualquer versao mudar no pyproject.toml — o teste do ambiente cobra"
+    por_que_so_a_impressao_e_nao_as_versoes: >
+      As versoes vivem no pyproject e SO la. Repeti-las aqui criaria dois arquivos que
+      concordam — que e exatamente o achado N-01: editar um nao mudaria nada e ninguem
+      descobriria. Aqui fica so a impressao digital calculada a partir de la, e um
+      teste cobra que as duas batam. Mudar uma dependencia passa a exigir re-registrar
+      a impressao, que e o mesmo contrato do sha256 da serie do NEFIN.
+    o_que_esta_impressao_protege: >
+      A promessa do pre-registro. `alfa_contra_fatores()` resolve um sistema por
+      numpy.linalg.lstsq e `mensal()` compoe retornos por pandas.groupby — as duas sao
+      implementacoes, nao teoremas. Ate 05/09/2026 o DADO estava selado (sha256 da
+      serie, .gitattributes contra CRLF) e o AMBIENTE nao estava: um clone em outra
+      maquina produziria numeros possivelmente diferentes e o pre-registro nao teria
+      como dizer. Fonte com hash rodando em ambiente nao declarado e meio pre-registro.
+    o_que_ela_NAO_protege: >
+      Nao garante bit a bit. Sistema operacional, BLAS ligada ao numpy e arquitetura de
+      CPU continuam fora do registro, e podem mover a ultima casa decimal de uma
+      regressao. A impressao cobre o que da para cobrir com o repositorio, e esta
+      linha existe para que ninguem leia mais do que ela diz.
+  nefin_fatores:
+    arquivo: "dados/nefin_factors.csv"
+    metodologia: "docs/fontes/NEFIN_methodology.pdf"
+    origem: "NEFIN — Nucleo de Pesquisas em Economia Financeira, FEA-USP"
+    status: COMPLETO
+    obtido: 2026-09-04
+    cobertura: "2001-01-02 a 2026-07-03 · 6.321 pregoes · 307 meses"
+    fatores: [Rm_minus_Rf, SMB, HML, WML, IML, Risk_Free]
+    construcao: >
+      Tercis EXTREMOS, retorno igualmente ponderado, long-short. Elegibilidade:
+      acao mais negociada da firma, negociada em mais de 80% dos pregoes do ano t-1
+      com volume acima de R$500.000/dia, listada antes de dezembro de t-1. SMB e HML
+      reordenam em janeiro com dados de dezembro e junho de t-1 — a defasagem
+      contabil ja esta embutida na fonte. WML e IML reordenam todo mes. Livre de
+      risco: swap DI de 30 dias.
+    ressalva_de_uso: >
+      Sao carteiras long-short de papel, sem custo, sem imposto e sem restricao de
+      venda a descoberto. O premio bruto de um fator NAO e o retorno de uma
+      estrategia. WML gira 12 vezes por ano e HML uma: comparar os dois premios
+      brutos e comparar coisas com custo de execucao incomparavel.
+
+# ── PRE-REGISTRO DO BACKTEST ──────────────────────────────────────────────────
+# Escrito ANTES de existir backtest. Depois de ver o resultado, qualquer criterio
+# parece ter sido o original — e a auditoria da literatura brasileira (§9 de
+# estrategias-acoes-brasil) mostra que foi assim que ela propria foi construida:
+# busca de parametros reportada como resultado, sem correcao para testes multiplos.
+#
+# TRES REGRAS DE EXECUCAO, que valem mais que as estrategias:
+#   1. As estrategias com `hipotese_nula_esperada` DEVEM FALHAR. Rode-as PRIMEIRO.
+#      Se qualquer uma "funcionar", o defeito esta no pipeline, nao no mercado —
+#      provavelmente look-ahead contabil. Sao o controle de integridade do backtest.
+#   2. Toda estrategia e medida LIQUIDA de custo e imposto, com o custos.yaml como
+#      insumo. E o unico diferencial estrutural deste backtest frente a literatura:
+#      nenhum dos retornos publicados e declarado liquido de corretagem, emolumentos,
+#      spread ou ganho de capital.
+#   3. `variantes_permitidas` e declarado ANTES. Sem teto de busca, o resultado
+#      reportado e o maximo de uma amostra de tentativas.
+estrategias_pre_registradas:
+  status: PARCIALMENTE_EXECUTADO   # 05/09/2026 — H1 e H3 rodadas, H2 sem dado
+  execucao:
+    data: 2026-09-05
+    fonte: "dados/nefin_factors.csv, sha256[:12] 619991c2192c"
+    amostra: "306 meses (2001-01 a 2026-06), filtro n_dias >= 15"
+    correcao_de_registro: >
+      O pre-registro afirmava 307 meses. Sao 307 BRUTOS e 306 apos o filtro de
+      n_dias >= 15 — o ultimo mes (2026-07) tem 3 pregoes. As medias e os t
+      reproduzem exatamente (HML 0,688% t=2,60; SMB -0,055% t=-0,18); so a contagem
+      do rotulo estava errada.
+    especificacao: >
+      Regressao de cada fator contra OS DEMAIS quatro. "Demais" no `rejeita_se`
+      significa excluir o proprio fator — incluir-se daria R2 igual a 1 por
+      construcao, o que seria tautologia e nao teste.
+      SEM subtrair Risk_Free: os fatores do NEFIN sao long-short auto-financiados, e
+      descontar o CDI de um spread cobra um custo que a carteira nao tem. Subtraindo,
+      o alfa do HML vira -0,178% (t=-0,68) em vez de +0,766% (t=+2,94) — inverte o
+      sinal E o veredito.
+      ATENCAO PARA A PROXIMA SESSAO: `fatores.alfa_contra_fatores()` SUBTRAI o
+      Risk_Free. Ela foi escrita para carteira COMPRADA, nao para fator. Usa-la nesta
+      familia de teste devolve o numero errado sem levantar erro nenhum.
+  emissao: 2026-09-03
+  benchmark_obrigatorio: "alfa contra os fatores do NEFIN, nao contra o Ibovespa puro"
+  bloqueado_por: ["pendencia_19_series_NEFIN"]
+  nota_de_bloqueio: >
+    Bater o Ibovespa pode ser exposicao a fatores conhecidos, e o Ibovespa brasileiro
+    tem concentracao setorial alta. Alfa contra um modelo de fatores local e outra
+    afirmacao — e o insumo e publico e gratuito, a um download de distancia.
+
+  hml_puro_v1:
+    ordem_de_execucao: 1
+    hipotese_nula_esperada: null      # RETIRADA em 04/09/2026 — ver abaixo
+    hipotese: "o premio de valor existe no Brasil e a pergunta e o que sobra liquido"
+    base: >
+      MEDIDO NA FONTE PRIMARIA, nao citado: HML = 0,688% ao mes, t = 2,60, em 307
+      meses (2001-2026). Positivo em TODAS as janelas testadas: 0,741% em 2001-2012,
+      0,461% em 2001-2016, 0,638% em 2013-2026, 1,103% em 2021-2026.
+    correcao_de_premissa: >
+      A versao 1.3.0 registrou este teste como HIPOTESE NULA ESPERADA, com base na
+      afirmacao de que "HML paga 0,05% ao mes no Brasil" — numero que veio de resumo
+      indexado de artigo, nao da serie. Com a serie em maos, esse numero NAO SE
+      REPRODUZ em nenhuma janela de 2001 a 2026. A premissa estava errada e a
+      correcao e feita ANTES de rodar qualquer backtest, que e o unico momento em que
+      corrigir um pre-registro nao o invalida.
+    rejeita_se: "alfa contra os demais fatores nao distinguivel de zero, LIQUIDO de custo e imposto"
+    resultado:
+      veredito: NAO_REJEITA_PARA_EFEITO_DE_DECISAO
+      alfa_bruto_am: 0.00766
+      alfa_bruto_aa: 0.0958
+      t: 2.94
+      r2: 0.108
+      custo_e_imposto_matam: false
+      nota_do_custo: "IR 15% + 4 pontas de 0,0300% deixam 8,03% a.a. — custo nao mata"
+      por_que_nao_rejeita_apesar_do_t: >
+        Quatro razoes, e a quarta e decisiva.
+        (1) O alfa e NEGATIVO em 2009-2016 (-0,309%, t=-0,76): ausente por oito anos
+        seguidos, um terco da amostra.
+        (2) Bootstrap de 10.000 reamostragens de meses: P(t > 1,96) = 83%. Em 17% das
+        amostras nao rejeitaria.
+        (3) CONCENTRACAO. 73% do alfa vive em 12 dos 306 meses. Removendo esses 4% da
+        amostra o alfa cai de 0,766% para 0,203% e o t de 2,94 para 0,83. E NAO e
+        artefato de remover os melhores meses: a mesma cirurgia deixa o WML vivo
+        (perde 44%, t continua 2,98). O HML morre, o WML nao.
+        (4) O OBJETO TESTADO NAO E A ESTRATEGIA. HML e long-short de tercis extremos
+        e a perna vendida nao existe para pessoa fisica — o proprio pre-registro diz
+        isso na `nota` abaixo. O NEFIN publica so o spread, nunca as pernas. O alfa
+        da perna COMPRADA, o unico investivel, NAO E MENSURAVEL com esta fonte.
+      o_que_falta: >
+        Retorno das carteiras High e Low separadas, o que exige montar os tercis a
+        partir do dado de acao — Fase 0. Ate la: executado no que a fonte permite,
+        INCONCLUSIVO no que a decisao exige.
+    variantes_permitidas: 1
+    nota: >
+      O premio do FATOR existir nao significa que uma carteira de valor sobrevive ao
+      custo. HML gira uma vez por ano (janeiro), o que e a favor; mas e um long-short
+      de tercis extremos igualmente ponderados, e a perna vendida nao existe para o
+      investidor pessoa fisica deste projeto. O que se pode testar e a perna comprada.
+
+  dy_alto_v1:
+    ordem_de_execucao: 2
+    hipotese_nula_esperada: "NAO supera em retorno total"
+    base: >
+      Tres evidencias independentes e convergentes: acoes brasileiras (SciELO
+      1994-1999), FIIs brasileiros (fundos de maior DY mediano nao estavam entre os de
+      maior rentabilidade), e ETF de covered call na pesquisa de ETFs deste projeto.
+      Tres classes, tres metodologias, mesma conclusao.
+    resultado:
+      veredito: NAO_EXECUTAVEL
+      motivo: >
+        A serie do NEFIN nao tem fator de dividend yield. As colunas sao Rm_minus_Rf,
+        SMB, HML, WML, IML e Risk_Free. A metodologia do NEFIN tem uma secao 8 sobre
+        Dividend Yield, mas ela nao esta no CSV publicado. Testar DY exigiria montar a
+        carteira a partir do dado de acao — Fase 0.
+        NAO SUBSTITUIR POR PROXY: HML nao e DY. Trata-los como equivalentes seria
+        exatamente o erro que o `benchmark_obrigatorio` existe para impedir.
+    rejeita_se: "idem hml_puro_v1"
+    variantes_permitidas: 1
+
+  tamanho_smb_v1:
+    ordem_de_execucao: 3
+    hipotese_nula_esperada: "NAO supera"
+    base: >
+      CONFIRMADO na fonte primaria: SMB = -0,055% ao mes, t = -0,18, em 307 meses.
+      Negativo e sem significancia — o premio de tamanho nao existe no Brasil no
+      periodo. A literatura reportava -0,02%; a direcao e a mesma e a magnitude e
+      maior. Esta hipotese nula SOBREVIVEU a verificacao.
+    resultado:
+      veredito: HIPOTESE_NULA_SOBREVIVE
+      alfa_am: 0.00054
+      t: 0.28
+      robustez: >
+        Sobrevive a tudo que se tentou. Alfa nao significativo nos cinco recortes
+        (2001-2008, 2009-2016, 2017-2026 e as duas metades). Bootstrap de 10.000
+        reamostragens: P(t > 1,96) = 3%. R2 de 0,644 contra os demais fatores, quase
+        todo vindo do IML (beta 0,894, t 19,7) — o SMB no Brasil e, em boa parte,
+        iliquidez com outro nome.
+      consequencia: >
+        Nenhuma alocacao neste projeto pode se justificar por premio de tamanho.
+        Fecha a pergunta, e fecha na direcao que o pre-registro esperava.
+    rejeita_se: "idem"
+    variantes_permitidas: 1
+
+  mille_v1:
+    ordem_de_execucao: 10
+    origem: >
+      Metodo do Mille (Joao Bosco Oliveira Junior), coautor do Bastter em "Investindo
+      para Vencer: Segredos do Mille". NAO e fonte independente — e a mesma casa cujo
+      metodo este projeto existe para corrigir. Entra pelo mesmo portao que qualquer
+      outra: pre-registro antes de rodar, e o CLAUDE.md e explicito em nao concordar
+      com o Bastter por afinidade.
+    os_quatro_pilares_declarados: >
+      (1) GOVERNANCA: bons administradores, ler guidance, ouvir webcast, contatar o RI.
+      (2) PRODUTIVIDADE: margem liquida acima de 20%, receita liquida crescendo mais que
+          o CPV, ROE; EBITDA mais relevante que lucro liquido.
+      (3) GERACAO DE CAIXA: FCO, Capex, e FCL Capex (FCO - Capex) que "nao pode ficar
+          muito tempo negativo".
+      (4) ENDIVIDAMENTO: evitar divida alta, investir com geracao propria.
+    o_que_e_testavel_e_o_que_nao_e:
+      testavel_da_CVM: >
+        Pilares 2, 3 e 4 saem inteiros de DRE, DFC e BP — as tres demonstracoes que a
+        Fase 0 ja vai ingerir. Margem liquida > 20% e um corte NUMERICO e falsificavel.
+      NAO_testavel: >
+        O pilar 1 (governanca) nao e mensuravel por esta esteira: "ligar para o RI" e
+        "ouvir webcast" nao viram coluna. Isso NAO desqualifica o pilar — desqualifica
+        a pretensao de que o metodo inteiro seja reproduzivel por dado publico. Quem
+        rodar so os pilares 2 a 4 esta rodando TRES QUARTOS do metodo, e o registro
+        precisa dizer isso em vez de fingir cobertura completa.
+      sobreposicao_com_o_bloco_C: >
+        O pilar 4 e essencialmente o bloco C por outro nome. Nao duplicar: se o C ja
+        exclui por alavancagem, o mille_v1 herda o corte em vez de criar um segundo.
+    critica_a_registrar_ANTES_de_rodar: >
+      MARGEM LIQUIDA ACIMA DE 20% E UM FILTRO SETORIAL DISFARCADO DE FILTRO DE
+      QUALIDADE. Banco, seguradora, software e concessionaria tem margem
+      estruturalmente alta; varejo, distribuicao, construcao e frigorifico tem margem
+      estruturalmente baixa — e nenhuma das duas coisas fala sobre a qualidade da
+      administracao. Um corte de 20% aplicado ao Ibovespa nao seleciona empresas boas,
+      seleciona setores de margem alta, e depois atribui a selecao ao criterio.
+      Este e exatamente o defeito que o projeto existe para corrigir: apresentar como
+      derivado o que e escolha. Se o teste for rodado, tem de ser rodado COM controle
+      setorial — comparando a empresa contra o proprio setor, nao contra o mercado.
+    hipotese_nula_esperada: "NAO supera o indice apos controle setorial"
+    rejeita_se: "alfa contra os fatores do NEFIN nao distinguivel de zero, liquido de custo e imposto"
+    variantes_permitidas: 1
+    status: PRE_REGISTRADA_NAO_EXECUTAVEL
+    bloqueado_por: ["fase_0_cvm", "classificacao_setorial"]
+
+  indice_puro:
+    ordem_de_execucao: 4
+    papel: "HIPOTESE NULA VERDADEIRA"
+    premio_de_referencia_medido: >
+      MEDIDO na fonte primaria, e e o numero mais desconfortavel do projeto: o premio
+      de risco de acoes no Brasil entre 2001 e 2026 foi de 0,96% ao ano (acoes 12,80%
+      contra CDI 11,84%), com t = 0,74 — NAO distinguivel de zero. E em 6 de 17
+      janelas moveis de 10 anos a bolsa PERDEU do CDI, incluindo quatro seguidas
+      (2005-2014 a 2008-2017).
+    consequencia_para_a_politica: >
+      Isto NAO invalida `crescimento.base_rv`, porque aquele parametro sempre foi uma
+      PREFERENCIA DECLARADA e nunca uma consequencia de dado — mas agora o preco da
+      preferencia esta medido. Quem escolhe 65% em renda variavel no Brasil esta
+      apostando que os proximos 25 anos nao se parecem com os ultimos 25 em premio de
+      risco, e essa aposta deve estar escrita, nao implicita.
+    nota: >
+      Se nada bater esta linha liquida de custo real, a resposta e o indice — e o
+      catalogo de campos continua valendo como ferramenta de estudo, que e o objetivo
+      declarado do usuario, mas nao como maquina de selecao.
+
+  portao_de_exclusao_v1:
+    ordem_de_execucao: 5
+    elevada_por: >
+      Critica do usuario em 04/09/2026, e ela esta correta no ponto central: uma
+      estatistica INCONDICIONAL nao responde uma pergunta CONDICIONAL. Bessembinder
+      mede a distribuicao de TODAS as acoes; ninguem investe em todas. Se o universo
+      tem qualidade media baixa — divida alta, lucro baixo, mercado menos maduro —,
+      "a maioria e ruim" descreve a composicao do universo, nao o resultado de um
+      criterio. Esta entrada e exatamente o teste dessa hipotese, e por isso sobe
+      para logo depois dos tres controles de integridade.
+    o_que_a_critica_NAO_resolve: >
+      A assimetria de Bessembinder e sobre FORMA DA DISTRIBUICAO, nao sobre nivel: o
+      retorno de acoes e log-normal com cauda direita extrema, e a mediana fica abaixo
+      da media por construcao, inclusive nos EUA, onde ~4% das empresas geram toda a
+      riqueza liquida. Filtrar eleva a media do subconjunto e NAO elimina a assimetria
+      dentro dele — uma carteira concentrada de empresas boas ainda pode nao conter as
+      poucas que carregam o resultado. Por isso o teste mede tambem a DISPERSAO dentro
+      do universo filtrado, nao so a media.
+    hipotese: >
+      Excluir por iliquidez, insolvencia, accruals altos e diluicao melhora o retorno
+      SEM SELECIONAR NADA. E a unica estrategia da lista que nao depende de premio de
+      risco existir: a logica de exclusao nao precisa que um fator pague.
+    universo: "elegivel_apos_portoes_A_e_C do catalogo de acoes ON"
+    rejeita_se: "nao superar o universo sem filtro"
+    variantes_permitidas: 2
+
+  piotroski_v1:
+    ordem_de_execucao: 6
+    universo: quartil_superior_book_to_market
+    score: f_score_9_sinais
+    corte: "score >= 8"
+    rebalanceamento: anual
+    hipotese: >
+      Separa recuperacao de deterioracao DENTRO do valor. E o teste mais interessante
+      do conjunto porque resolve a contradicao da literatura: se o premio de valor e
+      nulo (HML a 0,05%) porque a media mistura a empresa barata que se recupera com a
+      que esta morrendo, um filtro que as separa pode produzir resultado onde o fator
+      nao produz.
+    rejeita_se: "nao distinguir os extremos com significancia"
+    variantes_permitidas: 2
+
+  greenblatt_v1:
+    ordem_de_execucao: 7
+    ranking: [roic, ebit_sobre_ev]
+    combinacao: soma_de_posicoes
+    n_ativos: 16
+    rebalanceamento: trimestral
+    definicao_roic: "EBIT/(capital_de_giro + imobilizado_liquido)"
+    nota_definicao: >
+      FIXADA AQUI de proposito. "Magic Formula" nao e uma especificacao unica: Greenblatt
+      usa EBIT no lugar de NOPLAT, e as implementacoes divergem na definicao de capital
+      investido. Duas implementacoes honestas dao ROIC diferente, e os resultados
+      publicados variam por fator de tres (11,06% a.a. em 2007-2017; 21,92% em outro
+      periodo; 29,17% no componente de valor em 2000-2020).
+    verificar_monotonicidade: true
+    nota_monotonicidade: >
+      O achado mais importante da estrategia e o menos citado: se o decil 1 rende mais
+      que o 2, que rende mais que o 3, o sinal tem ESTRUTURA. Se so o topo funciona,
+      e ruido no topo. Medir isso vale mais que medir o retorno do decil 1.
+    rejeita_se: "alfa contra fatores NEFIN nao distinguivel de zero"
+    variantes_permitidas: 3
+
+  momento_12_1_v1:
+    ordem_de_execucao: 8
+    obrigatorio: custo_fiscal_explicito
+    hipotese: >
+      E o fator com MELHOR evidencia brasileira — MEDIDO em 1,302% ao mes com t = 4,17,
+      o unico da serie com t acima de 3 — e o MENOS compativel com o objetivo declarado
+      deste projeto. A pergunta nao
+      e se o bruto supera — a literatura ja diz que sim — e sim o que sobra depois de
+      15% de ganho de capital a cada giro.
+    nota: >
+      Um backtest de momento sem custo fiscal explicito superestima o resultado, e o
+      erro CRESCE com o patrimonio, porque a isencao de R$20 mil/mes so protege
+      patrimonio pequeno. Este e o unico ponto do plano em que a tributacao entra
+      DENTRO do backtest, e nao ao lado dele.
+    rejeita_se: "nao bater o indice LIQUIDO de custo e imposto"
+    variantes_permitidas: 2
+
+  criterio_nao_e_previsao:
+    registrado_em: 2026-09-04
+    origem: "critica do usuario sobre o exemplo fintech x Itau"
+    enunciado: >
+      Qual empresa e melhor e qual acao rende mais sao DUAS PERGUNTAS DIFERENTES, e
+      confundi-las e o erro central da analise fundamentalista de varejo. O Itau
+      empresta melhor que uma fintech quase certamente — escala, custo de captacao,
+      base de dados de credito. Isso e publico, e por ser publico ja esta no preco.
+      O retorno da acao depende do que se PAGA pela qualidade, nao da qualidade.
+    o_que_a_evidencia_brasileira_diz: >
+      Lucratividade e investimento EXPLICAM a variacao dos retornos no Brasil e NAO
+      apresentaram premio de risco no segundo passo de Fama-MacBeth. Ou seja: o
+      criterio separa empresa boa de empresa ruim sem separar investimento bom de
+      investimento ruim. E a evidencia de distress e simetrica e igualmente
+      desconfortavel — comprar empresa ruim barata TAMBEM nao pagou. Nem qualidade
+      nem preco isolados foram sinal confiavel.
+    consequencia_de_desenho: >
+      E por isso que os blocos B (rentabilidade) sao marcados `sem_premio_local` e
+      usados como DESCRICAO, enquanto C e D (solvencia, qualidade do lucro) sao
+      PORTOES DE EXCLUSAO. A logica da exclusao nao exige que exista premio: exige
+      apenas que falencia e fraude destruam capital, o que nao e controverso.
+      Excluir as ruins e defensavel; ORDENAR as boas e esperar que o topo do ranking
+      supere e que a evidencia local nao sustenta.
+
+  descontos_obrigatorios_sobre_a_literatura:
+    D1: "benchmark quase sempre CAPM ou Ibovespa puro — o correto e alfa contra NEFIN"
+    D2: "vies de sobrevivencia nao declarado em quase todos os estudos"
+    D3: "look-ahead contabil nao descrito — o desconto mais provavel de todos"
+    D4: "custos e impostos ausentes de TODO retorno publicado"
+    D5: "busca de parametros reportada como resultado, sem correcao para testes multiplos"
+    D6: "dependencia de periodo — cinco estudos, cinco janelas, resultados 3x diferentes"
+    D7: "decaimento pos-publicacao nao testado (Piotroski adaptado circula ha ~20 anos)"
+
+# ── DECISOES EM ABERTO ────────────────────────────────────────────────────────
+# Uma decisao PENDENTE bloqueia o que ela sustenta. Nao ha default silencioso.
+# ── SLEEVES ───────────────────────────────────────────────────────────────────
+# Uma rota de renda variavel nao e um ativo: e um RECIPIENTE. O que muda entre
+# elas nao e so custo — e quantos ativos distintos elas entregam por dentro.
+sleeves:
+  indexado:
+    metodo: INDEXADO
+    n_ativos_efetivo: "o do indice"
+    exige_selecao: false
+    nota: "diversificacao instantanea; o custo da taxa de administracao E o premio do seguro"
+  selecao_ativa:
+    metodo: SELECAO_ATIVA
+    exige_selecao: true
+    bloqueado_por: "A05_nucleo_indexado_vs_selecao_ativa"
+    n_minimo_default: 20
+    meses_para_montar: "n_minimo / ativos_por_aporte"
+    nota: >
+      Custo de administracao zero, mas o risco de selecao e seu. Bessembinder mede
+      esse risco: a mediana das acoes individuais perde de titulo publico.
+
+# ══ LIMITACOES DECLARADAS ════════════════════════════════════════════════════
+# O que o motor SABE que nao modela. Um limite escrito nao vira surpresa depois.
+# Esta secao e DOCUMENTAL: nao e lida por codigo, e lida por voce.
+limitacoes_declaradas:
+  ir_na_venda_de_renda_variavel:
+    o_que_falta: >
+      O motor nao aplica IR de 15% sobre o ganho na venda de nenhuma rota de renda
+      variavel, nem a isencao de R$20 mil/mes do art. 59, I da IN RFB 1.585/2015.
+    direcao_do_vies: >
+      Favorece o ETF. A isencao existe para acao e NAO existe para ETF (art. 59,
+      par. 2o, II), entao ignorar tributacao apaga uma vantagem que so a acao tem.
+      Como a decisao A05 (indexado vs selecao) e exatamente a decisao entre esses
+      dois, o vies aponta contra a alternativa que o proprio backtest vai testar.
+    quando_deixa_de_importar: >
+      Na fase de ACUMULACAO com aporte mensal e sem venda, o efeito e zero — nao se
+      paga IR sobre o que nao se vendeu. Passa a importar no rebalanceamento e na
+      fase de retirada, que ainda nao existem no motor.
+    fonte: "IN RFB 1.585/2015, arts. 57 e 59 — docs/fontes/in-rfb-1585-2015-normaslegais.md"
+
+  periodicidade_da_custodia_do_tesouro:
+    o_que_falta: >
+      Desde 31/12/2024 a B3 cobra a custodia do Tesouro Direto por netting pro rata
+      (OC 014/2024-VPC), com cobranca semestral e no resgate. O motor desconta
+      mensalmente.
+    direcao_do_vies: >
+      Subestima levemente o saldo: o dinheiro da taxa sai antes de quando sairia de
+      verdade e deixa de render por alguns meses. E conservador — erra contra a rota
+      do Tesouro, nunca a favor.
+    ordem_de_grandeza: "centavos por ano a R$500/mes; irrelevante para ordenar rotas"
+    fonte: "OC 014/2024-VPC — docs/fontes/b3-tarifas-tesouro-direto-oc014-2024.md"
+
+  datado_cobra_liquidez_onde_deveria_cobrar_vencimento:
+    o_que_falta: >
+      A funcao DATADO exige `exige_liquidez_dias: 30`. Isso trata um problema de
+      DURACAO com um criterio de LIQUIDEZ, e as duas coisas nao sao a mesma.
+    como_apareceu: >
+      Achado H-01 (05/09/2026), ao catalogar LCI e LCA. Com a carencia minima de 9
+      meses que a regulacao atual pratica, a rota perde TODAS as funcoes no G6 —
+      simulado: 270 dias nao sobra nenhuma, 90 dias nenhuma, 30 dias so DATADO.
+      Uma LCI isenta de IR, coberta pelo FGC e que vence EXATAMENTE na data do
+      objetivo seria eliminada por iliquidez que o objetivo nao precisa.
+    o_que_a_regra_deveria_dizer: >
+      Para um objetivo DATADO o que importa e o dinheiro estar la NA DATA, nao antes.
+      A regra correta seria "vence ate a data do objetivo OU e liquida em 30 dias" —
+      exatamente o padrao que o G8/CARREGO ja implementa para PROTECAO_REAL, onde a
+      duracao vem do compromisso e nao do catalogo.
+    por_que_nao_mudei: >
+      `exige_liquidez_dias` e escolha declarada, nao defeito obvio, e afrouxa-la deixa
+      entrar tambem coisas ilíquidas que nao vencem em data nenhuma. A mudanca precisa
+      vir com o casamento de vencimento junto, senao troca um erro por outro.
+      Registrada como pendencia P-12.
+    efeito_hoje: nenhum
+    por_que_efeito_zero: >
+      LCI e LCA estao bloqueadas no G5 por insumo NAO_CONFIRMADO (carencia e % do CDI),
+      entao o G6 nem chega a ve-las. O problema so morde no dia em que a carencia for
+      confirmada — e nesse dia ele apareceria como "a rota nao recebeu peso", sem dizer
+      que a causa foi um criterio mal escolhido.
+
+  isento_ir_e_booleano_e_o_fii_nao_e: >
+    RotaAloc.isento_ir e um booleano. O FII nao cabe nele: o RENDIMENTO distribuido e
+    isento (com >=100 cotistas, Lei 11.033 art. 3o) e o GANHO de capital e tributado a
+    20% sem a isencao mensal de R$20 mil. True subestima o imposto, False superestima.
+    Hoje a rota esta bloqueada e o campo nao e lido; quando desbloquear, o campo precisa
+    virar dois — `isento_ir_rendimento` e `aliquota_ganho`. Pendencia P-13.
+
+  reserva_e_divida_tratadas_como_independentes:
+    o_que_falta: 'G1 (divida) e G2 (reserva) rodam em sequencia como se os dois lados fossem
+      independentes. Quando a reserva e COLATERAL da divida, nao sao: o mesmo dinheiro aparece
+      como seguranca no G2 e como limite de gasto no cartao.
+
+      '
+    como_apareceu: 'Achado J-02 (05/09/2026). O cofrinho do PicPay garante a fatura do cartao.
+      Num cenario de perda de renda, a reserva e consumida pela divida que a prendia.
+
+      '
+    por_que_e_pior_que_iliquidez: 'Iliquidez atrasa o acesso. Acoplamento DESTROI o ativo no
+      exato cenario em que ele deveria ser usado. Uma reserva 100% liquida mas empenhada numa
+      divida que cresce e uma reserva com correlacao -1 com a propria necessidade.
+
+      '
+    o_que_falta_implementar: 'Um campo em Estado marcando reserva empenhada em divida, e o G1
+      descontando essa parcela da reserva computavel — ou, mais simples e mais honesto, o G2
+      recusando contar como reserva qualquer valor que sirva de garantia a divida do usuario.
+
+      '
+    efeito_hoje: nenhum — reserva_atual e 0,00 e nao ha reserva a empenhar
+    aplica_se_ao_caso_do_usuario: false
+    por_que_nao: 'Corrigido em 05/09/2026: o valor dele nao e reserva, e caucao de meio de pagamento.
+      A limitacao continua REAL e vale para quem empenhar reserva de verdade — mas nao descreve
+      a situacao atual. Mantida no arquivo porque o defeito do motor existe (G1 e G2 tratam
+      os dois lados como independentes), nao porque ele o sofra hoje.'
+  escalabilidade_multiusuario_parcial:
+    o_que_falta: >
+      A fronteira motor/usuario existe para `compromissos` e `decisoes` (achado L-01,
+      perfil.yaml), mas QUATRO secoes continuam misturadas: `corretora` (metodologia do
+      ranking junto com os PESOS que ele escolheu), `aporte_extraordinario` (regra junto
+      com o padrao de bonus dele), `sleeves`, e `custos.yaml -> cofrinho` (termos de um
+      produto de mercado junto com o estado da conta DELE).
+    como_apareceu: >
+      Achado L-01 (05/09/2026). O usuario lembrou que escalabilidade inclui SERVIR MAIS
+      PESSOAS e que o projeto estava construido sobre as preferencias dele. Medido:
+      109 chaves de motor contra 13 de usuario, no mesmo arquivo.
+    por_que_so_parcial: >
+      Separei as duas secoes INEQUIVOCAS. As quatro restantes sao mistas DENTRO da
+      secao, e dividi-las sem pensar criaria bagunca pior que a atual — `corretora.pesos`
+      e escolha dele, `corretora.reclamacoes` e metodologia, e as duas moram no mesmo
+      dicionario. Fazer isso direito exige decidir a granularidade, e isso e desenho,
+      nao arrumacao.
+    por_que_agora_e_nao_depois: >
+      Eram 13 chaves. Depois da Fase 0 e dos blocos de analise seriam muito mais, e cada
+      decisao nova escrita no lugar errado aprofunda o acoplamento. Separar cedo custou
+      uma funcao de carga; separar tarde custaria uma migracao.
+    efeito_hoje: >
+      Nenhum: ha um usuario so. Morde quando existir o segundo — e ai, sem a fronteira,
+      ele apagaria as decisoes do primeiro ao editar o politica.yaml.
+
+  reserva_e_um_numero_e_o_mundo_tem_baldes:
+    o_que_falta: >
+      `Estado.reserva_atual` e um escalar. Com teto de saldo por produto, saber QUANTO
+      ha de reserva deixou de bastar: para responder "a proxima parcela cabe?" e
+      preciso saber ONDE ela esta.
+    como_apareceu: >
+      Consequencia direta do P-24 (05/09/2026). Ao compor a reserva em varias rotas, o
+      motor precisa do saldo POR ROTA para saber quais tetos ja foram consumidos e
+      qual trecho de isencao ainda existe. O campo `Estado.reserva_por_rota` foi
+      criado, e e OPCIONAL.
+    o_que_o_motor_faz_quando_nao_sabe: >
+      Diz. Quando `reserva_por_rota` e None e ha reserva, o G2 devolve a composicao do
+      ALVO INTEIRO e emite o alerta de que nao sabe onde o saldo existente esta. NAO
+      supoe que a reserva foi construida na ordem do plano — seria uma premissa
+      inventada, e e exatamente o genero de suposicao silenciosa que o F-02 puniu.
+    quando_os_dois_numeros_discordam: >
+      Se `reserva_por_rota` somar diferente de `reserva_atual`, o motor mostra os dois
+      e nao escolhe. Divergencia entre duas medidas do mesmo saldo e informacao do
+      usuario para resolver, nao ambiguidade para o motor arbitrar.
+    direcao_do_vies: >
+      Sem o mapa, a composicao superestima quanto ainda cabe nas rotas de teto baixo —
+      o motor pode indicar um destino que na verdade ja esta cheio. O vies aponta para
+      RECOMENDAR DEMAIS a rota melhor, que e a direcao perigosa.
+  ordem_dos_portoes_nao_e_dado:
+    o_que_falta: >
+      A ordem de execucao dos portoes G0..G8 esta no codigo (funcao alocar), nao no
+      YAML. Cada portao tem `ativo` como dado, mas a SEQUENCIA nao.
+    por_que_importa: >
+      F-02 mostrou que a ordem tem consequencia material: com o G3 antes do G5, uma
+      rota de custo NAO_CONFIRMADO era ranqueada por custo tratando o desconhecido
+      como zero. Consertado invertendo a ordem no codigo — o que so prova que a
+      sequencia e uma regra, e regra e dado (P3).
+    divida_tecnica: "declarar `ordem` em cada portao e o motor iterar por ela"

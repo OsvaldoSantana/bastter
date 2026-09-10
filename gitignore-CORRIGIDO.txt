@@ -1,0 +1,113 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .gitignore — repositorio PUBLICO (decidido em 06/09/2026, P-62)
+#
+# Regra da casa: toda exclusao aqui tem um MOTIVO escrito. Um arquivo excluido
+# sem justificativa e uma decisao que ninguem consegue revisar depois.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Dado bruto ───────────────────────────────────────────────────────────────
+# ~1,5 GB de CSV/ZIP da CVM e o COTAHIST de 2023 (557 MB descompactado).
+# Nao entra em git nem privado: e reproduzivel a partir das URLs registradas em
+# docs/fontes/README.md, e um blob desse tamanho no historico e permanente.
+data/
+*.duckdb
+*.duckdb.wal
+
+# ── Fontes primarias: fica o .md, sai o binario ──────────────────────────────
+# Decisao de 04/09/2026. O .md de cada fonte carrega URL, data de acesso, status
+# de leitura e o trecho literal — e o suficiente para rebaixar o original.
+# RISCO ACEITO E DECLARADO: norma revogada sai do ar. Se um PDF de docs/fontes
+# deixar de ser rebaixavel, o .md vira a unica testemunha do que ele dizia.
+docs/fontes/**/*.pdf
+docs/fontes/**/*.htm
+docs/fontes/**/*.html
+docs/fontes/**/*.zip
+docs/fontes/**/*.xls
+docs/fontes/**/*.xlsx
+docs/fontes/**/*.csv
+docs/fontes/**/*.txt
+
+# ── Material com direito autoral ─────────────────────────────────────────────
+# Livros do Bastter. Sao insumo de leitura, nao do sistema; nada no codigo os le.
+# Ficam fora mesmo em repo privado — um repo privado pode virar publico por
+# engano, e essa e a unica linha que seria irreversivel.
+livro-*.pdf
+ROTEIRO DO INICIANTE*.pdf
+Engenharia-Reversa-do-Bastter.html
+
+# ── Saidas geradas ───────────────────────────────────────────────────────────
+# Produto de rodar os demos. Versiona-se o gerador, nunca o gerado — senao o
+# diff de um commit de codigo vem poluido pela saida que ele mesmo mudou.
+alocacao/out_*.txt
+pesquisa-custos-2026-08/calc/tabelas.txt
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+# .mypy_cache: 15 MB de bancos SQLite. Descoberto em 06/09/2026 do jeito errado — ele
+# entrou no pacote da terca e o inchou de 640 KB para 15 MB. Cache de ferramenta nunca
+# entra em repositorio: e derivado, e grande, e especifico da maquina.
+.mypy_cache/
+
+# ── Segredo e local ──────────────────────────────────────────────────────────
+.env
+CLAUDE.local.md
+.claude/scheduled_tasks.lock
+
+# ── dbt (previsto no blueprint, ainda nao existe) ────────────────────────────
+dbt/target/
+dbt/logs/
+
+# ── O QUE FICA DENTRO, de proposito ──────────────────────────────────────────
+# alocacao/dados/nefin_factors.csv (882 KB) — NAO e "dado bruto": e a serie de
+#   benchmark contra a qual o backtest sera julgado. fatores.py publica o sha256
+#   dela (hash_fonte()), e um resultado de backtest so e reproduzivel se a serie
+#   que o produziu estiver versionada junto. Excluir seria quebrar a unica coisa
+#   que o pre-registro promete.
+# alocacao/estado.yaml SAIU. Ver o bloco "SEGREDO" no fim deste arquivo.
+# alocacao/teses.yaml — registros K e C, com impressao digital. E o antidoto a
+#   reescrita retroativa de tese; versionar e o ponto.
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# SEGREDO — o unico bloco deste arquivo que nao e higiene
+#
+# O QUE ACONTECEU EM 08/09/2026, e vale escrever porque a licao e o motivo.
+# O repositorio foi criado e empurrado com `alocacao/estado.yaml` DENTRO. Aquele
+# arquivo carrega patrimonio, aporte e divida reais. Ele foi para o GitHub num
+# commit, e commit empurrado nao se apaga editando o arquivo: fica no historico.
+#
+# A pendencia P-67 previa exatamente isso — "falta o teste que impede estado.yaml
+# de ir para um repositorio publico" — e foi aberta DEPOIS do push. O teste que
+# teria pego o erro nao existia quando o erro aconteceu. Agora existe:
+# `alocacao/test_p67_segredo.py`.
+#
+# REGRA: nenhum arquivo com estado financeiro real entra neste repositorio.
+# O motor NAO precisa dele — `test_usuario_novo.py` mede o sistema funcionando
+# com patrimonio zero (achado U-01), e `estado.exemplo.yaml` ocupa o lugar.
+# ═════════════════════════════════════════════════════════════════════════════
+alocacao/estado.yaml
+estado.yaml
+**/estado.yaml
+!alocacao/estado.exemplo.yaml
+!**/estado.exemplo.yaml
+
+# ── Pasta de entrega do Cowork ───────────────────────────────────────────────
+# "Claude outputs/" e onde o app deposita o que eu envio. Ela contem uma COPIA
+# INTEIRA do projeto mais o .zip — inclusive outra copia do estado.yaml.
+#
+# Nao e so tamanho: e a armadilha do `pesquisa-custos-2026-08/calc/` outra vez,
+# e pior. Uma sessao futura que abra `Claude outputs/.../alocacao/motor.py`
+# estaria lendo uma versao congelada, e nada no arquivo avisa isso.
+Claude outputs/
+Claude Outputs/
+*.zip
+
+# ── Sobra da migracao de skills ──────────────────────────────────────────────
+# O `dot-claude/` virou `.claude/` em 08/09. A pasta velha resistiu ao
+# Remove-Item porque o OneDrive segurava o lock. Ignorada para nao voltar.
+dot-claude/

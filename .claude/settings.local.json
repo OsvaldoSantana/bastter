@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:dados.cvm.gov.br)",
+      "WebFetch(domain:normas.receita.fazenda.gov.br)",
+      "WebFetch(domain:nefin.com.br)",
+      "WebFetch(domain:www.b3.com.br)",
+      "WebFetch(domain:www.in.gov.br)",
+      "WebFetch(domain:legismap.com.br)",
+      "WebFetch(domain:normasinternet2.receita.fazenda.gov.br)",
+      "WebFetch(domain:www.normaslegais.com.br)"
+    ]
+  }
+}

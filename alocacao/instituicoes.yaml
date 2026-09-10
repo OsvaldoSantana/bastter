@@ -1,0 +1,768 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# instituicoes.yaml — o catalogo de casas. Pendencia P-36, metade B.
+#
+# POR QUE ESTE ARQUIVO EXISTE.
+#
+# Ate 05/09/2026 estas 24 instituicoes eram 136 linhas de literais Python dentro de
+# `corretoras.catalogo_instituicoes()`: ~15 campos MEDIDOS por casa, com `fonte=` e
+# `confirmacao=` inline. Era dado de pesquisa dentro de codigo, fora de todo o
+# aparato de procedencia do custos.yaml. Mudar a corretagem do Itau era editar
+# Python, e nada testava se aquele numero tinha procedencia.
+#
+# ACHADO Q-02, encontrado ao migrar — e ele muda o que o arquivo AFIRMA.
+#
+#   O campo `confirmacao` era UMA letra (C/P/N) por instituicao, e `pontuar()` a
+#   aplica como MULTIPLICADOR DE TUDO: N zera a nota inteira. Mas a letra nunca
+#   significou "este registro e confiavel". Ela sempre significou "os CUSTOS podem
+#   ser lidos em fonte oficial" — a propria `regra` do multiplicador, em
+#   politica.yaml, diz isso com todas as letras: "instituicao cujo custo nao pode ser
+#   lido em fonte oficial NAO entra em ordenacao, por melhor que pareca pelo balanco".
+#
+#   As fontes provam: BTG, Bradesco, Mirae e Avenue tem `confirmacao: N` e `fonte`
+#   dizendo "BCB IF.data 03/2026 (porte) — custos NAO OBTIDOS". O balanco deles vem
+#   do BANCO CENTRAL e esta perfeitamente confirmado. O indice de reclamacoes do BTG
+#   e do Bradesco vem do ranking do BC, tambem primario, tambem confirmado.
+#
+#   O COMPORTAMENTO estava certo (nao publicar custo tira da ordenacao, por decisao
+#   declarada). O REGISTRO e que nao sabia dizer isso: um leitor do arquivo antigo
+#   concluiria que o dado de balanco do BTG e duvidoso, quando ele veio do regulador.
+#
+#   Aqui a procedencia e POR GRUPO DE CAMPOS, porque e assim que as fontes de fato se
+#   agrupam — custos vem da pagina da casa, balanco vem do IF.data, reclamacoes vem
+#   do ranking do BC. E `confirmacao` deixou de ser um campo proprio: ela e DERIVADA
+#   de `custos.procedencia.status`. Dois campos que podiam discordar viraram um.
+#
+# O QUE ESTE ARQUIVO NAO CONSERTA
+#   A granularidade e por GRUPO e nao por campo, e isso e escolha. Procedencia por
+#   campo daria 24 x 15 = 360 blocos para registrar cinco fontes reais — bloat que
+#   ninguem leria, e registro que ninguem le e pior que registro nenhum. Se um campo
+#   um dia vier de fonte diferente da do grupo, ele precisa de grupo proprio.
+# ─────────────────────────────────────────────────────────────────────────────
+
+meta:
+  versao: "1.0.0"
+  emissao: 2026-09-05
+  origem: "extraido de corretoras.catalogo_instituicoes(), 136 linhas de literais Python"
+  pesquisa: "31/08 e 01/09/2026"
+  como_ler_status: >
+    COMPLETO / PARCIAL / NAO_CONFIRMADO, a mesma taxonomia do custos.yaml. O status de
+    `custos.procedencia` e o que vira o multiplicador de confirmacao do ranking: 1,00 /
+    0,75 / 0,00, com os fatores declarados em politica.yaml -> corretora.
+    multiplicador_de_confirmacao. Status de OUTRO grupo nao multiplica nada — ele diz
+    apenas o que aquele grupo de campos vale.
+
+instituicoes:
+  itau:
+    nome: "Itaú (íon / Itaú Corretora)"
+    pegadinha: "zero só no digital; mesa/telefone mantém tabela Bovespa. Exercício de opção 0,5%"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      tesouro_taxa_propria_zero: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      exercicio_opcao_pct: 0.005
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial Itaú, 31/08/2026 + BCB IF.data 03/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 232452.3
+      pl_entidade: 3390.1
+      resultado_trimestre: 239.5
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 46.87
+      bc_procedentes: 4596
+      bc_clientes: 98052200
+      bc_posicao: 3
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    reclame_aqui:
+      ra_nota: 8.1
+      ra_solucao: 85.2
+      ra_voltaria: 73.5
+      ra_reclamacoes: 19814
+      procedencia:
+        status: COMPLETO
+        fonte: "site Reclame Aqui, consulta de 31/08/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+    facilidade:
+      home_broker_web: true
+      procedencia:
+        status: COMPLETO
+        fonte: "paginas oficiais consultadas em 31/08/2026"
+        acesso: 2026-08-31
+
+  c6:
+    nome: "C6 Bank"
+    pegadinha: "taxa própria no Tesouro Direto NÃO CONFIRMADA; opções não mencionadas na página"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial C6, 31/08/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 6740.1
+      pl_entidade: 2540.4
+      resultado_trimestre: 334.6
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 59.77
+      bc_procedentes: 2103
+      bc_clientes: 35193110
+      bc_posicao: 2
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+    facilidade:
+      home_broker_web: true
+      procedencia:
+        status: COMPLETO
+        fonte: "paginas oficiais consultadas em 31/08/2026"
+        acesso: 2026-08-31
+
+  inter:
+    nome: "Banco Inter"
+    pegadinha: "mesa com MÍNIMO de R$50,00 por ordem; taxa no Tesouro não confirmada"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      mesa_minimo: 50.0
+      procedencia:
+        status: PARCIAL
+        fonte: "página oficial Inter, 31/08/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 7331.9
+      pl_entidade: 7331.9
+      resultado_trimestre: 332.7
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 26.15
+      bc_procedentes: 1163
+      bc_clientes: 44458414
+      bc_posicao: 10
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  santander:
+    nome: "Santander Corretora"
+    pegadinha: "custódia não confirmada; mesa a partir de R$20,00 fixo; exercício via mesa"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      mesa_minimo: 20.0
+      procedencia:
+        status: COMPLETO
+        fonte: "tabela oficial Santander, vigências 2023 e 2024"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 107047.9
+      pl_entidade: 382.0
+      resultado_trimestre: 3.7
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 34.19
+      bc_procedentes: 2472
+      bc_clientes: 72310206
+      bc_posicao: 7
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  nuinvest:
+    nome: "NuInvest / Nubank"
+    pegadinha: "custódia não mencionada na página; cobram mesa e 'zeragem pelo risco'"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: PARCIAL
+        fonte: "página oficial NuInvest, 31/08/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 21128.2
+      pl_entidade: 4763.2
+      resultado_trimestre: 48.5
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 9.2
+      bc_procedentes: 1080
+      bc_clientes: 117259020
+      bc_posicao: 13
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+    facilidade:
+      home_broker_web: true
+      procedencia:
+        status: COMPLETO
+        fonte: "paginas oficiais consultadas em 31/08/2026"
+        acesso: 2026-08-31
+
+  bb:
+    nome: "Banco do Brasil"
+    pegadinha: "site bloqueou acesso automatizado (HTTP 403); isenção vem de fonte SECUNDÁRIA"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: PARCIAL
+        fonte: "fonte secundária — bb.com.br inacessível em 31/08/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 187012.5
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 32.68
+      bc_procedentes: 2748
+      bc_clientes: 84086146
+      bc_posicao: 8
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  rico:
+    nome: "Rico (marca XP Inc.)"
+    pegadinha: "zero só em ordens do próprio cliente nas plataformas digitais; exercício mín. R$50"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      mesa_minimo: 50.0
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial Rico + BCB IF.data 03/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 11526.7
+      pl_entidade: 7405.6
+      resultado_trimestre: 23.7
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "CNPJ 13.434.335 INATIVO no BCB; operações dentro da XP CCTVM"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  modalmais:
+    nome: "modalmais (marca XP Inc.)"
+    pegadinha: "exercício de opção 0,5% comprador e vendedor"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      tesouro_taxa_propria_zero: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      exercicio_opcao_pct: 0.005
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial modalmais + BCB IF.data 03/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 11526.7
+      pl_entidade: 7405.6
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "site exibe CNPJ da XP; Banco Modal INATIVO no BCB"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  toro:
+    nome: "Toro Investimentos"
+    pegadinha: "0,5% em encerramentos compulsórios e ordens por telefone; foco declarado em trading"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      tesouro_taxa_propria_zero: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      exercicio_opcao_pct: 0.005
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial Toro + BCB IF.data 03/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 107047.9
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "sem registro próprio no BCB; site redireciona para Santander Corretora"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  clear:
+    nome: "Clear (marca XP Inc.)"
+    pegadinha: "página de custos devolveu HTTP 403"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "site oficial Clear (status societário) — custos NÃO OBTIDOS"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "entidade legal EXTINTA; incorporada à XP Investimentos CCTVM"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  xp:
+    nome: "XP Investimentos"
+    pegadinha: "swing trade aparece a R$4,90 na página oficial; zero só no day trade COM RLP. ETF a 0,50%"
+    custos:
+      corretagem_rv: 4.9
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      tesouro_taxa_propria_zero: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.005
+      procedencia:
+        status: PARCIAL
+        fonte: "página oficial XP, 31/08 e 01/09/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 11526.7
+      pl_entidade: 7405.6
+      resultado_trimestre: 23.7
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  btg:
+    nome: "BTG Pactual digital"
+    pegadinha: "site é SPA sem HTML servido; nenhum custo operacional pôde ser lido"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 (porte) — custos NÃO OBTIDOS"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 78166.9
+      pl_entidade: 74510.4
+      resultado_trimestre: 4570.4
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 41.98
+      bc_procedentes: 1168
+      bc_clientes: 27807332
+      bc_posicao: 4
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  bradesco:
+    nome: "Bradesco / Ágora"
+    pegadinha: "páginas servem só metadados; PDF de tarifas não pôde ser baixado"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 (porte) — custos NÃO OBTIDOS"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 177224.6
+      pl_entidade: 3980.8
+      resultado_trimestre: 108.4
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 84.9
+      bc_procedentes: 9375
+      bc_clientes: 110412514
+      bc_posicao: 1
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  caixa:
+    nome: "Caixa"
+    pegadinha: "FII é isento de corretagem; ação NÃO é. Day trade R$2,90"
+    custos:
+      corretagem_rv: 4.49
+      corretagem_pct: 0.0002
+      custodia_absorvida: true
+      corretagem_fii: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial Caixa, 31/08/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 115335.2
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    reclamacoes:
+      bc_indice: 23.32
+      bc_procedentes: 3737
+      bc_clientes: 160219441
+      bc_posicao: 11
+      procedencia:
+        status: COMPLETO
+        fonte: "Ranking de Instituicoes por Indice de Reclamacoes — Banco Central, 2T/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  safra:
+    nome: "Safra Corretora"
+    pegadinha: "+PIS, COFINS e ISS sobre a corretagem; mesa 0,5% + R$25 fixo"
+    custos:
+      corretagem_rv: 4.5
+      corretagem_pct: 0.0
+      custodia_absorvida: true
+      tesouro_taxa_propria_zero: true
+      corretagem_etf_pct: 0.0
+      exercicio_opcao_pct: 0.005
+      mesa_minimo: 25.0
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial Safra, 31/08/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 17954.9
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  terra:
+    nome: "Terra Investimentos"
+    pegadinha: "tabela regressiva premia quem opera MUITO — o oposto deste perfil"
+    custos:
+      corretagem_rv: 4.5
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: COMPLETO
+        fonte: "página oficial Terra, 31/08/2026"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  genial:
+    nome: "Genial Investimentos"
+    pegadinha: "não publica valores; zero condicionado à adesão ao RLP. PREJUÍZO no trimestre"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: PARCIAL
+        fonte: "página oficial Genial, 31/08/2026 + BCB IF.data"
+        acesso: 2026-08-31
+    balanco:
+      pl_entidade: 277.8
+      resultado_trimestre: -4.4
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  warren:
+    nome: "Warren"
+    pegadinha: "modelo fee-based declarado; PL de R$61-78 mi e PREJUÍZO no trimestre"
+    custos:
+      corretagem_rv: 0.0
+      corretagem_pct: 0.0
+      tesouro_taxa_propria_zero: true
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: COMPLETO
+        fonte: "documento oficial Warren (sem data explícita) + BCB IF.data"
+        acesso: 2026-08-31
+    balanco:
+      pl_conglomerado: 78.4
+      pl_entidade: 61.4
+      resultado_trimestre: -1.3
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  mirae:
+    nome: "Mirae Asset (Brasil)"
+    pegadinha: "HTTP 403 em todas as tentativas; mirae.com.br não resolve DNS"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 — custos NÃO OBTIDOS"
+        acesso: 2026-08-31
+    balanco:
+      pl_entidade: 394.4
+      resultado_trimestre: 5.9
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: true
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  orama:
+    nome: "Órama"
+    pegadinha: "site é SPA sem conteúdo textual"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 (status)"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "adquirida pelo BTG (R$500 mi); SEM REGISTRO ATIVO no BCB em 03/2026"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  guide:
+    nome: "Guide Investimentos"
+    pegadinha: "site devolveu HTTP 404 nas páginas de custos"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 (ausência de registro)"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "NÃO EXISTE MAIS; adquirida pelo Banco Safra; sem registro no BCB"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  necton:
+    nome: "Necton"
+    pegadinha: "domínio só resolve em IPv6"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 (status)"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "adquirida pelo BTG (~R$350 mi); situação INATIVA no BCB"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  vitreo:
+    nome: "Vitreo / Empiricus Investimentos"
+    pegadinha: "domínios não resolvem DNS"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026 (status)"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "PLATAFORMA ENCERRADA em 09/12/2023; DTVM formalmente ativa, sem varejo"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31
+
+  avenue:
+    nome: "Avenue (braço Brasil)"
+    pegadinha: "não é corretora de B3 no varejo; foco EUA"
+    custos:
+      corretagem_rv: null
+      corretagem_pct: 0.0
+      corretagem_etf_pct: 0.0
+      procedencia:
+        status: NAO_CONFIRMADO
+        fonte: "BCB IF.data 03/2026"
+        acesso: 2026-08-31
+    balanco:
+      pl_entidade: 44.4
+      resultado_trimestre: -5.9
+      procedencia:
+        status: COMPLETO
+        fonte: "BCB IF.data, base 03/2026 — PL e resultado em R$ milhoes"
+        acesso: 2026-08-31
+    societario:
+      entidade_independente: false
+      evento_societario: "Itaú assumiu 50,1% do capital (dez/2025)"
+      procedencia:
+        status: COMPLETO
+        fonte: "pesquisa de 31/08 e 01/09/2026 — registro na CVM/BCB e comunicados"
+        acesso: 2026-08-31

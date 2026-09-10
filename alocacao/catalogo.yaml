@@ -1,0 +1,559 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# catalogo.yaml — o universo de rotas. Pendencia P-36, metade A.
+#
+# POR QUE ESTE ARQUIVO EXISTE.
+#
+# A doutrina P2 diz "regras como dados", e ate 05/09/2026 ela valia so para as
+# REGRAS. O CATALOGO — 25 rotas com todos os parametros — vivia como literais Python
+# dentro de `alocacao.catalogo()`, 183 linhas. Mudar a corretagem de uma rota era
+# editar codigo, e nada do aparato de procedencia do custos.yaml alcancava um unico
+# desses valores. Era o achado N-01 em escala maior: o guarda do P-28 varre o YAML e
+# nada varria o Python.
+#
+# AS TRES REGRAS DESTE ARQUIVO
+#
+# 1. VALOR QUE VEM DO custos.yaml FICA COMO REFERENCIA, NUNCA COMO COPIA.
+#    `adm_aa: {de: etf.PIBB11}` e nao `adm_aa: 0.0059`. Copiar o numero criaria dois
+#    lugares que concordam — o defeito N-01 — e mataria `expira`, `status` e
+#    `bloqueia` da constante original. A referencia herda tudo isso de graca.
+#
+# 2. TODA ROTA DECLARA PROCEDENCIA. Uma rota nao e um numero medido: e uma DECISAO
+#    DE MODELAGEM ("o Tesouro Selic serve LASTRO e tambem DATADO"). A procedencia
+#    dela e quem decidiu, quando, e com base em que. E a P1 estendida ao catalogo.
+#
+# 3. INSUMO BLOQUEADO BLOQUEIA A ROTA, NUNCA O CATALOGO. Ver achado Q-01 abaixo.
+#
+# O QUE CONTINUA EM PYTHON, DE PROPOSITO
+#
+# As tres ESTRATEGIAS de bloqueio (`val_recusa`, `motivo_literal`,
+# `exige_status_completo`) sao logica, nao dado. O YAML diz QUAL se aplica e a QUE
+# fonte; `alocacao.py` implementa COMO. Acrescentar uma rota nao exige tocar em
+# Python; acrescentar um TIPO NOVO de regra exige — e deve exigir.
+#
+# ACHADO Q-01 (05/09/2026), encontrado ao migrar
+#   O tratamento de insumo bloqueado era INCONSISTENTE e ninguem tinha percebido,
+#   porque as duas metades nunca se encontravam no mesmo teste:
+#     - as rotas de ETF degradavam com elegancia: `val()` levantava, a rota entrava
+#       sem `adm_aa` e COM o motivo escrito (foi assim que o BOVV11 ficou visivel);
+#     - todas as outras explodiam: `val()` levantava dentro de `catalogo()` e o
+#       CATALOGO INTEIRO morria. Uma constante `NAO_CONFIRMADO` em `corretagem.
+#       safra_terra` derrubaria as 25 rotas, inclusive as 24 que nao dependem dela.
+#   A segunda metade viola a P6 de frente: esconder 24 rotas boas porque falta um
+#   numero e exatamente "sumir com o ativo por falta de dado". Aqui a regra e uma so
+#   e vale para todas: insumo bloqueado bloqueia A ROTA, com o motivo escrito.
+#
+# NOTA DE VERSAO: os textos de bloqueio preservam, por ora, os TRES formatos
+# diferentes que existiam no Python. Sao inconsistentes e a inconsistencia agora
+# esta visivel neste arquivo, que e o primeiro passo para arruma-la. Unifica-los
+# junto da migracao teria misturado duas mudancas e destruido a unica garantia forte
+# que esta migracao tem: `test_Q01_o_catalogo_do_yaml_e_identico_ao_que_era_codigo`.
+# ─────────────────────────────────────────────────────────────────────────────
+
+meta:
+  versao: "1.0.0"
+  emissao: 2026-09-05
+  origem: "extraido de alocacao.catalogo(), 183 linhas de literais Python"
+  base_de_custos: "custos.yaml"
+
+# ── Vocabulario de referencia, para quem for editar ──────────────────────────
+# Onde um valor pode aparecer, aceita-se:
+#   3.0                          literal
+#   {de: "etf.PIBB11"}           val(custos.yaml naquele caminho)
+#   {soma: [ref, ref]}           soma de referencias resolvidas
+#   {de_se_na_lista: {...}}      valor SE a chave estiver na lista declarada na
+#                                propria constante, senao `senao`. Existe por causa
+#                                do achado F-01: quem cobra custodia interna vem de
+#                                `etf.custodia_interna_ishares.aplica_a`, e nunca de
+#                                uma lista escrita no codigo.
+#   {de_campo: "a.b.c"}          le um campo CRU do custos.yaml, sem passar por val()
+_vocabulario: >
+  literal | {de: caminho} | {soma: [...]} | {de_se_na_lista: {...}} | {de_campo: caminho}
+
+rotas:
+
+  # ══ LIQUIDEZ ══════════════════════════════════════════════════════════════
+  td_reserva:
+    nome: "Tesouro Reserva / Selic ate R$10k"
+    funcoes: [LIQUIDEZ]
+    exposicao: selic
+    custodia_td: true
+    td_isento: true
+    liquidez_dias: 0
+    perda_maxima: nominal_zero
+    indexador: selic
+    emissor: TESOURO_NACIONAL
+    nota: "isento de custodia ate R$10k por CPF; risco soberano, sem FGC"
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        Regulamento do Tesouro Direto. O teto da isencao NAO esta copiado aqui: e
+        `custos.yaml -> tesouro.isencao_selic`, lido por `retorno_liquido_aa` e pela
+        composicao do G2. O nome da rota cita "R$10k" so como rotulo humano.
+      revisar_se: "a isencao de custodia do Tesouro mudar de valor ou de regra"
+
+  rdb_100:
+    nome: "RDB / CDB 100% do CDI, liquidez diaria"
+    funcoes: [LIQUIDEZ]
+    exposicao: cdi
+    liquidez_dias: 0
+    perda_maxima: nominal_zero
+    indexador: cdi
+    emissor: BANCO_GRANDE
+    nota: "coberto pelo FGC ate R$250k POR CONGLOMERADO"
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        Rota GENERICA, e isso e uma decisao e nao uma omissao: ela representa a
+        familia de RDB/CDB de liquidez diaria a 100% do CDI, nao um produto de um
+        banco. Por isso `rendimento_fator` e 1,0 literal — e a definicao da familia,
+        nao uma taxa medida. O teto do FGC vem de `politica.yaml -> tetos`.
+      revisar_se: "o usuario escolher um CDB especifico; ai vira rota propria, com emissor"
+
+  poupanca:
+    nome: "Poupanca"
+    funcoes: [LIQUIDEZ]
+    exposicao: poupanca
+    liquidez_dias: 0
+    perda_maxima: nominal_zero
+    indexador: poupanca
+    rendimento_fator: 1.0
+    isento_ir_rendimento: true
+    emissor: BANCO_GRANDE
+    nota: >-
+      rendeu 8,31% contra 14,57% do CDI em 12 meses — 57% do CDI, e isso e RENDIMENTO,
+      nao custo: nenhum criterio de custo a elimina
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        A isencao de IR e legal (Lei 8.981/1995 art. 68, III). O RENDIMENTO vem de
+        `custos.yaml -> macro.poupanca_am`, com `expira` proprio — nao esta copiado
+        aqui. `rendimento_fator: 1.0` significa "entrega o proprio indexador
+        poupanca", nao "entrega 100% do CDI".
+      revisar_se: "a regra de remuneracao da poupanca mudar (Selic cruzar 8,5% a.a.)"
+
+  # ══ COFRINHO PICPAY — doutrina P6 ═════════════════════════════════════════
+  picpay_cofrinho:
+    nome: "PicPay Cofrinho do Cartao (102% do CDI)"
+    funcoes: [LASTRO]
+    exposicao: cdi
+    indexador: cdi
+    rendimento_fator: {de: "cofrinho.picpay_pct_cdi"}
+    perda_maxima: nominal_zero
+    emissor: BANCO_MEDIO
+    liquidez_dias: {de_campo: "cofrinho.picpay_garantia_de_limite.liquidez_pior_caso_dias"}
+    nota: >-
+      NAO declara LIQUIDEZ, e essa e a consequencia inteira do achado J-01. O saldo e
+      caucao do limite do cartao: destrava ao pagar a fatura (dia 10) e volta a travar
+      conforme o cartao e usado. A espera vai de 0 a 29 dias conforme o dia em que a
+      emergencia cair, e reserva se julga pelo PIOR caso. Rende 2 p.p. do CDI acima do
+      rdb_100 e mesmo assim nao serve para a funcao que o usuario precisa preencher
+      primeiro
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-05
+      base: >
+        Capturas do app PicPay de 05/09/2026, registradas em `custos.yaml -> cofrinho`.
+        E a UNICA posicao que o usuario possui, e ate 05/09 nao existia no catalogo —
+        o pior caso da P6. O `liquidez_dias` NAO e um numero escolhido: vem do campo
+        `liquidez_pior_caso_dias` da propria constante, que registra o ciclo da fatura.
+      revisar_se: >
+        o usuario deixar de usar o cofrinho como garantia do cartao — ai a rota volta a
+        ser candidata a LIQUIDEZ e a funcao muda
+
+  picpay_turbinado:
+    nome: "PicPay Cofrinho Turbinado (121% do CDI, teto R$10k)"
+    funcoes: [LIQUIDEZ]
+    exposicao: cdi
+    indexador: cdi
+    rendimento_fator: {de: "cofrinho.turbinado_pct_cdi"}
+    perda_maxima: nominal_zero
+    emissor: BANCO_MEDIO
+    liquidez_dias: 0
+    teto_de_saldo: {de: "cofrinho.turbinado_teto"}
+    bloqueio:
+      regra: exige_status_completo
+      fontes: ["cofrinho.turbinado_condicao_de_isencao"]
+    nota: >-
+      ACHADO K-01: a mensalidade de R$23,99 (R$287,88/ano) so se paga a partir de
+      R$13.625 de saldo, e o produto aceita no maximo R$10.000 — pagando, NUNCA se
+      paga; no teto perde R$76,60/ano para o cofrinho de 102%. So faz sentido com a
+      isencao, e a isencao e mensal e por missoes que o banco escolhe. Por isso a rota
+      entra BLOQUEADA: o custo do mes que vem e desconhecido por construcao, nao por
+      falta de pesquisa
+    procedencia:
+      status: PARCIAL
+      decidido_em: 2026-09-05
+      base: >
+        Capturas do app de 05/09/2026. PARCIAL e nao COMPLETO porque a condicao de
+        isencao do mes seguinte e desconhecida POR CONSTRUCAO: as missoes mudam e quem
+        as escolhe e o banco. O `teto_de_saldo` e o dado que fechou a P-24.
+      revisar_se: "as condicoes de isencao virarem regra estavel e publicada"
+
+  # ══ LASTRO e DATADO — A-04 ════════════════════════════════════════════════
+  td_selic:
+    nome: "Tesouro Selic acima de R$10k"
+    funcoes: [LASTRO, DATADO]
+    exposicao: selic
+    custodia_td: true
+    td_isento: true
+    liquidez_dias: 1
+    perda_maxima: nominal_zero
+    duracao_anos: 0.0
+    indexador: selic
+    emissor: TESOURO_NACIONAL
+    nota: >-
+      pos-fixado: sem marcacao a mercado. Serve LASTRO e tambem DATADO de qualquer
+      prazo, porque duracao zero casa com qualquer objetivo
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        `duracao_anos: 0.0` nao e uma medicao: e a definicao de pos-fixado. E o que
+        autoriza a rota a ocupar DATADO de qualquer prazo sem casar vencimento.
+      revisar_se: "nunca — e propriedade do instrumento, nao numero de mercado"
+
+  td_ipca:
+    nome: "Tesouro IPCA+ Principal"
+    funcoes: [PROTECAO_REAL, DATADO]
+    exposicao: ipca
+    custodia_td: true
+    td_isento: false
+    liquidez_dias: 1
+    perda_maxima: limitada
+    duracao_anos: null
+    indexador: ipca
+    emissor: TESOURO_NACIONAL
+    nota: >-
+      marcacao a mercado: +2 p.p. de juro real derruba ~47% o vencimento 2060. A
+      duracao vem do compromisso registrado, e o teto de compromissos decide ate qual
+      vencimento voce pode ir
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-03
+      base: >
+        `duracao_anos: null` e o campo mais importante deste arquivo, e ele e uma
+        AUSENCIA DELIBERADA. A duracao nao e constante de catalogo: vem do papel que o
+        usuario se compromete a carregar (registro CARREGO, portao G8). Supor uma
+        duracao aqui seria supor um compromisso que ninguem assumiu — foi assim que a
+        versao 1.0.0 alocou 17% num NTN-B de duracao 18 sem prazo nenhum a casar.
+      revisar_se: "nunca preencher com um numero. Se estiver preenchido, e defeito"
+
+  # ══ CRESCIMENTO — ETF e acao ══════════════════════════════════════════════
+  # F-01: a custodia interna do fundo NAO e a custodia da B3. Ela e descontada dentro
+  # do patrimonio do ETF, alem da taxa de administracao, e o rol de quem a cobra vem
+  # do proprio custos.yaml (`aplica_a`) — nunca de uma lista escrita no codigo.
+  _modelo_etf_b3: &modelo_etf_b3
+    funcoes: [CRESCIMENTO]
+    b3_vista: true
+    custodia_rv: true
+    liquidez_dias: 2
+    negocia_em_lote: true
+    indexador: rv
+
+  pibb11:
+    <<: *modelo_etf_b3
+    nome: "PIBB11 — corretora zero"
+    exposicao: ibrx50
+    adm_aa: {de: "etf.PIBB11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "PIBB11", senao: 0.0}
+    procedencia: &proc_etf
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        A taxa de administracao NAO esta copiada aqui: e uma referencia a `custos.yaml
+        -> etf.<ticker>`, que carrega `fonte`, `acesso` e `expira` proprios. A custodia
+        interna e resolvida contra `etf.custodia_interna_ishares.aplica_a` — quem cobra
+        vem da constante, nunca de uma lista no codigo (achado F-01).
+      revisar_se: "a constante de taxa expirar; a rota se bloqueia sozinha se ela cair"
+
+  divo11:
+    <<: *modelo_etf_b3
+    nome: "DIVO11 — corretora zero"
+    exposicao: idiv
+    adm_aa: {de: "etf.DIVO11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "DIVO11", senao: 0.0}
+    procedencia: *proc_etf
+
+  bova11:
+    <<: *modelo_etf_b3
+    nome: "BOVA11 — corretora zero"
+    exposicao: ibovespa
+    adm_aa: {de: "etf.BOVA11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "BOVA11", senao: 0.0}
+    procedencia: *proc_etf
+
+  smal11:
+    <<: *modelo_etf_b3
+    nome: "SMAL11 — corretora zero"
+    exposicao: smallcap
+    adm_aa: {de: "etf.SMAL11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "SMAL11", senao: 0.0}
+    procedencia: *proc_etf
+
+  ivvb11:
+    <<: *modelo_etf_b3
+    nome: "IVVB11 — corretora zero"
+    exposicao: sp500
+    adm_aa: {de: "etf.IVVB11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "IVVB11", senao: 0.0}
+    procedencia: *proc_etf
+
+  bovv11:
+    <<: *modelo_etf_b3
+    nome: "BOVV11 — corretora zero"
+    exposicao: ibovespa
+    adm_aa: {de: "etf.BOVV11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "BOVV11", senao: 0.0}
+    procedencia:
+      status: PARCIAL
+      decidido_em: 2026-09-01
+      base: >
+        A rota existe e a taxa NAO. `etf.BOVV11` e NAO_CONFIRMADO — o site do gestor
+        bloqueia robo —, entao ela entra BLOQUEADA e visivel, com o motivo escrito.
+        Pendencia P-05. E o caso que provou que a degradacao vale a pena: sem ela, a
+        rota simplesmente sumiria.
+      revisar_se: "visita manual ao site do gestor fechar a taxa"
+
+  bova11_xp:
+    nome: "BOVA11 — via corretora que cobra 0,50% em ETF"
+    funcoes: [CRESCIMENTO]
+    exposicao: ibovespa
+    b3_vista: true
+    negocia_em_lote: true
+    corr_pct: {de: "corretagem.xp_etf_pct"}
+    saida_extra: {de: "corretagem.xp_etf_pct"}
+    adm_aa: {de: "etf.BOVA11"}
+    custodia_interna_aa:
+      de_se_na_lista: {valor: "etf.custodia_interna_ishares", chave: "BOVA11", senao: 0.0}
+    custodia_rv: true
+    liquidez_dias: 2
+    indexador: rv
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        Rota de CONTRASTE: e o mesmo ativo do `bova11`, com a corretagem de uma casa
+        que cobra. Existe para tornar visivel o custo de escolher a corretora errada, e
+        por isso `negocia_em_lote` e true mas `custodia_interna_aa` e identica — o que
+        muda entre as duas rotas e SO a corretagem.
+      revisar_se: "a tabela da corretora mudar; a referencia ja avisa pelo `expira`"
+
+  acao_zero:
+    <<: *modelo_etf_b3
+    nome: "Acao individual — corretora zero"
+    exposicao: acao_br
+    nota: >-
+      tem a isencao de R$20 mil/mes na venda (IN RFB 1.585/2015 art. 59, I); o ETF NAO
+      tem — o art. 59 §2º, II exclui expressamente as negociacoes de cotas de fundo de
+      indice de acoes. LIMITACAO DECLARADA: o motor nao modela IR na venda de nenhuma
+      rota de RV, entao esta assimetria nao entra no ranking — e ela favorece o ETF
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        Sem `adm_aa`: acao individual nao tem taxa de administracao, e essa AUSENCIA e
+        a tese da decisao A05. A assimetria de IR esta na nota e em
+        `politica.yaml -> limitacoes_declaradas.ir_na_venda_de_renda_variavel`, com a
+        direcao do vies declarada.
+      revisar_se: "o motor passar a modelar IR na venda; ai a limitacao fecha"
+
+  acao_450:
+    nome: "Acao individual — R$4,50 por ordem"
+    funcoes: [CRESCIMENTO]
+    exposicao: acao_br
+    b3_vista: true
+    negocia_em_lote: true
+    indexador: rv
+    corr_fix: {de: "corretagem.safra_terra"}
+    custodia_rv: true
+    liquidez_dias: 2
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        Rota de CONTRASTE da corretagem FIXA. E ela que faz o G3 devolver "volta com
+        aporte de R$X" em vez de so excluir: custo fixo dilui com o aporte, custo
+        percentual nao. O valor vem de `custos.yaml -> corretagem.safra_terra`.
+      revisar_se: "a tabela da corretora mudar"
+
+  # ══ CRESCIMENTO — exterior ════════════════════════════════════════════════
+  _modelo_ext: &modelo_ext
+    funcoes: [CRESCIMENTO]
+    exposicao: sp500
+    indexador: rv
+    adm_aa: {de: "etf.IVV"}
+    liquidez_dias: 3
+    negocia_em_lote: true
+    saida_extra: {de: "exterior.iof_repatriacao"}
+
+  ext_avenue:
+    <<: *modelo_ext
+    nome: "ETF EUA (IVV) — Avenue melhor degrau"
+    entrada_extra:
+      soma: [{de: "exterior.spread_avenue_melhor"}, {de: "exterior.iof_investimento"}]
+    nota: "custodia fora do Brasil; gera obrigacao acessoria anual"
+    procedencia: &proc_ext
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        O custo de entrada e SOMA de duas coisas com naturezas diferentes: o spread
+        cambial da casa (comercial, muda quando ela quiser) e o IOF (legal, muda por
+        decreto). Somar na leitura em vez de guardar o total significa que uma mudanca
+        de IOF se propaga sozinha para as quatro rotas de exterior.
+      revisar_se: "o IOF de investimento ou de repatriacao mudar por decreto"
+
+  ext_nomad5:
+    <<: *modelo_ext
+    nome: "ETF EUA (IVV) — Nomad nivel 5"
+    entrada_extra:
+      soma: [{de: "exterior.spread_nomad_n5"}, {de: "exterior.iof_investimento"}]
+    nota: "custodia fora do Brasil; gera obrigacao acessoria anual"
+    procedencia: *proc_ext
+
+  ext_nomad1:
+    <<: *modelo_ext
+    nome: "ETF EUA (IVV) — Nomad nivel 1"
+    entrada_extra:
+      soma: [{de: "exterior.spread_nomad_n1"}, {de: "exterior.iof_investimento"}]
+    nota: "custodia fora do Brasil; gera obrigacao acessoria anual"
+    procedencia: *proc_ext
+
+  ext_vest:
+    <<: *modelo_ext
+    nome: "ETF EUA (IVV) — Vest stablecoin"
+    entrada_extra: {de: "exterior.vest_stablecoin.spread"}
+    bloqueio:
+      regra: motivo_literal
+      fontes: ["exterior.vest_stablecoin.iof"]
+    procedencia:
+      status: PARCIAL
+      decidido_em: 2026-09-01
+      base: >
+        O spread e conhecido; o tratamento de IOF em stablecoin NAO e, e por isso a
+        rota entra bloqueada. Note que `entrada_extra` aqui NAO soma IOF — e a
+        diferenca que a rota existe para testar, e e exatamente o que esta indefinido.
+      revisar_se: "a Receita ou o BCB fecharem o tratamento de IOF em stablecoin"
+
+  # ══ RENDA FIXA ISENTA ═════════════════════════════════════════════════════
+  # Catalogadas em 05/09/2026, bloqueadas por insumo. A rota EXISTIR visivel e
+  # bloqueada nao e o mesmo que ela nao existir: a segunda esconde a decisao de nao
+  # ter considerado a classe.
+  _modelo_rf_isenta: &modelo_rf_isenta
+    funcoes: [LASTRO, DATADO]
+    exposicao: cdi_isento
+    indexador: cdi
+    isento_ir_rendimento: true
+    aliquota_ganho: 0.0
+    perda_maxima: nominal_zero
+    emissor: BANCO_MEDIO
+    duracao_anos: 0.0
+    liquidez_dias: 9999          # ate a carencia vir da fonte, tratamos como travada
+    nota: >-
+      isencao de IR confirmada na Lei 11.033/2004 art. 3o (II para LCI, IV para LCA). O
+      que falta e comercial e regulatorio: quanto do CDI paga e qual a carencia minima.
+      Sem os dois nao da para ordenar contra o RDB
+    bloqueio:
+      regra: val_recusa
+      fontes:
+        - "renda_fixa_isenta.carencia_minima_dias"
+        - "renda_fixa_isenta.percentual_do_cdi"
+
+  lci:
+    <<: *modelo_rf_isenta
+    nome: "LCI — isenta de IR, coberta pelo FGC"
+    procedencia: &proc_rf_isenta
+      status: PARCIAL
+      decidido_em: 2026-09-05
+      base: >
+        A isencao esta CONFIRMADA em fonte primaria (Lei 11.033/2004 art. 3o, II para
+        LCI e IV para LCA, com confirmacao independente na Lei 15.270/2025 art. 16-A).
+        `liquidez_dias: 9999` e uma escolha CONSERVADORA declarada, nao uma medicao: a
+        carencia minima do CMN nao foi lida, e tratar como travada erra para o lado que
+        nao inventa vantagem.
+      revisar_se: "a carencia minima do CMN e o percentual do CDI virem da fonte"
+
+  lca:
+    <<: *modelo_rf_isenta
+    nome: "LCA — isenta de IR, coberta pelo FGC"
+    procedencia: *proc_rf_isenta
+
+  fii:
+    nome: "FII — cota em bolsa"
+    funcoes: [CRESCIMENTO]
+    exposicao: imovel_br
+    b3_vista: true
+    custodia_rv: true
+    liquidez_dias: 2
+    negocia_em_lote: false
+    indexador: rv
+    perda_maxima: limitada
+    isento_ir_rendimento: true   # com >=100 cotistas — Lei 11.033/2004 art. 3o
+    aliquota_ganho: 0.20         # Lei 8.668/1993 art. 18 (red. Lei 9.779/1999)
+    bloqueio:
+      regra: val_recusa
+      fontes: ["fii.taxa_administracao"]
+    nota: >-
+      regime FECHADO (CVM 175 Anexo III art. 3o): nao existe resgate, so venda em
+      mercado secundario — a liquidez e a do book, nao do fundo. Rendimento isento com
+      >=100 cotistas; GANHO tributado a 20% sem a isencao mensal
+    procedencia:
+      status: PARCIAL
+      decidido_em: 2026-09-05
+      base: >
+        E a rota que motivou a P-13: `isento_ir` era booleano e o FII nao cabia nele —
+        o RENDIMENTO distribuido e isento e o GANHO e tributado a 20%. Os dois numeros
+        sao LEGAIS e por isso sao literais com a lei citada ao lado, nao referencias a
+        uma tabela comercial. `negocia_em_lote: false` e a diferenca real contra os
+        ETF: FII negocia por cota unitaria.
+      revisar_se: "a tributacao de FII mudar por lei; a taxa de adm nunca sera unica"
+
+  # ══ SEGURO DE CAUDA e APOSTA ══════════════════════════════════════════════
+  ext_conta:
+    nome: "Conta em corretora estrangeira independente (IBKR/Schwab)"
+    funcoes: [SEGURO_CAUDA]
+    exposicao: jurisdicao_eua
+    indexador: rv
+    entrada_extra: {de: "exterior.iof_investimento"}
+    saida_extra: {de: "exterior.iof_repatriacao"}
+    liquidez_dias: 3
+    negocia_em_lote: true
+    nota: >-
+      o valor aqui e jurisdicional, nao de retorno. Avenue/Inter/BTG/XP US tem
+      controlador brasileiro
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-01
+      base: >
+        A rota nao tem `adm_aa` porque o que ela compra nao e um produto: e uma
+        JURISDICAO. Por isso tambem nao tem exposicao a indice — `jurisdicao_eua` e
+        uma exposicao propria, e o G4 nao a compara com sp500.
+      revisar_se: "o controle societario das casas citadas mudar"
+
+  hash11:
+    <<: *modelo_etf_b3
+    nome: "HASH11 (cripto via B3)"
+    funcoes: [APOSTA]
+    exposicao: cripto
+    adm_aa: {de: "etf.HASH11"}
+    perda_maxima: total
+    nota: >-
+      1,3% a.a. consome 34,6% do aportado em 20 anos. Nao e reserva de valor: Choi &
+      Shin — hedge de inflacao, NAO safe haven
+    procedencia:
+      status: COMPLETO
+      decidido_em: 2026-09-03
+      base: >
+        `perda_maxima: total` e o campo que importa, e ele e uma AFIRMACAO e nao uma
+        estimativa: a rota so entra na carteira com registro de TESE assinado (G7), e o
+        K01 do registro exige que o usuario declare a perda maxima aceita. O catalogo
+        diz o que o instrumento PODE fazer; o registro diz o que o usuario ACEITA.
+      revisar_se: "nunca — perda total e propriedade da classe, nao previsao"
