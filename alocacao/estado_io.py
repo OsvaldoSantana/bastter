@@ -81,6 +81,23 @@ def _registros(lista, classe, rot, problemas):
     out = [_registro(x, classe, f"{rot}[{i}]", problemas) for i, x in enumerate(lista)]
     return [r for r in out if r is not None]
 
+def _conferir_empenho(doc, d, problemas):
+    """`reserva_empenhada` e uma segunda forma de dizer o que `reserva_atual -
+    reserva_disponivel` ja diz (J-01). Ate 11/09 era lida e descartada -- campo morto,
+    4a ocorrencia da auditoria de 10/09; antes de 11/09 ia para `d` e quebrava
+    `Estado(**d)`. Agora e CONFERENCIA, no padrao de `reserva_por_rota`: duas medidas
+    do mesmo saldo que discordam viram problema. O motor continua usando so
+    `reserva_disponivel`."""
+    if doc.get("reserva_empenhada") is None: return
+    emp = _num(doc.get("reserva_empenhada"), "reserva_empenhada", problemas)
+    nom, disp = d.get("reserva_atual"), d.get("reserva_disponivel")
+    if emp is None or nom is None or disp is None: return
+    if abs(emp - (nom - disp)) > 0.01:
+        problemas.append(
+            f"reserva_empenhada diz {emp:.2f} e reserva_atual - reserva_disponivel da "
+            f"{nom - disp:.2f}. Sao duas medidas do mesmo empenho e elas discordam — o "
+            f"sistema nao escolhe entre as duas por voce. O motor usa reserva_disponivel")
+
 def _match(doc, problemas):
     """P-71, segunda metade: os dois campos que `estado.exemplo.yaml` pede e que ate
     11/09 nunca eram lidos. Ausente e diferente de falso: sem `match_verificado` o G0
@@ -157,16 +174,7 @@ def validar(doc, P=None, hoje=None):
     d["reserva_disponivel"] = _num(doc.get("reserva_disponivel"), "reserva_disponivel",
                                    problemas) if doc.get("reserva_disponivel") is not None \
                               else d.get("reserva_atual")
-    # P-71, achado lateral: `reserva_empenhada` era guardado em `d` e NUNCA lido — nem
-    # no calculo abaixo (que usa `nom`/`disp`, nao esta chave) nem por nenhum
-    # consumidor (a auditoria externa de 10/09 ja apontava como "campo morto, 4a
-    # ocorrencia", AUDITORIA-DEEPSEEK-CONFERIDA.md). E tambem NAO e campo de `Estado`
-    # — guardar em `d` quebrava `Estado(**d)` com `TypeError: unexpected keyword
-    # argument 'reserva_empenhada'`, que e exatamente o que a porta de entrada real
-    # nunca exercitou. A validacao do preenchimento continua; so o valor parou de
-    # ser armazenado sem uso.
-    if doc.get("reserva_empenhada") is not None:
-        _num(doc.get("reserva_empenhada"), "reserva_empenhada", problemas)
+    _conferir_empenho(doc, d, problemas)
     nom, disp = d.get("reserva_atual"), d.get("reserva_disponivel")
     if nom is not None and disp is not None and disp < nom - 1e-9:
         desp = d.get("despesa_mensal") or 0

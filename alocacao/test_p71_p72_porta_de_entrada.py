@@ -183,3 +183,16 @@ def test_P71_match_verificado_tem_de_ser_booleano(tmp_path):
     Aceitar seria decidir pelo usuario o que ele quis dizer."""
     _, problemas, _ = _carregar(tmp_path, "match_verificado: sim\n")
     assert any("match_verificado" in p for p in problemas), problemas
+
+
+def test_reserva_empenhada_discordante_vira_problema(tmp_path):
+    """Auditoria de 10/09, 'campos mortos': `reserva_empenhada` era lida e descartada.
+    Agora confere com `reserva_atual - reserva_disponivel` (27000 - 200 = 26800)."""
+    _, problemas, _ = _carregar(tmp_path, "reserva_disponivel: 200.0\nreserva_empenhada: 500.0\n")
+    assert any("reserva_empenhada diz" in p for p in problemas), problemas
+
+
+def test_reserva_empenhada_coerente_nao_acusa_nada(tmp_path):
+    """O espelho: sem ele, o teste de cima passaria com uma conferencia que acusa sempre."""
+    _, problemas, _ = _carregar(tmp_path, "reserva_disponivel: 26500.0\nreserva_empenhada: 500.0\n")
+    assert not any("reserva_empenhada diz" in p for p in problemas), problemas

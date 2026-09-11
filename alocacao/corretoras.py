@@ -177,6 +177,13 @@ def regras(P=None):
         raise NotImplementedError(
             "politica.yaml diz corretora.facilidade.pontua: true, e nao ha dimensao de "
             "facilidade em pontuar() — a pesquisa de 31/08 nao obteve proxy objetivo.")
+    if c["promocional"]["peso"] != 0:
+        # Campo morto ate 11/09 (auditoria de 10/09): trocar o peso no YAML nao mudava
+        # nada. O zero e DECISAO declarada; outro valor exige a dimensao em pontuar().
+        raise NotImplementedError(
+            "politica.yaml diz corretora.promocional.peso != 0, e nao ha dimensao de "
+            "promocao em pontuar(). Mudar o numero sem implementar a dimensao seria um "
+            "ranking que ignora em silencio o que o arquivo mandou.")
     return dict(mult=mult,
                 indice_nota_zero=float(c["reclamacoes"]["escala_indice_para_nota_zero"]),
                 custo_nota_zero=float(c["corretagem"]["custo_do_aporte_para_nota_zero"]))

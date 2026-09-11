@@ -64,7 +64,10 @@ ESTADOS = ("REGRA_DECIDIDA", "COMPROMISSO_ATIVO")
 # precisam estar EXPLICITAMENTE adiados, nao simplesmente vazios: a diferenca entre
 # "ainda nao sei" e "esqueci" e a unica coisa que este arquivo protege.
 DIFERIDOS_C = ("C02_compromisso", "C04_custo_de_quebrar")
-DIFERIDOS_K = ("K02_tese",)
+# Nao ha equivalente para teses, e a ausencia e de proposito (11/09/2026): existia uma
+# constante assim e nada a lia. O G-01 nasceu do C02, que depende do juro travado NA
+# COMPRA; o K02 nao depende de compra nenhuma. Diferir a tese selaria na impressao um
+# texto vazio -- pre-registro de nada.
 AGUARDA = "AGUARDA_COMPRA"
 
 CAMPOS_K = ("K01_perda_maxima_aceita", "K02_tese", "K03_prazo",

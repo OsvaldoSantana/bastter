@@ -1,57 +1,44 @@
 # -*- coding: utf-8 -*-
 """
 Guarda de codigo morto do lado Python. Ponto "Campos mortos, 4a ocorrencia" de
-`AUDITORIA-DEEPSEEK-CONFERIDA.md`: o projeto tem
+`AUDITORIA-DEEPSEEK-CONFERIDA.md`: o projeto tinha
 `test_P28_secao_operacional_nao_tem_chave_morta` protegendo o YAML (chave declarada
 e nunca lida) e nada equivalente para o Python -- campo de dataclass ou constante de
-modulo declarado e nunca referenciado de novo. Isto e o N-01 esperando acontecer do
-lado do codigo, e este modulo e a rede que faltava.
+modulo declarado e nunca referenciado de novo. E o N-01 esperando acontecer do lado
+do codigo; o inventario e os testes estao em `test_campos_mortos.py`.
 
-Dos quatro campos que a auditoria citou, so DOIS cabem aqui:
-  `DIFERIDOS_K` (tese.py)       constante de modulo -- em escopo
-  `status_do_variavel` (aporte.py, campo de dataclass) -- em escopo
-  `corretora.promocional`       e chave de YAML, ja coberta por
-                                 `test_P28_secao_operacional_nao_tem_chave_morta`
-                                 (esta na `DIVIDA_DE_COBERTURA`, P-32) -- fora daqui
-  `estado_io.reserva_empenhada` era uma CHAVE DE DICT (`d["reserva_empenhada"]`),
-                                 nao campo de dataclass nem constante de modulo --
-                                 e ja foi corrigido (P-71/P-72, 11/09/2026): o dict
-                                 nao guarda mais o valor, so valida -- fora daqui
+Os quatro da auditoria, decididos em 11/09/2026 (o porque de cada um esta em
+PENDENCIAS.md): `Aporte.status_do_variavel` e `tese.DIFERIDOS_K` foram REMOVIDOS;
+`reserva_empenhada` (estado_io) e `corretora.promocional` (politica.yaml) passaram a
+ser USADOS, os dois como guarda. So os dois primeiros eram visiveis a esta guarda: o
+terceiro e chave de dict e o quarto e chave de YAML, que o P-28 ja cobre.
 
 O QUE ISTO ENXERGA
   campo de dataclass     toda classe com `@dataclass`, os `AnnAssign` do corpo dela
   constante de modulo    `Assign`/`AnnAssign` de `Name` simples, direto no corpo do
-                         MODULO (fora de def/classe, fora de `if __name__ == "__main__"`)
-  referencia             em qualquer modulo de PRODUCAO (nunca teste, demo ou
-                         conftest -- no espirito do `impacto.py` e do P-28, porque
-                         "so o teste constroi" e exatamente o padrao que a P-71
-                         mostrou ser insuficiente): `Attribute` (`obj.campo`),
-                         `keyword` de chamada (`Classe(campo=...)`), `Name` solto
-                         (`NOME`), OU chave de `Dict` com o mesmo texto
-                         (`{**x.__dict__, "campo": v}` -- o idioma que `alocacao.py`
-                         usa para "clonar com um campo trocado")
+                         MODULO (fora de def/classe, fora do bloco `__main__`)
+  referencia             em qualquer modulo de PRODUCAO -- nunca teste, demo ou
+                         conftest, porque "so o teste constroi" e exatamente o padrao
+                         que a P-71 mostrou ser insuficiente: `Attribute`
+                         (`obj.campo`), `keyword` de chamada (`Classe(campo=...)`),
+                         `Name` solto, ou chave literal de `Dict` -- o idioma que
+                         `alocacao.py` usa para clonar um dataclass com um campo trocado
 
 O QUE ISTO NAO ENXERGA, declarado -- e a lista importa mais que a de cima:
   - `getattr(obj, nome)` com nome dinamico, e despacho por dicionario: invisiveis,
     como em `impacto.py`.
-  - CONSTRUIR um campo (`Classe(campo=x)`, ou a chave de dict acima) conta como
-    referencia MESMO QUE o valor nunca seja lido de volta (`.campo`) em lugar
-    nenhum. Um campo so ESCRITO e nunca LIDO passa como vivo aqui -- era exatamente
-    o padrao de `estado_io.reserva_empenhada` antes da correcao, e esta guarda
-    sozinha NAO o teria pego. Escrita e leitura sao duas perguntas diferentes; esta
-    guarda so responde "o nome aparece de novo em algum lugar executavel?".
-  - correspondencia e por NOME, nao por classe: um campo `nome` bate com QUALQUER
-    `Attribute`/`keyword`/chave de dict chamado `nome` no projeto inteiro, nao so
-    o do dataclass em questao. Superamostragem deliberada: para nomes genericos
-    (`nome`, `valor`, `saldo`) isso quase sempre evita falso positivo; para nomes
-    distintivos (`DIFERIDOS_K`, `status_do_variavel`) a precisao e alta porque a
-    chance de colisao e baixa.
-  - `dataclasses.fields(Classe)` e `dataclasses.asdict(obj)` iterando por reflexao
-    nao produzem `Attribute`/`keyword`/chave de dict com o nome literal -- ficam
-    invisiveis, como qualquer outra forma de acesso dinamico.
-  - string solta em docstring/mensagem de erro NAO conta (so chave de dict conta
-    entre os literais de string) -- e a direcao certa: citar o nome numa frase nao
-    e uso.
+  - CONSTRUIR um campo (keyword ou chave de dict) conta como referencia MESMO QUE o
+    valor nunca seja lido de volta. Um campo so ESCRITO e nunca LIDO passa como vivo
+    aqui. Escrita e leitura sao duas perguntas; esta guarda so responde "o nome
+    aparece de novo em algum lugar executavel?".
+  - a correspondencia e por NOME, nao por classe: um campo `nome` bate com qualquer
+    `nome` do projeto. Superamostragem deliberada -- para nome generico isso evita
+    falso positivo e custa falso negativo; para nome distintivo a precisao e alta.
+  - `dataclasses.fields()` e `asdict()` iterando por reflexao ficam invisiveis.
+  - uso SO em teste conta como morto. E a direcao certa para dado de negocio (P-71)
+    e pode ser rigor demais para um utilitario que um teste real consome -- o caso
+    `ambiente.PACOTE_PARA_IMPORT`, que esta no inventario por isso.
+  - nome citado em docstring, comentario ou mensagem nao conta: citar nao e usar.
 
 Um mapa que finge completude e pior que nao ter mapa. As duas listas andam juntas.
 """
@@ -62,119 +49,87 @@ import os
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 
-def _modulos():
+def _modulos(raiz=AQUI):
     """Mesmo filtro de impacto.py: todo .py de producao, nunca teste, demo ou conftest."""
-    return sorted(f for f in os.listdir(AQUI)
+    return sorted(f for f in os.listdir(raiz)
                   if f.endswith(".py") and not f.startswith(("test_", "demo_", "conftest")))
 
 
-def _arvore(f):
-    return ast.parse(open(os.path.join(AQUI, f), encoding="utf-8").read(), filename=f)
+def _arvore(f, raiz=AQUI):
+    with open(os.path.join(raiz, f), encoding="utf-8") as fh:
+        return ast.parse(fh.read(), filename=f)
 
 
-def campos_de_dataclass(modulos=None):
-    """{(modulo, classe, campo): (lineno, col_offset)} -- todo AnnAssign direto no
-    corpo de uma classe decorada com @dataclass."""
-    out = {}
-    for f in (modulos or _modulos()):
-        for n in ast.walk(_arvore(f)):
-            if not isinstance(n, ast.ClassDef):
-                continue
-            decoradores = {d.id for d in n.decorator_list if isinstance(d, ast.Name)}
-            if "dataclass" not in decoradores:
-                continue
-            for item in n.body:
-                if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
-                    out[(f, n.name, item.target.id)] = (item.target.lineno, item.target.col_offset)
-    return out
-
-
-def _e_bloco_main(no_if):
-    """`if __name__ == "__main__":` -- variavel de script, nao constante do sistema."""
-    t = no_if.test
+def _e_bloco_main(no):
+    t = no.test
     return (isinstance(t, ast.Compare) and isinstance(t.left, ast.Name)
             and t.left.id == "__name__")
 
 
-def constantes_de_modulo(modulos=None):
-    """{(modulo, nome): (lineno, col_offset)} -- Assign/AnnAssign de Name simples
-    direto no corpo do MODULO, fora de `if __name__ == "__main__"`."""
-    out = {}
-    for f in (modulos or _modulos()):
-        for item in _arvore(f).body:
+def definicoes(raiz=AQUI):
+    """{rotulo: (arquivo, nome, (linha, coluna))}. Rotulo `arq.py:Classe.campo` para
+    campo de dataclass e `arq.py:NOME` para constante de modulo."""
+    out: dict[str, tuple[str, str, tuple[int, int]]] = {}
+    for f in _modulos(raiz):
+        arvore = _arvore(f, raiz)
+        for n in ast.walk(arvore):
+            if not isinstance(n, ast.ClassDef):
+                continue
+            if "dataclass" not in {d.id for d in n.decorator_list if isinstance(d, ast.Name)}:
+                continue
+            for item in n.body:
+                if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+                    alvo = item.target
+                    out[f"{f}:{n.name}.{alvo.id}"] = (f, alvo.id, (alvo.lineno, alvo.col_offset))
+        for item in arvore.body:
             if isinstance(item, ast.If) and _e_bloco_main(item):
                 continue
-            alvo = None
+            nome = None
             if isinstance(item, ast.Assign) and len(item.targets) == 1 \
                and isinstance(item.targets[0], ast.Name):
-                alvo = item.targets[0]
+                nome = item.targets[0]
             elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
-                alvo = item.target
-            if alvo is not None:
-                out[(f, alvo.id)] = (alvo.lineno, alvo.col_offset)
+                nome = item.target
+            if nome is not None:
+                out[f"{f}:{nome.id}"] = (f, nome.id, (nome.lineno, nome.col_offset))
     return out
 
 
-def _referencias(nome, modulos=None):
-    """Toda ocorrencia, em qualquer modulo de producao, onde `nome` aparece como
-    Attribute, keyword de chamada, Name solto, ou chave de Dict -- na ARVORE, nunca
-    em texto bruto. Devolve [(modulo, lineno, col_offset)]."""
-    out = []
-    for f in (modulos or _modulos()):
-        for n in ast.walk(_arvore(f)):
-            if isinstance(n, ast.Attribute) and n.attr == nome:
-                out.append((f, n.lineno, n.col_offset))
-            elif isinstance(n, ast.keyword) and n.arg == nome:
-                out.append((f, n.lineno, n.col_offset))
-            elif isinstance(n, ast.Name) and n.id == nome:
-                out.append((f, n.lineno, n.col_offset))
+def referencias(raiz=AQUI):
+    """{nome: {(arquivo, linha, coluna)}} -- toda aparicao executavel de um nome, na
+    ARVORE e nunca no texto, numa passada so por modulo."""
+    out: dict[str, set[tuple[str, int, int]]] = {}
+
+    def marca(nome, f, no):
+        out.setdefault(nome, set()).add((f, no.lineno, no.col_offset))
+
+    for f in _modulos(raiz):
+        for n in ast.walk(_arvore(f, raiz)):
+            if isinstance(n, ast.Attribute):
+                marca(n.attr, f, n)
+            elif isinstance(n, ast.keyword) and n.arg:
+                marca(n.arg, f, n)
+            elif isinstance(n, ast.Name):
+                marca(n.id, f, n)
             elif isinstance(n, ast.Dict):
-                for chave in n.keys:
-                    if isinstance(chave, ast.Constant) and chave.value == nome:
-                        out.append((f, chave.lineno, chave.col_offset))
+                for k in n.keys:
+                    if isinstance(k, ast.Constant) and isinstance(k.value, str):
+                        marca(k.value, f, k)
     return out
 
 
-def campos_nao_referenciados():
-    """(mortos_campo, mortos_const), cada item com a posicao da propria definicao
-    excluida da busca por referencia. Ordenado para saida estavel."""
-    mods = _modulos()
-    todas_as_refs = {}  # cache: nome -> [(modulo, lineno, col)]
-
-    def refs_de(nome):
-        if nome not in todas_as_refs:
-            todas_as_refs[nome] = _referencias(nome, mods)
-        return todas_as_refs[nome]
-
-    mortos_campo = []
-    for (f, classe, campo), pos_def in campos_de_dataclass(mods).items():
-        restantes = [r for r in refs_de(campo) if r != (f,) + pos_def]
-        if not restantes:
-            mortos_campo.append((f, classe, campo, pos_def[0]))
-
-    mortos_const = []
-    for (f, nome), pos_def in constantes_de_modulo(mods).items():
-        restantes = [r for r in refs_de(nome) if r != (f,) + pos_def]
-        if not restantes:
-            mortos_const.append((f, nome, pos_def[0]))
-
-    return sorted(mortos_campo), sorted(mortos_const)
-
-
-def relatorio():
-    campo, const = campos_nao_referenciados()
-    linhas = ["=" * 78, "CAMPOS DE DATACLASS SEM REFERENCIA ALEM DA PROPRIA DEFINICAO", "=" * 78]
-    for f, classe, campo_, ln in campo:
-        linhas.append(f"   {f}:{ln}  {classe}.{campo_}")
-    if not campo:
-        linhas.append("   (nenhum)")
-    linhas += ["", "=" * 78, "CONSTANTES DE MODULO SEM REFERENCIA ALEM DA PROPRIA DEFINICAO", "=" * 78]
-    for f, nome, ln in const:
-        linhas.append(f"   {f}:{ln}  {nome}")
-    if not const:
-        linhas.append("   (nenhuma)")
-    return "\n".join(linhas)
+def mortos(raiz=AQUI):
+    """Rotulos cuja UNICA aparicao executavel e a propria definicao. Ordenado."""
+    refs = referencias(raiz)
+    return sorted(rot for rot, (f, nome, pos) in definicoes(raiz).items()
+                  if not (refs.get(nome, set()) - {(f,) + pos}))
 
 
 if __name__ == "__main__":
-    print(relatorio())
+    lista = mortos()
+    print("=" * 78)
+    print(f"CAMPOS E CONSTANTES SEM REFERENCIA ALEM DA PROPRIA DEFINICAO: {len(lista)}")
+    print("=" * 78)
+    for rot in lista:
+        print(f"   {rot}")
+    print("\nInventario (com pendencia) em test_campos_mortos.py.")

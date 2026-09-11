@@ -391,7 +391,6 @@ DIVIDA_DE_COBERTURA = {
     "revisao.cadencia":                 "P-28",
     "revisao.mes":                      "P-28",
     "revisao.gatilhos_extraordinarios": "P-28",
-    "corretora.promocional":            "P-32",
     "corretora.cobertura_e_penalidade": "P-32",
     "corretora.fora_do_ranking":        "P-32",
     "sleeves.indexado":                 "P-34",

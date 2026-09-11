@@ -136,6 +136,17 @@ def test_promocional_tem_peso_zero_por_decisao_declarada():
     assert P["corretora"]["promocional"]["e_uma_decisao_nao_uma_omissao"] is True
 
 
+def test_promocional_diferente_de_zero_recusa_o_ranking():
+    """Auditoria de 10/09, 'campos mortos': `promocional` era declarado e nenhum modulo
+    o lia -- trocar o peso no YAML nao mudava nada. Agora e o padrao de `reclame_aqui`
+    e `facilidade`: sem dimensao em pontuar(), peso diferente de zero recusa."""
+    from corretoras import regras
+    P2 = copy.deepcopy(P)
+    P2["corretora"]["promocional"]["peso"] = -5
+    with pytest.raises(NotImplementedError, match="promocional"):
+        regras(P2)
+
+
 def test_custo_por_operacao_tem_detalhe_alem_da_acao_a_vista():
     """A critica do usuario sobre 'custos por operacao mais detalhados'. O caso que
     prova a necessidade: a XP cobra 0,50% em ETF e R$4,90 em acao — sao rotas de custo

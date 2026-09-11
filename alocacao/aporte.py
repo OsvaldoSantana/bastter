@@ -49,7 +49,6 @@ class Aporte:
     base: float                       # o piso: o que acontece no mes ruim
     extraordinario_tipico: float = 0.0   # tamanho tipico do bonus, quando vem
     extraordinarios_por_ano: float = 0.0 # quantos por ano, historicamente
-    status_do_variavel: str = "NAO_CONFIRMADO"
     nota: str = ""
 
     @property

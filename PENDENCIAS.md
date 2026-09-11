@@ -309,6 +309,10 @@ escrito, nunca aplicado), `cobertura_e_penalidade` e `nota_cobertura` (o código
 implementa a penalidade por dimensão ausente, mas com números próprios) e
 `fora_do_ranking`.
 
+**11/09/2026: `promocional` saiu desta lista.** O `regras()` agora recusa peso diferente
+de zero, no mesmo padrão de `reclame_aqui` e `facilidade`. Restam
+`cobertura_e_penalidade` e `fora_do_ranking`.
+
 ---
 
 ## P-34 · `sleeves` — seis chaves que o `sleeve.py` não lê
@@ -1225,6 +1229,49 @@ linha da F-03 em `## Fechadas` ganha a ressalva. Não mexi em nenhum dos dois re
 
 ---
 
+## P-77 · Meia P-13: o IR de ganho do FII está declarado e nenhum cálculo o aplica
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Claude. **Gatilho:** antes de qualquer rota
+com `aliquota_ganho` sair do bloqueio por insumo — hoje o FII está bloqueado, e é só
+por isso que o número não sai errado.
+
+Achado pela guarda de campos mortos (11/09). A P-13 trocou `isento_ir` por dois campos
+porque o FII não cabia num booleano: rendimento isento, **ganho tributado a 20%**
+(Lei 8.668/1993 art. 18). O catálogo preenche os dois, e três testes conferem o
+valor de `aliquota_ganho`. **Nenhuma linha de produção o lê.** `retorno_liquido_aa`
+calcula `ir = 0.0 if r.isento_ir else aliquota_ir_rf(...)`, e `isento_ir` devolve
+`isento_ir_rendimento` — para o FII, IR zero sobre tudo. É exatamente o *"True
+subestimava o imposto"* que o comentário da P-13 descreve como o erro que ela corrigiu.
+
+Inventariado em `test_campos_mortos.py`; o teste do inventário quebra no dia em que ele
+passar a ser lido, e a linha tem de sair.
+
+---
+
+## P-78 · Dado de pesquisa coletado e nunca consumido — oito campos de `Instituicao` e um utilitário
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo decide por campo; Claude executa.
+**Gatilho:** a próxima vez que `corretoras.py` for tocado.
+
+A guarda achou 10 além dos quatro da auditoria; um é a P-77. Os outros nove:
+
+- `bc_procedentes`, `bc_clientes` — o numerador e o denominador do `bc_indice`, que é o
+  que pontua. Guardar a origem de um número é procedência; a pergunta é se o lugar
+  dela é o dataclass ou o `instituicoes.yaml`.
+- `corretagem_fii`, `corretagem_etf_pct`, `exercicio_opcao_pct`, `mesa_minimo` — custo
+  por operação coletado e fora de `pontuar()`, que só usa `corretagem_rv`. O
+  `corretagem_etf_pct` é o 0,50% da XP em ETF: para quem compra ETF, é o custo que
+  mais importa, e o ranking não o vê.
+- `home_broker_web`, `exporta_csv` — a dimensão `facilidade`, que o `regras()` já
+  recusa pontuar em voz alta. Decisão tomada; o campo pode ficar como dado exibido.
+- `ambiente.PACOTE_PARA_IMPORT` — usado só pelo teste do P-15. **É ponto cego
+  declarado da guarda**, não defeito do código: uso só em teste conta como morto de
+  propósito (P-71), e para um utilitário isso pode ser rigor demais.
+
+Nada foi removido: o LIMITE do prompt era parar acima de cinco e mostrar a lista.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
@@ -1280,6 +1327,11 @@ linha da F-03 em `## Fechadas` ganha a ressalva. Não mexi em nenhum dos dois re
 | — | achado lateral: `Estado(**estado_io.carregar()[0])` nunca funcionou — `d` carregava `reserva_empenhada`/`meses_cobertos`, nenhum campo de `Estado` | 11/09 — os dois removidos de `d` (eram campo morto e formula duplicada; a validação de `reserva_empenhada` continua) |
 | — | achado lateral: `custo_entrada_fixo_pct` tratava `aporte==0` como custo infinito para toda rota, mesmo as de tarifa zero — zerava o universo e violava `_conferir_invariantes` | 11/09 — `r.corr_fix == 0` agora é custo zero para qualquer aporte; sem mudança para aporte>0 |
 | P-69 | `etf.IMAB11` duas vezes no `custos.yaml` — o PyYAML ficava com o placeholder `null` e a entrada de 05/09 estava morta (Y-01) | 11/09 — entradas **fundidas** (valor/fonte de 05/09, base legal e `bloqueia` da outra); `test_y01_yaml_duplicata.py` varre os seis YAML pela árvore de nós. A F-03 foi medida à mão com 0,25%, nunca por `val()` — não foi contaminada. Abriu a P-76 |
+| — | guarda de campos mortos do lado Python (auditoria de 10/09: o P-28 protegia só o YAML) | 11/09 — `campos_mortos.py` (AST; referência = `Attribute`, `keyword`, `Name` ou chave de `Dict`, só em produção) + `test_campos_mortos.py` com inventário que não apodrece e os pontos cegos declarados. Achou 10 além dos quatro — P-77 e P-78 |
+| — | `Aporte.status_do_variavel` | 11/09 — **removido**. Ninguém o preenchia e ninguém o lia: um status que parece gate e não é. A desconfiança do extraordinário já está no desenho (piso × extraordinário) |
+| — | `tese.DIFERIDOS_K` | 11/09 — **removido**. O G-01 nasceu do C02, que depende do juro travado na compra; o K02 não depende de compra. Diferir a tese selaria na impressão um texto vazio |
+| — | `estado_io.reserva_empenhada` | 11/09 — **usado**, como conferência: se declarado, tem de bater com `reserva_atual − reserva_disponivel`, no padrão de `reserva_por_rota`. O motor segue usando só `reserva_disponivel` |
+| — | `corretora.promocional` (P-32) | 11/09 — **usado**: `regras()` recusa peso ≠ 0, como faz com `reclame_aqui` e `facilidade` |
 
 ---
 
