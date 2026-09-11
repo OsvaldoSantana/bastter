@@ -626,7 +626,14 @@ A fila **mudou de primeiro lugar**, e a razão está no achado V-01 abaixo.*
    - `GetListedSupplementCompany` devolve uma **janela recente**, não a série completa —
      a PETR veio com 24 proventos, e o endpoint paginado
      (`GetListedCashDividends`) reportou **343** desde 2010. Os desdobramentos parecem ir
-     bem mais longe (BBAS com 18, BBDC com 10). **Falta a esteira do histórico longo.**
+     bem mais longe (BBAS com 18, BBDC com 10). **A esteira do histórico longo existe
+     desde 11/09** (`python fase0/coletar_b3.py --proventos-completos`, ⚙ desktop) e
+     **ainda não rodou**. Ela lê o `tradingName` do acervo de eventos, grava só histórico
+     que fecha a conta com o `totalRecords`, e acusa `totalRecords: 0` em vez de gravá-lo
+     como "empresa sem proventos". **O que esperar da primeira corrida:** o formato da
+     resposta nunca foi visto em primeira mão (a pesquisa é `PARCIAL`), e o `tradingName`
+     do suplemento tem 12 posições — `ITAUUNIBANCO` preenche todas, e pode estar truncado.
+     Se o endpoint exigir o nome inteiro, esse caso sai como `TOTAL-ZERO`, não como zero.
    - **MBRF sem evento nenhum** — achado A-03 acima.
 2. **Fase 0 da CVM — o prazo é SEMANAL, e são 6 arquivos, não 1,5 GB.** ⚙ **exige o
    desktop.** O `NAO_CONFIRMADO` **fechou em 06/09** pela própria CVM

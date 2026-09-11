@@ -1272,6 +1272,22 @@ Nada foi removido: o LIMITE do prompt era parar acima de cinco e mostrar a lista
 
 ---
 
+## P-79 · A normalização da resposta da B3 existe em três lugares
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Claude. **Gatilho:** a próxima vez que o
+caminho `--eventos` do `coletar_b3.py` precisar mudar por outro motivo.
+
+A esteira de proventos (11/09) precisou desembrulhar o acervo — string JSON contendo
+lista (A-00, A-02) — e ganhou `desembrulhar()`. A mesma regra já vivia **inline** em
+`coletar_eventos` e numa **cópia** em `test_coletar_b3.py` (`_normalizar`, com um teste
+que confere o fonte). Três implementações da mesma conta é a N-01 na forma canônica.
+
+Não unifiquei porque o LIMITE do prompt 5 proibia tocar o caminho `--eventos`: ele
+funciona, e o acervo que ele produz não se recupera. Quando ele for tocado por outro
+motivo, `coletar_eventos` passa a chamar `desembrulhar()` e o teste espelho morre.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |

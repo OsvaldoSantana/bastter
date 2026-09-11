@@ -29,6 +29,8 @@ USO
     python coletar_b3.py --eventos                 # usa o ultimo snapshot de indice
     python coletar_b3.py --eventos --tickers PETR4,VALE3,ITUB4
     python coletar_b3.py --indice IBOV --eventos   # a rotina diaria
+    python coletar_b3.py --proventos-completos     # historico longo; le o tradingName do acervo
+    python coletar_b3.py --proventos-completos --tickers PETR4,VALE3
 
 Sem dependencia de terceiro: so biblioteca padrao. Isso e deliberado -- este script NAO
 entra na impressao digital do ambiente (`ambiente.py`), porque ele nao produz numero
@@ -41,6 +43,9 @@ from datetime import datetime, timezone
 BASE = "https://sistemaswebb3-listados.b3.com.br"
 URL_INDICE = BASE + "/indexProxy/indexCall/GetPortfolioDay/{p}"
 URL_SUPLEMENTO = BASE + "/listedCompaniesProxy/CompanyCall/GetListedSupplementCompany/{p}"
+URL_PROVENTOS = BASE + "/listedCompaniesProxy/CompanyCall/GetListedCashDividends/{p}"
+TAMANHO_PAGINA = 99    # o do unico pedido observado (pesquisa 2.2); limite do servidor desconhecido
+MAX_PAGINAS = 100      # trava de laco: 9.900 proventos, ~30x o historico inteiro da PETR
 
 RAIZ_PADRAO = os.path.join("data", "bronze", "b3")
 PAUSA_S = 1.2          # cortesia com o servidor. Nao e otimizavel: e educacao.
@@ -293,6 +298,203 @@ def coletar_eventos(raiz, tickers, dia, forcar):
     return 1 if (vazias or erros or fora_do_formato or sem_evento_nenhum) else 0
 
 
+# ------------------------------------------------- proventos: o historico longo
+#
+# O suplemento devolve uma JANELA recente (24 proventos da PETR em 11/09); o historico
+# desde 2010 (343, segundo a pesquisa) vem de GetListedCashDividends, paginado. A chave
+# e o `tradingName` -- TEXTO, nao o codigo de 4 letras -- e ele sai do acervo de eventos
+# que JA existe. Montar a partir do ticker seria o A-01 outra vez.
+#
+# FORMATO NAO OBSERVADO EM PRIMEIRA MAO. A pesquisa marca este endpoint PARCIAL. O
+# envelope `page`/`results` que o parser exige e o do GetPortfolioDay (mesmo proxy,
+# gravado no acervo), nao um byte deste endpoint. Por isso nada e presumido: resposta
+# sem `page.totalRecords` e gravada como evidencia e ACUSADA -- a regra do A-02.
+#
+# `desembrulhar` repete a normalizacao inline de `coletar_eventos`. Unificar exigiria
+# tocar o caminho --eventos, que funciona e cujo acervo nao se recupera; a duplicacao
+# esta registrada em PENDENCIAS.md.
+
+class PaginacaoInvalida(Exception):
+    """A paginacao nao se sustenta. Nada e gravado como se estivesse completo.
+    `tipo`: TOTAL-ZERO, FORA-DO-FORMATO, LACO ou INCOMPLETO. `bruto`: a resposta que
+    provou o defeito, quando ha uma -- e evidencia, e vai para o acervo com o tipo."""
+
+    def __init__(self, motivo, tipo, bruto=None):
+        super().__init__(motivo)
+        self.tipo, self.bruto = tipo, bruto
+
+
+def desembrulhar(texto):
+    """O acervo real vem duplamente codificado (A-00) e em lista (A-02)."""
+    dados = json.loads(texto)
+    if isinstance(dados, str):
+        try:
+            dados = json.loads(dados)
+        except json.JSONDecodeError:
+            return dados
+    if isinstance(dados, list):
+        so_dicts = [x for x in dados if isinstance(x, dict)]
+        if so_dicts:
+            return so_dicts[0]
+    return dados
+
+
+def trading_names(raiz, dia=None):
+    """(dia_usado, {emissora: tradingName}, [emissoras sem nome]) a partir do acervo de
+    eventos -- da captura `dia`, ou da mais recente.
+
+    O campo vem PREENCHIDO a 12 posicoes ('PETROBRAS   '), e o unico pedido observado
+    funcionando usou 'PETROBRAS'. O espaco a direita sai; nada mais e mexido."""
+    base = os.path.join(raiz, "eventos")
+    if not os.path.isdir(base):
+        return None, {}, []
+    dias = sorted(d for d in os.listdir(base) if d.startswith("dt_captura="))
+    if dia:
+        dias = [d for d in dias if d == "dt_captura=" + dia]
+    if not dias:
+        return None, {}, []
+    pasta = os.path.join(base, dias[-1])
+    nomes, sem_nome = {}, []
+    for arq in sorted(os.listdir(pasta)):
+        if not arq.endswith(".json") or "NAO-E-OBJETO" in arq:
+            continue
+        with open(os.path.join(pasta, arq), encoding="utf-8") as f:
+            d = desembrulhar(f.read())
+        nome = (d.get("tradingName") or "").strip() if isinstance(d, dict) else ""
+        if nome:
+            nomes[arq[:-len(".json")]] = nome
+        else:
+            sem_nome.append(arq[:-len(".json")])
+    return dias[-1][len("dt_captura="):], nomes, sem_nome
+
+
+def paginar(trading_name, buscar_fn=None, pausa=PAUSA_S, tamanho=TAMANHO_PAGINA,
+            max_paginas=MAX_PAGINAS):
+    """Percorre as paginas ate o fim. Devolve (paginas, total), com `paginas` uma lista
+    de (url, texto BRUTO, registros). Levanta PaginacaoInvalida em vez de devolver meio
+    historico com cara de historico inteiro.
+
+    Laco sobre endpoint sem contrato tem tres jeitos de mentir, e cada um tem trava:
+      fim declarado    para em `page.totalPages`, ou no teto de totalRecords/tamanho;
+      pagina repetida  o mesmo conteudo duas vezes e servidor ignorando pageNumber;
+      teto duro        `max_paginas`, mesmo que o servidor diga que ha mais."""
+    buscar_fn = buscar_fn or buscar
+    paginas, vistas, total, n = [], set(), None, 1
+    while True:
+        if n > max_paginas:
+            raise PaginacaoInvalida("passou de %d paginas sem chegar ao fim" % max_paginas,
+                                    "LACO")
+        url = URL_PROVENTOS.format(p=carga({"language": "pt-br", "pageNumber": n,
+                                             "pageSize": tamanho, "tradingName": trading_name}))
+        texto, _ = buscar_fn(url)
+        d = desembrulhar(texto)
+        pagina = d.get("page") if isinstance(d, dict) else None
+        if not isinstance(pagina, dict) or "totalRecords" not in pagina \
+           or not isinstance(d.get("results"), list):
+            raise PaginacaoInvalida("pagina %d fora do envelope page/results" % n,
+                                    "FORA-DO-FORMATO", texto)
+        if total is None:
+            total = pagina["totalRecords"]
+        elif pagina["totalRecords"] != total:
+            raise PaginacaoInvalida("totalRecords mudou no meio: %s -> %s"
+                                    % (total, pagina["totalRecords"]), "INCOMPLETO", texto)
+        if total == 0:
+            # A armadilha que a pesquisa observou: tradingName errado devolve 0 com HTTP
+            # 200. Gravar isso como "empresa sem proventos" e o F-02 -- ausencia de dado
+            # virando dado. E o A-01 num campo novo.
+            raise PaginacaoInvalida("totalRecords 0 -- quase sempre tradingName que o "
+                                    "endpoint nao reconhece", "TOTAL-ZERO", texto)
+        assinatura = sha256(json.dumps(d["results"], sort_keys=True))
+        if assinatura in vistas:
+            raise PaginacaoInvalida("pagina %d repete uma anterior -- o servidor ignora "
+                                    "pageNumber" % n, "LACO", texto)
+        vistas.add(assinatura)
+        paginas.append((url, texto, len(d["results"])))
+        if n >= (pagina.get("totalPages") or -(-total // tamanho)):
+            break
+        if not d["results"]:
+            raise PaginacaoInvalida("pagina %d veio vazia antes do fim declarado" % n,
+                                    "INCOMPLETO", texto)
+        n += 1
+        time.sleep(pausa)
+    obtidos = sum(k for _, _, k in paginas)
+    if obtidos != total:
+        raise PaginacaoInvalida("vieram %d de %d registros declarados" % (obtidos, total),
+                                "INCOMPLETO")
+    return paginas, total
+
+
+def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None,
+                      pausa=PAUSA_S):
+    """Uma pasta por emissora, uma pagina bruta por arquivo, em
+    `proventos/dt_captura=DIA/EMISSORA/pagina-NNN.json`. So se grava historico que
+    FECHOU a conta com o totalRecords; o resto vira evidencia `EMISSORA.TIPO.json`."""
+    usado, nomes, sem_nome = trading_names(raiz, de_captura)
+    if not nomes:
+        print("Nao ha acervo de eventos com tradingName em %s. Rode antes:\n"
+              "    python coletar_b3.py --eventos" % os.path.abspath(raiz), file=sys.stderr)
+        return 2
+    pedidas = sorted(set(emissoras)) if emissoras else sorted(nomes)
+    fora = [e for e in pedidas if e not in nomes]
+    alvos = [e for e in pedidas if e in nomes]
+    print("tradingName lido do acervo de eventos dt_captura=%s (%d emissoras)\n"
+          % (usado, len(nomes)))
+    pasta = os.path.join(raiz, "proventos", "dt_captura=" + dia)
+    falhas, completas, ja = [], 0, 0
+
+    for i, em in enumerate(alvos, 1):
+        nome, destino = nomes[em], os.path.join(pasta, em)
+        if os.path.isdir(destino):
+            # Sem --forcar aqui de proposito: regravar paginas por cima deixaria sobra de
+            # uma coleta mais longa. Recoletar o mesmo dia e apagar a pasta a mao.
+            ja += 1
+            print("  %3d/%d  %-5s  ja existe -- o acervo do dia e imutavel" % (i, len(alvos), em))
+            continue
+        try:
+            paginas, total = paginar(nome, buscar_fn, pausa)
+        except PaginacaoInvalida as e:
+            if e.bruto is not None:
+                gravar(os.path.join(pasta, "%s.%s.json" % (em, e.tipo)), e.bruto, False)
+            falhas.append((em, nome, e.tipo, str(e)))
+            print("  %3d/%d  %-5s  %-14s %s: %s" % (i, len(alvos), em, nome[:14], e.tipo, e))
+            continue
+        except RuntimeError as e:
+            falhas.append((em, nome, "REDE", str(e)[:120]))
+            print("  %3d/%d  %-5s  ERRO DE REDE: %s" % (i, len(alvos), em, str(e)[:60]))
+            continue
+        shas = []
+        for k, (_url, texto, _n) in enumerate(paginas, 1):
+            gravar(os.path.join(destino, "pagina-%03d.json" % k), texto, False)
+            shas.append(sha256(texto))
+        anotar_manifesto(raiz, {
+            "capturado_em": agora_iso(), "tipo": "proventos_completos", "emissora": em,
+            "trading_name": nome, "trading_name_de": "eventos/dt_captura=%s" % usado,
+            "pasta": destino, "paginas": len(paginas), "total_registros": total,
+            "sha256_paginas": shas, "url_primeira_pagina": paginas[0][0],
+        })
+        completas += 1
+        print("  %3d/%d  %-5s  %-14s %4d registros em %d pagina(s)"
+              % (i, len(alvos), em, nome[:14], total, len(paginas)))
+        time.sleep(pausa)
+
+    print("\n%d completas, %d ja existiam, %d falharam." % (completas, ja, len(falhas)))
+    if falhas:
+        print("\nFALHARAM -- nada disto foi gravado como historico. A resposta que provou\n"
+              "o defeito, quando havia uma, esta em <EMISSORA>.<TIPO>.json:")
+        for em, nome, tipo, msg in falhas:
+            print("  %-5s  %-14s %-16s %s" % (em, nome[:14], tipo, msg[:70]))
+        if any(t == "TOTAL-ZERO" for _, _, t, _ in falhas):
+            print("\nTOTAL-ZERO NAO e 'empresa sem proventos'. E quase sempre o tradingName\n"
+                  "que o endpoint nao reconhece -- o campo do suplemento tem 12 posicoes e\n"
+                  "pode estar truncado. Mesma armadilha do A-01, num campo novo.")
+    if fora:
+        print("\npedidas e ausentes do acervo de eventos (sem tradingName para usar): "
+              + ", ".join(fora))
+    if sem_nome:
+        print("\nsem tradingName no acervo de eventos: " + ", ".join(sem_nome))
+    return 1 if (falhas or fora or sem_nome) else 0
+
+
 # ---------------------------------------------------------------------- main
 
 def main(argv=None):
@@ -302,7 +504,21 @@ def main(argv=None):
     p.add_argument("--eventos", action="store_true", help="captura eventos societarios")
     p.add_argument("--tickers", help="lista separada por virgula; sem isso usa o ultimo snapshot de indice")
     p.add_argument("--forcar", action="store_true", help="reescreve snapshot ja existente do mesmo dia")
+    p.add_argument("--proventos-completos", action="store_true",
+                   help="historico longo de proventos (paginado); le o tradingName do acervo de eventos")
+    p.add_argument("--de-captura", metavar="AAAA-MM-DD",
+                   help="com --proventos-completos: captura de eventos de onde ler o tradingName")
     a = p.parse_args(argv)
+
+    if a.proventos_completos:
+        if a.indice or a.eventos:
+            p.error("--proventos-completos roda sozinho: ele le o tradingName do acervo de "
+                    "eventos que JA existe, e misturar os passos esconderia de qual captura")
+        dia = hoje()
+        print("acervo: %s    dt_captura=%s\n" % (os.path.abspath(a.raiz), dia))
+        emissoras = ([empresa_de(t) for t in a.tickers.split(",") if t.strip()]
+                     if a.tickers else None)
+        return coletar_proventos(a.raiz, dia, emissoras=emissoras, de_captura=a.de_captura)
 
     if not a.indice and not a.eventos:
         p.error("escolha ao menos --indice ou --eventos")

@@ -209,5 +209,136 @@ def test_acervo_A03_emissora_sem_evento_nenhum_e_acusada():
         "coleta, nao troca de codigo pontual: %s" % sem_nada)
 
 
+# ──────────────────────────── proventos completos: paginacao, sem rede nenhuma
+
+def _pagina(n, total, por_pagina, total_paginas=None, dupla=False):
+    """Resposta sintetica no envelope page/results -- o do GetPortfolioDay, que e o
+    unico envelope deste proxy observado em primeira mao."""
+    ini = (n - 1) * por_pagina
+    res = [{"lastDatePrior": "d%03d" % k, "rate": "0,1"}
+           for k in range(ini, min(ini + por_pagina, total))]
+    page = {"pageNumber": n, "pageSize": por_pagina, "totalRecords": total}
+    if total_paginas is not None:
+        page["totalPages"] = total_paginas
+    texto = json.dumps({"page": page, "results": res})
+    return json.dumps(texto) if dupla else texto
+
+
+class _B3Falsa:
+    """Faz o papel de `buscar`: decodifica o pedido do caminho e registra cada um."""
+
+    def __init__(self, responder):
+        self.responder, self.pedidos = responder, []
+
+    def __call__(self, url):
+        pedido = json.loads(base64.b64decode(url.split("GetListedCashDividends/", 1)[1]))
+        self.pedidos.append(pedido)
+        return self.responder(pedido), {}
+
+
+def _acervo_eventos(raiz, nomes, dia="2026-09-11"):
+    """Acervo de eventos no formato REAL de 11/09: string JSON contendo uma lista."""
+    pasta = os.path.join(raiz, "eventos", "dt_captura=" + dia)
+    os.makedirs(pasta)
+    for em, tn in nomes.items():
+        corpo = json.dumps([{"code": em, "tradingName": tn, "cashDividends": []}])
+        with open(os.path.join(pasta, em + ".json"), "w", encoding="utf-8") as f:
+            f.write(json.dumps(corpo))
+
+
+def test_paginacao_para_no_fim_declarado():
+    b3 = _B3Falsa(lambda p: _pagina(p["pageNumber"], 250, 99, total_paginas=3, dupla=True))
+    paginas, total = c.paginar("PETROBRAS", b3, pausa=0)
+    assert total == 250 and [k for _, _, k in paginas] == [99, 99, 52]
+    assert [p["pageNumber"] for p in b3.pedidos] == [1, 2, 3], "nem uma pagina a mais"
+    assert {p["tradingName"] for p in b3.pedidos} == {"PETROBRAS"}
+
+
+def test_paginacao_sem_totalPages_para_pelo_totalRecords():
+    b3 = _B3Falsa(lambda p: _pagina(p["pageNumber"], 250, 99))
+    _, total = c.paginar("PETROBRAS", b3, pausa=0)
+    assert total == 250 and len(b3.pedidos) == 3
+
+
+def test_paginacao_nao_entra_em_laco_quando_o_servidor_ignora_pageNumber():
+    """Servidor que devolve sempre a pagina 1 com `totalPages: 3`: sem a trava de pagina
+    repetida, o coletor gravaria 3 copias da mesma coisa como se fossem 297 registros."""
+    b3 = _B3Falsa(lambda p: _pagina(1, 250, 99, total_paginas=3))
+    with pytest.raises(c.PaginacaoInvalida) as e:
+        c.paginar("PETROBRAS", b3, pausa=0)
+    assert e.value.tipo == "LACO" and len(b3.pedidos) == 2
+
+
+def test_paginacao_tem_teto_duro():
+    """Servidor que promete paginas sem fim, cada uma diferente: para no teto."""
+    b3 = _B3Falsa(lambda p: _pagina(p["pageNumber"], 10**6, 99, total_paginas=10**6))
+    with pytest.raises(c.PaginacaoInvalida) as e:
+        c.paginar("PETROBRAS", b3, pausa=0, max_paginas=5)
+    assert e.value.tipo == "LACO" and len(b3.pedidos) == 5
+
+
+def test_servidor_que_corta_o_tamanho_da_pagina_nao_vira_historico_completo():
+    """totalRecords 250, mas o servidor so entrega 50 por pagina e diz 3 paginas: vieram
+    150. Meio historico gravado como inteiro e pior que nenhum."""
+    b3 = _B3Falsa(lambda p: _pagina(p["pageNumber"], 250, 50, total_paginas=3))
+    with pytest.raises(c.PaginacaoInvalida) as e:
+        c.paginar("PETROBRAS", b3, pausa=0)
+    assert e.value.tipo == "INCOMPLETO"
+
+
+def test_resposta_fora_do_envelope_e_acusada():
+    for bruto in ('[]', '"erro"', json.dumps({"results": []}), json.dumps({"page": {}})):
+        with pytest.raises(c.PaginacaoInvalida) as e:
+            c.paginar("PETROBRAS", _B3Falsa(lambda p, b=bruto: b), pausa=0)
+        assert e.value.tipo == "FORA-DO-FORMATO", bruto
+
+
+def test_trading_name_vem_do_acervo_sem_o_preenchimento_e_nunca_do_ticker(tmp_path):
+    """O campo do suplemento tem 12 posicoes ('PETROBRAS   '). O pedido tem de levar o
+    TEXTO do acervo, sem o espaco -- nunca 'PETR', que e o A-01 num campo novo."""
+    _acervo_eventos(str(tmp_path), {"PETR": "PETROBRAS   "})
+    b3 = _B3Falsa(lambda p: _pagina(p["pageNumber"], 3, 99, total_paginas=1))
+    assert c.coletar_proventos(str(tmp_path), "2026-09-12", buscar_fn=b3, pausa=0) == 0
+    assert b3.pedidos[0]["tradingName"] == "PETROBRAS"
+
+
+def test_total_zero_e_acusado_e_nao_gravado_como_empresa_sem_proventos(tmp_path):
+    """A armadilha que a pesquisa observou: tradingName errado devolve totalRecords 0
+    com HTTP 200. Gravado como historico, viraria 'empresa sem proventos' -- o F-02."""
+    raiz = str(tmp_path)
+    _acervo_eventos(raiz, {"PETR": "PETROBRAS   "})
+    b3 = _B3Falsa(lambda p: _pagina(1, 0, 99, total_paginas=0))
+    assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 1
+    pasta = os.path.join(raiz, "proventos", "dt_captura=2026-09-12")
+    assert not os.path.isdir(os.path.join(pasta, "PETR")), "zero virou historico"
+    assert os.path.exists(os.path.join(pasta, "PETR.TOTAL-ZERO.json")), "a evidencia sumiu"
+    manif = os.path.join(raiz, "manifesto.jsonl")
+    assert not os.path.exists(manif) or "proventos_completos" not in open(manif).read()
+
+
+def test_historico_completo_grava_uma_pagina_por_arquivo_com_sha(tmp_path):
+    raiz = str(tmp_path)
+    _acervo_eventos(raiz, {"PETR": "PETROBRAS   "})
+    b3 = _B3Falsa(lambda p: _pagina(p["pageNumber"], 250, 99, total_paginas=3))
+    assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 0
+    pasta = os.path.join(raiz, "proventos", "dt_captura=2026-09-12", "PETR")
+    assert sorted(os.listdir(pasta)) == ["pagina-001.json", "pagina-002.json", "pagina-003.json"]
+    reg = json.loads(open(os.path.join(raiz, "manifesto.jsonl")).read().strip().split("\n")[-1])
+    assert reg["tipo"] == "proventos_completos" and reg["total_registros"] == 250
+    assert len(reg["sha256_paginas"]) == 3 and reg["trading_name"] == "PETROBRAS"
+    # e o acervo do dia e imutavel: segunda corrida nao pede nada nem regrava
+    antes = len(b3.pedidos)
+    c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0)
+    assert len(b3.pedidos) == antes
+
+
+def test_proventos_completos_nao_se_mistura_com_eventos():
+    """O caminho --eventos funciona e o acervo dele nao se recupera: o passo novo roda
+    sozinho, lendo o que ja existe."""
+    with pytest.raises(SystemExit) as e:
+        c.main(["--proventos-completos", "--eventos"])
+    assert e.value.code == 2
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
