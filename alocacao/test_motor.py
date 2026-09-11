@@ -175,3 +175,23 @@ def test_P70_val_fica_em_silencio_antes_da_expiracao(capsys):
     assert r == 1.0
     err = capsys.readouterr().err
     assert err == ""
+
+def test_P70_toda_expira_e_data_e_nunca_texto():
+    """P-70, segunda metade (11/09/2026). Destravar `HOJE` nao bastava: `val()` so avisa
+    quando `expira` e `dt.date`, e `expira: '2026-12-04'` ENTRE ASPAS carrega como texto
+    -- o aviso fica mudo sem erro nenhum. Eram quatro, e duas eram `cdi_aa` e `selic_aa`,
+    as constantes que o CLAUDE.md cita como prova de que o mecanismo funciona: foram
+    reconferidas em 05/09 e a data nova foi escrita com aspas. Medido no tipo CARREGADO,
+    porque o defeito so existe depois do `safe_load`."""
+    texto = []
+    def anda(d, p=""):
+        if isinstance(d, dict):
+            if "valor" in d:
+                e = d.get("expira")
+                if e is not None and not isinstance(e, dt.date):
+                    texto.append(f"{p.lstrip('.')} = {e!r}")
+                return
+            for k, v in d.items(): anda(v, f"{p}.{k}")
+    anda(carregar())
+    assert not texto, ("`expira` que nao e data -- val() nunca avisa nestas. Tire as "
+                       "aspas (AAAA-MM-DD sem aspas e data em YAML): " + "; ".join(texto))

@@ -30,7 +30,7 @@ macro:
     status: COMPLETO
     fonte: BCB/SGS 4389
     acesso: '2026-09-05'
-    expira: '2026-12-04'
+    expira: 2026-12-04
     nota: 'reconferido em 05/09/2026: 13,90 em 03/09/2026, valor inalterado desde 28/08. Nao
       era numero errado, era prazo vencido.'
   selic_aa:
@@ -38,7 +38,7 @@ macro:
     status: COMPLETO
     fonte: BCB/SGS 432 (meta Copom)
     acesso: '2026-09-05'
-    expira: '2026-12-04'
+    expira: 2026-12-04
     nota: 'reconferido em 05/09/2026: meta de 14,00 vigente.'
   poupanca_am: {valor: 0.006455, status: COMPLETO, fonte: "BCB/SGS 25",   acesso: 2026-08-28, expira: 2026-09-28}
 
@@ -186,7 +186,7 @@ etf:
     status: PARCIAL
     fonte: itnow.com.br/imab11/caracteristicas — pagina do gestor (Itau Asset), 05/09/2026
     acesso: '2026-09-05'
-    expira: '2027-09-05'
+    expira: 2027-09-05
     bloqueia:
     - comparacao_definitiva_imab11_vs_td_ipca
     - rota_etf_renda_fixa_protecao_real
@@ -329,7 +329,7 @@ cofrinho:
       custa R$1.200/ano para economizar R$287,88 — gastar para poupar.'
     fonte: relato do usuario em 05/09/2026
     acesso: '2026-09-05'
-    expira: '2026-10-05'
+    expira: 2026-10-05
     achado_K03_a_isencao_nao_e_gratuita: 'A mensalidade de R$23,99 nao foi DISPENSADA — foi
       paga em outra moeda. Gasto no cartao alimenta a fatura que prende o cofrinho, e a chave
       Pix e tornar o PicPay o banco principal. Os R$287,88/ano da conta do K-01 sao o PISO do
