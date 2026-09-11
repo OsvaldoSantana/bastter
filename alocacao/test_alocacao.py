@@ -4,7 +4,7 @@
 Cada achado das auditorias de 02 e 03/09/2026 tem pelo menos um teste que FALHA na
 versao anterior e passa nesta. O docstring de cada um nomeia o achado.
 """
-import os, sys, re, ast, math, copy, dataclasses, datetime as dt
+import os, sys, re, ast, math, copy, dataclasses, datetime as dt, types
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pytest
 from motor import carregar as carregar_custos, val
@@ -16,7 +16,8 @@ from alocacao import (simular_custo as al_simular, Estado, Divida, Objetivo,
                       motor_aporte, vencimento_maximo, AQUI, g2_reserva,
                       compor_reserva, segmentos_de_capacidade, InsumoBloqueado,
                       carregar_catalogo, _resolve, _conferir_invariantes,
-                      fase_aporte, fase_universo, distribuir_por_funcao)
+                      fase_aporte, fase_universo, distribuir_por_funcao,
+                      custo_entrada_fixo_pct)
 from tese import validar_tese, validar_carrego, impressao, impressao_carrego
 import ambiente
 
@@ -574,6 +575,22 @@ def test_rota_com_custo_percentual_nao_volta_com_aporte_maior():
         d = {r.id: (m, reent) for r, e, m, reent in fora}
         for rid in ("ext_avenue", "ext_nomad1", "ext_conta"):
             assert d[rid][0] == "PERCENTUAL" and d[rid][1] is None
+
+
+def test_custo_entrada_fixo_pct_zero_aporte_nao_inflaciona_rota_gratuita():
+    """Achado lateral do P-71/P-72 (11/09/2026). `aporte_mensal=0` passou a ser
+    estado legitimo (P-72), e isso expos que `custo_entrada_fixo_pct` tratava
+    aporte==0 como custo INFINITO para QUALQUER rota — inclusive as de tarifa
+    fixa zero. Estourava o universo inteiro e `_conferir_invariantes` recusava
+    pesos somando 0 em vez de 1. Uma rota sem tarifa fixa e gratis para qualquer
+    aporte, aporte==0 incluso; uma rota com tarifa continua math.inf a aporte 0 —
+    esse caso nao muda em relacao ao comportamento anterior."""
+    gratis = types.SimpleNamespace(corr_fix=0.0)
+    cobra = types.SimpleNamespace(corr_fix=4.50)
+    assert custo_entrada_fixo_pct(gratis, 0) == 0.0
+    assert custo_entrada_fixo_pct(gratis, 500) == 0.0
+    assert custo_entrada_fixo_pct(cobra, 0) == math.inf
+    assert custo_entrada_fixo_pct(cobra, 500) == pytest.approx(4.50/500)
 
 
 # ══ A-05 · G1 liquido contra liquido ═════════════════════════════════════════
@@ -1315,12 +1332,17 @@ def test_ausencia_de_informacao_nao_vira_empenho_presumido():
 def test_estado_real_nao_tem_mais_reserva_empenhada_a_denunciar():
     """O aviso de empenho continua no motor e vale para quem empenhar reserva de
     verdade. O estado dele deixou de dispara-lo porque a reserva virou 0,00 e o
-    deposito saiu do campo — o modelo certo era mais simples que o meu."""
+    deposito saiu do campo — o modelo certo era mais simples que o meu.
+
+    P-71, achado lateral: `dados["meses_cobertos"]` nao existe mais (duplicava a
+    property de `Estado`, e quebrava `Estado(**dados)` — o proprio caminho que este
+    teste agora exercita, em vez de ler uma segunda formula da mesma conta)."""
     import yaml as _y, estado_io
     d = _y.safe_load(open(os.path.join(AQUI, "estado.yaml"), encoding="utf-8"))
     dados, problemas, _av = estado_io.validar(d)
     assert not any("RESERVA EMPENHADA" in p for p in problemas)
-    assert dados["reserva_atual"] == 0.0 and dados["meses_cobertos"] == 0.0
+    assert dados["reserva_atual"] == 0.0
+    assert Estado(**dados).meses_cobertos == 0.0
 
 def test_o_aviso_de_empenho_continua_funcionando_para_quem_empenhar():
     """A maquinaria nao virou codigo morto: ela so nao e exercitada pelo estado dele."""

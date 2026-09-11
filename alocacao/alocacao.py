@@ -416,8 +416,18 @@ def catalogo(C, path=None):
 
 # ══ CUSTO ════════════════════════════════════════════════════════════════════
 def custo_entrada_fixo_pct(r, aporte):
-    """Parte do custo de entrada que DILUI com o aporte."""
-    return (r.corr_fix/aporte if aporte else math.inf)
+    """Parte do custo de entrada que DILUI com o aporte.
+
+    Achado lateral do P-71/P-72 (11/09/2026), encontrado escrevendo o teste que prova
+    o pipeline inteiro com `aporte_mensal=0` — estado que a P-72 passou a permitir.
+    `r.corr_fix == 0` e custo zero para QUALQUER aporte, aporte==0 incluso: uma rota
+    sem tarifa fixa nao fica infinitamente cara so porque nao ha aporte este mes. A
+    versao anterior tratava aporte==0 como `math.inf` incondicional — isso reprovava
+    TODA rota no G3 (inclusive as de tarifa zero) e `_conferir_invariantes` recusava
+    pesos somando 0 em vez de 1. Para aporte>0 o resultado e identico ao de antes."""
+    if r.corr_fix == 0:
+        return 0.0
+    return r.corr_fix/aporte if aporte else math.inf
 
 def custo_entrada_percentual(r, B3V):
     """Parte do custo de entrada que NAO dilui com aporte nenhum. Achado A-02."""

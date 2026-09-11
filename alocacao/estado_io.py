@@ -14,10 +14,15 @@ Mesmo desenho do validador de tese: devolve TODOS os problemas de uma vez, separ
 o que bloqueia do que e aviso, e nao inventa valor nenhum.
 """
 from __future__ import annotations
-import os, re, datetime as dt
+import os, re, sys, datetime as dt
 import yaml
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, AQUI)
+# P-71: sem ciclo de import. `alocacao.py` NAO importa `estado_io` (conferido antes
+# desta linha existir) -- so o inverso seria um problema, e o inverso nao acontece.
+from alocacao import Divida, Objetivo
+
 NUMERICOS = ("despesa_mensal", "reserva_atual", "aporte_mensal", "caixa", "horizonte_anos")
 
 class EstadoInvalido(Exception):
@@ -72,8 +77,13 @@ def validar(doc, P=None, hoje=None):
                     f"reserva_por_rota soma {soma:.2f} e reserva_atual diz {nom0:.2f}. "
                     f"Sao duas medidas do mesmo saldo e elas discordam — o sistema nao "
                     f"escolhe entre as duas por voce")
-    d["dividas"] = doc.get("dividas") or []
-    d["objetivos"] = doc.get("objetivos") or []
+    # P-71: ate 11/09/2026 estes dois viravam LISTA DE DICT, e todo consumidor real
+    # (g1_divida: `d.taxa_am`; necessidade_datada: `o.prazo_anos`) espera dataclass.
+    # Nao estourava porque nenhum teste carregava um estado pelo caminho real -- as
+    # duas listas do estado.yaml de producao estao vazias. Convertido aqui, na UNICA
+    # porta de entrada, para que quem chama `Estado(**d)` receba o contrato certo.
+    d["dividas"] = [Divida(**x) for x in (doc.get("dividas") or [])]
+    d["objetivos"] = [Objetivo(**x) for x in (doc.get("objetivos") or [])]
 
     meta = doc.get("meta") or {}
     if meta.get("status") != "REAL":
@@ -99,8 +109,16 @@ def validar(doc, P=None, hoje=None):
     d["reserva_disponivel"] = _num(doc.get("reserva_disponivel"), "reserva_disponivel",
                                    problemas) if doc.get("reserva_disponivel") is not None \
                               else d.get("reserva_atual")
-    d["reserva_empenhada"] = _num(doc.get("reserva_empenhada"), "reserva_empenhada",
-                                  problemas) if doc.get("reserva_empenhada") is not None else 0.0
+    # P-71, achado lateral: `reserva_empenhada` era guardado em `d` e NUNCA lido — nem
+    # no calculo abaixo (que usa `nom`/`disp`, nao esta chave) nem por nenhum
+    # consumidor (a auditoria externa de 10/09 ja apontava como "campo morto, 4a
+    # ocorrencia", AUDITORIA-DEEPSEEK-CONFERIDA.md). E tambem NAO e campo de `Estado`
+    # — guardar em `d` quebrava `Estado(**d)` com `TypeError: unexpected keyword
+    # argument 'reserva_empenhada'`, que e exatamente o que a porta de entrada real
+    # nunca exercitou. A validacao do preenchimento continua; so o valor parou de
+    # ser armazenado sem uso.
+    if doc.get("reserva_empenhada") is not None:
+        _num(doc.get("reserva_empenhada"), "reserva_empenhada", problemas)
     nom, disp = d.get("reserva_atual"), d.get("reserva_disponivel")
     if nom is not None and disp is not None and disp < nom - 1e-9:
         desp = d.get("despesa_mensal") or 0
@@ -116,17 +134,28 @@ def validar(doc, P=None, hoje=None):
         problemas.append(f"estabilidade_renda = {d['estabilidade_renda']!r}: "
                          f"use alta, media ou baixa")
 
-    if d["aporte_mensal"] is not None and d["aporte_mensal"] <= 0:
+    # P-72 (11/09/2026): aporte_mensal == 0 bloqueava o carregamento inteiro, o que
+    # contradiz a U-01 -- um cliente novo que ainda nao guarda nada e um ESTADO, nao
+    # um erro de preenchimento. So o NEGATIVO continua impossivel (bloqueia).
+    if d["aporte_mensal"] is not None and d["aporte_mensal"] < 0:
         problemas.append(
-            "aporte_mensal = 0. Este e o unico campo do arquivo que, sozinho, deixa o "
-            "sistema inteiro inerte: sem aporte nao ha reserva a formar, nao ha alocacao "
-            "a executar e nenhum portao tem o que decidir. Se o valor for real, a questao "
-            "do projeto deixa de ser 'onde aportar' e passa a ser 'de onde sai o aporte'. "
-            "Se foi deixado em branco, e o campo mais importante a preencher")
+            f"aporte_mensal = {d['aporte_mensal']:.2f}: negativo nao existe. Corrija "
+            f"o arquivo")
+    elif d["aporte_mensal"] == 0:
+        avisos.append(
+            "aporte_mensal = 0. Sem aporte nao ha reserva a formar nem alocacao a "
+            "executar, e nenhum portao que decide 'quanto' tem o que fazer -- mas isto "
+            "e o estado de um cliente que ainda nao guarda nada, e o sistema responde "
+            "mesmo assim (achado U-01). Se o valor for real, a questao do projeto "
+            "deixa de ser 'onde aportar' e passa a ser 'de onde sai o aporte'. Se foi "
+            "deixado em branco, e o campo mais importante a preencher")
 
     if d["despesa_mensal"] and d["reserva_atual"] is not None:
+        # P-71, mesmo achado lateral: `d["meses_cobertos"]` tambem quebrava
+        # `Estado(**d)` -- `Estado.meses_cobertos` ja e uma property calculada da
+        # reserva EFETIVA (nao da nominal, achado J-01). Guardar aqui era a N-01,
+        # "duplicacao de formula", que a auditoria externa tambem ja tinha achado.
         meses = d["reserva_atual"]/d["despesa_mensal"]
-        d["meses_cobertos"] = meses
         if meses < 1: avisos.append(f"reserva cobre {meses:.1f} mes de despesa")
 
 
