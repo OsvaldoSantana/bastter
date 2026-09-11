@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Testes das camadas 1, 3 e 4 do manual: unitario, canonico com oraculo, invariante."""
-import os, sys
+import os, sys, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pytest
 from motor import carregar, val, custodia_rv_aa, montar_rotas, simular, InsumoBloqueado
@@ -151,3 +151,27 @@ def test_nenhuma_constante_fica_com_trecho_nao_conferido():
             for k, v in d.items(): anda(v, f"{p}.{k}")
     anda(C)
     assert not faltam, "citacao sem trecho conferido: " + ", ".join(faltam)
+
+
+# ── P-70: HOJE fixo em 2026-09-01, resolvido no import, deixava o aviso mudo ──
+def test_P70_val_avisa_quando_a_data_injetada_passa_da_expiracao(capsys):
+    """`hoje` e injetado por parametro -- o teste nao depende do relogio real e
+    nao muda de resultado sozinho conforme os dias passam, ao contrario do que
+    a antiga constante `HOJE` fazia com o aviso em producao."""
+    no = {"valor": 1.0, "status": "COMPLETO", "fonte": "teste",
+          "expira": dt.date(2026, 9, 28)}
+    r = val(no, contexto="teste.expira", hoje=dt.date(2026, 9, 29))
+    assert r == 1.0
+    err = capsys.readouterr().err
+    assert "[AVISO]" in err and "teste.expira" in err and "2026-09-28" in err
+
+def test_P70_val_fica_em_silencio_antes_da_expiracao(capsys):
+    """O espelho do teste acima, com a MESMA constante. Sem ele o teste anterior
+    nao provaria nada: passaria igual se `val` avisasse sempre, cega para a
+    data injetada."""
+    no = {"valor": 1.0, "status": "COMPLETO", "fonte": "teste",
+          "expira": dt.date(2026, 9, 28)}
+    r = val(no, contexto="teste.expira", hoje=dt.date(2026, 9, 27))
+    assert r == 1.0
+    err = capsys.readouterr().err
+    assert err == ""

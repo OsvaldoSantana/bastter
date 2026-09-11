@@ -17,7 +17,6 @@ from dataclasses import dataclass, field
 import yaml
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-HOJE = dt.date(2026, 9, 1)
 
 class InsumoBloqueado(Exception):
     """Levantada quando um calculo depende de valor NAO_CONFIRMADO."""
@@ -40,8 +39,13 @@ def _consequencia(no):
     return f"  BLOQUEIA: {', '.join(b)}" if b else \
            "  (sem `bloqueia` declarado — o custo de nao ter este valor nao esta escrito)"
 
-def val(no, *, permitir_parcial=True, contexto=""):
-    """Extrai o valor de um no do YAML, recusando NAO_CONFIRMADO."""
+def val(no, *, permitir_parcial=True, contexto="", hoje=None):
+    """Extrai o valor de um no do YAML, recusando NAO_CONFIRMADO.
+
+    P-70: `HOJE` era uma constante fixa (2026-09-01) resolvida no IMPORT do
+    modulo — o aviso de expiracao ficava mudo a partir do primeiro dia
+    seguinte e ninguem via. `hoje` agora e parametro; quando omitido, resolve
+    para `dt.date.today()` NO MOMENTO DA CHAMADA, nao no import."""
     if not isinstance(no, dict) or "valor" not in no:
         return no
     st = no.get("status", "COMPLETO")
@@ -52,9 +56,11 @@ def val(no, *, permitir_parcial=True, contexto=""):
         raise InsumoBloqueado(f"{contexto}: status PARCIAL — {no.get('motivo','')}"
                               + _consequencia(no))
     exp = no.get("expira")
-    if exp and isinstance(exp, dt.date) and HOJE > exp:
-        print(f"  [AVISO] {contexto}: valor expirou em {exp} "
-              f"(fonte: {no.get('fonte','?')})", file=sys.stderr)
+    if exp and isinstance(exp, dt.date):
+        agora = hoje if hoje is not None else dt.date.today()
+        if agora > exp:
+            print(f"  [AVISO] {contexto}: valor expirou em {exp} "
+                  f"(fonte: {no.get('fonte','?')})", file=sys.stderr)
     return no["valor"]
 
 # ── K-03: custodia progressiva de verdade ─────────────────────────────────────
