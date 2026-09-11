@@ -1349,6 +1349,7 @@ motivo, `coletar_eventos` passa a chamar `desembrulhar()` e o teste espelho morr
 | — | `estado_io.reserva_empenhada` | 11/09 — **usado**, como conferência: se declarado, tem de bater com `reserva_atual − reserva_disponivel`, no padrão de `reserva_por_rota`. O motor segue usando só `reserva_disponivel` |
 | — | `corretora.promocional` (P-32) | 11/09 — **usado**: `regras()` recusa peso ≠ 0, como faz com `reclame_aqui` e `facilidade` |
 | B-02 | 3 de 74 emissoras com `totalRecords: 0` na esteira de proventos (ABEV, CURY, KLBN) | 11/09 — **não era truncamento** (o código supunha; a hipótese foi medida e caiu): a tabela de proventos guarda o nome **sem** o sufixo `S/A`. O coletor tenta o nome como veio e, **só depois de um zero**, sem o sufixo; a forma usada vai para o manifesto. As 71 gravadas não foram tocadas; recoletar as 3 é decisão do Osvaldo |
+| B-03 | CURY falhou nas duas formas do B-02 | 11/09 — `'CURY S.A.'` → 20: o sufixo não some, é **reescrito** (barra vira ponto). As bases divergem sem regra, então virou **cascata**: como veio → sem sufixo → `S.A.` → `SA`, só avançando depois de zero; a trilha inteira vai para o manifesto. 73 de 74 gravadas; recoletar a CURY é decisão do Osvaldo |
 
 ---
 

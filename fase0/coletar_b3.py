@@ -315,6 +315,12 @@ def coletar_eventos(raiz, tickers, dia, forcar):
 # ponto ('SUZANO S.A.') passa como veio. O match e EXATO ('ITAU' -> 0): nao ha acerto
 # parcial silencioso -- ou o nome bate e vem tudo, ou vem zero, e zero e visivel.
 #
+# B-03, a recoleta: ABEV e KLBN fecharam sem o sufixo; CURY falhou nas duas formas.
+# 'CURY S.A.' -> 20: la o sufixo nao SOME, e REESCRITO (barra vira ponto). As duas bases
+# divergem SEM REGRA, entao nenhuma normalizacao deterministica cobre as tres -- por isso
+# a correcao do B-02, certa para duas, deixou uma de fora. Agora e uma CASCATA, e a
+# trilha inteira vai para o manifesto.
+#
 # `desembrulhar` repete a normalizacao inline de `coletar_eventos`. Unificar exigiria
 # tocar o caminho --eventos, que funciona e cujo acervo nao se recupera; a duplicacao
 # esta registrada em PENDENCIAS.md.
@@ -433,37 +439,48 @@ def paginar(trading_name, buscar_fn=None, pausa=PAUSA_S, tamanho=TAMANHO_PAGINA,
 SUFIXOS_SOCIETARIOS = (" S/A.", " S/A", " S.A.", " SA")
 
 
-def sem_sufixo(nome):
-    """'AMBEV S/A' -> 'AMBEV'. None quando o nome nao termina em sufixo societario --
-    e entao nao existe segunda forma para tentar (B-02)."""
-    for suf in SUFIXOS_SOCIETARIOS:
-        if nome.upper().endswith(suf):
-            return nome[:-len(suf)].rstrip() or None
-    return None
+def candidatos(nome):
+    """[(tradingName, forma)] na ordem da cascata (B-03): como veio, sem sufixo, sufixo
+    com pontos, sufixo sem pontuacao. Texto repetido nao vira segunda tentativa, e base
+    vazia nao vira candidato.
+
+    Nome SEM sufixo societario so tem a primeira forma: 71 de 74 fecharam como vieram,
+    e a divergencia medida entre as bases e sempre no sufixo -- some (ABEV, KLBN) ou e
+    reescrito (CURY). Inventar um sufixo onde o suplemento nao tem nenhum seria outra
+    hipotese, sem medicao."""
+    cascata = [(nome, "COMO_VEIO")]
+    base = next((nome[:-len(s)].rstrip() for s in SUFIXOS_SOCIETARIOS
+                 if nome.upper().endswith(s)), "")
+    if base:
+        for tn, forma in ((base, "SEM_SUFIXO"), (base + " S.A.", "SUFIXO_COM_PONTOS"),
+                          (base + " SA", "SUFIXO_SEM_PONTUACAO")):
+            if tn not in {t for t, _ in cascata}:
+                cascata.append((tn, forma))
+    return cascata
 
 
 def proventos_de(nome, buscar_fn=None, pausa=PAUSA_S):
-    """B-02. O nome como veio do acervo primeiro; SO depois de um TOTAL-ZERO, o nome sem
-    o sufixo societario. Outra falha (formato, laco, historico incompleto) nao ganha
-    segunda tentativa: nao e o nome que esta errado, e trocar o nome mascararia o defeito.
+    """Percorre `candidatos(nome)` e para no primeiro que responder. SO TOTAL-ZERO abre a
+    proxima forma: FORA-DO-FORMATO, LACO e INCOMPLETO param na hora -- nao e o nome que
+    esta errado, e trocar o nome mascararia o defeito real.
 
-    Devolve (paginas, total, nome_usado, forma, tentativas). A forma e PROCEDENCIA --
-    vai para o manifesto, porque quem reprocessar precisa saber que texto a B3 aceitou.
-    Se as duas formas derem zero, sobe TOTAL-ZERO com as duas respostas em `brutos`."""
-    tn, forma, tentativas, brutos = nome, "COMO_VEIO", [], []
-    while True:
+    Devolve (paginas, total, nome_usado, forma, tentativas). A trilha inteira -- a forma
+    que funcionou E as que falharam antes -- e PROCEDENCIA: vai para o manifesto, porque
+    quem reprocessar precisa saber que texto a B3 aceitou e quais recusou. Se toda a
+    cascata der zero, sobe TOTAL-ZERO com todas as respostas em `brutos`."""
+    cascata, tentativas, brutos = candidatos(nome), [], []
+    for k, (tn, forma) in enumerate(cascata):
+        if k:
+            time.sleep(pausa)
         try:
             paginas, total = paginar(tn, buscar_fn, pausa)
         except PaginacaoInvalida as e:
             tentativas.append({"trading_name": tn, "forma": forma, "resultado": e.tipo})
             if e.bruto is not None:
                 brutos.append((forma, e.tipo, e.bruto))
-            alt = sem_sufixo(tn) if (e.tipo == "TOTAL-ZERO" and forma == "COMO_VEIO") else None
-            if alt is None:
+            if e.tipo != "TOTAL-ZERO" or k == len(cascata) - 1:
                 e.tentativas, e.brutos = tentativas, brutos
                 raise
-            tn, forma = alt, "SEM_SUFIXO"
-            time.sleep(pausa)
             continue
         tentativas.append({"trading_name": tn, "forma": forma, "resultado": "COMPLETO",
                            "registros": total})
@@ -500,7 +517,7 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
             paginas, total, usado_nome, forma, tentativas = proventos_de(nome, buscar_fn, pausa)
         except PaginacaoInvalida as e:
             for forma_b, tipo_b, bruto in e.brutos:
-                extra = "" if forma_b == "COMO_VEIO" else ".SEM-SUFIXO"
+                extra = "" if forma_b == "COMO_VEIO" else "." + forma_b.replace("_", "-")
                 gravar(os.path.join(pasta, "%s.%s%s.json" % (em, tipo_b, extra)), bruto, False)
             trilha = "; ".join("%r -> %s" % (t["trading_name"], t["resultado"])
                                for t in e.tentativas) or str(e)
@@ -524,7 +541,7 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
             "sha256_paginas": shas, "url_primeira_pagina": paginas[0][0],
         })
         completas += 1
-        nota = "" if forma == "COMO_VEIO" else "  (sem sufixo: %r)" % usado_nome
+        nota = "" if forma == "COMO_VEIO" else "  (%s: %r)" % (forma, usado_nome)
         print("  %3d/%d  %-5s  %-14s %4d registros em %d pagina(s)%s"
               % (i, len(alvos), em, nome[:14], total, len(paginas), nota))
         time.sleep(pausa)
@@ -538,7 +555,7 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
         if any(t == "TOTAL-ZERO" for _, _, t, _ in falhas):
             print("\nTOTAL-ZERO NAO e 'empresa sem proventos': e um nome que a tabela de\n"
                   "proventos nao reconhece -- o match e exato. Cada linha acima mostra as formas\n"
-                  "tentadas: como veio e, havendo sufixo societario, sem ele (B-02). NAO e\n"
+                  "tentadas: como veio e, havendo sufixo societario, a cascata (B-03). NAO e\n"
                   "truncamento do campo de 12 posicoes: essa hipotese foi medida e caiu.")
     if fora:
         print("\npedidas e ausentes do acervo de eventos (sem tradingName para usar): "

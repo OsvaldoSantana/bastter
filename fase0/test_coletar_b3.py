@@ -359,13 +359,22 @@ def _ultimo_manifesto(raiz):
 
 
 @pytest.mark.parametrize("nome,esperado", [
-    ("AMBEV S/A", "AMBEV"), ("CURY S/A", "CURY"), ("KLABIN S/A", "KLABIN"),
-    ("SUZANO S.A.", "SUZANO"), ("X S/A.", "X"), ("X SA", "X"),
-    ("ENERGISA", None), ("PETROBRAS", None), ("ITAUUNIBANCO", None),
+    ("AMBEV S/A", ["AMBEV S/A", "AMBEV", "AMBEV S.A.", "AMBEV SA"]),
+    ("CURY S/A", ["CURY S/A", "CURY", "CURY S.A.", "CURY SA"]),
+    ("X S/A.", ["X S/A.", "X", "X S.A.", "X SA"]),
+    ("SUZANO S.A.", ["SUZANO S.A.", "SUZANO", "SUZANO SA"]),     # nao repete o texto
+    ("X SA", ["X SA", "X", "X S.A."]),
+    ("ENERGISA", ["ENERGISA"]),        # ' SA' exige o espaco
+    ("PETROBRAS", ["PETROBRAS"]), ("ITAUUNIBANCO", ["ITAUUNIBANCO"]),
+    (" S/A", [" S/A"]),                # base vazia nao vira candidato
 ])
-def test_B02_sufixo_societario(nome, esperado):
-    """' SA' exige o espaco: ENERGISA termina em SA e nao tem sufixo nenhum."""
-    assert c.sem_sufixo(nome) == esperado
+def test_B03_candidatos_em_cascata(nome, esperado):
+    assert [tn for tn, _ in c.candidatos(nome)] == esperado
+
+
+def test_B03_a_cascata_nomeia_cada_forma_na_ordem():
+    assert [f for _, f in c.candidatos("CURY S/A")] == [
+        "COMO_VEIO", "SEM_SUFIXO", "SUFIXO_COM_PONTOS", "SUFIXO_SEM_PONTUACAO"]
 
 
 def test_B02_nome_que_so_funciona_sem_sufixo(tmp_path):
@@ -392,17 +401,21 @@ def test_B02_nome_que_so_funciona_com_sufixo(tmp_path):
     assert _ultimo_manifesto(raiz)["forma_do_nome"] == "COMO_VEIO"
 
 
-def test_B02_nome_que_falha_nas_duas_formas_continua_TOTAL_ZERO(tmp_path):
-    """Zero nas duas formas NAO vira 'empresa sem proventos'. As duas respostas ficam
-    como evidencia, cada uma com a forma no nome do arquivo."""
+def test_B03_nome_que_falha_em_toda_a_cascata_continua_TOTAL_ZERO(tmp_path):
+    """Zero em todas as formas NAO vira 'empresa sem proventos'. Cada resposta fica como
+    evidencia, com a forma no nome do arquivo. (Era o teste de duas formas do B-02; o
+    contrato mudou no B-03, e o teste mede o contrato novo.)"""
     raiz = str(tmp_path)
     _acervo_eventos(raiz, {"KLBN": "KLABIN S/A  "})
     b3 = _B3Falsa(_responde_por_nome({}))
     assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 1
-    assert [p["tradingName"] for p in b3.pedidos] == ["KLABIN S/A", "KLABIN"]
+    assert [p["tradingName"] for p in b3.pedidos] == [
+        "KLABIN S/A", "KLABIN", "KLABIN S.A.", "KLABIN SA"]
     pasta = os.path.join(raiz, "proventos", "dt_captura=2026-09-12")
-    assert not os.path.isdir(os.path.join(pasta, "KLBN")), "zero nas duas virou historico"
-    assert sorted(os.listdir(pasta)) == ["KLBN.TOTAL-ZERO.SEM-SUFIXO.json", "KLBN.TOTAL-ZERO.json"]
+    assert not os.path.isdir(os.path.join(pasta, "KLBN")), "zero na cascata virou historico"
+    assert sorted(os.listdir(pasta)) == [
+        "KLBN.TOTAL-ZERO.SEM-SUFIXO.json", "KLBN.TOTAL-ZERO.SUFIXO-COM-PONTOS.json",
+        "KLBN.TOTAL-ZERO.SUFIXO-SEM-PONTUACAO.json", "KLBN.TOTAL-ZERO.json"]
     assert not os.path.exists(os.path.join(raiz, "manifesto.jsonl"))
 
 
@@ -423,6 +436,63 @@ def test_B02_segunda_tentativa_so_depois_de_um_zero_nunca_antes():
     b3 = _B3Falsa(_responde_por_nome({"AMBEV": 1}))
     c.proventos_de("AMBEV S/A", b3, pausa=0)
     assert [p["tradingName"] for p in b3.pedidos] == ["AMBEV S/A", "AMBEV"]
+
+
+def test_B03_os_tres_casos_reais(tmp_path):
+    """Medido na B3 em 11/09: 'AMBEV' -> 134 (o sufixo SOME), 'CURY S.A.' -> 20 (o sufixo
+    e REESCRITO: barra vira ponto). E um nome que falha em toda a cascata. A trilha
+    inteira vai para o manifesto: a forma que funcionou e as que falharam antes."""
+    raiz = str(tmp_path)
+    _acervo_eventos(raiz, {"ABEV": "AMBEV S/A   ", "CURY": "CURY S/A    ",
+                           "FANT": "FANTASMA S/A"})
+    b3 = _B3Falsa(_responde_por_nome({"AMBEV": 134, "CURY S.A.": 20}))
+    assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 1
+
+    with open(os.path.join(raiz, "manifesto.jsonl"), encoding="utf-8") as f:
+        regs = {r["emissora"]: r for r in map(json.loads, f.read().strip().split("\n"))}
+    assert sorted(regs) == ["ABEV", "CURY"], "so as que fecharam vao para o manifesto"
+
+    assert regs["ABEV"]["forma_do_nome"] == "SEM_SUFIXO"
+    assert regs["ABEV"]["total_registros"] == 134
+
+    cury = regs["CURY"]
+    assert (cury["forma_do_nome"], cury["trading_name"]) == ("SUFIXO_COM_PONTOS", "CURY S.A.")
+    assert cury["trading_name_do_acervo"] == "CURY S/A" and cury["total_registros"] == 20
+    assert [(t["trading_name"], t["resultado"]) for t in cury["tentativas"]] == [
+        ("CURY S/A", "TOTAL-ZERO"), ("CURY", "TOTAL-ZERO"), ("CURY S.A.", "COMPLETO")]
+
+    pasta = os.path.join(raiz, "proventos", "dt_captura=2026-09-12")
+    assert os.path.isdir(os.path.join(pasta, "ABEV")) and os.path.isdir(os.path.join(pasta, "CURY"))
+    assert not os.path.isdir(os.path.join(pasta, "FANT"))
+    assert os.path.exists(os.path.join(pasta, "FANT.TOTAL-ZERO.SUFIXO-SEM-PONTUACAO.json"))
+
+
+def test_B03_como_veio_e_sempre_a_primeira_chamada():
+    """A ORDEM. Para qualquer nome, a primeira chamada leva o texto do acervo; quando ele
+    responde, nenhuma outra forma e pedida."""
+    for nome in ("AMBEV S/A", "CURY S/A", "SUZANO S.A.", "PETROBRAS"):
+        b3 = _B3Falsa(_responde_por_nome({}))
+        with pytest.raises(c.PaginacaoInvalida):
+            c.proventos_de(nome, b3, pausa=0)
+        assert b3.pedidos[0]["tradingName"] == nome
+        b3 = _B3Falsa(_responde_por_nome({nome: 3}))
+        c.proventos_de(nome, b3, pausa=0)
+        assert [p["tradingName"] for p in b3.pedidos] == [nome]
+
+
+def test_B03_falha_que_nao_e_zero_interrompe_a_cascata():
+    """So TOTAL-ZERO abre a proxima forma. Fora do formato no MEIO da cascata para ali:
+    'CURY S.A.' nunca e pedido, mesmo sendo a forma que funcionaria."""
+    def responder(p):
+        if p["tradingName"] == "CURY S/A":
+            return _pagina(1, 0, 99, total_paginas=0)
+        return '"erro"'
+    b3 = _B3Falsa(responder)
+    with pytest.raises(c.PaginacaoInvalida) as e:
+        c.proventos_de("CURY S/A", b3, pausa=0)
+    assert e.value.tipo == "FORA-DO-FORMATO"
+    assert [p["tradingName"] for p in b3.pedidos] == ["CURY S/A", "CURY"]
+    assert [t["resultado"] for t in e.value.tentativas] == ["TOTAL-ZERO", "FORA-DO-FORMATO"]
 
 
 if __name__ == "__main__":
