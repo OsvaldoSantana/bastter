@@ -168,6 +168,19 @@ etf:
          expira: 2027-09-05}
   DIVO11: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28,
          expira: 2027-09-05}
+  # F-03: rota CANDIDATA descoberta na leitura das fontes. ETF de renda fixa
+  # indexado ao IMA-B: mesma exposicao do td_ipca (juro real), tributacao de 15% por
+  # prazo medio de repactuacao > 720 dias (Lei 13.043/2014 art. 2o, III), IR SO no
+  # resgate/alienacao/distribuicao — sem come-cotas — e IOF zero (Decreto 6.306/2007
+  # art. 32 par. 2o, VII). Paga taxa de administracao em vez da custodia de 0,20%
+  # a.a. da B3, e negocia em bolsa. NAO entra no catalogo enquanto a taxa nao vier
+  # do REGULAMENTO — pagina de produto e PARCIAL.
+  #
+  # Y-01 (11/09/2026): esta chave existiu DUAS vezes neste mapping. O PyYAML fica com
+  # a ultima em silencio, e a ultima era o placeholder de 04/09 (valor null). Esta
+  # entrada, de 05/09, esteve morta desde que foi escrita. As duas foram fundidas:
+  # valor, fonte e acesso vem desta; a base legal e o `bloqueia` da rota vieram da
+  # outra. `test_y01_yaml_duplicata.py` impede a proxima.
   IMAB11:
     valor: 0.0025
     status: PARCIAL
@@ -176,10 +189,14 @@ etf:
     expira: '2027-09-05'
     bloqueia:
     - comparacao_definitiva_imab11_vs_td_ipca
+    - rota_etf_renda_fixa_protecao_real
     motivo: a pagina do gestor nao diz se 0,25% e TETO de regulamento ou taxa efetiva
     nota: Administrador Itau Unibanco S.A., gestor Itau Unibanco Asset Management, benchmark
       IMA-B. PARCIAL e nao COMPLETO porque as outras taxas de ETF do catalogo vieram de REGULAMENTO,
       que declara o teto; esta veio de pagina de produto. Fechar exige o regulamento do fundo.
+      Tributacao com fonte primaria lida — Lei 13.043/2014 art. 2o e IN RFB 1.585/2015 art. 28
+      dao a mesma regra de aliquota; Lei 14.754/2023 art. 22 exclui o ETF de renda fixa da
+      definicao geral de ETF, entao ele segue a regra propria.
   B5P211: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28,
          expira: 2027-09-05}
   BOVA11:
@@ -242,25 +259,6 @@ etf:
     status: NAO_CONFIRMADO
     motivo: "site do gestor bloqueia acesso automatizado; 3o maior ETF do pais por PL"
     bloqueia: ["tabela_etf_rv_completa"]
-  # F-03: rota CANDIDATA descoberta na leitura das fontes, ainda sem insumo.
-  # ETF de renda fixa indexado ao IMA-B: mesma exposicao do td_ipca (juro real),
-  # tributacao de 15% por prazo medio de repactuacao > 720 dias (Lei 13.043/2014
-  # art. 2o, III), IR SO no resgate/alienacao/distribuicao — sem come-cotas — e
-  # IOF zero (Decreto 6.306/2007 art. 32 par. 2o, VII). Diferencas materiais frente
-  # ao Tesouro IPCA+: paga taxa de administracao em vez da custodia de 0,20% a.a.
-  # da B3, e negocia em bolsa (o Tesouro so recompra em D+1). NAO entra no catalogo
-  # enquanto a taxa nao vier do regulamento — nao inventar o insumo.
-  IMAB11:
-    expira: 2027-09-05   # taxa de fundo: ciclo anual de assembleia
-    valor: null
-    status: NAO_CONFIRMADO
-    motivo: "taxa de administracao nao obtida; regulamento do fundo ainda nao baixado"
-    bloqueia: ["rota_etf_renda_fixa_protecao_real"]
-    nota: >
-      Lei 13.043/2014 art. 2o e IN RFB 1.585/2015 art. 28 dao a mesma regra de
-      aliquota; Lei 14.754/2023 art. 22 exclui expressamente o ETF de renda fixa da
-      definicao geral de ETF, entao ele segue a regra propria. Fontes lidas; falta
-      so o numero da taxa.
   IVV:  {valor: 0.00030, status: COMPLETO, fonte: "iShares Fact Sheet 30/06/2026 — PRIMARIO", acesso: 2026-09-03,
          nota: "Expense Ratio 0,03% = Management Fee 0,03% + Acquired Fund 0,00% + Other 0,00%",
          expira: 2027-09-05}

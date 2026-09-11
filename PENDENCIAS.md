@@ -1139,7 +1139,7 @@ achado — cada item foi rodado antes de virar pendência. Os quatro críticos s
 
 | # | item | classe | veredito |
 |---|---|---|---|
-| **P-69** | `etf.IMAB11` duplicado em `custos.yaml` (achado **Y-01**) | `BLOQUEIA_O_SISTEMA` | **CONFIRMADO, e o diagnóstico da auditoria está errado**: o YAML **não falha ao carregar** — PyYAML fica com a última chave, em silêncio. A entrada de 05/09 (0,25%, com fonte) está morta |
+| ~~**P-69**~~ | `etf.IMAB11` duplicado em `custos.yaml` (achado **Y-01**) | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas`; abriu a **P-76** |
 | ~~**P-70**~~ | `HOJE = dt.date(2026,9,1)` fixo em `motor.py:20` | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas` |
 | ~~**P-71**~~ | `dividas`/`objetivos` voltam como `dict`, motor espera dataclass | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas` |
 | ~~**P-72**~~ | `aporte_mensal <= 0` bloqueia `carregar()` | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas` |
@@ -1203,6 +1203,28 @@ antigo.
 
 ---
 
+## P-76 · A F-03 se declarou refutada com um insumo que não autoriza refutação
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo decide a regra; Claude implementa.
+**Gatilho:** quando o regulamento do IMAB11 for baixado (P-05/P-50) — ou antes, se
+qualquer decisão sobre a rota de ETF de renda fixa for tomada.
+
+Aberta ao fechar a P-69. A F-03 foi medida em 05/09 **à mão, com 0,25%** (está em
+`politica.yaml → fora_de_escopo.ETF_renda_fixa`) e registrada como *"hipótese caiu,
+Tesouro vence em todas as faixas"*. Mas o próprio insumo é `PARCIAL`, com
+`bloqueia: comparacao_definitiva_imab11_vs_td_ipca`, e o `motivo` diz por quê: **a
+página do gestor não diz se 0,25% é teto de regulamento ou taxa efetiva.**
+
+Isso não é detalhe. Se 0,25% for o **teto**, a taxa cobrada pode ser menor que 0,20% —
+e a comparação **inverte**. A conclusão saiu mais forte que o insumo que a sustenta: é a
+P1 aplicada ao relato de uma medição, não ao dado.
+
+**A decisão que falta:** uma conclusão medida herda o status do insumo mais fraco dela?
+Se sim, a F-03 volta a "tendência medida, não refutação" até o regulamento chegar, e a
+linha da F-03 em `## Fechadas` ganha a ressalva. Não mexi em nenhum dos dois registros.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
@@ -1257,6 +1279,7 @@ antigo.
 | P-72 | `aporte_mensal <= 0` bloqueava `carregar()`, contradizendo a U-01 | 11/09 — só NEGATIVO bloqueia; zero vira AVISO |
 | — | achado lateral: `Estado(**estado_io.carregar()[0])` nunca funcionou — `d` carregava `reserva_empenhada`/`meses_cobertos`, nenhum campo de `Estado` | 11/09 — os dois removidos de `d` (eram campo morto e formula duplicada; a validação de `reserva_empenhada` continua) |
 | — | achado lateral: `custo_entrada_fixo_pct` tratava `aporte==0` como custo infinito para toda rota, mesmo as de tarifa zero — zerava o universo e violava `_conferir_invariantes` | 11/09 — `r.corr_fix == 0` agora é custo zero para qualquer aporte; sem mudança para aporte>0 |
+| P-69 | `etf.IMAB11` duas vezes no `custos.yaml` — o PyYAML ficava com o placeholder `null` e a entrada de 05/09 estava morta (Y-01) | 11/09 — entradas **fundidas** (valor/fonte de 05/09, base legal e `bloqueia` da outra); `test_y01_yaml_duplicata.py` varre os seis YAML pela árvore de nós. A F-03 foi medida à mão com 0,25%, nunca por `val()` — não foi contaminada. Abriu a P-76 |
 
 ---
 

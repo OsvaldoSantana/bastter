@@ -534,12 +534,18 @@ só será usada em 2031.
 > sobrescrito por um ausente**. O erro é na direção conservadora (a rota fica bloqueada),
 > o que é sorte, não desenho.
 >
-> **Pergunta aberta:** o registro diz "F-03 medida e refutada (IMAB11 perde do Tesouro)".
-> Se o motor lê `None`, **com que número essa medição foi feita?** Responder antes de
-> apagar qualquer das duas entradas.
+> **FECHADO em 11/09.** A pergunta — *com que número a F-03 foi medida, se o motor lia
+> `None`?* — tem resposta: **0,25%, à mão, fora do motor.** Está em
+> `politica.yaml → fora_de_escopo.ETF_renda_fixa.resultado_medido_em_05_09_2026`, com as
+> três faixas escritas. A medição nunca passou por `val()`, então o Y-01 não a contaminou.
+> As duas entradas foram **fundidas** (valor e fonte de 05/09, base legal e `bloqueia` da
+> outra), e `test_y01_yaml_duplicata.py` varre os seis YAML do motor pela árvore de nós
+> (`yaml.compose`, nunca `safe_load` — que *é* o apagamento).
 >
-> **O teste que falta não é sobre IMAB11** — é uma varredura do YAML cru procurando chave
-> repetida em qualquer mapping. Um teste do IMAB11 seria patch.
+> **O que a resposta abriu (P-76):** a F-03 se declarou refutada com um insumo `PARCIAL`
+> cujo próprio `bloqueia` é `comparacao_definitiva_imab11_vs_td_ipca`. Se 0,25% for o
+> **teto** do regulamento, a taxa efetiva pode ficar abaixo de 0,20% — e a conclusão
+> inverte. A conclusão saiu mais forte que o insumo que a sustenta.
 
 > **A-01 e A-02 — 11/09/2026, a primeira corrida real da Fase 0, e ela rendeu dois
 > achados que nenhuma leitura teria dado.**
