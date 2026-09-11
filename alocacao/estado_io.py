@@ -14,14 +14,14 @@ Mesmo desenho do validador de tese: devolve TODOS os problemas de uma vez, separ
 o que bloqueia do que e aviso, e nao inventa valor nenhum.
 """
 from __future__ import annotations
-import os, re, sys, datetime as dt
+import dataclasses, os, re, sys, datetime as dt
 import yaml
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 # P-71: sem ciclo de import. `alocacao.py` NAO importa `estado_io` (conferido antes
 # desta linha existir) -- so o inverso seria um problema, e o inverso nao acontece.
-from alocacao import Divida, Objetivo
+from alocacao import Divida, MatchEmpregador, Objetivo
 
 NUMERICOS = ("despesa_mensal", "reserva_atual", "aporte_mensal", "caixa", "horizonte_anos")
 
@@ -46,6 +46,53 @@ def _num(v, campo, problemas):
         except ValueError:
             problemas.append(f"{campo}: '{v}' nao e numero"); return None
     problemas.append(f"{campo}: tipo inesperado {type(v).__name__}"); return None
+
+def _registro(x, classe, rot, problemas):
+    """Um mapa do YAML -> um dataclass, com as mesmas guardas dos campos do topo.
+
+    P-71, segunda metade: a primeira conversao era `classe(**x)` cru, e aceitava
+    exatamente o que este modulo existe para recusar -- virgula decimal virava texto,
+    campo em branco virava TypeError, chave errada sumia. Devolve None quando o
+    registro nao se sustenta; o motivo ja esta em `problemas`."""
+    campos = dataclasses.fields(classe)
+    nomes = [f.name for f in campos]
+    if not isinstance(x, dict):
+        problemas.append(f"{rot}: tem de ser um mapa com {nomes}"); return None
+    sobra = sorted(set(x) - set(nomes))
+    if sobra:
+        problemas.append(f"{rot}: {sobra} nao existe(m) em {classe.__name__} e seria(m) "
+                         f"descartado(s) em silencio. Campos aceitos: {nomes}")
+    vals = {}
+    for f in campos:
+        v = x.get(f.name)
+        if f.type == "str":
+            ok = isinstance(v, str) and v.strip()
+            if not ok: problemas.append(f"{rot}.{f.name}: nao preenchido")
+            vals[f.name] = v if ok else None
+        else:
+            vals[f.name] = _num(v, f"{rot}.{f.name}", problemas)
+    if any(v is None for v in vals.values()): return None
+    return classe(**vals)
+
+def _registros(lista, classe, rot, problemas):
+    if lista is None: return []
+    if not isinstance(lista, list):
+        problemas.append(f"{rot} tem de ser uma lista"); return []
+    out = [_registro(x, classe, f"{rot}[{i}]", problemas) for i, x in enumerate(lista)]
+    return [r for r in out if r is not None]
+
+def _match(doc, problemas):
+    """P-71, segunda metade: os dois campos que `estado.exemplo.yaml` pede e que ate
+    11/09 nunca eram lidos. Ausente e diferente de falso: sem `match_verificado` o G0
+    pergunta; com `true` ele se cala -- e essa resposta nao pode sumir no caminho.
+    Funcao propria porque `validar()` passou do teto de 120 linhas da P-37."""
+    mv = doc.get("match_verificado", False)
+    if not isinstance(mv, bool):
+        problemas.append(f"match_verificado = {mv!r}: use true ou false")
+        mv = False
+    me = doc.get("match_empregador")
+    return mv, (None if me is None else
+                _registro(me, MatchEmpregador, "match_empregador", problemas))
 
 def validar(doc, P=None, hoje=None):
     """(dados, problemas, avisos). `problemas` impedem o uso como estado REAL."""
@@ -82,8 +129,9 @@ def validar(doc, P=None, hoje=None):
     # Nao estourava porque nenhum teste carregava um estado pelo caminho real -- as
     # duas listas do estado.yaml de producao estao vazias. Convertido aqui, na UNICA
     # porta de entrada, para que quem chama `Estado(**d)` receba o contrato certo.
-    d["dividas"] = [Divida(**x) for x in (doc.get("dividas") or [])]
-    d["objetivos"] = [Objetivo(**x) for x in (doc.get("objetivos") or [])]
+    d["dividas"] = _registros(doc.get("dividas"), Divida, "dividas", problemas)
+    d["objetivos"] = _registros(doc.get("objetivos"), Objetivo, "objetivos", problemas)
+    d["match_verificado"], d["match_empregador"] = _match(doc, problemas)
 
     meta = doc.get("meta") or {}
     if meta.get("status") != "REAL":

@@ -115,3 +115,71 @@ def test_P72_aporte_mensal_negativo_continua_bloqueando(tmp_path):
     d, problemas, avisos = estado_io.carregar(path=str(p), exigir_real=False)
     assert any("aporte_mensal" in x and "-100" in x for x in problemas), (
         f"aporte_mensal negativo tem de continuar bloqueando: {problemas}")
+
+
+# ── segunda metade (11/09/2026): a porta aceitava o que o validador existe para
+# recusar. A conversao para dataclass do 4f54f31 foi feita SEM passar os numeros por
+# `_num()` -- e o modulo existe exatamente para pegar virgula decimal, campo em branco
+# e chave errada, as tres falhas silenciosas do preenchimento a mao.
+BASE_MINIMA = textwrap.dedent("""\
+    meta: {status: REAL, preenchido_em: 2026-09-11}
+    despesa_mensal: 4500
+    estabilidade_renda: media
+    aporte_mensal: 500
+    horizonte_anos: 25
+    caixa: 0.0
+    reserva_atual: 27000.0
+    """)
+
+
+def _carregar(tmp_path, extra):
+    p = tmp_path / "estado.yaml"
+    p.write_text(BASE_MINIMA + extra, encoding="utf-8")
+    return estado_io.carregar(path=str(p), exigir_real=False)
+
+
+def test_P71_virgula_decimal_em_divida_vira_problema_e_nao_texto(tmp_path):
+    """`taxa_am: "14,5"` entrava como a STRING '14,5', sem problema nenhum, e
+    estourava no G1 (`'14,5' > float`). Agora e o mesmo tratamento dos campos do
+    topo: problema que bloqueia, e o numero interpretado para quem pedir o relatorio."""
+    d, problemas, _ = _carregar(
+        tmp_path, 'dividas:\n  - {nome: cartao, saldo: 3000, taxa_am: "14,5"}\n')
+    assert any("dividas[0].taxa_am" in p for p in problemas), problemas
+    assert d["dividas"][0].taxa_am == 14.5
+
+
+def test_P71_divida_incompleta_vira_problema_e_nao_excecao(tmp_path):
+    """Antes: `TypeError: missing 1 required positional argument`. O contrato do
+    modulo e devolver TODOS os problemas de uma vez, nunca o primeiro como excecao."""
+    d, problemas, _ = _carregar(tmp_path, "dividas:\n  - {nome: cartao, saldo: 3000}\n")
+    assert any("dividas[0].taxa_am" in p for p in problemas), problemas
+    assert d["dividas"] == [], "registro incompleto nao vira Divida com buraco"
+
+
+def test_P71_chave_desconhecida_em_divida_nao_some_em_silencio(tmp_path):
+    """`juros_am` no lugar de `taxa_am` e o erro de digitacao mais provavel. Chave
+    que o dataclass nao tem seria descartada -- e a P2 do outro lado da porta."""
+    _, problemas, _ = _carregar(
+        tmp_path, "dividas:\n  - {nome: cartao, saldo: 3000, taxa_am: 0.14, juros_am: 0.14}\n")
+    assert any("juros_am" in p for p in problemas), problemas
+
+
+def test_P71_match_declarado_chega_ao_estado(tmp_path):
+    """`estado.exemplo.yaml` pede `match_empregador` e `match_verificado`, e
+    `validar()` nunca os lia. Com o G0 desligado era inerte; ligado, quem ja
+    respondeu `match_verificado: true` receberia a pergunta ao RH de novo."""
+    from alocacao import MatchEmpregador
+    d, problemas, _ = _carregar(tmp_path, (
+        "match_verificado: true\n"
+        "match_empregador: {taxa: 0.5, teto_pct_salario: 0.05, salario_bruto_mensal: 12000}\n"))
+    assert not problemas, problemas
+    e = Estado(**d)
+    assert e.match_verificado is True
+    assert isinstance(e.match_empregador, MatchEmpregador) and e.match_empregador.taxa == 0.5
+
+
+def test_P71_match_verificado_tem_de_ser_booleano(tmp_path):
+    """`match_verificado: sim` e texto, e texto nao-vazio e verdadeiro em Python.
+    Aceitar seria decidir pelo usuario o que ele quis dizer."""
+    _, problemas, _ = _carregar(tmp_path, "match_verificado: sim\n")
+    assert any("match_verificado" in p for p in problemas), problemas
