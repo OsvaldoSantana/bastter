@@ -140,7 +140,8 @@ def test_manifesto_e_append_e_uma_linha_por_captura():
     with tempfile.TemporaryDirectory() as d:
         c.anotar_manifesto(d, {"tipo": "teste", "n": 1})
         c.anotar_manifesto(d, {"tipo": "teste", "n": 2})
-        linhas = open(os.path.join(d, "manifesto.jsonl"), encoding="utf-8").read().strip().split("\n")
+        with open(os.path.join(d, "manifesto.jsonl"), encoding="utf-8") as f:
+            linhas = f.read().strip().split("\n")
         assert [json.loads(x)["n"] for x in linhas] == [1, 2]
 
 
@@ -338,6 +339,90 @@ def test_proventos_completos_nao_se_mistura_com_eventos():
     with pytest.raises(SystemExit) as e:
         c.main(["--proventos-completos", "--eventos"])
     assert e.value.code == 2
+
+
+# ─────────── B-02: o suplemento poe o sufixo societario, a tabela de proventos nao
+
+def _responde_por_nome(tabela, por_pagina=99):
+    """{tradingName: total}. Nome ausente devolve totalRecords 0 -- o match da B3 e
+    exato, medido em 11/09 ('ITAU' -> 0 para 'ITAUUNIBANCO')."""
+    def responder(p):
+        total = tabela.get(p["tradingName"], 0)
+        return _pagina(p["pageNumber"], total, por_pagina,
+                       total_paginas=-(-total // por_pagina) if total else 0)
+    return responder
+
+
+def _ultimo_manifesto(raiz):
+    with open(os.path.join(raiz, "manifesto.jsonl"), encoding="utf-8") as f:
+        return json.loads(f.read().strip().split("\n")[-1])
+
+
+@pytest.mark.parametrize("nome,esperado", [
+    ("AMBEV S/A", "AMBEV"), ("CURY S/A", "CURY"), ("KLABIN S/A", "KLABIN"),
+    ("SUZANO S.A.", "SUZANO"), ("X S/A.", "X"), ("X SA", "X"),
+    ("ENERGISA", None), ("PETROBRAS", None), ("ITAUUNIBANCO", None),
+])
+def test_B02_sufixo_societario(nome, esperado):
+    """' SA' exige o espaco: ENERGISA termina em SA e nao tem sufixo nenhum."""
+    assert c.sem_sufixo(nome) == esperado
+
+
+def test_B02_nome_que_so_funciona_sem_sufixo(tmp_path):
+    """O caso medido: 'AMBEV S/A' -> 0, 'AMBEV' -> 134. A forma usada e procedencia."""
+    raiz = str(tmp_path)
+    _acervo_eventos(raiz, {"ABEV": "AMBEV S/A   "})
+    b3 = _B3Falsa(_responde_por_nome({"AMBEV": 134}))
+    assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 0
+    assert [p["tradingName"] for p in b3.pedidos] == ["AMBEV S/A", "AMBEV", "AMBEV"]
+    reg = _ultimo_manifesto(raiz)
+    assert reg["forma_do_nome"] == "SEM_SUFIXO" and reg["trading_name"] == "AMBEV"
+    assert reg["trading_name_do_acervo"] == "AMBEV S/A" and reg["total_registros"] == 134
+    assert [t["resultado"] for t in reg["tentativas"]] == ["TOTAL-ZERO", "COMPLETO"]
+
+
+def test_B02_nome_que_so_funciona_com_sufixo(tmp_path):
+    """'SUZANO S.A.' passou como veio. A tabela so conhece a forma COM sufixo: a segunda
+    nunca e pedida, e o manifesto diz COMO_VEIO."""
+    raiz = str(tmp_path)
+    _acervo_eventos(raiz, {"SUZB": "SUZANO S.A. "})
+    b3 = _B3Falsa(_responde_por_nome({"SUZANO S.A.": 40}))
+    assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 0
+    assert {p["tradingName"] for p in b3.pedidos} == {"SUZANO S.A."}
+    assert _ultimo_manifesto(raiz)["forma_do_nome"] == "COMO_VEIO"
+
+
+def test_B02_nome_que_falha_nas_duas_formas_continua_TOTAL_ZERO(tmp_path):
+    """Zero nas duas formas NAO vira 'empresa sem proventos'. As duas respostas ficam
+    como evidencia, cada uma com a forma no nome do arquivo."""
+    raiz = str(tmp_path)
+    _acervo_eventos(raiz, {"KLBN": "KLABIN S/A  "})
+    b3 = _B3Falsa(_responde_por_nome({}))
+    assert c.coletar_proventos(raiz, "2026-09-12", buscar_fn=b3, pausa=0) == 1
+    assert [p["tradingName"] for p in b3.pedidos] == ["KLABIN S/A", "KLABIN"]
+    pasta = os.path.join(raiz, "proventos", "dt_captura=2026-09-12")
+    assert not os.path.isdir(os.path.join(pasta, "KLBN")), "zero nas duas virou historico"
+    assert sorted(os.listdir(pasta)) == ["KLBN.TOTAL-ZERO.SEM-SUFIXO.json", "KLBN.TOTAL-ZERO.json"]
+    assert not os.path.exists(os.path.join(raiz, "manifesto.jsonl"))
+
+
+def test_B02_segunda_tentativa_so_depois_de_um_zero_nunca_antes():
+    """Ordem e causa. O nome como veio vai SEMPRE primeiro, e so TOTAL-ZERO abre a segunda
+    forma: resposta fora do formato nao e culpa do nome."""
+    b3 = _B3Falsa(_responde_por_nome({"AMBEV S/A": 5, "AMBEV": 134}))
+    _, total, usado, forma, _ = c.proventos_de("AMBEV S/A", b3, pausa=0)
+    assert (usado, forma, total) == ("AMBEV S/A", "COMO_VEIO", 5)
+    assert [p["tradingName"] for p in b3.pedidos] == ["AMBEV S/A"], "pediu a 2a sem zero"
+
+    b3 = _B3Falsa(lambda p: '"erro"')
+    with pytest.raises(c.PaginacaoInvalida) as e:
+        c.proventos_de("AMBEV S/A", b3, pausa=0)
+    assert e.value.tipo == "FORA-DO-FORMATO"
+    assert [p["tradingName"] for p in b3.pedidos] == ["AMBEV S/A"], "trocou o nome por formato"
+
+    b3 = _B3Falsa(_responde_por_nome({"AMBEV": 1}))
+    c.proventos_de("AMBEV S/A", b3, pausa=0)
+    assert [p["tradingName"] for p in b3.pedidos] == ["AMBEV S/A", "AMBEV"]
 
 
 if __name__ == "__main__":

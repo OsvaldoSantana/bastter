@@ -305,10 +305,15 @@ def coletar_eventos(raiz, tickers, dia, forcar):
 # e o `tradingName` -- TEXTO, nao o codigo de 4 letras -- e ele sai do acervo de eventos
 # que JA existe. Montar a partir do ticker seria o A-01 outra vez.
 #
-# FORMATO NAO OBSERVADO EM PRIMEIRA MAO. A pesquisa marca este endpoint PARCIAL. O
-# envelope `page`/`results` que o parser exige e o do GetPortfolioDay (mesmo proxy,
-# gravado no acervo), nao um byte deste endpoint. Por isso nada e presumido: resposta
-# sem `page.totalRecords` e gravada como evidencia e ACUSADA -- a regra do A-02.
+# FORMATO: suposto a partir do GetPortfolioDay (mesmo proxy) e CONFIRMADO na primeira
+# corrida, 11/09/2026 -- 71 de 74 emissoras fecharam a conta no envelope page/results.
+# A guarda continua: resposta sem `page.totalRecords` e gravada e ACUSADA (A-02).
+#
+# B-02, a mesma corrida: as 3 que faltaram (ABEV, CURY, KLBN) deram totalRecords 0, e
+# NAO por truncamento -- 'AMBEV S/A' tem 9 caracteres. O suplemento guarda o nome COM o
+# sufixo societario e a tabela de proventos SEM: 'AMBEV S/A' -> 0, 'AMBEV' -> 134. Com
+# ponto ('SUZANO S.A.') passa como veio. O match e EXATO ('ITAU' -> 0): nao ha acerto
+# parcial silencioso -- ou o nome bate e vem tudo, ou vem zero, e zero e visivel.
 #
 # `desembrulhar` repete a normalizacao inline de `coletar_eventos`. Unificar exigiria
 # tocar o caminho --eventos, que funciona e cujo acervo nao se recupera; a duplicacao
@@ -322,6 +327,7 @@ class PaginacaoInvalida(Exception):
     def __init__(self, motivo, tipo, bruto=None):
         super().__init__(motivo)
         self.tipo, self.bruto = tipo, bruto
+        self.tentativas, self.brutos = [], []    # preenchidos por proventos_de (B-02)
 
 
 def desembrulhar(texto):
@@ -424,6 +430,46 @@ def paginar(trading_name, buscar_fn=None, pausa=PAUSA_S, tamanho=TAMANHO_PAGINA,
     return paginas, total
 
 
+SUFIXOS_SOCIETARIOS = (" S/A.", " S/A", " S.A.", " SA")
+
+
+def sem_sufixo(nome):
+    """'AMBEV S/A' -> 'AMBEV'. None quando o nome nao termina em sufixo societario --
+    e entao nao existe segunda forma para tentar (B-02)."""
+    for suf in SUFIXOS_SOCIETARIOS:
+        if nome.upper().endswith(suf):
+            return nome[:-len(suf)].rstrip() or None
+    return None
+
+
+def proventos_de(nome, buscar_fn=None, pausa=PAUSA_S):
+    """B-02. O nome como veio do acervo primeiro; SO depois de um TOTAL-ZERO, o nome sem
+    o sufixo societario. Outra falha (formato, laco, historico incompleto) nao ganha
+    segunda tentativa: nao e o nome que esta errado, e trocar o nome mascararia o defeito.
+
+    Devolve (paginas, total, nome_usado, forma, tentativas). A forma e PROCEDENCIA --
+    vai para o manifesto, porque quem reprocessar precisa saber que texto a B3 aceitou.
+    Se as duas formas derem zero, sobe TOTAL-ZERO com as duas respostas em `brutos`."""
+    tn, forma, tentativas, brutos = nome, "COMO_VEIO", [], []
+    while True:
+        try:
+            paginas, total = paginar(tn, buscar_fn, pausa)
+        except PaginacaoInvalida as e:
+            tentativas.append({"trading_name": tn, "forma": forma, "resultado": e.tipo})
+            if e.bruto is not None:
+                brutos.append((forma, e.tipo, e.bruto))
+            alt = sem_sufixo(tn) if (e.tipo == "TOTAL-ZERO" and forma == "COMO_VEIO") else None
+            if alt is None:
+                e.tentativas, e.brutos = tentativas, brutos
+                raise
+            tn, forma = alt, "SEM_SUFIXO"
+            time.sleep(pausa)
+            continue
+        tentativas.append({"trading_name": tn, "forma": forma, "resultado": "COMPLETO",
+                           "registros": total})
+        return paginas, total, tn, forma, tentativas
+
+
 def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None,
                       pausa=PAUSA_S):
     """Uma pasta por emissora, uma pagina bruta por arquivo, em
@@ -451,12 +497,15 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
             print("  %3d/%d  %-5s  ja existe -- o acervo do dia e imutavel" % (i, len(alvos), em))
             continue
         try:
-            paginas, total = paginar(nome, buscar_fn, pausa)
+            paginas, total, usado_nome, forma, tentativas = proventos_de(nome, buscar_fn, pausa)
         except PaginacaoInvalida as e:
-            if e.bruto is not None:
-                gravar(os.path.join(pasta, "%s.%s.json" % (em, e.tipo)), e.bruto, False)
-            falhas.append((em, nome, e.tipo, str(e)))
-            print("  %3d/%d  %-5s  %-14s %s: %s" % (i, len(alvos), em, nome[:14], e.tipo, e))
+            for forma_b, tipo_b, bruto in e.brutos:
+                extra = "" if forma_b == "COMO_VEIO" else ".SEM-SUFIXO"
+                gravar(os.path.join(pasta, "%s.%s%s.json" % (em, tipo_b, extra)), bruto, False)
+            trilha = "; ".join("%r -> %s" % (t["trading_name"], t["resultado"])
+                               for t in e.tentativas) or str(e)
+            falhas.append((em, nome, e.tipo, trilha))
+            print("  %3d/%d  %-5s  %-14s %s: %s" % (i, len(alvos), em, nome[:14], e.tipo, trilha))
             continue
         except RuntimeError as e:
             falhas.append((em, nome, "REDE", str(e)[:120]))
@@ -468,13 +517,16 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
             shas.append(sha256(texto))
         anotar_manifesto(raiz, {
             "capturado_em": agora_iso(), "tipo": "proventos_completos", "emissora": em,
-            "trading_name": nome, "trading_name_de": "eventos/dt_captura=%s" % usado,
+            "trading_name": usado_nome, "trading_name_do_acervo": nome,
+            "forma_do_nome": forma, "tentativas": tentativas,
+            "trading_name_de": "eventos/dt_captura=%s" % usado,
             "pasta": destino, "paginas": len(paginas), "total_registros": total,
             "sha256_paginas": shas, "url_primeira_pagina": paginas[0][0],
         })
         completas += 1
-        print("  %3d/%d  %-5s  %-14s %4d registros em %d pagina(s)"
-              % (i, len(alvos), em, nome[:14], total, len(paginas)))
+        nota = "" if forma == "COMO_VEIO" else "  (sem sufixo: %r)" % usado_nome
+        print("  %3d/%d  %-5s  %-14s %4d registros em %d pagina(s)%s"
+              % (i, len(alvos), em, nome[:14], total, len(paginas), nota))
         time.sleep(pausa)
 
     print("\n%d completas, %d ja existiam, %d falharam." % (completas, ja, len(falhas)))
@@ -484,9 +536,10 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
         for em, nome, tipo, msg in falhas:
             print("  %-5s  %-14s %-16s %s" % (em, nome[:14], tipo, msg[:70]))
         if any(t == "TOTAL-ZERO" for _, _, t, _ in falhas):
-            print("\nTOTAL-ZERO NAO e 'empresa sem proventos'. E quase sempre o tradingName\n"
-                  "que o endpoint nao reconhece -- o campo do suplemento tem 12 posicoes e\n"
-                  "pode estar truncado. Mesma armadilha do A-01, num campo novo.")
+            print("\nTOTAL-ZERO NAO e 'empresa sem proventos': e um nome que a tabela de\n"
+                  "proventos nao reconhece -- o match e exato. Cada linha acima mostra as formas\n"
+                  "tentadas: como veio e, havendo sufixo societario, sem ele (B-02). NAO e\n"
+                  "truncamento do campo de 12 posicoes: essa hipotese foi medida e caiu.")
     if fora:
         print("\npedidas e ausentes do acervo de eventos (sem tradingName para usar): "
               + ", ".join(fora))
@@ -499,13 +552,18 @@ def coletar_proventos(raiz, dia, emissoras=None, de_captura=None, buscar_fn=None
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="Captura o dado perecivel da B3 (Fase 0).")
-    p.add_argument("--raiz", default=RAIZ_PADRAO, help="raiz do acervo (padrao: %s)" % RAIZ_PADRAO)
-    p.add_argument("--indice", metavar="COD", help="captura a carteira teorica (ex.: IBOV, IBXX, SMLL, IDIV)")
+    p.add_argument("--raiz", default=RAIZ_PADRAO,
+                   help="raiz do acervo (padrao: %s)" % RAIZ_PADRAO)
+    p.add_argument("--indice", metavar="COD",
+                   help="captura a carteira teorica (ex.: IBOV, IBXX, SMLL, IDIV)")
     p.add_argument("--eventos", action="store_true", help="captura eventos societarios")
-    p.add_argument("--tickers", help="lista separada por virgula; sem isso usa o ultimo snapshot de indice")
-    p.add_argument("--forcar", action="store_true", help="reescreve snapshot ja existente do mesmo dia")
+    p.add_argument("--tickers",
+                   help="lista separada por virgula; sem isso usa o ultimo snapshot de indice")
+    p.add_argument("--forcar", action="store_true",
+                   help="reescreve snapshot ja existente do mesmo dia")
     p.add_argument("--proventos-completos", action="store_true",
-                   help="historico longo de proventos (paginado); le o tradingName do acervo de eventos")
+                   help="historico longo de proventos (paginado); le o tradingName do "
+                        "acervo de eventos")
     p.add_argument("--de-captura", metavar="AAAA-MM-DD",
                    help="com --proventos-completos: captura de eventos de onde ler o tradingName")
     a = p.parse_args(argv)

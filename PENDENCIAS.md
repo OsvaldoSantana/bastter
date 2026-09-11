@@ -1348,6 +1348,7 @@ motivo, `coletar_eventos` passa a chamar `desembrulhar()` e o teste espelho morr
 | — | `tese.DIFERIDOS_K` | 11/09 — **removido**. O G-01 nasceu do C02, que depende do juro travado na compra; o K02 não depende de compra. Diferir a tese selaria na impressão um texto vazio |
 | — | `estado_io.reserva_empenhada` | 11/09 — **usado**, como conferência: se declarado, tem de bater com `reserva_atual − reserva_disponivel`, no padrão de `reserva_por_rota`. O motor segue usando só `reserva_disponivel` |
 | — | `corretora.promocional` (P-32) | 11/09 — **usado**: `regras()` recusa peso ≠ 0, como faz com `reclame_aqui` e `facilidade` |
+| B-02 | 3 de 74 emissoras com `totalRecords: 0` na esteira de proventos (ABEV, CURY, KLBN) | 11/09 — **não era truncamento** (o código supunha; a hipótese foi medida e caiu): a tabela de proventos guarda o nome **sem** o sufixo `S/A`. O coletor tenta o nome como veio e, **só depois de um zero**, sem o sufixo; a forma usada vai para o manifesto. As 71 gravadas não foram tocadas; recoletar as 3 é decisão do Osvaldo |
 
 ---
 

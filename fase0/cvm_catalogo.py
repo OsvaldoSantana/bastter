@@ -129,7 +129,8 @@ def detalhar(slug, raiz, gravar_arquivo=True):
 
 
 def main(argv=None):
-    a = argparse.ArgumentParser(description="Interroga a API CKAN do portal de dados abertos da CVM.")
+    a = argparse.ArgumentParser(
+        description="Interroga a API CKAN do portal de dados abertos da CVM.")
     a.add_argument("--raiz", default=RAIZ_PADRAO)
     a.add_argument("--listar", action="store_true", help="nomes de todos os conjuntos")
     a.add_argument("--procurar", metavar="TERMO", help="acha o slug sem adivinhar")
