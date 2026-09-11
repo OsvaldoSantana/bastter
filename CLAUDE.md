@@ -210,6 +210,13 @@ série.
 
 ## 3. Como rodar
 
+**Na máquina do Osvaldo (10/09/2026): Python 3.13, e o `pyproject.toml` exige
+`==3.11.*`.** Não é detalhe de instalação — é o P-15 funcionando: a faixa foi fechada de
+propósito (3.12 mudou comparação de `datetime.date`, e o projeto compara `expira` em quase
+todo `val()`). Ou instala-se o 3.11, ou a faixa é reaberta **com medição**, nunca por
+conveniência. Enquanto isso, um resultado produzido no 3.13 é número novo, não conferência
+de um antigo.
+
 ```bash
 cd alocacao
 python ambiente.py           # confere o ambiente ANTES de acreditar num número
@@ -324,6 +331,39 @@ Pendência fechada não some: vai para a tabela do fim, com a data. O histórico
 que já foi resolvido é o que impede a sessão seguinte de reabrir tarefa pronta —
 o que já aconteceu três vezes neste projeto.
 
+### Teste em toda etapa — sem exceção
+
+Regra dele, 11/09/2026: *"nunca deixar de implementar testes unitários em todas as etapas."*
+
+Ela não é redundante com o "um achado, um teste": aquela é **reativa** (achou defeito,
+escreve teste), esta é **preventiva** (escreveu código, escreve teste). O `coletar_b3.py`
+mostrou a diferença da pior forma — foi entregue em 06/09 com *"compila e a lógica foi
+testada"*, e na primeira corrida real quebrou **três vezes seguidas**, em A-00, A-01 e
+A-02.
+
+**Os três eram função pura. Nenhum precisava de rede.** O que faltou não foi teste de
+integração: foi teste de `empresa_de` e de `normalizar` — as duas funções onde morava
+todo o risco, e as duas que ficaram sem.
+
+**Consequência operacional:** arquivo novo em `fase0/` ou em `alocacao/` nasce com
+`test_<nome>.py` ao lado. Script utilitário também — foi um script utilitário que trouxe
+dado do ativo errado com HTTP 200.
+
+### Escalável, auditável, manutenível — nesta ordem de conferência
+
+Regra dele, 11/09/2026. Não é slogan; são três perguntas com resposta verificável, e o
+projeto já tem a ferramenta de cada uma:
+
+| | a pergunta | onde já se responde |
+|---|---|---|
+| **escalável** | funciona com 400 empresas, não só com 76? com dois usuários? | P-41/P-42 mediram; `catalogo.yaml` é quadrático **por desenho declarado** |
+| **auditável** | de onde veio este número, e o que muda se a escolha for outra? | P1, `impacto.py`, o acervo em bruto com sha256 |
+| **manutenível** | a próxima sessão entende sem reler tudo? o teste pega a volta? | `CLAUDE.md`, `ACHADOS.md`, um teste por achado |
+
+**O que isto proíbe na prática:** script de uma vez só que ninguém consegue rodar de
+novo; número no código em vez de no YAML; e correção sem teste — as três coisas que
+fazem o projeto parecer pronto e não ser.
+
 ### Sempre terminar indicando o próximo passo
 
 Toda sessão fecha nomeando **qual é o próximo passo do planejamento**. Não uma
@@ -414,6 +454,22 @@ Registradas porque cada uma foi um erro meu que ele pegou:
 ## 7. Onde o projeto está
 
 **Fase A — formar a reserva.** Até **~mai/2031**, recalculado em 05/09 (achado M-01).
+
+> **10/09/2026 — o aporte deixou de ser zero.** Primeiro depósito de **R$500**, no cofrinho
+> do PicPay. A P-02 sai de `DADO_DE_UM_USUARIO` pendente e passa a ter valor — e o M-01 diz
+> que esta é a alavanca de **33 meses**, não a de 3.
+>
+> **E o quadro completo apareceu no mesmo dia** (`docs/fontes/picpay-cofrinhos-2026-09-10.md`):
+> total guardado **R$ 8.181,71** — R$500 no Turbinado (121%) e **R$7.681,71 no Cofrinho do
+> Cartão (120%)** —, e **os dois etiquetados `LIMITE DO CARTÃO`** pelo próprio app.
+>
+> **O M-01 estava certo pelo motivo certo.** Ele dizia que "~mar/2030" fora calculado com
+> R$7.671 de reserva e que isso estava errado *"porque a reserva é zero"*. O saldo é
+> R$7.681,71: **o número existia — errado era chamá-lo de reserva.**
+>
+> `reserva_disponivel = 8.181,71 − limite comprometido`, e o limite comprometido é o único
+> número que ainda falta. Com ele zerado a Fase A está muito à frente do que este arquivo
+> supõe; com o limite todo usado, a reserva é zero. **Não presuma nenhum dos dois** — P-68.
 O projeto dizia "~mar/2030", número calculado com R$7.671 de reserva inicial — e a
 reserva é **zero**. São 56 meses, não 42.
 
@@ -467,6 +523,71 @@ só será usada em 2031.
 > curta, notas e release). Para incorporação o portão só pode dizer *"esta empresa exige
 > dossiê"* — P-64.
 
+> **Y-01 — chave YAML duplicada é sobrescrita em silêncio. 10/09/2026.**
+>
+> `custos.yaml` tem **duas** entradas `etf.IMAB11` (linhas 171 e 253). O PyYAML **não
+> reclama**: fica com a última. O que o motor lê hoje é `valor: null,
+> status: NAO_CONFIRMADO` — a entrada de 05/09, com valor 0,25%, fonte e data de acesso,
+> **está morta desde que foi escrita**.
+>
+> É o F-02 numa camada nova: lá insumo ausente virava zero; aqui **insumo presente é
+> sobrescrito por um ausente**. O erro é na direção conservadora (a rota fica bloqueada),
+> o que é sorte, não desenho.
+>
+> **Pergunta aberta:** o registro diz "F-03 medida e refutada (IMAB11 perde do Tesouro)".
+> Se o motor lê `None`, **com que número essa medição foi feita?** Responder antes de
+> apagar qualquer das duas entradas.
+>
+> **O teste que falta não é sobre IMAB11** — é uma varredura do YAML cru procurando chave
+> repetida em qualquer mapping. Um teste do IMAB11 seria patch.
+
+> **A-01 e A-02 — 11/09/2026, a primeira corrida real da Fase 0, e ela rendeu dois
+> achados que nenhuma leitura teria dado.**
+>
+> **A-01 — `B3SA3` virou `BSA`, e a B3 respondeu 200.** O coletor derivava a emissora
+> filtrando dígitos do ticker. Funciona em 73 dos 74 ativos do Ibovespa e erra em
+> **B3SA3**, cujo código de emissora é `B3SA` — tem dígito no meio. O endpoint **casou
+> com outra empresa** e devolveu capital social de R$9,61 bi datado de 1981.
+>
+> Este é o modo de falha mais caro do projeto inteiro: **não é ausência de dado, é dado
+> do ativo errado, com aparência perfeita.** Nenhum teste de "veio resposta?" o pega. A
+> regra certa é posicional — ticker da B3 é 4 caracteres de emissora + dígitos —, e o
+> coletor agora imprime o nome da empresa em cada linha, para que a divergência seja
+> visível a olho.
+>
+> **A-02 — eu registrei o formato do endpoint errado.** `docs/fontes/pesquisa-bases-e-apis-2026-09.md`
+> diz que `GetListedSupplementCompany` devolve um **objeto**. Devolve uma **lista**. As 74
+> emissoras vieram como lista, sem exceção. A leitura original passou por uma ferramenta
+> de resumo, que desembrulhou a lista de um elemento **sem avisar**, e eu transcrevi a
+> conclusão dela como se fosse o dado.
+>
+> É a mesma classe do F-05/N-01 com um intermediário novo: **um resumo não é uma
+> observação.** Quando a fonte é máquina, o que vale é o byte que ela devolve, e a única
+> prova é o arquivo bruto gravado no acervo.
+>
+> **O acerto de desenho, e vale registrar porque foi barato:** a guarda escrita em 10/09
+> — *"resposta estranha é evidência, não lixo: grave o bruto e acuse no fim"* — fez o
+> coletor sobreviver às 74 e trazer a forma real de volta, em vez de morrer na primeira.
+> A versão anterior perdia 75 ativos por causa de um.
+
+> **A-03 — o código da emissora muda, e a história não vem junto. 11/09/2026.**
+>
+> `MBRF` voltou com `tradingName: MARFRIG`, `codeCVM: 20788`, e **as três listas de
+> eventos vazias**. Não é falha de rede nem chave errada: o código mudou (`MRFG` → `MBRF`,
+> na fusão com a BRF) e o histórico **ficou sob o código antigo**.
+>
+> Zero numa lista é comum e legítimo — há empresa que nunca desdobrou. **Zero nas três,
+> numa empresa do Ibovespa, é quase sempre troca de código.** Das 74 emissoras, só a MBRF
+> caiu nesse caso, o que torna a guarda barata e precisa.
+>
+> É a confirmação concreta do que a pesquisa de 06/09 tinha previsto em abstrato: **o
+> mapeamento ticker ↔ CNPJ ↔ CD_CVM também precisa ser bitemporal**, senão o join vaza
+> futuro. Aqui ele não vaza futuro — ele **apaga passado**, que é o outro lado da mesma
+> moeda. Série de preços sem ajuste de proventos é série inútil.
+>
+> Note o que salvou: `codeCVM` vem no mesmo objeto. **O CNPJ/CD_CVM é estável quando o
+> ticker não é** — é por ele que a ponte para o código antigo se faz.
+
 ### Próximo passo, em ordem de valor
 
 *Revisado em 06/09/2026 pela pesquisa de bases e APIs (`docs/fontes/pesquisa-bases-e-apis-2026-09.md`).
@@ -488,11 +609,19 @@ A fila **mudou de primeiro lugar**, e a razão está no achado V-01 abaixo.*
 > nada ter acontecido com a empresa. COTAHIST cru lê isso como um crash. Não havia linha
 > nenhuma no plano sobre isso.
 
-1. **Coletar o dado perecível da B3.** ⚙ **exige o desktop.** `fase0/coletar_b3.py`
-   (stdlib apenas, compila e tem a lógica testada; a rede não). Captura eventos
-   societários e carteira de índice em snapshot datado e imutável, com sha256 e
-   manifesto. **Vem antes da CVM** porque DFP/ITR são ZIP estático em portal oficial com
-   dicionário publicado — não evaporam; este endpoint pode.
+1. ~~Coletar o dado perecível da B3.~~ **FEITO em 11/09/2026 — o acervo existe.**
+   Carteira do Ibovespa (76 ativos) e eventos societários de **74 emissoras**, todas com
+   nome conferido contra o ticker. `dt_captura=2026-09-11`.
+   **O acervo ponto-no-tempo do projeto começa nesta data** — vai para
+   `limitacoes_declaradas`: não há PIT anterior a 11/09/2026, e backtest antes disso é
+   reconstrução, não observação.
+
+   **Duas lacunas declaradas do que foi capturado, e nenhuma é bloqueio:**
+   - `GetListedSupplementCompany` devolve uma **janela recente**, não a série completa —
+     a PETR veio com 24 proventos, e o endpoint paginado
+     (`GetListedCashDividends`) reportou **343** desde 2010. Os desdobramentos parecem ir
+     bem mais longe (BBAS com 18, BBDC com 10). **Falta a esteira do histórico longo.**
+   - **MBRF sem evento nenhum** — achado A-03 acima.
 2. **Fase 0 da CVM — o prazo é SEMANAL, e são 6 arquivos, não 1,5 GB.** ⚙ **exige o
    desktop.** O `NAO_CONFIRMADO` **fechou em 06/09** pela própria CVM
    (`docs/fontes/cvm-dfp-politica-atualizacao.md`, status COMPLETO):

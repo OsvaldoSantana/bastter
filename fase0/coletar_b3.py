@@ -155,14 +155,27 @@ def ultimo_indice(raiz, indice):
 # ------------------------------------------------------------------ eventos
 
 def empresa_de(ticker):
-    """PETR4 -> PETR. O endpoint de suplemento pede o codigo de 4 letras da EMISSORA."""
-    letras = "".join(c for c in ticker.upper() if c.isalpha())
-    return letras[:4]
+    """PETR4 -> PETR. O endpoint pede o codigo da EMISSORA, que sao os 4 PRIMEIROS
+    caracteres do ticker -- nao as 4 primeiras LETRAS.
+
+    ACHADO DE 11/09/2026, e ele e silencioso. A versao anterior filtrava digitos:
+    `"".join(c for c in ticker if c.isalpha())[:4]`. Funciona para 73 dos 74 ativos do
+    IBOV e erra em **B3SA3**, cujo codigo de emissora e `B3SA` -- tem um digito no meio.
+    A versao antiga produzia `BSA`, e o pior: o endpoint RESPONDEU, com capital social de
+    R$9,61 bi e data de 1981. Ou seja, ele casou com OUTRA empresa e devolveu 200.
+
+    E o modo de falha mais caro que existe aqui: nao e ausencia de dado, e dado do ativo
+    ERRADO, com aparencia perfeita. Nenhum teste de "veio resposta?" pegaria.
+
+    Ticker da B3 = 4 caracteres de emissora + 1-2 digitos (+ F de fracionario). Entao a
+    regra certa e posicional, nao por tipo de caractere."""
+    return ticker.upper().strip()[:4]
 
 
 def coletar_eventos(raiz, tickers, dia, forcar):
     emissoras = sorted({empresa_de(t) for t in tickers if empresa_de(t)})
     vazias, erros, gravadas = [], [], 0
+    fora_do_formato, sem_evento_nenhum = [], []
 
     for i, emissora in enumerate(emissoras, 1):
         url = URL_SUPLEMENTO.format(p=carga({"issuingCompany": emissora, "language": "pt-br"}))
@@ -172,6 +185,43 @@ def coletar_eventos(raiz, tickers, dia, forcar):
         except Exception as e:                       # noqa: BLE001 -- queremos o nome do erro
             erros.append((emissora, str(e)[:120]))
             print("  %3d/%d  %-5s  ERRO: %s" % (i, len(emissoras), emissora, str(e)[:60]))
+            time.sleep(PAUSA_S)
+            continue
+
+        # ACHADO DE 11/09/2026, na primeira execucao real (ABEV foi a primeira e ja
+        # quebrou). O endpoint NEM SEMPRE devolve objeto. Dois casos observados:
+        #   1. JSON dentro de string -- `json.loads` uma vez devolve `str`, e dai
+        #      `dados.get(...)` levanta AttributeError e DERRUBA A COLETA INTEIRA;
+        #   2. string curta de erro da propria B3.
+        # A versao anterior morria na primeira emissora esquisita e perdia as outras 75.
+        # Regra nova: normaliza o que da, GRAVA o bruto de qualquer jeito (resposta
+        # estranha e evidencia, nao lixo), e ACUSA no fim. Nunca derruba a corrida por
+        # causa de um ativo.
+        if isinstance(dados, str):
+            try:
+                dados = json.loads(dados)            # caso 1: JSON duplamente codificado
+            except json.JSONDecodeError:
+                pass
+        # CASO 3, e ele e o formato NORMAL deste endpoint -- descoberto na primeira
+        # corrida real (11/09/2026): as 74 emissoras devolveram **lista**, nao objeto.
+        # A leitura anterior, feita por ferramenta de resumo, tinha desembrulhado a lista
+        # de um elemento sem avisar, e eu registrei o formato errado em
+        # `docs/fontes/pesquisa-bases-e-apis-2026-09.md`. Achado A-02.
+        # Mais de um elemento e informacao, nao erro: a mesma emissora pode ter mais de
+        # um registro. Guardamos todos e usamos o primeiro, dizendo quantos vieram.
+        n_registros = 1
+        if isinstance(dados, list):
+            so_dicts = [x for x in dados if isinstance(x, dict)]
+            if so_dicts:
+                n_registros = len(so_dicts)
+                dados = so_dicts[0]
+        if not isinstance(dados, dict):
+            destino = os.path.join(raiz, "eventos", "dt_captura=" + dia,
+                                   emissora + ".RESPOSTA-NAO-E-OBJETO.json")
+            gravar(destino, texto, forcar)
+            fora_do_formato.append((emissora, type(dados).__name__, repr(dados)[:70]))
+            print("  %3d/%d  %-5s  RESPOSTA NAO E OBJETO (%s) -- gravada para conferencia"
+                  % (i, len(emissoras), emissora, type(dados).__name__))
             time.sleep(PAUSA_S)
             continue
 
@@ -186,15 +236,29 @@ def coletar_eventos(raiz, tickers, dia, forcar):
         if not dados.get("tradingName"):
             vazias.append(emissora)
 
+        # ACHADO A-03, 11/09/2026. MBRF voltou com tradingName "MARFRIG", codeCVM 20788,
+        # e as TRES listas vazias. Nao e falha de rede nem chave errada -- e que o codigo
+        # de emissora MUDOU (MRFG -> MBRF, na fusao com a BRF) e a historia de eventos
+        # NAO VEM JUNTO: ela ficou sob o codigo antigo.
+        #
+        # Zero em uma lista e comum e legitimo (empresa que nunca desdobrou). Zero nas
+        # TRES, numa empresa do IBOV, e quase sempre troca de codigo -- e tratar isso
+        # como "empresa sem eventos" poe uma serie de precos sem ajuste no backtest.
+        # Silencio aqui custa mais que erro.
+        if n_cash == 0 and n_stock == 0 and n_subs == 0:
+            sem_evento_nenhum.append((emissora, (dados.get("tradingName") or "").strip()))
+
         destino = os.path.join(raiz, "eventos", "dt_captura=" + dia, emissora + ".json")
         ok, nota = gravar(destino, texto, forcar)
         gravadas += 1 if ok else 0
         anotar_manifesto(raiz, {
             "capturado_em": agora_iso(), "tipo": "eventos_societarios",
-            "emissora": emissora, "trading_name": dados.get("tradingName"),
+            "emissora": emissora,
+            "trading_name": (dados.get("tradingName") or "").strip(),
             "code_cvm": dados.get("codeCVM"), "url": url, "arquivo": destino,
             "sha256": sha256(texto), "bytes": len(texto.encode("utf-8")),
             "cash_dividends": n_cash, "stock_dividends": n_stock, "subscriptions": n_subs,
+            "registros_na_resposta": n_registros,
             "gravado": ok, "nota": nota,
         })
         print("  %3d/%d  %-5s  %-28s cash=%-4d stock=%-3d subs=%-3d  %s" % (
@@ -205,9 +269,28 @@ def coletar_eventos(raiz, tickers, dia, forcar):
     print("\n%d emissoras, %d arquivos novos." % (len(emissoras), gravadas))
     if vazias:
         print("SEM tradingName (chave provavelmente errada, CONFERIR): " + ", ".join(vazias))
+    if sem_evento_nenhum:
+        print("\nZERO EVENTOS NAS TRES LISTAS em %d emissora(s) -- A-03, provavel TROCA DE\n"
+              "CODIGO. A historia fica sob o codigo ANTIGO e nao acompanha o novo:"
+              % len(sem_evento_nenhum))
+        for em, nome in sem_evento_nenhum:
+            print("  %-5s  %s" % (em, nome))
+        print("Serie de precos sem ajuste e serie inutil. Ache o codigo anterior e colete\n"
+              "por ele tambem, ou declare a lacuna.")
+    print("\nCONFIRA A COLUNA DO NOME antes de confiar no acervo. O endpoint casa por\n"
+          "aproximacao e devolve 200 para codigo errado -- foi assim que B3SA3 virou\n"
+          "'BSA' e trouxe outra empresa. Nome que nao bate com o ticker e dado do ativo\n"
+          "errado, nao dado ausente.")
     if erros:
         print("ERRO DE REDE em %d: %s" % (len(erros), ", ".join(e for e, _ in erros)))
-    return 1 if (vazias or erros) else 0
+    if fora_do_formato:
+        print("\nRESPOSTA FORA DO FORMATO em %d emissora(s) -- o bruto foi gravado como\n"
+              "  <EMISSORA>.RESPOSTA-NAO-E-OBJETO.json para conferencia:" % len(fora_do_formato))
+        for em, tipo, amostra in fora_do_formato:
+            print("  %-5s  %-5s  %s" % (em, tipo, amostra))
+        print("Isto NAO e o mesmo que 'empresa sem eventos'. Nao trate como ausencia de\n"
+              "dado ate saber o que a B3 respondeu.")
+    return 1 if (vazias or erros or fora_do_formato or sem_evento_nenhum) else 0
 
 
 # ---------------------------------------------------------------------- main

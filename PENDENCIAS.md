@@ -5,7 +5,7 @@ Regra da casa: pendência sem dono e sem gatilho não é pendência, é desabafo
 
 **Estado em 06/09/2026 (2ª sessão do dia) · política 1.17.0 · custos 2.1 · perfil 1.0 · catálogo 1.0 · 269 testes**
 
-**Classes:** 34 `BLOQUEIA_O_SISTEMA` · 10 `DECISAO_DE_DESENHO` · 2 `DADO_DE_UM_USUARIO`
+**Classes:** 42 `BLOQUEIA_O_SISTEMA` · 10 `DECISAO_DE_DESENHO` · 3 `DADO_DE_UM_USUARIO`
 (P-55 fechada no mesmo dia; P-57 a P-67 abertas)
 
 ---
@@ -988,6 +988,221 @@ esperança.
 
 ---
 
+## P-68 · O primeiro aporte existe — e a pergunta certa não é quanto, é se está livre
+
+**Classe:** `DADO_DE_UM_USUARIO`. **Dono:** Osvaldo. **Gatilho:** antes de rodar qualquer
+projeção de Fase A com número real.
+
+**10/09/2026: R$500 depositados**, no cofrinho do PicPay a 121% do CDI, obtido *"por
+completar as missões"*.
+
+O projeto já mediu esse produto, e o registro é desconfortável (`custos.yaml`, seção
+`cofrinho`, achados J-01/J-02/K-01):
+
+- o Turbinado a 121% que foi analisado em 05/09 vem com **mensalidade de R$287,88/ano** e
+  exige **R$2.500 de gasto no cartão em 3 meses**;
+- o diferencial de 121% para 102% vale **2,113% a.a. líquido de IR** — e, no teto,
+  **PERDE R$76,60 por ano** contra o cofrinho comum;
+- e o principal: **o cofrinho que rende mais é caução do limite do cartão.** Dinheiro
+  empenhado **não é reserva** — é garantia. O `Estado` já separa `reserva_atual` de
+  `reserva_disponivel` exatamente por isso.
+
+### RESPONDIDA em 10/09 pela tela do app — e a resposta contraria o que ele disse
+
+`docs/fontes/picpay-cofrinhos-2026-09-10.md`, status OBSERVADO.
+
+Ele escreveu *"os 500 reais é livre"*. **A tela do produto diz o contrário**, em duas
+marcações independentes: *"O saldo deste cofrinho está ativo como limite do seu cartão"*
+e a etiqueta `LIMITE DO CARTÃO` na lista.
+
+A distinção por trás disso é real: o cofrinho é **líquido** (resgata quando quiser) e
+**empenhado** (resgatar derruba o limite) ao mesmo tempo. É exatamente por isso que o
+`Estado` separa `reserva_atual` de `reserva_disponivel` desde o J-01.
+
+**E apareceu o número que faltava:** total guardado **R$ 8.181,71** — R$500 no Turbinado
+(121%) e **R$ 7.681,71 no Cofrinho do Cartão (120%)**, os dois etiquetados
+`LIMITE DO CARTÃO`.
+
+> **O M-01 estava certo pelo motivo certo.** Ele registrou que "~mar/2030" fora calculado
+> com **R$7.671 de reserva inicial** e que isso estava errado *"porque a reserva é zero"*.
+> O saldo hoje é **R$7.681,71**. **O número existia** — o que estava errado era chamá-lo
+> de reserva. Agora há evidência, com etiqueta do próprio app.
+
+**O que ainda falta, e é o único número que define a Fase A:** quanto do limite está
+**comprometido** hoje. `reserva_disponivel = 8.181,71 − limite usado`. Com limite zerado,
+a reserva é R$8.181,71 e a Fase A está muito à frente do que o projeto supõe; com o limite
+todo usado, é **zero**, e o dinheiro garante dívida que já existe.
+
+### Decisão dele em 11/09, e o registro guarda as duas coisas separadas
+
+> *"considerar 500 reais livres — devo ter clicado na hora de depositar para usar como
+> limite"*
+
+**Registrado assim, e a separação é o ponto:**
+
+| campo | valor | status |
+|---|---|---|
+| estado observado do Turbinado | `LIMITE DO CARTAO` | **OBSERVADO** — etiqueta do app, 10/09 |
+| `reserva_disponivel` dos R$500 | 500 | **DECISAO_DO_USUARIO**, `NAO_CONFIRMADO` na fonte |
+
+Não é firula de modelagem: as duas afirmações podem ser verdadeiras ao mesmo tempo — o
+app mostra o estado de hoje, ele descreve a intenção e o que pretende desfazer. Misturá-las
+num campo só apagaria qual das duas o sistema está usando.
+
+**A conferência que fecha isso leva 30 segundos:** no cofrinho Turbinado há a linha *"O
+saldo deste cofrinho está ativo como limite do seu cartão"* com uma seta. Entrar, desligar,
+e tirar outra captura. Aí `reserva_disponivel = 500` vira **OBSERVADO** e a decisão some do
+caminho — que é sempre o desfecho melhor.
+
+> **O risco real, e ele é uma hipótese, não um fato:** na lista, **os dois** cofrinhos
+> aparecem com a etiqueta `LIMITE DO CARTAO` — inclusive o de 120%. Pode ser que, no
+> PicPay, **taxa alta e caução sejam o mesmo produto**, e que desligar o limite jogue o
+> saldo para o cofrinho comum de 102%. Se for o caso, não existe "R$500 livre a 121%": há
+> uma escolha.
+>
+> **E o preço dessa escolha é pequeno e já está medido:** 121% × 102% sobre R$500 é
+> **R$13,20/ano bruto**. Treze reais por ano é o que custa ter esse dinheiro solto — e num
+> projeto cuja Fase A depende de reserva de verdade, é barato. Mas é decisão dele, não
+> minha, e depende de a hipótese se confirmar. `NAO_CONFIRMADO`.
+
+---
+
+## P-74 · K-01 comparou contra a alternativa errada
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Claude. **Gatilho:** antes de reescrever a
+seção `cofrinho` do `custos.yaml`.
+
+O K-01 mediu **121% × 102%** e concluiu que a mensalidade de R$287,88/ano fazia o
+Turbinado perder. **Mas a alternativa real não é o cofrinho comum de 102%** — é o
+**Cofrinho do Cartão a 120%**, que ele já tem e onde já estão R$7.681,71.
+
+Com CDI de 13,90% a.a.:
+
+| comparação | diferencial | sobre R$8.181,71 |
+|---|---|---|
+| 121% × **120%** | **0,139 p.p. a.a.** | **R$ 11,37/ano bruto · R$ 8,81–9,67 líquido** |
+| 121% × 102% | 2,641 p.p. a.a. | R$ 216,08/ano bruto |
+
+**As missões valem ~R$9 por ano**, antes de contar o que custa gerá-las (o K-01 registrou
+~R$2.500 de gasto no cartão em 3 meses). É o M-01 outra vez: o destino move pouco, o
+aporte move tudo — R$50/mês a mais valem R$600/ano, **66 vezes** o prêmio das missões.
+
+E é a **P7** aplicada a dinheiro: manter o 121% depende de lembrar de cumprir tarefa todo
+mês. Uma rotina que depende de alguém lembrar não é uma rotina — e aqui ela vale R$9.
+
+**NAO_CONFIRMADO antes de reescrever o K-01:** a tela de 10/09 diz apenas *"Tarefas
+concluídas"*; o K-01 registrou R$287,88/ano a partir de capturas de **05/09**. As duas
+leituras podem estar descrevendo **planos diferentes**, e isso precisa ser reconciliado —
+não reescrever o achado antigo com o dado novo sem entender a diferença.
+
+---
+
+## P-75 · O ambiente instalado diverge dos pinos, e o Python é outro
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo. **Gatilho:** antes de acreditar em
+qualquer número produzido na máquina dele.
+
+Instalado em 10/09: **numpy 2.5.3, pandas 3.0.5**, em **Python 3.13**.
+Declarado no `pyproject.toml`: **numpy==2.4.4, pandas==3.0.2**, `requires-python ==3.11.*`.
+
+**As três divergem, e as duas primeiras são as que MUDAM NÚMERO** — `alfa_contra_fatores`
+resolve por `numpy.linalg.lstsq`, `mensal()` compõe por `pandas.groupby`.
+
+Isto é o P-15 fazendo exatamente o trabalho dele: a divergência virou evento visível em
+vez de número silenciosamente diferente. **A saída não é afrouxar o pino.** Ou se instala
+o declarado, ou se muda o declarado **com medição** e registro em `REGISTRO-vN.md`.
+
+Enquanto isso vale a regra já escrita no CLAUDE.md §3: a suíte continua verde e **isso
+está certo** — o que deixa de valer não é o código, é a *reprodução* de um resultado
+pré-registrado.
+
+---
+
+
+
+- livres → `reserva_atual = 500`, `reserva_disponivel = 500`. A Fase A começou.
+- empenhados → `reserva_atual = 500`, `reserva_disponivel = 0`. **A reserva continua zero**,
+  e o que existe é uma caução que rende.
+
+E uma segunda, que pode **melhorar** o registro do projeto: se os 121% vieram de **missões**
+e **não** de mensalidade, então a aritmética do K-01 não se aplica a este caso — o custo de
+R$287,88/ano some, e o Turbinado deixa de perder para o cofrinho comum. **Seria a primeira
+vez que um achado do projeto é derrubado por um fato novo em vez de por um erro.** Não
+presumi: o K-01 fica como está até a captura do app confirmar.
+
+---
+
+## P-69 a P-72 · Auditoria externa (DeepSeek), conferida contra o código em 10/09
+
+**Documento:** `AUDITORIA-DEEPSEEK-CONFERIDA.md`. Auditoria de terceiro é **hipótese**, não
+achado — cada item foi rodado antes de virar pendência. Os quatro críticos são verdadeiros.
+
+| # | item | classe | veredito |
+|---|---|---|---|
+| **P-69** | `etf.IMAB11` duplicado em `custos.yaml` (achado **Y-01**) | `BLOQUEIA_O_SISTEMA` | **CONFIRMADO, e o diagnóstico da auditoria está errado**: o YAML **não falha ao carregar** — PyYAML fica com a última chave, em silêncio. A entrada de 05/09 (0,25%, com fonte) está morta |
+| ~~**P-70**~~ | `HOJE = dt.date(2026,9,1)` fixo em `motor.py:20` | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas` |
+| ~~**P-71**~~ | `dividas`/`objetivos` voltam como `dict`, motor espera dataclass | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas` |
+| ~~**P-72**~~ | `aporte_mensal <= 0` bloqueia `carregar()` | `BLOQUEIA_O_SISTEMA` | **FECHADA 11/09/2026** — ver tabela `## Fechadas` |
+
+### O que os quatro têm em comum, e isso vale mais que os quatro
+
+**P-71 e P-72 moram na costura entre dois módulos que cada um testa sozinho.** Os testes do
+G1 montam `Divida(...)` na mão; `test_usuario_novo.py` monta o cadastro em memória. Nenhum
+passa por `estado_io.carregar()`. **269 testes, e a porta de entrada real do sistema não é
+exercitada por nenhum.**
+
+Isso não é um bug: é uma lacuna de cobertura com forma reconhecível. O próximo defeito real
+provavelmente mora ali também.
+
+**E morava — duas vezes.** O teste que fecha P-71/P-72 (`test_p71_p72_porta_de_entrada.py`)
+escreve um estado sintético (`tmp_path`, nunca o real) com dívida, objetivo e
+`aporte_mensal=0`, carrega pelo caminho real e roda `alocar()` até o fim. Ele bateu em
+QUATRO exceções diferentes, cada uma só visível depois que a anterior foi corrigida:
+`EstadoInvalido` (P-72) → `AttributeError` em `g1_divida` (P-71) → `TypeError:
+Estado.__init__() got an unexpected keyword argument 'reserva_empenhada'` (achado lateral:
+`d` carregava `reserva_empenhada` e `meses_cobertos`, nenhum campo de `Estado` — o primeiro
+já apontado como campo morto pela própria auditoria externa, o segundo duplicava uma
+`@property` que `Estado` já calcula) → `ValueError: pesos somam 0` (achado lateral em
+`custo_entrada_fixo_pct`, que tratava `aporte==0` como custo infinito para QUALQUER rota,
+inclusive as de tarifa zero). `Estado(**estado_io.carregar()[0])` nunca tinha sido
+executado, nem uma vez, fora deste teste.
+
+### Correção à auditoria, registrada porque o método exige
+
+**A1 (bônus arredondado, `aporte.py:69`) é verdadeiro, mas a auditoria o descreve pela
+metade.** Ela diz "projeção otimista". Medido: 5/ano → 6 disparos (**+20%**), 7/ano → 6
+(**−14%**), 11/ano → 12 (**+9%**). **Erra nos dois sentidos.** Viés que troca de sinal
+conforme o input é pior que viés constante: não dá para corrigir de cabeça.
+
+### Onde a auditoria erra de forma que importa: a ordem
+
+Ela propõe **quatro semanas de motor** e a Fase 0 depois. É a P-44 sendo violada por
+escrito, e o **X-01** torna o argumento mais forte — o dado estruturado da CVM responde 3
+dos 10 passos de uma leitura de incorporadora, e nenhuma refatoração do motor antecipa
+essa descoberta. Some-se o prazo semanal declarado pela própria CVM.
+
+**Ordem defendida:** P-69 a P-72 (horas, não semanas) → **Fase 0** → o resto **em paralelo**.
+
+---
+
+## P-73 · A máquina roda Python 3.13 e o projeto exige 3.11
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo. **Gatilho:** antes de acreditar em
+qualquer número produzido lá.
+
+`pyproject.toml` fecha em `requires-python = "==3.11.*"`, e a faixa é fechada **de
+propósito**: 3.12 mudou o comportamento de comparação de `datetime.date` em alguns
+caminhos, e o projeto compara `expira` em quase todo `val()`.
+
+Isto é o P-15 fazendo o trabalho dele — a divergência virou um evento visível em vez de um
+número silenciosamente diferente. **A saída não é reabrir a faixa por conveniência**: ou se
+instala o 3.11, ou se reabre **com medição** e se registra em `REGISTRO-vN.md`.
+
+Enquanto isso, um resultado produzido no 3.13 é **número novo**, não conferência de um
+antigo.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
@@ -1037,6 +1252,11 @@ esperança.
 | P-40 | sem lint nem type-checker | 06/09 — ruff e mypy em **zero**, com cada dispensa justificada |
 | T-01 | linha morta cuja chamada contradizia a docstring | 06/09 — removida; revelou o **terceiro catálogo** |
 | — | cofrinho do PicPay fora do catálogo | 05/09 — 2 rotas; a dele entra **sem** LIQUIDEZ |
+| P-70 | `HOJE` fixo em `motor.py`, resolvido no import — aviso de expiração mudo desde 02/09 | 11/09 — `val()` recebe `hoje` opcional, resolvido em `dt.date.today()` NO MOMENTO DA CHAMADA; 2 testes injetam data (nunca o relógio real) |
+| P-71 | `dividas`/`objetivos` voltavam como `dict`, motor espera dataclass | 11/09 — `estado_io.validar()` converte para `Divida`/`Objetivo` na carga; `test_p71_p72_porta_de_entrada.py` é o primeiro teste que passa por `estado_io.carregar()` de verdade |
+| P-72 | `aporte_mensal <= 0` bloqueava `carregar()`, contradizendo a U-01 | 11/09 — só NEGATIVO bloqueia; zero vira AVISO |
+| — | achado lateral: `Estado(**estado_io.carregar()[0])` nunca funcionou — `d` carregava `reserva_empenhada`/`meses_cobertos`, nenhum campo de `Estado` | 11/09 — os dois removidos de `d` (eram campo morto e formula duplicada; a validação de `reserva_empenhada` continua) |
+| — | achado lateral: `custo_entrada_fixo_pct` tratava `aporte==0` como custo infinito para toda rota, mesmo as de tarifa zero — zerava o universo e violava `_conferir_invariantes` | 11/09 — `r.corr_fix == 0` agora é custo zero para qualquer aporte; sem mudança para aporte>0 |
 
 ---
 

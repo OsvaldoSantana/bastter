@@ -1767,12 +1767,34 @@ def test_P15_a_divergencia_numerica_avisa_e_nao_quebra():
     dissesse em que ambiente rodou seria meio pre-registro. Entao: a suite nao quebra,
     e quem carrega o aviso e o RESULTADO.
 
-    E o mesmo mecanismo do `expira` — `motor.val()` avisa em stderr e devolve o valor."""
+    E o mesmo mecanismo do `expira` — `motor.val()` avisa em stderr e devolve o valor.
+
+    ACHADO Z-01, 11/09/2026. Este teste DIZIA isso e fazia o contrario: ele afirmava
+    `reproduz_o_registrado is True`, ou seja, ficava vermelho exatamente na maquina com
+    outro numpy — a coisa que a docstring acima proibe em duas linhas.
+
+    Passou despercebido por um motivo simples: a unica maquina que rodava a suite tinha
+    as versoes pinadas, entao a afirmacao errada e a certa davam o mesmo resultado. E o
+    padrao F-05/N-01 na sua forma mais pura — arquivo e codigo concordando por acidente.
+    Quem o encontrou foi o proprio mecanismo, no dia em que a suite rodou numa maquina
+    com numpy 2.5.3 e pandas 3.0.5.
+
+    O que este teste mede AGORA: que o selo e HONESTO, nao que ele e verde. Ou seja,
+    que `reproduz_o_registrado` e derivado das divergencias em vez de afirmado, e que o
+    bloco carrega o que precisa para alguem julgar o resultado depois."""
     selo = ambiente.selo()
-    assert selo["reproduz_o_registrado"] is True, \
-        "neste ambiente o selo tem de dizer que reproduz — se nao diz, veja o stderr"
+    # A afirmacao certa: o selo nao pode MENTIR. Ele diz que reproduz se, e somente se,
+    # nao ha divergencia numerica nem pacote ausente.
+    assert selo["reproduz_o_registrado"] == (
+        not (selo["divergencia_numerica"] or selo["ausentes"])), \
+        "o selo contradiz as proprias divergencias que ele lista"
     assert selo["impressao"] == ambiente.impressao()
     assert "python" in selo
+    assert "divergencia_de_ferramenta" in selo, \
+        "a divergencia de ferramenta e reportada e NAO entra em reproduz_o_registrado"
+    # E a suite NAO quebra por ambiente diferente — que e a frase da docstring virando
+    # medicao. Se um dia alguem trocar isto por `is True`, este comentario e a razao
+    # pela qual nao deve.
 
 
 def test_P15_a_divergencia_numerica_e_separada_da_de_ferramenta():
@@ -1797,7 +1819,12 @@ def test_P15_o_resultado_do_backtest_carrega_o_selo_do_ambiente():
     r = fatores.alfa_contra_fatores(m["SMB"] + m["Risk_Free"], m)
     assert r["fonte_hash"] == fatores.hash_fonte()
     assert r["ambiente"]["impressao"] == ambiente.impressao()
-    assert r["ambiente"]["reproduz_o_registrado"] is True
+    # Z-01: o que importa e que o resultado CARREGUE o selo, nao que o selo seja verde.
+    # Um alfa calculado em ambiente divergente continua sendo um numero legitimo — ele
+    # so nao e a CONFERENCIA de um numero antigo, e e o selo que diz isso a quem ler.
+    assert "reproduz_o_registrado" in r["ambiente"]
+    assert r["ambiente"]["reproduz_o_registrado"] == ambiente.selo()["reproduz_o_registrado"], \
+        "o selo publicado com o resultado tem de ser o mesmo que o ambiente reporta"
 
 
 def test_P15_o_que_a_impressao_do_ambiente_NAO_promete():
