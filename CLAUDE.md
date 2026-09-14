@@ -210,7 +210,30 @@ série.
 
 ## 3. Como rodar
 
-**Na máquina do Osvaldo (10/09/2026): Python 3.13, e o `pyproject.toml` exige
+> **11/09/2026 — Python 3.11.9 instalado, e o `ambiente.py` disse, pela primeira vez:**
+> `python: requer ==3.11.* · rodando 3.11.9`. Desde que o P-15 foi escrito, nenhuma
+> máquina havia rodado o interpretador declarado.
+>
+> **Como instalar as dependências — e NÃO é `pip install -e .`:**
+>
+> ```powershell
+> py -3.11 -m pip install "PyYAML==6.0.3" "numpy==2.4.4" "pandas==3.0.2" "pytest==9.1.1" ruff mypy types-PyYAML
+> ```
+>
+> É o comando que o próprio `ambiente.py --instalar` imprime. Use-o.
+>
+> **B-04 — `pip install -e .` NÃO funciona, e o motivo é o padrão da casa outra vez.**
+> O `pyproject.toml` declara `[build-system]` com setuptools, e o build **falha**:
+> *"Multiple top-level packages discovered in a flat-layout: ['data', 'fase0',
+> 'alocacao', 'auditoria']"*. Nunca houve declaração de `packages`, porque **este projeto
+> nunca foi um pacote instalável** — é um conjunto de scripts, e o `pyproject.toml` existe
+> para **declarar versões**, não para construir distribuição.
+>
+> O arquivo promete um build que não existe. É inofensivo hoje, e é exatamente a forma de
+> defeito que o projeto persegue: **declaração sem execução.** Ou o `[build-system]` sai,
+> ou ganha `[tool.setuptools] packages = []` e passa a ser verdade. Pendência, não urgência.
+
+**Na máquina do Osvaldo, até 11/09/2026: Python 3.13, e o `pyproject.toml` exige
 `==3.11.*`.** Não é detalhe de instalação — é o P-15 funcionando: a faixa foi fechada de
 propósito (3.12 mudou comparação de `datetime.date`, e o projeto compara `expira` em quase
 todo `val()`). Ou instala-se o 3.11, ou a faixa é reaberta **com medição**, nunca por
@@ -534,18 +557,12 @@ só será usada em 2031.
 > sobrescrito por um ausente**. O erro é na direção conservadora (a rota fica bloqueada),
 > o que é sorte, não desenho.
 >
-> **FECHADO em 11/09.** A pergunta — *com que número a F-03 foi medida, se o motor lia
-> `None`?* — tem resposta: **0,25%, à mão, fora do motor.** Está em
-> `politica.yaml → fora_de_escopo.ETF_renda_fixa.resultado_medido_em_05_09_2026`, com as
-> três faixas escritas. A medição nunca passou por `val()`, então o Y-01 não a contaminou.
-> As duas entradas foram **fundidas** (valor e fonte de 05/09, base legal e `bloqueia` da
-> outra), e `test_y01_yaml_duplicata.py` varre os seis YAML do motor pela árvore de nós
-> (`yaml.compose`, nunca `safe_load` — que *é* o apagamento).
+> **Pergunta aberta:** o registro diz "F-03 medida e refutada (IMAB11 perde do Tesouro)".
+> Se o motor lê `None`, **com que número essa medição foi feita?** Responder antes de
+> apagar qualquer das duas entradas.
 >
-> **O que a resposta abriu (P-76):** a F-03 se declarou refutada com um insumo `PARCIAL`
-> cujo próprio `bloqueia` é `comparacao_definitiva_imab11_vs_td_ipca`. Se 0,25% for o
-> **teto** do regulamento, a taxa efetiva pode ficar abaixo de 0,20% — e a conclusão
-> inverte. A conclusão saiu mais forte que o insumo que a sustenta.
+> **O teste que falta não é sobre IMAB11** — é uma varredura do YAML cru procurando chave
+> repetida em qualquer mapping. Um teste do IMAB11 seria patch.
 
 > **A-01 e A-02 — 11/09/2026, a primeira corrida real da Fase 0, e ela rendeu dois
 > achados que nenhuma leitura teria dado.**
@@ -594,6 +611,119 @@ só será usada em 2031.
 > Note o que salvou: `codeCVM` vem no mesmo objeto. **O CNPJ/CD_CVM é estável quando o
 > ticker não é** — é por ele que a ponte para o código antigo se faz.
 
+> **11/09/2026 — cinco rodadas no Claude Code, e o saldo real.**
+>
+> Fechadas e commitadas: **P-69/Y-01** (`258ca3b`), **P-70** (`9e1aa8a` + `e15d205`),
+> **P-71/P-72** (`4f54f31` + `c989ac6`), **campos mortos** (`fb8ce78`), e a esteira
+> `--proventos-completos` escrita com testes sem rede.
+>
+> **A pergunta do Y-01 foi respondida:** a F-03 foi medida **à mão, com 0,25%, fora do
+> motor** — está em `politica.yaml → fora_de_escopo.ETF_renda_fixa`. O valor nunca passou
+> por `val()`, então a duplicata não a contaminou. Mas abriu a **P-76**: a conclusão foi
+> registrada como *"refutada"* e o insumo que a sustenta é `PARCIAL`. Se 0,25% for o
+> **teto** do regulamento, a taxa efetiva pode ficar abaixo de 0,20% e **a comparação
+> inverte**. *Uma conclusão medida herda o status do insumo mais fraco dela?* — é a P1
+> aplicada ao relato de uma medição, e ainda não tem resposta.
+>
+> **O achado de maior valor não estava em nenhum prompt: P-77.** `retorno_liquido_aa` faz
+> `ir = 0.0 if r.isento_ir else ...`, e `isento_ir` resolve por `isento_ir_rendimento` —
+> então, para o FII, **o IR de ganho de capital vira zero**. É exatamente o defeito que a
+> P-13 foi criada para corrigir, vivo, no código. Hoje não produz número errado **só
+> porque o FII está bloqueado por falta de insumo** — o bloqueio está *escondendo* o bug.
+> É o F-02 ao contrário: lá a ausência virava zero; aqui a ausência **esconde** um zero
+> que já está errado.
+>
+> **O portão da P-40, instalado em 11/09:** `ruff check .` → **All checks passed**.
+> `mypy` **não rodou**: parou nos stubs do numpy com *"Type statement is only supported in
+> Python 3.12 and greater"*.
+>
+> **Isso não é dívida de código — é a P-73 pela terceira vez.** O `pyproject.toml` declara
+> `python_version = "3.11"`, a máquina roda **3.13**, e o numpy instalado traz stubs com
+> sintaxe de 3.12+. O mypy **nunca vai passar nessa máquina** enquanto a divergência
+> existir. Instalar o Python 3.11 deixou de ser preferência de reprodutibilidade e virou
+> **requisito operacional**: sem ele, metade do portão está permanentemente desligada.
+>
+> E nenhum commit fez o bump de versão do `politica.yaml` nem o changelog — passo 9 do
+> protocolo, cinco commits seguidos.
+
+> **B-02 — a causa do TOTAL-ZERO não era truncamento. Medida em 11/09/2026.**
+>
+> A esteira de proventos fechou **71 de 74** emissoras — mais de **8 mil registros**, com
+> ITUB em 956, BBDC em 902, ITSA em 506 e PETR em 343. Falharam três: **ABEV, CURY,
+> KLBN**, todas com `totalRecords: 0`.
+>
+> O código supunha **truncamento no campo de 12 posições**. Nenhuma das três estava
+> truncada: `AMBEV S/A` tem 9 caracteres, `CURY S/A` tem 8, `KLABIN S/A` tem 10.
+>
+> **O que elas têm em comum é a barra.** Chamei o endpoint com os nomes sem o sufixo e ele
+> respondeu: **`AMBEV` → 134 registros. `KLABIN` → 18.** Com `S/A`, zero. E os nomes com
+> `S.A.` **de ponto** — SUZANO, RUMO, VIVARA, IGUATEMI — passaram todos.
+>
+> **A causa real: os dois endpoints da B3 guardam o nome comercial de formas diferentes.**
+> O suplemento devolve `AMBEV S/A`; a tabela de proventos guarda `AMBEV`. Não é bug de
+> codificação nosso — é divergência entre duas bases da mesma casa.
+>
+> **E o teste que importava mais deu a resposta tranquilizadora:** chamei com `ITAU`
+> (prefixo de `ITAUUNIBANCO`) e voltou **zero**. Ou seja, **o match é exato, não por
+> prefixo nem por conteúdo.** Isso fecha a dúvida que eu tinha e que valia mais que as
+> três falhas: **não existe match parcial silencioso.** Ou o nome bate e vem tudo, ou não
+> bate e vem zero — e zero é visível. **O acervo das 71 está íntegro**, e `ITAUUNIBANCO`,
+> com exatamente 12 caracteres, é o nome real e não um nome cortado.
+>
+> **Corrigido e commitado (`b02b789`), 13 testes novos.** O coletor tenta o nome como veio
+> e, **só depois de um zero**, sem o sufixo societário; a forma usada vai para o manifesto,
+> porque **a forma é procedência, não detalhe de implementação** — quem reprocessar precisa
+> saber qual nome trouxe o dado.
+>
+> Dois testes valem por si: um garante que a segunda tentativa **nunca acontece antes** de
+> um zero (resposta fora do formato não é culpa do nome, e trocar o nome mascararia o
+> defeito); outro garante que zero **nas duas formas** continua sendo `TOTAL-ZERO`, e não
+> vira "empresa sem proventos". As duas respostas ficam no acervo como evidência, com a
+> forma no nome do arquivo.
+>
+> E os comentários do código que culpavam o truncamento foram corrigidos. **Uma hipótese
+> errada deixada num comentário engana a próxima sessão com a autoridade de um fato.**
+
+> **A suíte deixou de ficar verde nesta máquina — e isso agora é o caminho crítico.**
+>
+> Enquanto `ruff` e `mypy` não estavam instalados, o `test_p40_lint.py` **pulava** e a
+> suíte fechava verde. Instalados em 11/09, o ruff passou em `alocacao/` e em `fase0/`
+> (zero), e o **mypy falha em toda rodada** — nos stubs do numpy, que exigem Python 3.12+.
+>
+> **Não é dívida de código. É a P-73**, e ela mudou de natureza: deixou de ser uma questão
+> de reprodutibilidade de backtest e virou operacional. **Uma suíte permanentemente
+> vermelha deixa de ser sinal** — em duas semanas ninguém olha mais, e o dia em que um
+> teste de verdade quebrar, ele vai entrar no meio do vermelho de sempre.
+>
+> Instalar o Python 3.11 é o que devolve o verde. Não é preferência.
+>
+> *(O ruff na raiz acusa 20 erros, **14 deles em `pesquisa-custos-2026-08/calc/`** — a
+> cópia congelada de agosto que o §4 marca como armadilha. Corretamente não tocada.)*
+
+> **B-03 — não há regra única, e isso muda a estratégia. Medido em 11/09/2026.**
+>
+> A correção do B-02 fechou **ABEV (134)** e **KLBN (18)**, exatamente os números previstos.
+> **CURY falhou nas duas formas.** Fui atrás e achei:
+>
+> | emissora | suplemento guarda | tabela de proventos guarda | o que aconteceu |
+> |---|---|---|---|
+> | ABEV | `AMBEV S/A` | `AMBEV` | sufixo **removido** |
+> | KLBN | `KLABIN S/A` | `KLABIN` | sufixo **removido** |
+> | **CURY** | `CURY S/A` | **`CURY S.A.`** → **20 registros** | sufixo **reescrito**: barra vira ponto |
+>
+> **As duas bases da B3 divergem sem regra.** Às vezes o sufixo societário some, às vezes
+> ele muda de grafia. Uma normalização determinística — "tire o sufixo" — **não cobre os
+> três casos**, e foi exatamente por isso que a correção do B-02, que estava certa, ainda
+> deixou uma de fora.
+>
+> A estratégia certa não é uma regra: é uma **cascata de candidatos** — como veio, sem
+> sufixo, sufixo com pontos, sufixo sem pontuação — parando no primeiro que responder, e
+> **registrando qual funcionou**. O acervo precisa guardar a forma, não a regra.
+>
+> **O que NÃO está em risco, e vale dizer:** o match é exato (`ITAU` → 0), então as 73 que
+> bateram bateram **exatamente**. Divergência de grafia produz zero, nunca dado parcial.
+> **O acervo é íntegro ou visivelmente incompleto — nunca silenciosamente errado.**
+
 ### Próximo passo, em ordem de valor
 
 *Revisado em 06/09/2026 pela pesquisa de bases e APIs (`docs/fontes/pesquisa-bases-e-apis-2026-09.md`).
@@ -626,14 +756,7 @@ A fila **mudou de primeiro lugar**, e a razão está no achado V-01 abaixo.*
    - `GetListedSupplementCompany` devolve uma **janela recente**, não a série completa —
      a PETR veio com 24 proventos, e o endpoint paginado
      (`GetListedCashDividends`) reportou **343** desde 2010. Os desdobramentos parecem ir
-     bem mais longe (BBAS com 18, BBDC com 10). **A esteira do histórico longo existe
-     desde 11/09** (`python fase0/coletar_b3.py --proventos-completos`, ⚙ desktop) e
-     **ainda não rodou**. Ela lê o `tradingName` do acervo de eventos, grava só histórico
-     que fecha a conta com o `totalRecords`, e acusa `totalRecords: 0` em vez de gravá-lo
-     como "empresa sem proventos". **O que esperar da primeira corrida:** o formato da
-     resposta nunca foi visto em primeira mão (a pesquisa é `PARCIAL`), e o `tradingName`
-     do suplemento tem 12 posições — `ITAUUNIBANCO` preenche todas, e pode estar truncado.
-     Se o endpoint exigir o nome inteiro, esse caso sai como `TOTAL-ZERO`, não como zero.
+     bem mais longe (BBAS com 18, BBDC com 10). **Falta a esteira do histórico longo.**
    - **MBRF sem evento nenhum** — achado A-03 acima.
 2. **Fase 0 da CVM — o prazo é SEMANAL, e são 6 arquivos, não 1,5 GB.** ⚙ **exige o
    desktop.** O `NAO_CONFIRMADO` **fechou em 06/09** pela própria CVM
@@ -677,7 +800,23 @@ Não os repita de memória — leia do YAML.
   quando passa da data. Em 05/09/2026 `cdi_aa` e `selic_aa` foram reconferidos na
   API do BCB e **os dois valores estavam certos** — era prazo vencido, não número
   errado. É assim que o mecanismo deve funcionar: ele manda reconferir, não
-  presume erro. Próximo a vencer: `poupanca_am`, em 28/09/2026.
+  presume erro. Próximo a vencer: `poupanca_am` em **28/09/2026**, e
+  `cofrinho.turbinado_condicao_de_isencao` em **05/10/2026**.
+
+  > **B-01, 11/09/2026 — e este parágrafo estava mentindo.** O aviso só dispara quando
+  > `expira` é `dt.date`. **Quatro das 43 constantes datadas tinham a data entre aspas**
+  > (`expira: '2026-12-04'`), e YAML entre aspas é **texto** — o `val()` fica mudo, sem
+  > erro nenhum.
+  >
+  > **Duas delas eram exatamente `cdi_aa` e `selic_aa`**: reconferidas em 05/09 e
+  > reescritas com aspas **na mesma sessão que as reconferiu**. O parágrafo acima citava
+  > as duas como prova de que o mecanismo funciona, enquanto o mecanismo estava desligado
+  > **para elas**.
+  >
+  > A culpa é minha, e o padrão é o de sempre: o arquivo declarava um comportamento que o
+  > código não tinha, e os dois concordavam por acidente porque ninguém checou o **tipo**
+  > do valor carregado. Corrigido com `test_P70_toda_expira_e_data_e_nunca_texto`, que
+  > mede o tipo **depois** do `safe_load` — porque o defeito só existe lá.
 - **Procedência de trecho.** Toda constante cuja fonte cita documento e artigo
   carrega `trecho_conferido`. Constante nova com `false` faz o suite falhar
   (`test_nenhuma_constante_fica_com_trecho_nao_conferido`). Em 05/09 as seis que
