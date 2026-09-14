@@ -12,7 +12,7 @@ Mudancas em relacao a v1:
   K-11       constantes vem do YAML com procedencia; caminhos relativos; roda com -m; testes
 """
 from __future__ import annotations
-import os, sys, datetime as dt
+import math, os, sys, datetime as dt
 from dataclasses import dataclass, field
 import yaml
 
@@ -200,7 +200,18 @@ def montar_rotas(C):
 
 # ── simulacao ─────────────────────────────────────────────────────────────────
 def custo_entrada_pct(r, aporte, b3v):
-    return (r.corr_fix/aporte) + r.corr_pct + (b3v if r.b3_vista else 0.0) + r.entrada_pct
+    """Custo de entrada como fracao do aporte.
+
+    E-01: `aporte=0` levantava ZeroDivisionError. A irma
+    `alocacao.custo_entrada_fixo_pct` ja tratava o caso, e o tratamento dela e o certo:
+    tarifa fixa ZERO custa zero em qualquer aporte, e tarifa fixa com aporte zero e
+    custo infinito -- diluicao ao contrario.
+
+    As duas NAO se unificam como estao: esta le `r.entrada_pct` de `motor.Rota`, a de la
+    le `r.entrada_extra` de `alocacao.RotaAloc`. Sao dataclasses diferentes, e juntar e
+    outra tarefa."""
+    fixo = 0.0 if r.corr_fix == 0 else (r.corr_fix/aporte if aporte else math.inf)
+    return fixo + r.corr_pct + (b3v if r.b3_vista else 0.0) + r.entrada_pct
 
 def custo_saida_pct(r, b3v):
     return r.corr_pct + (b3v if r.b3_vista else 0.0) + r.saida_pct
@@ -208,6 +219,13 @@ def custo_saida_pct(r, b3v):
 def simular(r, C, aporte, anos, bruto=None, custodia_absorvida=False, verbose=False):
     """Retorna (patrimonio, custo_total, alertas). Rendimento bruto identico em todas as rotas:
     o objetivo e ISOLAR O CUSTO, nao prever retorno."""
+    # E-01/F-02: rota BLOQUEADA nao simula. O insumo ausente vira `adm_aa = 0.0` pelo
+    # default do dataclass, e zero e o melhor valor possivel -- a BOVV11 (taxa
+    # NAO_CONFIRMADA) empatava EXATO com a "Corretora taxa zero". A guarda gemea mora em
+    # `alocacao.simular_custo`; aqui ela faltava. Nao vai pelo canal `alertas`: alerta e
+    # para problema que ainda deixa o numero valer, e este numero nao vale.
+    if not r.confiavel:
+        raise InsumoBloqueado(f"rota {r.nome} bloqueada: {'; '.join(r.bloqueios)}")
     bruto = bruto if bruto is not None else val(C["macro"]["cdi_aa"], contexto="cdi")
     B3V   = val(C["b3"]["vista_total_pct"], contexto="b3.vista")
     ISEN  = val(C["b3"]["custodia_rv_isencao"], contexto="b3.isencao")

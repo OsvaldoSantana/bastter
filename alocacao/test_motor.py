@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Testes das camadas 1, 3 e 4 do manual: unitario, canonico com oraculo, invariante."""
-import os, sys, datetime as dt
+import math, os, sys, datetime as dt
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pytest
-from motor import carregar, val, custodia_rv_aa, montar_rotas, simular, InsumoBloqueado
+from motor import (carregar, val, custodia_rv_aa, montar_rotas, simular, InsumoBloqueado,
+                   custo_entrada_pct)
 
 C = carregar()
 FX   = C["b3"]["custodia_rv_faixas"]["valor"]
@@ -55,6 +56,74 @@ def test_rota_com_insumo_nao_confirmado_nao_entra_na_ordenacao():
     assert vest and not vest[0].confiavel
     bovv = [r for r in rotas if "BOVV11" in r.nome]
     assert bovv and not bovv[0].confiavel
+
+
+# ══ E-01 · a guarda do F-02 faltava no modulo irmao ══════════════════════════
+def test_E01_rota_bloqueada_recusa_simular():
+    """MEDIR A BANDEIRA NAO E MEDIR QUEM A HONRA.
+
+    O teste acima afirma `not bovv.confiavel` -- ele confere que a BANDEIRA esta
+    levantada. Ninguem conferia que alguem a HONRA, e foi exatamente assim que este
+    defeito sobreviveu: `alocacao.simular_custo` recusava rota bloqueada desde o F-02,
+    e `motor.simular`, que faz o MESMO trabalho, calculava normalmente.
+
+    A recusa vai por EXCECAO, nao por `alertas`: alerta e para problema que ainda deixa
+    o numero valer."""
+    C = carregar()
+    bovv = [r for r in montar_rotas(C) if "BOVV11" in r.nome][0]
+    with pytest.raises(InsumoBloqueado) as e:
+        simular(bovv, C, 500.0, 20)
+    assert "BOVV11" in str(e.value) and "bloqueada" in str(e.value)
+
+
+def test_E01_a_bloqueada_nao_empata_mais_com_a_rota_gratuita():
+    """O numero falso, nomeado. Medido em 12/09 sobre o instantaneo de 06/09: a BOVV11
+    bloqueada custava R$1329.680718 em 20 anos a R$500/mes, e a "Corretora taxa zero"
+    custava R$1329.680718 -- empate EXATO, porque a taxa desconhecida virava `adm_aa =
+    0.0` pelo default do dataclass. Zero e o melhor valor possivel, entao o insumo
+    ausente nao so entrava na conta: entrava vencendo.
+
+    Agora as duas nao podem mais ser comparadas, porque a bloqueada se recusa a produzir
+    numero."""
+    C = carregar()
+    rotas = montar_rotas(C)
+    bovv = [r for r in rotas if "BOVV11" in r.nome][0]
+    zero = [r for r in rotas if r.nome == "Corretora taxa zero"][0]
+
+    _, custo_zero, _ = simular(zero, C, 500.0, 20)
+    assert custo_zero == pytest.approx(1329.680718, abs=1e-6), \
+        "a rota gratuita mudou de custo: a base mudou e a comparacao do E-01 precisa ser remedida"
+    with pytest.raises(InsumoBloqueado):
+        simular(bovv, C, 500.0, 20)
+
+
+def test_E01_rota_confiavel_simula_identico_ao_de_antes():
+    """Instantaneo dourado: a correcao nao pode mexer em quem nao estava quebrado. Os
+    dois numeros foram medidos ANTES da guarda existir, com py -3.11."""
+    C = carregar()
+    bova = [r for r in montar_rotas(C) if r.nome == "BOVA11 — corretora zero"][0]
+    pat, custo, alertas = simular(bova, C, 500.0, 20)
+    assert pat == pytest.approx(568783.8963120249, rel=1e-9)
+    assert custo == pytest.approx(4822.744260748139, rel=1e-9)
+    assert alertas == []
+
+
+def test_E01_custo_de_entrada_com_aporte_zero_e_infinito_e_nao_levanta():
+    """`r.corr_fix/aporte` levantava ZeroDivisionError. A irma
+    `alocacao.custo_entrada_fixo_pct` devolve infinito, que e a resposta certa: com
+    aporte zero, a tarifa fixa e diluida ao contrario. Tarifa fixa ZERO continua custando
+    zero em qualquer aporte -- e o outro ramo da irma, e ele nao virou infinito."""
+    C = carregar()
+    b3v = val(C["b3"]["vista_total_pct"], contexto="b3.vista")
+    com_tarifa = [r for r in montar_rotas(C) if "Safra" in r.nome][0]
+    assert com_tarifa.corr_fix > 0
+    assert custo_entrada_pct(com_tarifa, 0, b3v) == math.inf
+    assert custo_entrada_pct(com_tarifa, 500.0, b3v) == pytest.approx(
+        4.50/500 + com_tarifa.corr_pct + b3v + com_tarifa.entrada_pct)
+
+    sem_tarifa = [r for r in montar_rotas(C) if r.nome == "Corretora taxa zero"][0]
+    assert sem_tarifa.corr_fix == 0
+    assert custo_entrada_pct(sem_tarifa, 0, b3v) == pytest.approx(b3v)
 
 def test_valor_bloqueado_levanta_excecao():
     """Um calculo que depende de NAO_CONFIRMADO recusa-se a rodar, em vez de rodar com premissa."""

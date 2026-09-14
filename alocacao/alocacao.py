@@ -424,7 +424,11 @@ def custo_entrada_fixo_pct(r, aporte):
     sem tarifa fixa nao fica infinitamente cara so porque nao ha aporte este mes. A
     versao anterior tratava aporte==0 como `math.inf` incondicional — isso reprovava
     TODA rota no G3 (inclusive as de tarifa zero) e `_conferir_invariantes` recusava
-    pesos somando 0 em vez de 1. Para aporte>0 o resultado e identico ao de antes."""
+    pesos somando 0 em vez de 1. Para aporte>0 o resultado e identico ao de antes.
+
+    A irma e `motor.custo_entrada_pct`, que em 12/09 ganhou o mesmo tratamento (E-01).
+    Elas NAO se unificam como estao: esta le `r.entrada_extra` de `RotaAloc`, a de la le
+    `r.entrada_pct` de `motor.Rota` -- dataclasses diferentes, e juntar e outra tarefa."""
     if r.corr_fix == 0:
         return 0.0
     return r.corr_fix/aporte if aporte else math.inf
