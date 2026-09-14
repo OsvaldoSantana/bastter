@@ -41,12 +41,14 @@ O QUE O RANKING NAO FAZ: nao pontua atendimento, aplicativo, research, nem nota 
 Reclame Aqui — a pesquisa registrou que nao conseguiu ler nenhuma nota literal, e
 inventar uma seria pior que a lacuna.
 """
+# E-08, 13/09/2026
 from __future__ import annotations
-import os, sys
-from dataclasses import dataclass
+import io, os, sys
+from dataclasses import dataclass, field
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import yaml
-from alocacao import carregar_politica
+from alocacao import carregar_politica, _caminho
+from motor import carregar as carregar_custos, val, InsumoBloqueado
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
@@ -84,6 +86,13 @@ class Instituicao:
     # ── facilidade: proxies objetivos ─────────────────────────────────────────
     home_broker_web: bool | None = None
     exporta_csv: bool | None = None
+    # E-08, 13/09/2026. Espelha `RotaAloc.bloqueios`: motivos que tiram um campo de
+    # circulacao sem tirar a instituicao do catalogo. Vem da resolucao de `{de:}`.
+    bloqueios: list = field(default_factory=list)
+
+    @property
+    def confiavel(self):
+        return not self.bloqueios
 
 INSTITUICOES_YAML = os.path.join(AQUI, "instituicoes.yaml")
 
@@ -106,7 +115,54 @@ def carregar_instituicoes_cru(path=None):
     return _INSTITUICOES_CRU[p]
 
 
-def catalogo_instituicoes(path=None):
+# ── E-08, 13/09/2026: o resolvedor de referencia ────────────────────────────
+RANKING = "ranking_corretoras"
+
+
+def _resolver(valor, C, campo, iid, contexto, bloqueios):
+    """`{de: "corretagem.xp_etf_pct"}` -> o valor do custos.yaml, passando por `val()`.
+
+    ACHADO E-08. Ate aqui o `instituicoes.yaml` so aceitava literal, e por isso SEIS
+    numeros existiam duas vezes: uma no `custos.yaml`, com status, fonte e `expira`, e
+    outra aqui, crua. As copias concordavam -- e o N-01 e sobre o dia em que param.
+
+    Pior que a divergencia futura era o RELOGIO. As cinco constantes de `corretagem`
+    expiram em 04/12/2026; as seis copias nao tinham campo de validade nenhum. O
+    projeto construiu um mecanismo de vencimento e metade dos numeros nao estava ligada
+    nele. Passar por `val()` resolve isso de graca: o aviso de `expira` sai em stderr
+    para quem referencia.
+
+    E RESOLVE O OUTRO LADO DO E-08, que e o que importa mais. `corretagem.xp_swing` e
+    PARCIAL e declara `bloqueia: ["ranking_corretoras"]` -- nomeia ESTE consumidor. O
+    ranking rodava assim mesmo, porque lia a copia e nunca chamava `val()`: a
+    consequencia declarada nao chegava nele. Agora chega. Quem carrega o catalogo diz
+    QUEM e (`contexto`), e uma constante que bloqueia esse nome devolve `None`.
+
+    `None` nao e um buraco: e o valor que `pontuar()` ja sabia tratar -- ele marca a
+    dimensao como nao avaliada e a `cobertura` penaliza. **Dimensao ausente e
+    penalidade, nao neutralidade**, que e o que o proprio `pontuar` ja dizia.
+
+    O contexto e OPCIONAL de proposito. Sem contexto, `bloqueia` nao e checado -- um
+    consumidor que nao se nomeia nao pode reivindicar um bloqueio dirigido a outro.
+    NAO_CONFIRMADO continua barrando em qualquer caso, porque ali nao ha valor nenhum.
+    """
+    if not (isinstance(valor, dict) and "de" in valor):
+        return valor
+    caminho = valor["de"]
+    no = _caminho(C, caminho)
+    if contexto and contexto in (no.get("bloqueia") or []):
+        bloqueios.append("%s.%s: %s bloqueia %s — %s"
+                         % (iid, campo, caminho, contexto,
+                            no.get("motivo", "sem motivo declarado")))
+        return None
+    try:
+        return val(no, contexto="%s.%s -> %s" % (iid, campo, caminho))
+    except InsumoBloqueado as e:
+        bloqueios.append("%s.%s: %s" % (iid, campo, str(e)[:160]))
+        return None
+
+
+def catalogo_instituicoes(path=None, C=None, contexto=None):
     """Le o instituicoes.yaml. Pendencia P-36, metade B.
 
     Ate 05/09/2026 estas 24 casas eram 136 linhas de literais Python, com ~15 campos
@@ -122,6 +178,11 @@ def catalogo_instituicoes(path=None):
     Agora a procedencia e POR GRUPO, e `confirmacao` e DERIVADA de
     `custos.procedencia.status`. Dois campos que podiam discordar viraram um."""
     d = carregar_instituicoes_cru(path)
+    # E-08: so carrega o custos.yaml se houver referencia a resolver. Quem nunca usa
+    # `{de:}` nao paga por ele.
+    precisa = "de:" in io.open(path or INSTITUICOES_YAML, encoding="utf-8").read()
+    if precisa and C is None:
+        C = carregar_custos()
     out = []
     for iid, cru in d["instituicoes"].items():
         campos = {k: v for k, v in cru.items() if k not in GRUPOS_DE_CAMPOS}
@@ -136,7 +197,11 @@ def catalogo_instituicoes(path=None):
             raise ValueError(f"{iid}: status de custos desconhecido {st!r}")
         campos["confirmacao"] = STATUS_PARA_LETRA[st]
         campos["fonte"] = proc["custos"]["fonte"]
-        out.append(Instituicao(id=iid, **campos))
+        bloqueios = []
+        if C is not None:
+            campos = {k: _resolver(v, C, k, iid, contexto, bloqueios)
+                      for k, v in campos.items()}
+        out.append(Instituicao(id=iid, bloqueios=bloqueios, **campos))
     return out
 
 
@@ -278,7 +343,10 @@ def reclame_aqui(inst: Instituicao, P=None):
 
 def ranking(pesos, aporte=500.0, horizonte_anos=10.0, apenas_viaveis=True, P=None):
     out = []
-    for i in catalogo_instituicoes():
+    # E-08: o ranking diz QUEM E. `corretagem.xp_swing` declara
+    # `bloqueia: ["ranking_corretoras"]`, e ate 13/09/2026 essa frase nao alcancava
+    # ninguem. Nomear-se aqui e o que a transforma em comportamento.
+    for i in catalogo_instituicoes(contexto=RANKING):
         p = pontuar(i, pesos, aporte, horizonte_anos, P)
         out.append((i, p))
     out.sort(key=lambda x: -x[1]["total"])

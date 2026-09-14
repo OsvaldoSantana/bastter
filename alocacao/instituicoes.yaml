@@ -412,12 +412,12 @@ instituicoes:
     nome: "XP Investimentos"
     pegadinha: "swing trade aparece a R$4,90 na página oficial; zero só no day trade COM RLP. ETF a 0,50%"
     custos:
-      corretagem_rv: 4.9
+      corretagem_rv: {de: "corretagem.xp_swing"}
       corretagem_pct: 0.0
       custodia_absorvida: true
       tesouro_taxa_propria_zero: true
       corretagem_fii: 0.0
-      corretagem_etf_pct: 0.005
+      corretagem_etf_pct: {de: "corretagem.xp_etf_pct"}
       procedencia:
         status: PARCIAL
         fonte: "página oficial XP, 31/08 e 01/09/2026"
@@ -511,8 +511,8 @@ instituicoes:
     nome: "Caixa"
     pegadinha: "FII é isento de corretagem; ação NÃO é. Day trade R$2,90"
     custos:
-      corretagem_rv: 4.49
-      corretagem_pct: 0.0002
+      corretagem_rv: {de: "corretagem.caixa_fixa"}
+      corretagem_pct: {de: "corretagem.caixa_pct"}
       custodia_absorvida: true
       corretagem_fii: 0.0
       corretagem_etf_pct: 0.0
@@ -546,7 +546,7 @@ instituicoes:
     nome: "Safra Corretora"
     pegadinha: "+PIS, COFINS e ISS sobre a corretagem; mesa 0,5% + R$25 fixo"
     custos:
-      corretagem_rv: 4.5
+      corretagem_rv: {de: "corretagem.safra_terra"}
       corretagem_pct: 0.0
       custodia_absorvida: true
       tesouro_taxa_propria_zero: true
@@ -574,7 +574,7 @@ instituicoes:
     nome: "Terra Investimentos"
     pegadinha: "tabela regressiva premia quem opera MUITO — o oposto deste perfil"
     custos:
-      corretagem_rv: 4.5
+      corretagem_rv: {de: "corretagem.safra_terra"}
       corretagem_pct: 0.0
       corretagem_etf_pct: 0.0
       procedencia:

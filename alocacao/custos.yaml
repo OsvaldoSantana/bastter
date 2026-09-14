@@ -182,21 +182,47 @@ etf:
   # valor, fonte e acesso vem desta; a base legal e o `bloqueia` da rota vieram da
   # outra. `test_y01_yaml_duplicata.py` impede a proxima.
   IMAB11:
+    # F-03 / P-05 FECHADAS em 13/09/2026. A taxa veio da LAMINA DO GESTOR (Itau Asset),
+    # que ele baixou e enviou -- nao de agregador, nao de citacao interna.
+    #
+    # E ela e a TAXA TOTAL, nao a de administracao. A P-05 dizia que a pendencia estava
+    # mal formulada, e estava: nas laminas brasileiras "taxa de administracao" e UM
+    # componente. Aqui sao tres, e a de administracao e a MENOR delas:
+    #
+    #     administracao  0,04%      custodia  0,03%      gestao  0,18%
+    #     distribuicao   nao ha     performance  nao ha
+    #     -------------------------------------------------------------
+    #     TOTAL          0,25% a.a.   <- e "taxa cobrada" == "taxa maxima"
+    #
+    # Comparar rotas por `taxa_adm` teria subestimado esta em SEIS VEZES.
+    #
+    # `taxa cobrada` == `taxa maxima` nas tres linhas: nao ha folga entre o que o fundo
+    # cobra e o teto que ele pode cobrar. Era essa a duvida que mandava esperar o
+    # regulamento -- e a lamina a responde.
+    status: COMPLETO
     valor: 0.0025
-    status: PARCIAL
-    fonte: itnow.com.br/imab11/caracteristicas — pagina do gestor (Itau Asset), 05/09/2026
-    acesso: '2026-09-05'
-    expira: 2027-09-05
-    bloqueia:
-    - comparacao_definitiva_imab11_vs_td_ipca
-    - rota_etf_renda_fixa_protecao_real
-    motivo: a pagina do gestor nao diz se 0,25% e TETO de regulamento ou taxa efetiva
-    nota: Administrador Itau Unibanco S.A., gestor Itau Unibanco Asset Management, benchmark
-      IMA-B. PARCIAL e nao COMPLETO porque as outras taxas de ETF do catalogo vieram de REGULAMENTO,
-      que declara o teto; esta veio de pagina de produto. Fechar exige o regulamento do fundo.
-      Tributacao com fonte primaria lida — Lei 13.043/2014 art. 2o e IN RFB 1.585/2015 art. 28
-      dao a mesma regra de aliquota; Lei 14.754/2023 art. 22 exclui o ETF de renda fixa da
-      definicao geral de ETF, entao ele segue a regra propria.
+    fonte: "Lamina It Now ID ETF IMA-B (IMAB11), Itau Asset — lamina do gestor, 31/08/2026"
+    acesso: 2026-09-13
+    trecho_conferido: true
+    expira: 2027-08-31       # a lamina e mensal; esta e a de 31/08/2026
+    revisar_se: "nova lamina mensal, ou alteracao de regulamento que mexa no teto"
+    composicao:
+      administracao: 0.0004
+      custodia: 0.0003
+      gestao: 0.0018
+      distribuicao: null
+      performance: null
+    cnpj: "31.024.153/0001-00"
+    inicio_do_fundo: 2019-05-17
+    pl_medio_3a: 2468371314.24
+    classificacao_tributaria: "Longo prazo sem compromisso"
+    liquidacao: "aplicacao D+0, resgate D+0, credito D+1"
+    nota: >-
+      Lei 13.043/2014 art. 2o e IN RFB 1.585/2015 art. 28 dao a mesma regra de aliquota;
+      Lei 14.754/2023 art. 22 exclui expressamente o ETF de renda fixa da definicao
+      geral de ETF, entao ele segue a regra propria. A lamina afirma "15% de IR": e o
+      piso da tabela regressiva de longo prazo, e quem decide a aliquota aqui e
+      `tributacao.ir_rf_faixas`, nao a peca de marketing.
   B5P211: {valor: 0.00040, status: COMPLETO, fonte: "Itau Asset", acesso: 2026-08-28,
          expira: 2027-09-05}
   BOVA11:
@@ -543,6 +569,56 @@ exterior:
       nota: "se o IOF de 1,10% se aplicar, a rota vai a 2,50% e passa a ser PIOR que a Avenue"
 
 tributacao:
+
+  # ── JCP: a aliquota e FUNCAO DO TEMPO, e o acervo comeca em 2010 ────────────
+  # Lida norma por norma no Planalto em 13/09/2026. Transcricoes em
+  # docs/fontes/lei-9249-1995-jcp-planalto.md.
+  #
+  # NAO e escalar. Aplicar um unico numero a serie inteira erra TODOS os registros
+  # de um dos lados, e o erro e invisivel porque qualquer um dos numeros e plausivel.
+  # Ha uma janela de SESSENTA E OITO DIAS em 2016 em que a aliquota foi 18%.
+  ir_jcp_fonte:
+    status: COMPLETO
+    expira: null          # lei nao vence no aniversario; vence quando outra a altera
+    revisar_se: "publicacao de norma que altere o art. 9o par. 2o da Lei 9.249/1995"
+    acesso: 2026-09-13
+    natureza_pf: TRIBUTACAO_DEFINITIVA   # art. 9o par. 3o, II -- sem ajuste na declaracao
+    trecho_conferido: true
+    valor:
+      - de: 1996-01-01
+        ate: 2015-12-31
+        aliquota: 0.15
+        fonte: "Lei 9.249/1995 art. 9o par. 2o, redacao ORIGINAL"
+      - de: 2016-01-01
+        ate: 2016-03-08
+        aliquota: 0.18
+        fonte: >-
+          MP 694/2015 art. 1o (publicada 30/09/2015), efeitos desde 01/01/2016 pelo
+          art. 4o, I. Prazo de vigencia encerrado em 08/03/2016 -- Ato Declaratorio
+          do Presidente da Mesa do Congresso Nacional no 5, de 09/03/2016.
+        nota: >-
+          Janela de 68 dias. O IR retido nela PERMANECE devido: a CF art. 62 par. 11
+          manda que as relacoes constituidas durante a vigencia da MP continuem por
+          ela regidas se o Congresso nao editar decreto legislativo em 60 dias, e
+          nao editou. Caducar nao devolve imposto pago.
+      - de: 2016-03-09
+        ate: 2025-12-31
+        aliquota: 0.15
+        fonte: "Lei 9.249/1995 art. 9o par. 2o -- redacao original restabelecida"
+      - de: 2026-01-01
+        ate: null
+        aliquota: 0.175
+        fonte: "LC 224/2025 art. 8o; vigencia pelo art. 14, III"
+        nota: >-
+          CORRECAO DE 13/09/2026. Eu tinha registrado 01/04/2026, lendo o art. 14, I,
+          "b" ("primeiro dia do quarto mes subsequente"). Aquela alinea cobre os arts.
+          7o e 9o -- NAO o art. 8o. O art. 8o cai no inciso III, "a partir de 1o de
+          janeiro de 2026". Fonte primaria ganha, mas so depois de ler QUAL item ela
+          cobre.
+      # MP 1.303/2025 NAO entra: foi retirada de pauta e caducou em outubro/2025,
+      # antes de produzir efeito sobre o JCP, e o Planalto nao a lista entre as
+      # normas que deram redacao ao par. 2o.
+
   ir_acao:            {valor: 0.15, status: COMPLETO, fonte: "Lei 11.033/2004 art. 2o",
          expira: null, revisar_se: "alteracao da Lei 11.033/2004 art. 2o"}
   isencao_mensal:     {valor: 20000.00, status: COMPLETO, fonte: "Lei 11.033/2004 art. 3o, I + IN RFB 1.585 art. 59",

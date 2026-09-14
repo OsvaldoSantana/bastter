@@ -22,9 +22,27 @@
 # N-01 de novo — dois arquivos que concordam, e editar um nao muda nada.
 # ─────────────────────────────────────────────────────────────────────────────
 
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
+# ── B-04, 13/09/2026: por que NAO ha [build-system] aqui ────────────────────
+# Havia. Ele declarava `setuptools.build_meta`, e `pip install -e .` FALHAVA: o
+# repositorio tem varios diretorios de topo (alocacao, fase0, auditoria, docs) e a
+# descoberta automatica do setuptools nao sabe qual e o pacote.
+#
+# A correcao obvia seria declarar os pacotes. Nao e a certa, e a razao e a doutrina
+# deste projeto: **ninguem instala este projeto.** `ambiente.comando_de_instalacao()`
+# monta `python -m pip install "numpy==..." "pandas==..."` -- instala as DEPENDENCIAS,
+# nunca o pacote. Os modulos sao importados por caminho, e nenhuma linha faz
+# `import bastter`.
+#
+# Entao `[build-system]` era um arquivo declarando um comportamento que o codigo nao
+# tem -- o defeito recorrente do projeto, na forma mais barata de corrigir: apagar a
+# promessa em vez de construir o que ela promete.
+#
+# ESTE ARQUIVO E UM MANIFESTO, nao uma definicao de pacote. Ele existe para ser LIDO
+# por `ambiente.declarado()` via tomllib, e a P-15 depende disso -- nao de build.
+#
+# MEDIDO ANTES DE APAGAR: a impressao digital do ambiente e 7565df1381e2c1ed com e
+# sem esta secao. A remocao nao pode invalidar resultado pre-registrado nenhum.
+# ─────────────────────────────────────────────────────────────────────────────
 
 [project]
 name = "bastter"
