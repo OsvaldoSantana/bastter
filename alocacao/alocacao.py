@@ -939,14 +939,19 @@ def g2_reserva(estado, rotas, C, P):
 
 def g3_atrito(rotas, C, P, aporte):
     """A-02: elegibilidade por custo de entrada, com o motivo separado por natureza."""
+    g = P["portoes"]["G3_atrito"]
     B3V = val(C["b3"]["vista_total_pct"], contexto="b3")
-    teto = P["portoes"]["G3_atrito"]["teto_custo_entrada_pct"]
+    teto = g["teto_custo_entrada_pct"]
+    # E-03: desligar suspende a ELIMINACAO, nunca o CALCULO. `dentro` e lista de PARES
+    # (rota, e) e o G4 consome o `e` -- devolver `rotas` cru entregaria rota nua onde o
+    # resto espera par. Desligado: calcula `e` de todas e nao elimina ninguem.
+    ligado = g["ativo"]
     dentro, fora = [], []
     for r in rotas:
         fixo = custo_entrada_fixo_pct(r, aporte)
         pct  = custo_entrada_percentual(r, B3V)
         e = fixo + pct
-        if e <= teto:
+        if e <= teto or not ligado:
             dentro.append((r, e))
         else:
             if pct >= teto:
@@ -972,6 +977,13 @@ def g4_dominancia(pares, C, aporte, P, anos, memo=None):
                    portao NAO tem autoridade logica, e o que ele faz vem de
                    `desempate_preferencia_horizonte`, declarado no YAML."""
     g = P["portoes"]["G4_dominancia"]
+    # E-03: desligar suspende a ELIMINACAO, nunca o CALCULO. `vivos` e lista de QUADRAS
+    # (rota, e, arrasto_no_horizonte, motivo) e quem vem depois consome o arrasto --
+    # devolver os pares crus quebraria o contrato de tupla de todo mundo que le a saida.
+    if not g["ativo"]:
+        _m = {} if memo is None else memo
+        return ([(r, e, arrasto_anualizado(r, C, aporte, anos, _m), None) for r, e in pares],
+                [], [])
     modo = g["desempate_preferencia_horizonte"]
     if modo not in ("menor_arrasto_no_horizonte", "ambas", "usuario"):
         raise ValueError(f"desempate_preferencia_horizonte desconhecido: {modo}")

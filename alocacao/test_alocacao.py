@@ -592,6 +592,84 @@ def test_custo_entrada_fixo_pct_zero_aporte_nao_inflaciona_rota_gratuita():
     assert custo_entrada_fixo_pct(cobra, 500) == pytest.approx(4.50/500)
 
 
+# ══ E-03 · dois portoes ignoravam o proprio interruptor ══════════════════════
+def _universo_real(politica):
+    """G6 e G5 rodam ANTES do G3 na ordem do YAML. Alimentar o G4 com o catalogo CRU
+    faria calcular arrasto de rota BLOQUEADA, e isso levanta InsumoBloqueado -- com
+    razao, e o F-02 trabalhando. Sao 18 rotas aqui contra 25 no catalogo cru."""
+    r6, _ = g6_coerencia_funcao(catalogo(C), politica)
+    r5, _ = g5_status(r6, politica)
+    return r5
+
+
+def test_E03_todo_portao_que_declara_ativo_le_o_proprio_interruptor():
+    """Fecha a CLASSE, nao os dois casos. Qualquer portao que declare `ativo` no
+    politica.yaml e tenha funcao de mesmo nome em minusculas precisa LER o campo --
+    senao o decimo portao repete o E-03. Interruptor morto nao da erro: da conclusao
+    errada em analise de sensibilidade, que e para isso que este projeto existe."""
+    import inspect
+
+    import alocacao as _mod
+    mudos = []
+    for nome, cfg in P["portoes"].items():
+        if not isinstance(cfg, dict) or "ativo" not in cfg:
+            continue
+        fn = getattr(_mod, nome.lower(), None)
+        if not callable(fn):
+            continue
+        if "ativo" not in inspect.getsource(fn):
+            mudos.append(nome)
+    assert not mudos, ("portao declara `ativo` no YAML e a funcao NAO le o campo: "
+                       + ", ".join(mudos) + ". Desligar no arquivo nao desligaria nada.")
+
+
+def test_E03_g3_desligado_nao_elimina_ninguem():
+    rotas = _universo_real(P)
+    P2 = copy.deepcopy(P); P2["portoes"]["G3_atrito"]["ativo"] = False
+    dentro_on, fora_on = g3_atrito(rotas, C, P, 500.0)
+    dentro_off, fora_off = g3_atrito(rotas, C, P2, 500.0)
+    assert (len(dentro_on), len(fora_on)) == (14, 4), "a base mudou: remeca o E-03"
+    assert len(dentro_off) == len(rotas) and fora_off == []
+
+
+def test_E03_g4_desligado_nao_elimina_ninguem():
+    rotas = _universo_real(P)
+    pares, _ = g3_atrito(rotas, C, P, 500.0)
+    P2 = copy.deepcopy(P); P2["portoes"]["G4_dominancia"]["ativo"] = False
+    vivos_on, dom_on, pref_on = g4_dominancia(pares, C, 500.0, P, 25)
+    vivos_off, dom_off, pref_off = g4_dominancia(pares, C, 500.0, P2, 25)
+    assert (len(vivos_on), len(dom_on), len(pref_on)) == (12, 2, 0), \
+        "a base mudou: remeca o E-03"
+    assert len(vivos_off) == len(pares) and dom_off == [] and pref_off == []
+
+
+def test_E03_desligado_preserva_a_ARIDADE_das_tuplas():
+    """O teste que pega a correcao ingenua (`return rotas, []`): `dentro` e lista de
+    PARES e `vivos` de QUADRAS, e quem vem depois consome esses campos. Medido em
+    12/09: 2 e 4. Desligar o portao desliga a eliminacao, nao o contrato."""
+    rotas = _universo_real(P)
+    P2 = copy.deepcopy(P)
+    P2["portoes"]["G3_atrito"]["ativo"] = False
+    P2["portoes"]["G4_dominancia"]["ativo"] = False
+    for politica in (P, P2):
+        dentro, _ = g3_atrito(rotas, C, politica, 500.0)
+        assert dentro and all(len(t) == 2 for t in dentro)
+        vivos, _, _ = g4_dominancia(dentro, C, 500.0, politica, 25)
+        assert vivos and all(len(t) == 4 for t in vivos)
+
+
+def test_E03_com_a_configuracao_padrao_a_correcao_e_inerte():
+    """Instantaneo dourado do E-03. Com os nove `ativo: true` -- a configuracao real --
+    a mudanca tem de nao mexer em nada. O `alocar()` inteiro foi serializado antes e
+    depois e comparado campo a campo (zero diferencas, sha256 fa57ee253758dacd); estes
+    numeros sao a parte que fica medida na suite."""
+    rotas = _universo_real(P)
+    dentro, fora = g3_atrito(rotas, C, P, 500.0)
+    vivos, dominados, preferencia = g4_dominancia(dentro, C, 500.0, P, 25)
+    assert (len(rotas), len(dentro), len(fora)) == (18, 14, 4)
+    assert (len(vivos), len(dominados), len(preferencia)) == (12, 2, 0)
+
+
 # ══ A-05 · G1 liquido contra liquido ═════════════════════════════════════════
 def test_g1_dispara_na_fronteira_de_090_ao_mes():
     e = Estado(**{**BASE, "dividas": [Divida("consignado", 20000, 0.0090)]})

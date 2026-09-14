@@ -105,16 +105,6 @@ def test_a_linha_de_base_nao_guarda_chave_ja_resolvida():
         + "\n  - ".join(sorted(resolvidas)))
 
 
-# XFAIL ESTRITO, e a escolha e deliberada. O defeito E-03 existe HOJE: este teste
-# reprova de verdade. Deixar a suite vermelha bloquearia todo o resto da segunda, e
-# suite cronicamente vermelha e suite que ninguem le -- foi assim que o A-06 passou.
-# `strict=True` faz o contrario do que parece: enquanto o defeito existir a suite fica
-# VERDE com o xfail registrado; no instante em que alguem consertar o G3/G4, o teste
-# passa, o strict transforma isso em FALHA, e a pessoa e obrigada a vir aqui tirar o
-# marcador. Ou seja: o defeito fica escrito na suite e o conserto nao pode passar
-# despercebido. Quando cair, apague estas seis linhas e o decorador.
-@pytest.mark.xfail(strict=True, reason="E-03 aberto: g3_atrito e g4_dominancia nao "
-                                       "leem `ativo`. Tirar o marcador ao corrigir.")
 @pytest.mark.skipif(not os.path.isdir(PACOTE), reason="pacote alocacao nao encontrado")
 def test_E03_todo_portao_declarado_le_o_proprio_interruptor():
     """O E-03 direto, e sem depender do script: os nove portoes declaram `ativo` no
