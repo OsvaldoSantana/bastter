@@ -15,9 +15,9 @@ import campos_mortos as cm
 # Divida inventariada, 11/09/2026. Uma entrada aqui e uma promessa registrada, nao uma
 # isencao: o segundo teste quebra se ela deixar de estar morta ou sair do codigo.
 INVENTARIO = {
-    # P-77: meia P-13. O catalogo declara 20% de IR sobre ganho do FII e nenhum
-    # calculo aplica -- `isento_ir` zera o IR inteiro da rota.
-    "alocacao.py:RotaAloc.aliquota_ganho": "P-77",
+    # P-77 SAIU daqui em 16/09/2026, e quem acusou foi o segundo teste deste arquivo:
+    # `regime_tributario` passou a ler `aliquota_ganho` e a linha virou mentira. Um
+    # inventario que so cresce e uma lista de desculpas; este apodrece de proposito.
     # P-78: dado de pesquisa coletado e nunca pontuado; decidir por campo.
     "corretoras.py:Instituicao.bc_procedentes": "P-78",
     "corretoras.py:Instituicao.bc_clientes": "P-78",

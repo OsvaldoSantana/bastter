@@ -41,6 +41,13 @@ arvore como esta escrita, entao um `<<` por mapping e uma chave como
 qualquer outra, e so acusa quando o MESMO texto de chave aparece duas vezes
 DENTRO DO MESMO mapping.
 """
+# FUSAO DE 16/09/2026. Existiam DUAS guardas para este mesmo defeito, escritas em
+# paralelo no mesmo fim de semana -- esta, na maquina, e `test_chaves_duplicadas.py`
+# + `auditoria/chaves_duplicadas.py`, vindas do pacote. Duas implementacoes da mesma
+# regra sao o N-01, e o projeto tem guarda contra isso no codigo e nao tinha na
+# suite. Esta ficou (usa `yaml.compose`, e ja estava dentro do `testpaths`); da
+# outra vieram os tres testes abaixo, que ela nao tinha: a prova de que a guarda
+# PEGA, o caso do merge, e o caso concreto do IMAB11.
 import os
 import sys
 
@@ -51,7 +58,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 
 ARQUIVOS = ("custos.yaml", "catalogo.yaml", "politica.yaml", "perfil.yaml",
-            "teses.yaml", "instituicoes.yaml")
+            "teses.yaml", "instituicoes.yaml", "estado.exemplo.yaml")
 
 
 def _chaves_duplicadas(caminho):
@@ -94,6 +101,48 @@ def test_Y01_nenhuma_chave_repetida_em_nenhum_mapping(nome):
         f"ULTIMA em silencio -- a(s) entrada(s) anterior(es) estao mortas desde "
         f"que foram escritas:\n  " + "\n  ".join(achados)
     )
+
+
+def test_Y01_a_guarda_PEGA_uma_duplicata_de_verdade(tmp_path):
+    """Guarda que nunca falhou e guarda que ninguem sabe se funciona.
+
+    Ate 16/09/2026 este arquivo tinha um teste so, e ele passa quando os YAML estao
+    limpos -- passaria igual se `_chaves_duplicadas` devolvesse `[]` sempre. Aqui o
+    E-09 e reproduzido em miniatura: o mesmo nome duas vezes, a segunda apagando a
+    primeira."""
+    f = tmp_path / "x.yaml"
+    f.write_text("etf:\n  IMAB11:\n    valor: 0.0025\n  IMAB11:\n    valor: null\n",
+                 encoding="utf-8")
+    achados = _chaves_duplicadas(str(f))
+    assert achados and "IMAB11" in achados[0]
+    # e a prova de que o PyYAML padrao NAO reclama -- fica com a ultima, calado
+    with open(f, encoding="utf-8") as fh:
+        assert yaml.safe_load(fh)["etf"]["IMAB11"]["valor"] is None
+
+
+def test_Y01_merge_NAO_e_duplicata(tmp_path):
+    """O `catalogo.yaml` usa ancora e merge (`<<: *modelo_etf_b3`). Sobrescrever uma
+    chave da ancora e o PROPOSITO do merge, nao um defeito -- e uma segunda
+    implementacao desta mesma guarda, escrita em paralelo no mesmo fim de semana,
+    reprovou o catalogo inteiro por isso antes de ser corrigida. O instrumento com
+    alcance menor que o sistema, outra vez."""
+    f = tmp_path / "m.yaml"
+    f.write_text("base: &b\n  a: 1\n  b: 2\nfilho:\n  <<: *b\n  b: 99\n",
+                 encoding="utf-8")
+    assert _chaves_duplicadas(str(f)) == []
+
+
+def test_Y01_a_taxa_do_IMAB11_esta_VIVA_no_arquivo():
+    """O caso concreto, e a razao de o E-09 ter sido caro: nao basta o numero estar
+    escrito, ele precisa ser o que o `yaml.safe_load` devolve."""
+    with open(os.path.join(AQUI, "custos.yaml"), encoding="utf-8") as f:
+        C = yaml.safe_load(f)
+    no = C["etf"]["IMAB11"]
+    assert no["status"] == "COMPLETO", "a taxa do IMAB11 voltou a nao valer"
+    assert no["valor"] == 0.0025
+    comp = no["composicao"]
+    assert abs(sum(v for v in comp.values() if v) - no["valor"]) < 1e-12, \
+        "os componentes da taxa nao somam o total declarado"
 
 
 if __name__ == "__main__":

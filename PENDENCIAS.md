@@ -1229,7 +1229,63 @@ linha da F-03 em `## Fechadas` ganha a ressalva. Não mexi em nenhum dos dois re
 
 ---
 
-## P-77 · Meia P-13: o IR de ganho do FII está declarado e nenhum cálculo o aplica
+---
+
+## P-80 · A rotina mede um terço do projeto
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo decide; Claude implementa.
+**Gatilho:** agora — as três suítes estão verdes ao mesmo tempo, e é a janela barata.
+
+`pyproject.toml` declara `testpaths = ["alocacao"]`, e `test_p40_lint.py` roda
+`ruff check .` com `cwd=alocacao/`. Consequência medida em 16/09: `py -3.11 -m pytest -q`
+dava **verde** enquanto `pytest fase0` tinha **9 falhas** e `pytest auditoria` tinha
+**2** — e `ruff` tinha **5 violações** em `fase0/refinar.py` que nenhum portão olhava.
+
+Isto é a **P7 aplicada à própria rotina**: rodar as outras duas depende de alguém
+lembrar, então não é rotina. E o preço já foi pago: o A-06 sobreviveu quatro dias e a
+linha de base das órfãs apodreceu, as duas coisas dentro das pastas que o portão não vê.
+
+**A mudança é de uma linha e meia,** e não a apliquei porque ela **redefine o que
+"verde" significa** neste projeto — isso é decisão sua, não minha:
+
+```toml
+testpaths = ["alocacao", "auditoria", "fase0"]
+```
+
+e, no lado do lint, `ruff check .` a partir da RAIZ. Esse segundo pede uma decisão a
+mais: a raiz tem **14 violações** em `pesquisa-custos-2026-08/calc/`, que é cópia
+congelada de pesquisa. Ou ela entra em `[tool.ruff] exclude` com o motivo escrito ao
+lado, ou o portão nasce com linha de base — e linha de base conhecida não é barreira
+(é o próprio texto do `test_P40_ruff_esta_em_zero`).
+
+---
+
+## P-81 · O `chaves_orfas.py` não separa decisão registrada de parâmetro órfão
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Claude, com sua confirmação.
+**Gatilho:** a próxima vez que a linha de base crescer.
+
+Reconferindo a linha de base em 16/09, dez chaves entraram de uma vez — e não porque
+alguém escreveu chave nova: o instrumento passou a contar **"LIDA SÓ POR TESTE"** como
+órfã. A mudança é deliberada e vem da P-77 (*campo que só o teste toca é campo que o
+motor não usa*).
+
+Mas as dez **não são da mesma espécie**, e a diferença decide o que fazer com cada uma:
+
+- **parâmetro órfão** — `portoes.G3_atrito.ativo` prometia comportamento e não
+  entregava. É defeito, e foi o E-03.
+- **decisão registrada** — `corretora.promocional.e_uma_decisao_nao_uma_omissao: true`
+  não promete comportamento nenhum: ela **registra um julgamento**, e o teste a lê para
+  fixar o registro. Isso é procedência, não dívida.
+
+Cinco das dez são do segundo tipo. Hoje elas convivem na mesma lista, e uma lista que
+mistura duas espécies faz a próxima pessoa tratar procedência como dívida — ou, pior,
+tratar dívida como procedência. O instrumento precisa de um terceiro rótulo, ou o YAML
+precisa de uma convenção que ele reconheça.
+
+---
+
+## ~~P-77~~ · Meia P-13 — **FECHADA 16/09/2026**, ver `## Fechadas`
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Claude. **Gatilho:** antes de qualquer rota
 com `aliquota_ganho` sair do bloqueio por insumo — hoje o FII está bloqueado, e é só
@@ -1272,7 +1328,7 @@ Nada foi removido: o LIMITE do prompt era parar acima de cinco e mostrar a lista
 
 ---
 
-## P-79 · A normalização da resposta da B3 existe em três lugares
+## ~~P-79~~ · Três cópias do desembrulho — **FECHADA 16/09/2026** junto com o A-06
 
 **Classe:** `DECISAO_DE_DESENHO`. **Dono:** Claude. **Gatilho:** a próxima vez que o
 caminho `--eventos` do `coletar_b3.py` precisar mudar por outro motivo.
@@ -1292,6 +1348,16 @@ motivo, `coletar_eventos` passa a chamar `desembrulhar()` e o teste espelho morr
 
 | # | o que era | fechada em |
 |---|---|---|
+| A-06 | `desembrulhar` não existia em `coletar_b3.py` — a lógica estava EMBUTIDA em `coletar_eventos`, e `refinar.py` importava um nome que só existia em cópia de teste | 16/09 — extraída, devolve `(dados, n_registros)` (A-07), e `coletar_eventos` a CHAMA. **Instantâneo dourado sobre os 74 arquivos do acervo real: `2127cad3…` idêntico antes e depois.** `pytest fase0` 9 falhas → 0, e `refinar.py` rodou até o fim pela primeira vez: 738 linhas |
+| P-79 | três cópias da normalização (embutida, `desembrulhar`, `_normalizar` no teste) | 16/09 — uma só. O teste que comparava o TEXTO DO FONTE das duas primeiras saiu: comparar fonte é o instrumento que sobra quando não dá para comparar comportamento, e não dar era **consequência** da duplicata |
+| P-77 | `aliquota_ganho` declarado e nunca lido pelo motor | 16/09 — `regime_tributario` lê; a linha saiu do `INVENTARIO` de `test_campos_mortos.py`, acusada pelo próprio teste do inventário |
+| — | `alocacao.py:PONTAS_DIVERGENTES` | 16/09 — **removida**. Constante decorativa que eu criei no P-77 e nunca referenciei; os motivos são frases inteiras. A guarda de campos mortos pegou o meu próprio lixo um commit depois de nascer |
+| — | DUAS guardas para o mesmo defeito Y-01/E-09 (`test_y01_yaml_duplicata.py` e `test_chaves_duplicadas.py` + `auditoria/chaves_duplicadas.py`), escritas em paralelo no mesmo fim de semana — o N-01 dentro da própria suíte | 16/09 — **fundidas**. Ficou a que usa `yaml.compose` e já estava no `testpaths`; da outra vieram os três testes que ela não tinha: a prova de que a guarda PEGA, o caso do merge, e o caso concreto do IMAB11. Fechou também a falha do P-15, sem precisar afrouxar o P-15 |
+| — | `test_E08b_a_referencia_HERDA_o_relogio` adiantava o relógio escrevendo em `motor.HOJE` — **apoiava-se no defeito que a P-70 removeu** | 16/09 — **o teste estava errado, não o P-70**. Agora troca o `val` que `corretoras` usa por um espião que injeta `hoje`: prova que o aviso saiu POR ALI, não só que alguém avisou |
+| — | `tributacao.ir_jcp_fonte` COMPLETO sem `fonte` no nível do nó | 16/09 — `fonte` escrita **e** a guarda `test_toda_constante_tem_procedencia` aprendeu a olhar dentro da série: se ALGUMA faixa declara fonte, todas precisam. Série meio declarada é pior que série não declarada, porque quem lê supõe que a faixa calada herda a de cima — e aqui herdar é o erro, a faixa de 18% vem de uma MP que caducou |
+| — | os cinco `*-patch.py` ainda no repositório, 5 violações de ruff | 16/09 — apagados. Remendo de uma vez não é ferramenta; deixá-lo convida a rodá-lo de novo |
+| — | `conferir-pacote.ps1` não rodou: política de execução + travessão `—` lido como CP1252, onde `0x94` é aspa tipográfica de fechamento e o parser do PowerShell a trata como delimitador de string | 16/09 — apagado, sem substituto. **O remédio não é um `.ps1` melhor**: `py -3.11` já funciona, não tem política de execução e aceita `encoding` explícito. E, sem zip, o script não tem função. Regra, se algum dia voltar a existir um `.ps1`: **7-bit ASCII, sem exceção** |
+| — | linha de base das órfãs apodrecida (10 novas, 2 já resolvidas na lista) | 16/09 — reconferida **na máquina real**, com o porquê ao lado de cada uma; `corretagem_fii` e `exercicio_opcao_pct` saíram porque o código passa a lê-las. Abriu a P-81 |
 | — | isenção de FII: 50 ou 100 cotistas | 04/09 — **100**, duas leis independentes |
 | — | enumerações ORDEM_EXERC / ESCALA_MOEDA / MOEDA | 04/09 — `OBSERVADO`, 12,8M linhas |
 | — | layout do COTAHIST conferido contra dado real | 04/09 — + fechamento ao byte em 05/09 |

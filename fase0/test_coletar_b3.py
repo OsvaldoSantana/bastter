@@ -68,18 +68,11 @@ def test_A01_a_deduplicacao_por_emissora_nao_perde_ativo():
 # ───────────────────────────────────────────── A-00 / A-02: forma da resposta
 
 def _normalizar(texto):
-    """Espelha o caminho de normalizacao do coletor, para poder exercita-lo sem rede.
-
-    Se esta funcao e a do coletor divergirem, o teste
-    `test_A02_a_normalizacao_do_teste_espelha_a_do_coletor` acusa."""
-    dados = json.loads(texto)
-    if isinstance(dados, str):
-        try: dados = json.loads(dados)
-        except json.JSONDecodeError: pass
-    if isinstance(dados, list):
-        so_dicts = [x for x in dados if isinstance(x, dict)]
-        if so_dicts: dados = so_dicts[0]
-    return dados
+    """P-79 FECHADA em 16/09/2026. Isto era a TERCEIRA copia da normalizacao -- havia
+    uma embutida em `coletar_eventos`, uma em `desembrulhar` e esta. Agora e so um
+    apelido para a unica implementacao, mantido porque quatro testes deste arquivo
+    leem o acervo e so querem o objeto."""
+    return c.desembrulhar(texto)[0]
 
 
 def test_A02_resposta_em_lista_e_o_formato_NORMAL():
@@ -104,16 +97,18 @@ def test_A00_resposta_que_nao_vira_dict_nao_levanta_excecao():
         assert not isinstance(_normalizar(bruto), dict), bruto
 
 
-def test_A02_a_normalizacao_do_teste_espelha_a_do_coletor():
-    """N-01 preventivo: duas implementacoes da mesma regra concordam por acidente ate o
-    dia em que nao concordam. Este teste le o FONTE do coletor e exige que os tres
-    degraus da normalizacao continuem la."""
-    fonte = open(c.__file__, encoding="utf-8").read()
-    for marca in ('isinstance(dados, str)', 'isinstance(dados, list)',
-                  'isinstance(dados, dict)'):
-        assert marca in fonte, (
-            "o coletor perdeu o degrau `%s` da normalizacao, e este teste deixou de "
-            "medir o caminho real." % marca)
+def test_A02_o_desembrulho_CONTA_os_registros_e_nao_so_escolhe():
+    """Substitui `test_A02_a_normalizacao_do_teste_espelha_a_do_coletor`, que comparava
+    o TEXTO DO FONTE de duas implementacoes para afirmar que elas concordavam.
+
+    Comparar fonte e o instrumento que sobra quando nao da para comparar comportamento
+    -- e nao dar era consequencia da duplicata, nao causa dela. Fechada a P-79, ha uma
+    implementacao so, e o teste passa a EXERCITA-LA. O que ele fixa e o contrato que o
+    `refinar.py` consome: o par (dado, quantos vieram), que e o A-07."""
+    assert c.desembrulhar('[{"a": 1}, {"a": 2}]') == ({"a": 1}, 2)
+    assert c.desembrulhar('[{"a": 1}]') == ({"a": 1}, 1)
+    assert c.desembrulhar('{"a": 1}') == ({"a": 1}, 1)
+    assert c.desembrulhar(json.dumps('indisponivel')) == ("indisponivel", 1)
 
 
 # ─────────────────────────────────────────────────── carga e imutabilidade

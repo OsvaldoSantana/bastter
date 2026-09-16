@@ -42,7 +42,7 @@ USO
 So biblioteca padrao. Fora da impressao do ambiente, de proposito.
 """
 
-import argparse, csv, datetime as dt, os, sys
+import argparse, csv, datetime as dt, json, os, sys
 from decimal import Decimal, InvalidOperation
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -339,15 +339,15 @@ def _texto(v):
 def gravar_csv(linhas, caminho):
     """Ordem ESTAVEL. Sem isso o instantaneo dourado acusa diferenca a cada rodada e
     para de servir como rede -- o defeito custa mais que a ausencia da rede."""
-    def chave(ln):
-        return (ln["cod"], ln["origem"], _texto(ln["data_ex"]), ln["tipo"],
-                ln["type_stock"], ln["isin"], _texto(ln["valor"]), _texto(ln["ratio"]))
+    def chave(l):
+        return (l["cod"], l["origem"], _texto(l["data_ex"]), l["tipo"],
+                l["type_stock"], l["isin"], _texto(l["valor"]), _texto(l["ratio"]))
     os.makedirs(os.path.dirname(caminho) or ".", exist_ok=True)
     with open(caminho, "w", encoding="utf-8", newline="\n") as f:
         w = csv.DictWriter(f, fieldnames=COLUNAS, lineterminator="\n")
         w.writeheader()
-        for ln in sorted(linhas, key=chave):
-            w.writerow({c: _texto(ln.get(c)) for c in COLUNAS})
+        for l in sorted(linhas, key=chave):
+            w.writerow({c: _texto(l.get(c)) for c in COLUNAS})
 
 
 def ultima_captura(raiz):
@@ -382,9 +382,9 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
         linhas.extend(novas)
 
         em = arq[:-len(".json")]
-        cab = next((dict(cod=ln["cod"], code_cvm=ln["code_cvm"],
-                         trading_name=ln["trading_name"], dt_captura=dia)
-                    for ln in novas), dict(cod=em, code_cvm="", trading_name="",
+        cab = next((dict(cod=l["cod"], code_cvm=l["code_cvm"],
+                         trading_name=l["trading_name"], dt_captura=dia)
+                    for l in novas), dict(cod=em, code_cvm="", trading_name="",
                                           dt_captura=dia))
         sub = os.path.join(pasta_pr, em)
         if os.path.isdir(sub):
@@ -397,7 +397,7 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
     gravar_csv(linhas, destino)
 
     porc = {}
-    for ln in linhas: porc[ln["fator_status"]] = porc.get(ln["fator_status"], 0) + 1
+    for l in linhas: porc[l["fator_status"]] = porc.get(l["fator_status"], 0) + 1
     print("captura %s -- %d emissoras, %d linhas" % (dia, emissoras, len(linhas)))
     for st in sorted(porc): print("  %-16s %6d" % (st, porc[st]))
     print("  -> %s" % os.path.abspath(destino))

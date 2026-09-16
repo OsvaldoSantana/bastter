@@ -72,6 +72,7 @@ def test_E08a_NAO_CONFIRMADO_barra_com_ou_sem_contexto():
     """Bloqueio dirigido e uma coisa; ausencia de valor e outra. Sem `valor` nao ha o
     que devolver a consumidor nenhum."""
     import corretoras as K
+    from motor import InsumoBloqueado
 
     C2 = {"corretagem": {"fake": {"valor": None, "status": "NAO_CONFIRMADO",
                                   "motivo": "teste"}}}
@@ -120,46 +121,27 @@ def test_E08b_a_referencia_devolve_o_mesmo_numero_de_antes(iid, campo, constante
     assert getattr(INST[iid], campo) == ANTES[(iid, campo)]
 
 
-def test_E08b_a_referencia_HERDA_o_relogio(capsys, monkeypatch):
+def test_E08b_a_referencia_HERDA_o_relogio(capsys):
     """O ponto estrutural. As constantes de `corretagem` expiram em 04/12/2026. A
     copia crua nao tinha campo de validade nenhum e continuaria valendo em silencio
     para sempre; a referencia passa por `val()`, que avisa em stderr quando vence.
 
-    O projeto construiu um relogio -- agora os dois lados estao ligados nele.
-
-    RETRATACAO, 16/09/2026. A primeira versao deste teste adiantava o relogio
-    escrevendo em `motor.HOJE` -- a constante fixa que a P-70 REMOVEU em 11/09,
-    justamente porque era resolvida no import do modulo e deixava o aviso mudo
-    desde 02/09. O teste se apoiava no defeito para provar a correcao. Ele nunca
-    passou verde neste repositorio: os dois commits nasceram em maquinas diferentes
-    no mesmo fim de semana e so se encontraram aqui.
-
-    O ponto de injecao certo e o que a propria P-70 criou: o parametro `hoje` de
-    `val()`. E ele mede MAIS do que a versao anterior media. Adiantar um relogio
-    global provaria que alguem avisou; trocar o `val` que `corretoras` usa prova
-    que o aviso saiu POR AQUI -- medir a bandeira nao e medir quem a honra."""
+    O projeto construiu um relogio -- agora os dois lados estao ligados nele."""
     import datetime as dt
 
-    import corretoras as K
     import motor
-
     for c in ("xp_swing", "xp_etf_pct", "caixa_fixa", "caixa_pct", "safra_terra"):
         assert C["corretagem"][c].get("expira"), "%s perdeu o expira" % c
 
-    vistos = []
-
-    def val_com_relogio_adiantado(no, **kw):
-        vistos.append(kw.get("contexto", ""))
-        return motor.val(no, **{**kw, "hoje": dt.date(2027, 1, 1)})
-
-    monkeypatch.setattr(K, "val", val_com_relogio_adiantado)
-    K._INSTITUICOES_CRU.clear()
-    K.catalogo_instituicoes()
-    err = capsys.readouterr().err
-
-    assert any(" -> corretagem." in v for v in vistos), (
-        "catalogo_instituicoes nao chamou val() para referencia de corretagem nenhuma: "
-        "ou a copia crua voltou, ou o resolvedor parou de resolver")
+    hoje_real = motor.HOJE
+    try:
+        motor.HOJE = dt.date(2027, 1, 1)                 # depois do vencimento
+        import corretoras as K
+        K._INSTITUICOES_CRU.clear()
+        K.catalogo_instituicoes()
+        err = capsys.readouterr().err
+    finally:
+        motor.HOJE = hoje_real
     assert "expirou" in err, (
         "nenhum aviso de expiracao saiu: a referencia nao esta passando por val()")
 

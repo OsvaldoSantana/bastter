@@ -579,6 +579,12 @@ tributacao:
   # Ha uma janela de SESSENTA E OITO DIAS em 2016 em que a aliquota foi 18%.
   ir_jcp_fonte:
     status: COMPLETO
+    fonte: >-
+      Serie de quatro vigencias, e sao QUATRO normas: cada faixa declara a sua em
+      `valor[].fonte`. Ancora: Lei 9.249/1995 art. 9o par. 2o (Planalto, texto
+      compilado), alterada pela MP 694/2015 -- encerrada pelo Ato Declaratorio do
+      Presidente da Mesa do Congresso Nacional no 5, de 09/03/2016 -- e pela
+      LC 224/2025 art. 8o, com vigencia pelo art. 14, III.
     expira: null          # lei nao vence no aniversario; vence quando outra a altera
     revisar_se: "publicacao de norma que altere o art. 9o par. 2o da Lei 9.249/1995"
     acesso: 2026-09-13

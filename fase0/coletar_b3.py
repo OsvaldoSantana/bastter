@@ -177,6 +177,47 @@ def empresa_de(ticker):
     return ticker.upper().strip()[:4]
 
 
+def desembrulhar(texto):
+    """(dados, n_registros). A unica leitura de FORMATO de resposta da B3 no projeto.
+
+    ACHADO A-06, 12/09/2026, e ele e sobre esta funcao nao existir. `refinar.py` a
+    importava; `coletar_b3.py` nao a tinha -- a logica estava EMBUTIDA dentro de
+    `coletar_eventos`, e o nome so existia numa copia de teste. A guarda que devia
+    proibir a duplicata (N-01) media a IDENTIDADE da referencia, e a referencia
+    existia. Guarda que mede o sintoma errado e pior que guarda nenhuma: ela da
+    sossego. Corrigido em 16/09/2026 -- a extracao foi conferida por instantaneo
+    dourado sobre os 74 arquivos do acervo de 11/09, byte a byte.
+
+    OS TRES FORMATOS QUE A B3 DEVOLVEU DE VERDADE, e o quarto de quando da errado:
+      1. objeto -- o unico que eu esperava quando escrevi a primeira versao;
+      2. JSON dentro de STRING (A-00): `json.loads` uma vez devolve `str`, e dai
+         `dados.get(...)` levantava AttributeError e DERRUBAVA A COLETA INTEIRA;
+      3. LISTA (A-02) -- o formato NORMAL deste endpoint: as 74 emissoras do IBOV
+         vieram em lista em 11/09/2026. A pesquisa registrava objeto porque a leitura
+         passou por uma ferramenta de resumo que desembrulhou a lista de um elemento
+         sem avisar. **Um resumo nao e uma observacao.**
+      4. string curta de erro da propria B3 -- sai como chegou, para quem chamou
+         tratar. Esta funcao nao JULGA nenhum formato: ela normaliza e conta.
+
+    ACHADO A-07, mesma data: mais de um registro para a mesma emissora nao e erro, e
+    INFORMACAO. Escolher o primeiro sem dizer quantos vieram e escrever ausencia de
+    criterio no lugar de criterio. Por isso a contagem sobe junto com o dado, e quem
+    chama decide o que fazer com ela."""
+    dados = json.loads(texto)
+    if isinstance(dados, str):
+        try:
+            dados = json.loads(dados)            # A-00: duplamente codificado
+        except json.JSONDecodeError:
+            return dados, 1                      # erro em texto: sai como chegou
+    n_registros = 1
+    if isinstance(dados, list):                  # A-02: o formato normal
+        so_dicts = [x for x in dados if isinstance(x, dict)]
+        if so_dicts:
+            n_registros = len(so_dicts)          # A-07: quantos vieram
+            dados = so_dicts[0]
+    return dados, n_registros
+
+
 def coletar_eventos(raiz, tickers, dia, forcar):
     emissoras = sorted({empresa_de(t) for t in tickers if empresa_de(t)})
     vazias, erros, gravadas = [], [], 0
@@ -186,40 +227,19 @@ def coletar_eventos(raiz, tickers, dia, forcar):
         url = URL_SUPLEMENTO.format(p=carga({"issuingCompany": emissora, "language": "pt-br"}))
         try:
             texto, _ = buscar(url)
-            dados = json.loads(texto)
+            dados, n_registros = desembrulhar(texto)
         except Exception as e:                       # noqa: BLE001 -- queremos o nome do erro
             erros.append((emissora, str(e)[:120]))
             print("  %3d/%d  %-5s  ERRO: %s" % (i, len(emissoras), emissora, str(e)[:60]))
             time.sleep(PAUSA_S)
             continue
 
-        # ACHADO DE 11/09/2026, na primeira execucao real (ABEV foi a primeira e ja
-        # quebrou). O endpoint NEM SEMPRE devolve objeto. Dois casos observados:
-        #   1. JSON dentro de string -- `json.loads` uma vez devolve `str`, e dai
-        #      `dados.get(...)` levanta AttributeError e DERRUBA A COLETA INTEIRA;
-        #   2. string curta de erro da propria B3.
-        # A versao anterior morria na primeira emissora esquisita e perdia as outras 75.
-        # Regra nova: normaliza o que da, GRAVA o bruto de qualquer jeito (resposta
-        # estranha e evidencia, nao lixo), e ACUSA no fim. Nunca derruba a corrida por
-        # causa de um ativo.
-        if isinstance(dados, str):
-            try:
-                dados = json.loads(dados)            # caso 1: JSON duplamente codificado
-            except json.JSONDecodeError:
-                pass
-        # CASO 3, e ele e o formato NORMAL deste endpoint -- descoberto na primeira
-        # corrida real (11/09/2026): as 74 emissoras devolveram **lista**, nao objeto.
-        # A leitura anterior, feita por ferramenta de resumo, tinha desembrulhado a lista
-        # de um elemento sem avisar, e eu registrei o formato errado em
-        # `docs/fontes/pesquisa-bases-e-apis-2026-09.md`. Achado A-02.
-        # Mais de um elemento e informacao, nao erro: a mesma emissora pode ter mais de
-        # um registro. Guardamos todos e usamos o primeiro, dizendo quantos vieram.
-        n_registros = 1
-        if isinstance(dados, list):
-            so_dicts = [x for x in dados if isinstance(x, dict)]
-            if so_dicts:
-                n_registros = len(so_dicts)
-                dados = so_dicts[0]
+        # A LEITURA DE FORMATO MORA EM `desembrulhar()`, e em lugar nenhum mais.
+        # Ate 16/09/2026 ela estava duplicada aqui dentro -- foi o A-06. O que ela
+        # resolve: resposta que nao e objeto NAO derruba a corrida (a versao de
+        # 11/09 morria na primeira emissora esquisita e perdia as outras 75), e a
+        # contagem de registros da mesma emissora sobe junto com o dado (A-07).
+        # Resposta estranha e EVIDENCIA, nao lixo: e gravada e ACUSADA no fim.
         if not isinstance(dados, dict):
             destino = os.path.join(raiz, "eventos", "dt_captura=" + dia,
                                    emissora + ".RESPOSTA-NAO-E-OBJETO.json")
@@ -321,9 +341,8 @@ def coletar_eventos(raiz, tickers, dia, forcar):
 # a correcao do B-02, certa para duas, deixou uma de fora. Agora e uma CASCATA, e a
 # trilha inteira vai para o manifesto.
 #
-# `desembrulhar` repete a normalizacao inline de `coletar_eventos`. Unificar exigiria
-# tocar o caminho --eventos, que funciona e cujo acervo nao se recupera; a duplicacao
-# esta registrada em PENDENCIAS.md.
+# P-79 FECHADA em 16/09/2026 junto com o A-06: a normalizacao mora em `desembrulhar()`,
+# uma vez so, e este caminho usa a MESMA funcao que `--eventos` e que o `refinar.py`.
 
 class PaginacaoInvalida(Exception):
     """A paginacao nao se sustenta. Nada e gravado como se estivesse completo.
@@ -334,21 +353,6 @@ class PaginacaoInvalida(Exception):
         super().__init__(motivo)
         self.tipo, self.bruto = tipo, bruto
         self.tentativas, self.brutos = [], []    # preenchidos por proventos_de (B-02)
-
-
-def desembrulhar(texto):
-    """O acervo real vem duplamente codificado (A-00) e em lista (A-02)."""
-    dados = json.loads(texto)
-    if isinstance(dados, str):
-        try:
-            dados = json.loads(dados)
-        except json.JSONDecodeError:
-            return dados
-    if isinstance(dados, list):
-        so_dicts = [x for x in dados if isinstance(x, dict)]
-        if so_dicts:
-            return so_dicts[0]
-    return dados
 
 
 def trading_names(raiz, dia=None):
@@ -371,7 +375,7 @@ def trading_names(raiz, dia=None):
         if not arq.endswith(".json") or "NAO-E-OBJETO" in arq:
             continue
         with open(os.path.join(pasta, arq), encoding="utf-8") as f:
-            d = desembrulhar(f.read())
+            d, _ = desembrulhar(f.read())
         nome = (d.get("tradingName") or "").strip() if isinstance(d, dict) else ""
         if nome:
             nomes[arq[:-len(".json")]] = nome
@@ -399,7 +403,7 @@ def paginar(trading_name, buscar_fn=None, pausa=PAUSA_S, tamanho=TAMANHO_PAGINA,
         url = URL_PROVENTOS.format(p=carga({"language": "pt-br", "pageNumber": n,
                                              "pageSize": tamanho, "tradingName": trading_name}))
         texto, _ = buscar_fn(url)
-        d = desembrulhar(texto)
+        d, _ = desembrulhar(texto)
         pagina = d.get("page") if isinstance(d, dict) else None
         if not isinstance(pagina, dict) or "totalRecords" not in pagina \
            or not isinstance(d.get("results"), list):

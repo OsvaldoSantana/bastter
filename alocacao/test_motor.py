@@ -138,12 +138,30 @@ def test_status_parcial_pode_ser_recusado():
     assert val(C["corretagem"]["xp_swing"], permitir_parcial=True, contexto="xp") == 4.90
 
 def test_toda_constante_tem_procedencia():
-    """Nenhum valor COMPLETO sem fonte."""
+    """Nenhum valor COMPLETO sem fonte -- e, quando o `valor` e uma SERIE, nenhuma
+    faixa da serie sem a dela.
+
+    16/09/2026. A guarda parava no `valor` e nunca olhava dentro. `tributacao.
+    ir_jcp_fonte` tem quatro vigencias vindas de QUATRO normas diferentes, e uma
+    unica frase no topo do no teria satisfeito esta guarda dizendo quase nada sobre
+    o que o motor de fato le.
+
+    A regra acrescentada e DE PROPOSITO mais estreita que "toda faixa precisa de
+    fonte", que reprovaria `ir_rf_faixas` (uma lei so, quatro prazos) sem que houvesse
+    defeito: se ALGUMA faixa declara fonte, TODAS precisam. Serie meio declarada e
+    pior que serie nao declarada, porque quem le supoe que a faixa calada herda a
+    fonte da de cima -- e nesta serie herdar e exatamente o erro: a faixa de 18% vem
+    de uma MP que caducou, e as vizinhas nao."""
     faltando = []
     def anda(no, cam=""):
         if isinstance(no, dict):
-            if "valor" in no and no.get("status") == "COMPLETO" and not no.get("fonte"):
-                faltando.append(cam)
+            if "valor" in no and no.get("status") == "COMPLETO":
+                if not no.get("fonte"): faltando.append(cam)
+                faixas = [f for f in (no["valor"] if isinstance(no["valor"], list) else [])
+                          if isinstance(f, dict)]
+                if any(f.get("fonte") for f in faixas):
+                    faltando.extend(f"{cam}.valor[{i}]" for i, f in enumerate(faixas)
+                                    if not f.get("fonte"))
             for k, v in no.items():
                 if k not in ("valor","status","fonte","acesso","expira","nota","motivo","bloqueia"):
                     anda(v, f"{cam}.{k}")

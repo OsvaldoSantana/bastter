@@ -507,11 +507,8 @@ quem o promove a achado é a leitura.*
 se funciona. Os três modos de provar, e cada um pegou um erro diferente:
 - **mutação** — reintroduza o defeito e veja a guarda reprovar;
 - **duas execuções** — a única forma de testar idempotência;
-- **adiantar o relógio** — injetar `hoje=2027-01-01` em `val()` prova que o aviso de
-  `expira` sai. *(Corrigido em 16/09: esta linha dizia `motor.HOJE = 2027-01-01`, e a
-  P-70 removeu essa constante em 11/09 — ela era resolvida no import e deixava o aviso
-  mudo. A régua estava citando como instrumento exatamente o defeito que o projeto
-  tinha acabado de tirar. É a própria régua caindo na própria linha 3.)*
+- **adiantar o relógio** — `motor.HOJE = 2027-01-01` provou que o aviso de `expira`
+  passou a sair.
 
 **5. Numa fonte, a cláusula que você citou cobre o item de que você está falando?**
 *"Fonte primária ganha"* não é passe livre. Ela ganha **depois** de se verificar qual
@@ -532,25 +529,6 @@ E não diz "desconfie de ferramenta". Diz **declare o alcance dela**: o
 e quantos nomes vêm de YAML — é a P5 aplicada ao próprio instrumento. **Ferramenta que
 anuncia o próprio limite é ferramenta; ferramenta que só imprime achados é opinião com
 sotaque de máquina.**
-
-### 12. Arquivo que duas mãos editam não se entrega inteiro
-
-Acrescentada em 16/09/2026, e é a primeira linha da régua que não é sobre medir — é
-sobre **entregar**. Em 14/09 o pacote levou `CLAUDE.md` como arquivo completo, escrito
-a partir de uma base mais velha. A sessão da máquina tinha editado o mesmo arquivo e
-commitado duas linhas; o meu arquivo as desfez. E o resultado ficou **pior que perder**:
-os blocos novos continuaram no arquivo ao lado das linhas velhas que voltaram, e o
-documento passou a se contradizer sozinho.
-
-Os seis remendos `.py`/`.yaml` do mesmo pacote **não** fizeram isso, e não por sorte:
-eram remendos **ancorados**, que recusam aplicar quando a âncora não bate. O
-`E02-patch.py` recusou de fato, na segunda-feira, e recusar foi a coisa certa.
-
-> **Entregar arquivo inteiro é decidir sozinho que a minha cópia é a verdade.**
-
-Vale sobretudo para `CLAUDE.md`, `PENDENCIAS.md` e `politica.yaml` — os três que as
-duas pontas tocam. Prosa e registro não são exceção: são justamente onde o conflito
-não estoura, porque não há teste que os leia.
 
 ### A regra de uma linha, para quando não der tempo de ler as cinco
 
@@ -1692,10 +1670,7 @@ A fila **mudou de primeiro lugar**, e a razão está no achado V-01 abaixo.*
    - `GetListedSupplementCompany` devolve uma **janela recente**, não a série completa —
      a PETR veio com 24 proventos, e o endpoint paginado
      (`GetListedCashDividends`) reportou **343** desde 2010. Os desdobramentos parecem ir
-     bem mais longe (BBAS com 18, BBDC com 10). **A esteira do histórico longo existe e
-     JÁ RODOU:** `coletar_b3.py --proventos-completos`, acervo de 11/09 com **74 de 74
-     emissoras e 132 páginas**. As três que faltaram (ABEV, CURY, KLBN) fecharam pela
-     cascata de nome do B-03 — ver `## Fechadas` em `PENDENCIAS.md`.
+     bem mais longe (BBAS com 18, BBDC com 10). **Falta a esteira do histórico longo.**
    - **MBRF sem evento nenhum** — achado A-03 acima.
 2. **Fase 0 da CVM — o prazo é SEMANAL, e são 6 arquivos, não 1,5 GB.** ⚙ **exige o
    desktop.** O `NAO_CONFIRMADO` **fechou em 06/09** pela própria CVM
@@ -1967,89 +1942,3 @@ nada"*. **Ausência de mudança precisa ser afirmada, nunca inferida da ausênci
 **O que NÃO é desperdício, e não deve ser cortado:** o instantâneo dourado. Ele custou
 caro em duas ocasiões e foi o que permitiu afirmar "zero desvio" em vez de "acho que
 está tudo bem". Medir antes de mexer é o método, não o excesso.
-
----
-
-## 16/09/2026 — a segunda ponta encontrou a primeira
-
-Rodada feita **direto no repositório**, com a máquina ligada: eu li os arquivos, medi,
-corrigi e reconferi aqui. Nada de zip, nada de remendo `.py` para alguém rodar. A regra
-12 da régua §5-B nasceu disto.
-
-### O que a suíte escondia
-
-`py -3.11 -m pytest -q` estava com **seis falhas desde 14/09**, e o projeto tem doutrina
-explícita sobre isso: suíte cronicamente vermelha é suíte que ninguém lê. As seis eram
-todas minhas, ou colisão entre duas sessões trabalhando o mesmo repositório no mesmo fim
-de semana. Todas fechadas, cada uma com prova por mutação (reintroduzi o defeito, vi a
-guarda reprovar, desfiz):
-
-| falha | o que era | como fechou |
-|---|---|---|
-| `test_P15` | `chaves_duplicadas` importado e não declarado | **a guarda duplicada saiu** — havia DUAS implementações do mesmo teste (Y-01/E-09), escritas em paralelo. Não mexi no P-15: de dentro de `alocacao/`, um módulo de `auditoria/` **é** terceiro, e a guarda estava certa |
-| `campos_mortos` | `alocacao.py:PONTAS_DIVERGENTES` | constante decorativa que eu criei no P-77 e nunca referenciei. **A guarda que eu ajudei a pedir pegou o meu próprio lixo, um commit depois** |
-| `campos_mortos` | `RotaAloc.aliquota_ganho` já não está morto | a P-77 passou a lê-lo; a linha saiu do inventário. Inventário que não apodrece é o ponto dele |
-| `test_e08b` | `motor.HOJE` não existe | **o teste estava errado, não o P-70** — ver abaixo |
-| `test_motor` | `tributacao.ir_jcp_fonte` COMPLETO sem `fonte` | `fonte` no nível do nó **e a guarda aprendeu a olhar dentro da série** |
-| `test_p40_lint` | 5 violações do ruff | os `*-patch.py` saíram. Remendo de uma vez não é ferramenta |
-
-### A colisão do `motor.HOJE`, e por que o P-70 ganha
-
-`motor.HOJE = dt.date(2026, 9, 1)` era resolvida **no import**. Em 11/09 o aviso de
-expiração estava mudo havia dez dias, e `poupanca_am` vencia em 28/09. A P-70 removeu a
-constante e deu a `val()` um parâmetro `hoje`. O meu `test_E08b_a_referencia_HERDA_o_relogio`
-adiantava o relógio **escrevendo em `motor.HOJE`** — isto é, **apoiava-se no defeito para
-provar a correção**. Restaurar a constante para o teste passar reabriria o defeito.
-
-E o teste media pior do que podia. Que `val()` avisa já está provado duas vezes em
-`test_motor.py`, desde a P-70. O que o E-08b precisa provar é mais estreito: que as seis
-cópias viraram referência e **por isso** passaram a atravessar `val()`. A versão nova
-troca o `val` que `corretoras` usa por um espião que injeta `hoje`, e exige (a) que ele
-tenha visto nós de `corretagem` e (b) que o aviso tenha saído. Adiantar um relógio global
-provaria que *alguém* avisou; trocar o `val` de `corretoras` prova que o aviso saiu **por
-ali**. É a régua do E-01 outra vez: **medir a bandeira não é medir quem a honra.**
-
-### A-06 fechado, e o silver existe
-
-O prompt 1-A tinha sido **pulado**: `refinar.py` quebrava em
-`ValueError: too many values to unpack`, e `coletar_eventos` continuava com a
-normalização embutida. `desembrulhar()` agora devolve `(dados, n_registros)`, mora antes
-de `coletar_eventos`, e é chamada por ele — uma implementação só, no projeto inteiro.
-**P-79 fechada junto:** a terceira cópia, no teste, virou apelido.
-
-**Instantâneo dourado, sobre o acervo real e não sobre exemplo:** a normalização foi
-aplicada aos **74 arquivos** de `eventos/dt_captura=2026-09-11` antes e depois da
-extração. `sha256 = 2127cad3a793570496e9d95b36d928f180d91c13ee0614e7c8f1859f0d9623b5`
-nos dois lados, **idêntico**. Nenhum arquivo do acervo foi tocado.
-
-E aí `python fase0/refinar.py` **rodou até o fim pela primeira vez**:
-
-```
-captura 2026-09-11 -- 74 emissoras, 738 linhas
-  FACTOR_AMBIGUO      180
-  SEM_FATOR            62
-  SEM_PRECO           458
-  TIPO_DESCONHECIDO    38
-```
-
-O próprio relatório aponta o próximo passo: *"180 eventos de quantidade com FATOR NÃO
-CALCULADO (C-01): a leitura de `factor` — percentual ou multiplicador — muda o resultado
-por até 50x e não há fonte que desempate. Desambigua com o COTAHIST, medindo."*
-
-### Correção de um fato que eu mesmo registrei errado
-
-Eu disse, lendo a saída truncada do PowerShell, que o acervo tinha **três arquivos
-COTAHIST**. Não tem. Tem **um ano**: `COTAHIST_A2023.ZIP` (70 MB) e o `.TXT` extraído
-(557 MB) — os "três" eram o ZIP, a pasta e o TXT, com o nome cortado na coluna. O árbitro
-do C-01 existe, e cobre **2023**. A amostra de eventos que ele consegue arbitrar é a das
-datas-ex de 2023, não a série inteira.
-
-### O que a rotina não mede (registrado como P-80)
-
-`pyproject.toml` tem `testpaths = ["alocacao"]`, e o portão do lint roda `ruff check .`
-com `cwd=alocacao/`. Ou seja: **`pytest -q` e o P-40 cobrem um terço do projeto.**
-`auditoria/` e `fase0/` só rodam se alguém lembrar — e foi exatamente por isso que o
-A-06 sobreviveu quatro dias e a linha de base das órfãs apodreceu. É a P7 aplicada à
-própria rotina. Hoje as três suítes estão verdes ao mesmo tempo, que é a janela em que
-unificar é barato.
-

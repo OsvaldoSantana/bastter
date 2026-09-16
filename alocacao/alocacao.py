@@ -559,9 +559,6 @@ def aliquota_ir_rf(C, dias):
     return 0.15
 
 # ── P-77: as DUAS pontas do imposto, e por que uma funcao so nao expressa as duas ──
-PONTAS_DIVERGENTES = "PONTAS_DIVERGENTES"
-
-
 def regime_tributario(r):
     """Devolve (aliquota_sobre_o_rendimento_ou_None, motivo_ou_None).
 
