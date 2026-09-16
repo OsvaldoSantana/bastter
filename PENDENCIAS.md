@@ -1344,10 +1344,57 @@ motivo, `coletar_eventos` passa a chamar `desembrulhar()` e o teste espelho morr
 
 ---
 
+---
+
+## P-82 · O repositório guardou uma cópia de si mesmo, e a suíte continuou verde
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **FECHADA em 16/09/2026**, no mesmo dia em que abriu —
+mas ela tem seis minutos de vida que valem mais que o conserto.
+
+Ao fechar as seis falhas herdadas, o `git rm` apagou os cinco `*-patch.py` e a guarda
+duplicada. Fez o certo. O `git add -A` seguinte encontrou na raiz a pasta
+`pacote_segunda/pacote_segunda/` — o zip de 14/09 descompactado ali por engano — e a
+levou junto. O git então viu os mesmos bytes saindo de um lugar e aparecendo em outro, e
+registrou **rename**: os arquivos não foram removidos, **foram mudados de lugar para
+dentro da cópia**.
+
+O commit `bebea75` passou a carregar uma cópia congelada do projeto de 14/09: um segundo
+`CLAUDE.md`, um segundo `chaves_orfas.py`, um segundo `refinar.py`, um segundo
+`test_chaves_orfas.py`. **E a suíte ficou verde**, porque nenhum portão olha para lá —
+`testpaths = ["alocacao"]`, `campos_mortos.py` varre `alocacao/`, o `ruff` do P-40 roda
+com `cwd=alocacao/`. **A P-80 cobrou a primeira conta em menos de uma hora.**
+
+### O que é caro aqui não é o erro, é que a regra já estava escrita
+
+O `.gitignore` ignora `Claude outputs/` com o motivo por extenso: *"ela contém uma CÓPIA
+INTEIRA do projeto... não é só tamanho: é a armadilha do `pesquisa-custos-2026-08/calc/`
+outra vez, e pior."* A armadilha tinha **nome**, tinha **precedente citado**, e tinha
+**remédio** — e o remédio era uma **lista de nomes de pasta que alguém precisa lembrar de
+estender**. `pacote_segunda/` não estava na lista. É a P7 na forma mais limpa que o
+projeto já produziu: *rotina que depende de lembrar não é rotina*.
+
+`alocacao/test_p82_copia_do_projeto.py` mede o **índice do git**, não o disco — como o
+`test_p67_segredo.py` faz com o `estado.yaml`. Descompactar um zip na pasta é inofensivo;
+o defeito nasce no `git add`. Duas regras: módulo com o mesmo nome de um módulo dos três
+pacotes, e **pasta de pacote aninhada** — a segunda existe porque a primeira não pegaria
+`pacote_segunda/pacote_segunda/alocacao/E02-patch.py`, cujo nome não colide com nada.
+
+### O que fica aberto dentro dela
+
+`pesquisa-custos-2026-08/calc/` tem `motor.py`, `test_motor.py` e `custos.yaml` — os
+mesmos nomes do projeto vivo, congelados em 28/08. Entrou em `COPIAS_DECLARADAS` com o
+motivo escrito, que é o terceiro caminho honesto do protocolo das órfãs. **Mas declarar
+não é resolver:** quem abrir `calc/motor.py` continua lendo uma versão de três semanas
+atrás sem nada no arquivo avisar. Mover para `docs/historico/` ou renomear os arquivos
+resolveria de vez — e isso é decisão sua.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| P-82 | `git add -A` levou `pacote_segunda/pacote_segunda/` junto, e o git registrou as deleções como **rename para dentro da cópia** — o repositório passou a guardar uma cópia congelada de si mesmo, com um segundo `CLAUDE.md`, e a suíte continuou verde porque nenhum portão olha para fora de `alocacao/` | 16/09 — cópia removida e `test_p82_copia_do_projeto.py` mede o **índice**, não o disco. A regra já existia no `.gitignore` e era uma lista de nomes de pasta a lembrar; agora é medição |
 | A-06 | `desembrulhar` não existia em `coletar_b3.py` — a lógica estava EMBUTIDA em `coletar_eventos`, e `refinar.py` importava um nome que só existia em cópia de teste | 16/09 — extraída, devolve `(dados, n_registros)` (A-07), e `coletar_eventos` a CHAMA. **Instantâneo dourado sobre os 74 arquivos do acervo real: `2127cad3…` idêntico antes e depois.** `pytest fase0` 9 falhas → 0, e `refinar.py` rodou até o fim pela primeira vez: 738 linhas |
 | P-79 | três cópias da normalização (embutida, `desembrulhar`, `_normalizar` no teste) | 16/09 — uma só. O teste que comparava o TEXTO DO FONTE das duas primeiras saiu: comparar fonte é o instrumento que sobra quando não dá para comparar comportamento, e não dar era **consequência** da duplicata |
 | P-77 | `aliquota_ganho` declarado e nunca lido pelo motor | 16/09 — `regime_tributario` lê; a linha saiu do `INVENTARIO` de `test_campos_mortos.py`, acusada pelo próprio teste do inventário |

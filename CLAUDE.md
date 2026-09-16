@@ -2044,6 +2044,30 @@ COTAHIST**. Não tem. Tem **um ano**: `COTAHIST_A2023.ZIP` (70 MB) e o `.TXT` ex
 do C-01 existe, e cobre **2023**. A amostra de eventos que ele consegue arbitrar é a das
 datas-ex de 2023, não a série inteira.
 
+### A P-80 cobrou em menos de uma hora (P-82)
+
+Registrei a P-80 e, no commit seguinte, ela mordeu. O `git rm` apagou os cinco
+`*-patch.py` e a guarda duplicada — certo. O `git add -A` seguinte encontrou
+`pacote_segunda/pacote_segunda/` na raiz (o zip de 14/09 descompactado ali) e a levou
+junto; o git viu os mesmos bytes saindo de um lado e chegando no outro e registrou
+**rename**. Os arquivos não foram removidos: **mudaram de lugar para dentro da cópia**.
+
+O repositório passou a guardar uma cópia congelada de si mesmo — segundo `CLAUDE.md`,
+segundo `chaves_orfas.py`, segundo `refinar.py` — e **a suíte continuou verde**, porque
+nenhum portão olha para fora de `alocacao/`.
+
+E o que custa aqui não é o erro. **A regra já estava escrita**: o `.gitignore` ignora
+`Claude outputs/` dizendo, por extenso, que a pasta *"contém uma CÓPIA INTEIRA do
+projeto"* e que isso é *"a armadilha do `pesquisa-custos-2026-08/calc/` outra vez"*. A
+armadilha tinha nome e precedente citado. O remédio era **uma lista de nomes de pasta que
+alguém precisa lembrar de estender** — e `pacote_segunda/` não estava nela.
+
+> **Regra escrita numa lista de nomes não é regra: é lembrete.** O que vale é o que mede.
+
+`alocacao/test_p82_copia_do_projeto.py` mede o **índice do git**, não o disco — o mesmo
+instrumento do `test_p67_segredo.py`. Descompactar um zip na pasta é inofensivo; o
+defeito nasce no `git add`.
+
 ### O que a rotina não mede (registrado como P-80)
 
 `pyproject.toml` tem `testpaths = ["alocacao"]`, e o portão do lint roda `ruff check .`
