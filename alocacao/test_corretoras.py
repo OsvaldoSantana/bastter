@@ -313,3 +313,189 @@ def test_P36_o_ranking_nao_mudou_com_a_migracao():
     ordem = [i.id for i, _ in ranking(PESOS, AP)]
     assert ordem[:4] == ["itau", "caixa", "c6", "santander"]
     assert len(catalogo_instituicoes()) == 24
+
+
+# ══ F-02, 16/09/2026: zero escrito onde ninguem mediu ═══════════════════════════
+def test_F02_casa_NAO_pesquisada_nao_carrega_numero_de_custo():
+    """Nove das 24 casas tem `custos.procedencia.status: NAO_CONFIRMADO`, e a `fonte`
+    de cada uma diz, com estas palavras, "custos NAO OBTIDOS". Todas carregavam
+    `corretagem_pct: 0.0` e `corretagem_etf_pct: 0.0`.
+
+    **Zero e o melhor valor possivel.** E o F-02 na letra -- o mesmo defeito da BOVV11,
+    cuja taxa NAO_CONFIRMADA virava `adm_aa = 0.0` e a punha como a rota mais barata do
+    catalogo. Aqui nao mordeu ate hoje por um acidente: os dois campos eram MORTOS,
+    ninguem os lia. A decisao de 13/09 de por o custo por operacao no ranking e
+    exatamente o que os acordaria -- e nove casas nao pesquisadas estreariam com custo
+    zero de graca.
+
+    A guarda e da CLASSE, nao dos dois campos: qualquer numero de custo novo numa casa
+    NAO_CONFIRMADA reprova aqui."""
+    import yaml
+    cru = yaml.safe_load(open(os.path.join(AQUI, "instituicoes.yaml"), encoding="utf-8"))
+    escritos = []
+    for iid, spec in cru["instituicoes"].items():
+        c = spec.get("custos") or {}
+        if (c.get("procedencia") or {}).get("status") != "NAO_CONFIRMADO":
+            continue
+        escritos += ["%s.%s = %r" % (iid, k, v) for k, v in c.items()
+                     if k != "procedencia" and isinstance(v, (int, float))]
+    assert not escritos, (
+        "casa com procedencia NAO_CONFIRMADO carregando numero de custo:\n  - "
+        + "\n  - ".join(escritos)
+        + "\n\nA fonte dela diz que o custo nao foi obtido. `null` e o que se sabe; "
+          "zero e o melhor valor possivel, e insumo ausente nao vira o numero mais "
+          "favoravel (F-02).")
+
+
+def test_F02_o_default_do_dataclass_tambem_era_um_zero_nao_medido():
+    """Corrigir so o YAML teria deixado o zero um andar acima: `corretagem_pct: float
+    = 0.0` no proprio dataclass. Uma casa que simplesmente NAO declarasse o campo
+    continuaria entrando com zero, e o YAML limpo nao salvaria."""
+    from corretoras import Instituicao
+    i = Instituicao(id="x", nome="X", corretagem_rv=None)
+    assert i.corretagem_pct is None, "o default voltou a ser zero"
+    assert i.corretagem_etf_pct is None, "o default voltou a ser zero"
+
+
+def test_F02_meio_custo_conhecido_NAO_e_um_custo():
+    """`custo = rv/aporte + pct`. Com `pct` desconhecido, somar a metade que se sabe com
+    um zero inventado da um numero -- e o numero e otimista por construcao. A dimensao
+    sai, e a `cobertura` penaliza, que e o tratamento que o proprio `pontuar` ja
+    declarava para dimensao ausente."""
+    from corretoras import Instituicao
+    meio = Instituicao(id="x", nome="X", corretagem_rv=4.9, corretagem_pct=None)
+    assert pontuar(meio, PESOS, AP, 10, P)["dim"]["corretagem"] is None
+    # as TRES parcelas conhecidas -- a de ETF entrou na dimensao em 16/09 (P-84)
+    inteiro = Instituicao(id="y", nome="Y", corretagem_rv=4.9, corretagem_pct=0.0,
+                          corretagem_etf_pct=0.0)
+    assert pontuar(inteiro, PESOS, AP, 10, P)["dim"]["corretagem"] is not None
+
+
+def test_a_saida_do_ranking_e_DETERMINISTICA_entre_execucoes():
+    """N-01 de LICAO, 16/09/2026. `vencedores distintos: N — <lista>` juntava um `set`,
+    e `set` de string nao tem ordem entre PROCESSOS. O texto do relatorio mudava entre
+    duas execucoes com o MESMO dado -- peguei isso tentando usar a saida como
+    instantaneo dourado, que e justamente para o que ela nao servia.
+
+    O `refinar.py` ja tinha aprendido a licao e escrito o motivo ("Ordem ESTAVEL. Sem
+    isso o instantaneo dourado acusa diferenca a cada rodada e para de servir como
+    rede"), e ela nao atravessou de modulo para modulo. Por isso o teste roda em
+    SUBPROCESSO com `PYTHONHASHSEED` diferente: dentro de um processo so, a ordem do
+    `set` e estavel e o defeito nao aparece."""
+    import subprocess
+    saidas = []
+    for semente in ("1", "42"):
+        amb = dict(os.environ, PYTHONHASHSEED=semente)
+        r = subprocess.run([sys.executable, os.path.join(AQUI, "corretoras.py")],
+                           capture_output=True, text=True, env=amb, timeout=120)
+        assert r.returncode == 0, r.stderr[-500:]
+        saidas.append(r.stdout)
+    assert saidas[0] == saidas[1], (
+        "o relatorio mudou de TEXTO entre duas execucoes com o mesmo dado -- ha um "
+        "`set` (ou `dict` de ordem nao garantida) sendo impresso sem ordenar.")
+
+
+# ══ P-84, 16/09/2026: custo por operacao entra no ranking (decisao dele de 13/09) ══
+def test_P84_o_PIOR_CASO_entre_acao_e_ETF_e_o_que_pontua():
+    """A dimensao `corretagem` ganhou segunda parcela em vez de virar dimensao nova --
+    dimensao nova exigiria um peso que ninguem mediu, e mexer no vetor mudaria a nota
+    das 24 casas para resolver o caso de uma.
+
+    PIOR CASO, e a escolha tem precedente na casa: a reserva se julga por
+    `liquidez_pior_caso_dias`, nunca pela media. A nota tem de descrever a ordem que vai
+    doer."""
+    from corretoras import Instituicao
+    so_acao = Instituicao(id="a", nome="A", corretagem_rv=0.0, corretagem_pct=0.0,
+                          corretagem_etf_pct=0.0)
+    caro_em_etf = Instituicao(id="b", nome="B", corretagem_rv=0.0, corretagem_pct=0.0,
+                              corretagem_etf_pct=0.005)
+    n1 = pontuar(so_acao, PESOS, AP, 10, P)
+    n2 = pontuar(caro_em_etf, PESOS, AP, 10, P)
+    assert n1["dim"]["corretagem"] == 100.0
+    assert n2["dim"]["corretagem"] < 100.0, "0,50% em ETF nao chegou na nota"
+    assert any("pior caso: ETF" in x for x in n2["notas"]), n2["notas"]
+
+    # e o inverso: acao cara, ETF gratis -> o pior caso continua sendo a acao
+    caro_em_acao = Instituicao(id="c", nome="C", corretagem_rv=4.9, corretagem_pct=0.0,
+                               corretagem_etf_pct=0.0)
+    n3 = pontuar(caro_em_acao, PESOS, AP, 10, P)
+    assert any("pior caso: ação" in x for x in n3["notas"]), n3["notas"]
+
+
+def test_P84_ETF_desconhecido_tira_a_dimensao_INTEIRA_e_isso_e_conservador():
+    """Descartar informacao DE PROPOSITO, e o caso vivo e a XP.
+
+    Ela tem `corretagem_etf_pct` COMPLETO (0,50%) e `corretagem_rv` BLOQUEADO para o
+    ranking (E-08: `xp_swing` e PARCIAL e nomeia este consumidor). Pontuar so pela
+    parcela conhecida daria 0,50%; a parcela desconhecida, quando foi medida, era R$4,90
+    em R$500 = **0,98%, o dobro**. Usar a metade conhecida seria otimista por um fator de
+    dois -- a direcao exata do F-02. Perder a dimensao custa `cobertura`, que e
+    penalidade, e penalidade e a direcao conservadora."""
+    from corretoras import Instituicao, catalogo_instituicoes, RANKING
+    meio = Instituicao(id="x", nome="X", corretagem_rv=0.0, corretagem_pct=0.0,
+                       corretagem_etf_pct=None)
+    r = pontuar(meio, PESOS, AP, 10, P)
+    assert r["dim"]["corretagem"] is None
+    assert any("ETF NÃO CONFIRMADA" in x for x in r["notas"]), r["notas"]
+
+    xp = {i.id: i for i in catalogo_instituicoes(contexto=RANKING)}["xp"]
+    assert xp.corretagem_rv is None and xp.corretagem_etf_pct == 0.005
+    assert pontuar(xp, PESOS, AP, 10, P)["dim"]["corretagem"] is None
+    assert 4.9/AP > xp.corretagem_etf_pct, (
+        "a parcela escondida da XP deixou de ser a mais cara -- a justificativa de "
+        "descartar a metade conhecida mudou, e a decisao precisa ser remedida")
+
+
+def test_P84_hoje_a_parcela_de_ETF_nao_muda_o_ranking_e_o_motivo_esta_MEDIDO():
+    """O teste que impede a pergunta *"implementamos e nada mudou, esta funcionando?"*.
+
+    Nao mudou, e o motivo e exato: **a unica casa com custo de ETF diferente de zero e a
+    XP**, e a dimensao dela ja estava `None` por causa do E-08. Mecanismo vivo, efeito
+    zero -- por acidente do dado, nao por defeito do codigo.
+
+    No dia em que qualquer outra casa declarar ETF diferente de zero, este teste falha e
+    manda reconferir o ranking. E a medicao virando guarda."""
+    from corretoras import catalogo_instituicoes, RANKING
+    inst = {i.id: i for i in catalogo_instituicoes(contexto=RANKING)}
+    com_etf = {iid: i.corretagem_etf_pct for iid, i in inst.items()
+               if i.corretagem_etf_pct}
+    assert com_etf == {"xp": 0.005}, (
+        "outra casa passou a ter custo de ETF: " + repr(com_etf) +
+        ". A parcela de ETF deixou de ser inerte -- reconfira o ranking.")
+    assert pontuar(inst["xp"], PESOS, AP, 10, P)["dim"]["corretagem"] is None
+
+
+def test_P84_os_tres_campos_EXIBIDOS_sao_constantes_e_e_por_isso_que_nao_pontuam():
+    """A medicao que decidiu o desenho, presa num teste. Se um dia um deles variar,
+    exibir deixa de ser a resposta certa e este teste manda revisitar."""
+    from corretoras import catalogo_instituicoes
+    todas = catalogo_instituicoes()
+    for campo, esperado in (("corretagem_fii", {0.0}), ("exercicio_opcao_pct", {0.005})):
+        vistos = {getattr(i, campo) for i in todas if getattr(i, campo) is not None}
+        assert vistos == esperado, (
+            "%s deixou de ser constante (%r): campo que VARIA discrimina, e discriminar "
+            "e o que faltava para ele virar dimensao em vez de exibicao." % (campo, vistos))
+    mesa = {i.id: i.mesa_minimo for i in todas if i.mesa_minimo is not None}
+    assert len(mesa) == 4 and len(set(mesa.values())) == 3, (
+        "a cobertura de mesa_minimo mudou (%r) -- com 20 de 24 casas sem declarar, nao "
+        "havia como separar 'nao tem mesa' de 'nao pesquisei'." % mesa)
+
+
+def test_P84_o_interruptor_de_pontuar_RECUSA_em_vez_de_ignorar():
+    """E-03: interruptor declarado e ligado em nada e pior que interruptor nenhum. Este
+    esta ligado, e falha alto."""
+    from corretoras import regras
+    P2 = copy.deepcopy(P)
+    P2["corretora"]["custo_por_operacao"]["pontua"] = True
+    with pytest.raises(NotImplementedError, match="custo_por_operacao"):
+        regras(P2)
+
+
+def test_P84_a_exibicao_obedece_o_arquivo():
+    from corretoras import custo_por_operacao
+    inter = INST["inter"]
+    assert custo_por_operacao(inter, P)["mesa_minimo"] == 50.0
+    P2 = copy.deepcopy(P)
+    P2["corretora"]["custo_por_operacao"]["exibe"] = False
+    assert custo_por_operacao(inter, P2) is None
+    assert custo_por_operacao(INST["btg"], P) is None, "casa sem nenhum dos tres"

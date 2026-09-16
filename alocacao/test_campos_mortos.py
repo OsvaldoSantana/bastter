@@ -19,12 +19,13 @@ INVENTARIO = {
     # `regime_tributario` passou a ler `aliquota_ganho` e a linha virou mentira. Um
     # inventario que so cresce e uma lista de desculpas; este apodrece de proposito.
     # P-78: dado de pesquisa coletado e nunca pontuado; decidir por campo.
+    # Quatro SAIRAM em 16/09 (P-84, decisao dele de 13/09): `corretagem_etf_pct`
+    # virou segunda parcela da dimensao `corretagem`; `corretagem_fii`,
+    # `exercicio_opcao_pct` e `mesa_minimo` sao lidos por `custo_por_operacao()`,
+    # exibidos e nunca pontuados. Sobram os dois de procedencia e os dois de
+    # facilidade, que `regras()` recusa ligar.
     "corretoras.py:Instituicao.bc_procedentes": "P-78",
     "corretoras.py:Instituicao.bc_clientes": "P-78",
-    "corretoras.py:Instituicao.corretagem_fii": "P-78",
-    "corretoras.py:Instituicao.corretagem_etf_pct": "P-78",
-    "corretoras.py:Instituicao.exercicio_opcao_pct": "P-78",
-    "corretoras.py:Instituicao.mesa_minimo": "P-78",
     "corretoras.py:Instituicao.home_broker_web": "P-78",
     "corretoras.py:Instituicao.exporta_csv": "P-78",
     # P-78: consumido so pelo teste do P-15 -- ponto cego declarado da guarda.

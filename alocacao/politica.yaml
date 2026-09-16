@@ -13,10 +13,22 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: "1.18.0"
+  versao: 1.19.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.19.0: >-
+      16/09/2026. Decisao dele de 13/09 implementada: custo por operacao entra no
+      ranking. Entrou como SEGUNDA PARCELA da dimensao `corretagem` (pior caso entre
+      acao e ETF), nao como dimensao nova -- dimensao nova exigiria um peso que
+      ninguem mediu, e mexer no vetor de pesos mudaria a nota das 24 casas para
+      resolver o caso de uma. Os outros tres campos coletados (corretagem_fii,
+      exercicio_opcao_pct, mesa_minimo) NAO pontuam: medidos em 16/09, os dois
+      primeiros tem UM UNICO valor entre as casas que os declaram (0,0 e 0,005), e
+      campo constante nao discrimina -- pontuar seria adicionar peso e nao mudar
+      ordenacao nenhuma. Passam a EXIBIDOS, no precedente do reclame_aqui.
+      Bump acumulado: os commits de 11 a 16/09 nao subiram versao (passo 9 do
+      protocolo), e este fecha a lacuna.
     "1.18.0": >
       ACHADO U-01, e ele e uma correcao do usuario sobre o ROTEIRO, nao sobre o codigo.
       Eu vinha listando "aporte realizado zero" e "teses nao assinadas" como bloqueios
@@ -640,6 +652,22 @@ corretora:
       mecanismo do risco R-01, o de maior probabilidade registrada no projeto. Uma
       interface que da preguica nao custa minutos, custa o aporte inteiro do mes.
 
+  custo_por_operacao:
+    pontua: false
+    exibe: true
+    motivo_de_nao_pontuar: >-
+      Medido em 16/09/2026, campo a campo, antes de escrever a dimensao.
+      `corretagem_fii`: 11 das 24 casas declaram, e TODAS declaram 0,0.
+      `exercicio_opcao_pct`: 4 declaram, e TODAS declaram 0,005.
+      `mesa_minimo`: 4 declaram (20, 25, 50) -- varia, mas 20 casas nao declaram e
+      nao ha como separar "nao tem mesa" de "nao pesquisei", entao pontuar penalizaria
+      vinte casas pela ausencia de um PRODUTO e nao pela falta de transparencia.
+      Campo constante nao discrimina: uma dimensao construida sobre ele adiciona peso
+      ao ranking e nao muda ordenacao nenhuma -- um numero que parece medir.
+      A quarta parcela, `corretagem_etf_pct`, NAO esta aqui: ela varia (a XP cobra
+      0,50%) e PONTUA, como segunda parcela de `corretagem`.
+    exibidos: ["corretagem_fii", "exercicio_opcao_pct", "mesa_minimo"]
+    e_uma_decisao_nao_uma_omissao: true
   promocional:
     peso: 0
     e_uma_decisao_nao_uma_omissao: true

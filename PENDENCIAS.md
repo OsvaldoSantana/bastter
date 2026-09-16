@@ -1390,10 +1390,150 @@ resolveria de vez — e isso é decisão sua.
 
 ---
 
+---
+
+## P-83 · Nove casas não pesquisadas carregavam custo ZERO — e a decisão 1 ia acordá-lo
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **FECHADA em 16/09/2026** na parte que é defeito.
+A dimensão do ranking, que é a decisão, **continua aberta** — ver P-84.
+
+Fui implementar a sua decisão de 13/09 (*"custo por operação entra no ranking: **sim**"*)
+e medi os campos antes de escrever a dimensão. A medição derrubou a premissa e achou
+outra coisa.
+
+### O que a medição mostrou
+
+| campo | declaram | valores distintos |
+|---|---|---|
+| `corretagem_fii` | 11 / 24 | **um só: 0,0** |
+| `exercicio_opcao_pct` | 4 / 24 | **um só: 0,005** |
+| `mesa_minimo` | 4 / 24 | 20 · 25 · 50 — o único que varia |
+| `corretagem_etf_pct` | 24 / 24 | 0,0 em 23, **0,005 na XP** |
+
+**Dois dos três campos que você autorizou são constantes.** Uma dimensão construída
+sobre eles adiciona peso ao ranking e **não muda ordenação nenhuma** — é um número que
+parece medir. É a forma do `pl_medio_3a`.
+
+### E o que estava embaixo, que é o achado
+
+`corretagem_etf_pct: 0.0` e `corretagem_pct: 0.0` estavam escritos em **nove casas cuja
+própria `fonte` diz, com estas palavras, "custos NÃO OBTIDOS"** — Clear, BTG, Bradesco,
+Mirae, Órama, Guide, Necton, Vitreo, Avenue. O `corretagem_rv` delas é `null`, ou seja
+*"não sei"*, e o campo vizinho traz zero.
+
+**Zero é o melhor valor possível.** É o F-02 na letra — o mesmo defeito da BOVV11, cuja
+taxa `NAO_CONFIRMADO` virava `adm_aa = 0.0` e a punha como a rota mais barata do
+catálogo. Não mordeu até hoje por um acidente: **os campos eram mortos.** A sua decisão
+de pôr o custo por operação no ranking é exatamente o que os acordaria, e nove casas não
+pesquisadas estreariam com custo zero de graça.
+
+**E o zero tinha um segundo andar:** `corretagem_pct: float = 0.0` era o *default do
+dataclass*. Limpar só o YAML deixaria o zero morando um nível acima, pronto para voltar
+na primeira casa que não declarasse o campo.
+
+### O que foi corrigido
+
+Os 18 zeros viraram `null`; os dois defaults viraram `None`; e `pontuar()` passou a tirar
+a dimensão quando **qualquer** das duas parcelas é desconhecida — meio custo conhecido não
+é um custo, e somar a metade que se sabe com um zero inventado dá um número otimista por
+construção.
+
+**Instantâneo dourado: o ranking saiu byte a byte idêntico** (`ee59cd02…`). A correção é
+inteiramente inerte hoje, que é exatamente o ponto — os zeros estavam dormindo.
+
+Três guardas, as três provadas por mutação: nenhuma casa `NAO_CONFIRMADO` pode carregar
+número de custo (guarda de **classe**, não dos dois campos); o default do dataclass não
+pode voltar a ser zero; meio custo não pontua.
+
+---
+
+## P-84 · A dimensão de custo por operação — o que a decisão 1 ainda precisa
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo. **Gatilho:** agora; nada trava.
+
+Com a P-83 corrigida, sobra a pergunta de desenho, e ela é sua porque envolve **peso**,
+que é política declarada:
+
+- `corretagem_fii` e `exercicio_opcao_pct` são **constantes**. O projeto já tem o
+  mecanismo certo para isso e o precedente escrito: `reclame_aqui` é **exibido e nunca
+  pontuado** (`politica.yaml → pontua: false, exibe: true`). Eles saem de campo morto sem
+  fingir que discriminam.
+- `mesa_minimo` varia (20/25/50) mas só 4 de 24 declaram, e **não dá para separar "não
+  tem mesa" de "não pesquisei"**. Pontuá-lo penalizaria 20 casas pela ausência de um
+  produto, não pela falta de transparência.
+- `corretagem_etf_pct` é o único com cobertura real depois da P-83 (15 casas) e com um
+  valor que separa: **os 0,50% da XP em ETF.** É também o que mais importa para quem
+  compra ETF — e ele **não estava** nos três que você autorizou.
+
+**A pergunta:** a corretagem de ETF entra como segunda parcela da dimensão `corretagem`
+que já existe (sem inventar peso novo), ou como dimensão própria com peso declarado por
+você no `politica.yaml`?
+
+---
+
+## P-85 · O relatório do ranking mudava de texto entre execuções
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **FECHADA em 16/09/2026.**
+
+Peguei tentando usar a saída do `corretoras.py` como instantâneo dourado — que é
+justamente para o que ela não servia. A linha *"vencedores distintos: N — <lista>"*
+juntava um `set`, e `set` de string não tem ordem **entre processos**.
+
+**O `refinar.py` já tinha aprendido a lição e escrito o motivo** — *"Ordem ESTÁVEL. Sem
+isso o instantâneo dourado acusa diferença a cada rodada e para de servir como rede"* — e
+ela não atravessou de módulo para módulo. É o A-07 (funções irmãs) com o irmão sendo um
+**módulo**: regra aplicada num lugar só.
+
+A guarda roda o relatório em **subprocesso**, com `PYTHONHASHSEED` diferente — dentro de
+um processo só a ordem do `set` é estável e o defeito não aparece.
+
+---
+
+---
+
+## P-86 · O `chaves_orfas.py` escondia 42 de 67 chaves, e emudecia por escolha de nome
+
+**Classe:** `BLOQUEIA_O_SISTEMA`. **FECHADA em 16/09/2026.**
+
+A ferramenta deduplicava por **nome de folha**: a segunda ocorrência de qualquer nome no
+mesmo arquivo **sumia do relatório** — nem órfã, nem lida, invisível. `bc_procedentes`
+aparecia para o Itaú e calava para as outras oito casas; `variantes_permitidas` aparecia
+numa estratégia e sumia em sete.
+
+**Peguei sem procurar**, e é isso que torna o defeito caro: batizei uma chave nova
+(`custo_por_operacao.e_uma_decisao_nao_uma_omissao`) com o mesmo nome de folha de uma
+existente, e a **existente desapareceu da auditoria**. Uma guarda que emudece porque
+alguém escolheu um nome é pior que guarda nenhuma — e o sintoma é a linha de base
+**encolher**, que é a direção que parece progresso.
+
+Corrigido para dedupe por caminho: **17 órfãs + 8 lidas-só-por-teste viraram 35 + 32.**
+
+### Zero espécies novas, e é isso que permitiu fechar barato
+
+As 42 escondidas são **nove espécies**, e todas já tinham o porquê escrito na linha de
+base — para *uma* instância. A linha de base declarava uma e cobria N em silêncio.
+Listá-las uma a uma seria copiar o mesmo motivo 42 vezes, então entrou `ESPECIES`, com
+glob e o motivo escrito na espécie (precedente na casa: `test_alocacao.py` já usa
+`corretora.*.e_uma_decisao_nao_uma_omissao`).
+
+E a guarda nova **me pegou na mesma rodada**: pus `instituicoes.*.facilidade.exporta_csv`
+por simetria, e o teste de *"espécie declarada que não casa com órfã nenhuma"* reprovou —
+nenhuma casa declara esse campo.
+
+`test_a_ferramenta_NAO_deduplica_por_nome_de_folha` é a guarda da guarda, com prova por
+mutação.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| P-84 | a decisão dele de 13/09 — custo por operação no ranking — sem implementação | 16/09 — `corretagem_etf_pct` entrou como **segunda parcela** da dimensão `corretagem` (pior caso entre ação e ETF), sem inventar peso. Os outros três são **exibidos e nunca pontuados** (`politica.yaml → corretora.custo_por_operacao`), porque medidos são constantes entre quem os declara. **A tabela do ranking não mudou**, e o motivo está preso num teste: a única casa com ETF ≠ 0 é a XP, cuja dimensão já estava `None` pelo E-08 |
+| P-86 | o `chaves_orfas.py` deduplicava por NOME DE FOLHA e escondia **42 de 67** chaves — a segunda ocorrência de um nome sumia do relatório | 16/09 — dedupe por caminho; linha de base recortada por **espécie** (glob + motivo), porque as 42 são nove espécies já declaradas para uma instância. Guarda da guarda com prova por mutação |
+| — | `politica.yaml` sem bump de versão desde 11/09 (passo 9 do protocolo, sete commits) | 16/09 — **1.18.0 → 1.19.0**, com o changelog registrando a decisão do custo por operação e a lacuna acumulada |
+| P-83 | nove casas com `procedencia: NAO_CONFIRMADO` — cuja própria fonte diz *"custos NÃO OBTIDOS"* — carregavam `corretagem_pct: 0.0` e `corretagem_etf_pct: 0.0`, e o default do dataclass também era `0.0` | 16/09 — 18 zeros viraram `null`, os dois defaults viraram `None`, e `pontuar()` tira a dimensão quando qualquer parcela é desconhecida. **Ranking byte a byte idêntico** (`ee59cd02…`): a correção é inerte hoje, e é esse o ponto — os zeros estavam dormindo até a decisão 1 acordá-los. 3 guardas provadas por mutação |
+| P-85 | a saída do `corretoras.py` mudava de TEXTO entre execuções (um `set` impresso sem ordenar) e não servia como instantâneo dourado | 16/09 — ordenado; guarda roda o relatório em subprocesso com `PYTHONHASHSEED` diferente. O `refinar.py` já tinha a lição escrita e ela não atravessou de módulo para módulo |
 | C-01 | `factor` dos eventos de quantidade: percentual ou multiplicador? As duas leituras produzem número e diferem por até 50x; 180 das 738 linhas do silver ficavam sem fator | 16/09 — **medido pela DISTRIBUIÇÃO**, não por um caso: os 65 desdobramentos usam 11 valores distintos que, lidos como percentual, caem em cima de razões canônicas (100→2x, 400→5x, 9900→100x). E a regra é **dupla**: no GRUPAMENTO `factor` já é o multiplicador, e é < 1. FACTOR_AMBIGUO 180 → CALCULADO 178 + FACTOR_FORA_DA_REGRA 2 (as incorporações). Instantâneo dourado: nenhuma coluna herdada mudou de valor |
 | — | a coluna `data_ex` do silver guardava `lastDatePrior`, que é o **último dia COM direito** — o degrau de preço cai no pregão seguinte, e quem ajustasse por ela deslocaria tudo em um pregão | 16/09 — renomeada para `ultimo_dia_com_direito`; entraram `data_ex` derivada e `data_ex_status`. `fase0/calendario.py` tira o calendário do próprio COTAHIST do acervo (**dia com negociação é pregão**) e **recusa** fora da cobertura em vez de chutar dia útil — Carnaval e feriado estadual não estão em regra genérica nenhuma. Hoje: 1 derivada, 737 `FORA_DA_COBERTURA`; a cobertura cresce sozinha a cada ano de COTAHIST |
 | P-82 | `git add -A` levou `pacote_segunda/pacote_segunda/` junto, e o git registrou as deleções como **rename para dentro da cópia** — o repositório passou a guardar uma cópia congelada de si mesmo, com um segundo `CLAUDE.md`, e a suíte continuou verde porque nenhum portão olha para fora de `alocacao/` | 16/09 — cópia removida e `test_p82_copia_do_projeto.py` mede o **índice**, não o disco. A regra já existia no `.gitignore` e era uma lista de nomes de pasta a lembrar; agora é medição |

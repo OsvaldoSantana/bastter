@@ -191,12 +191,26 @@ def main(argv=None):
     for y in a.yamls:
         doc = yaml.safe_load(open(y, encoding="utf-8"))
         orfas, apenas_teste = [], []
+        # ACHADO 16/09/2026 -- a ferramenta escondia 42 de 67 chaves, e do pior jeito.
+        # Esta deduplicacao era por NOME DE FOLHA (`vistos.add(k)`), entao a SEGUNDA
+        # ocorrencia de qualquer nome no mesmo arquivo sumia do relatorio -- nem orfa,
+        # nem lida: invisivel. `bc_procedentes` era reportada para o Itau e calada para
+        # as outras oito casas; `variantes_permitidas` aparecia numa estrategia e sumia
+        # em sete.
+        #
+        # Peguei sem procurar: batizei uma chave nova com o mesmo nome de folha de uma
+        # existente, e a EXISTENTE desapareceu da auditoria. Uma guarda que emudece
+        # quando alguem escolhe um nome e pior que guarda nenhuma -- e a linha de base
+        # ficava menor, que e a direcao que parece progresso.
+        #
+        # Dedupe por CAMINHO. O motivo original era ruido no relatorio; o preco era
+        # cobertura, e cobertura vale mais.
         vistos = set()
         for cam, v in folhas(doc):
             k = cam[-1]
-            if k in vistos:
+            if cam in vistos:
                 continue
-            vistos.add(k)
+            vistos.add(cam)
             if not a.incluir_meta and k in META:
                 continue
             if k in so_teste and not isinstance(v, (dict, list)):

@@ -2080,6 +2080,53 @@ negociação é pregão.** Nada de lista de feriados escrita de cabeça — o Ca
 derruba qualquer regra genérica de dia útil, e escrever a lista seria citar a mim mesmo.
 Fora da janela observada, a função devolve "não sei" e a linha diz `FORA_DA_COBERTURA`.
 
+### E a mesma decisão achou a guarda que emudece (P-86)
+
+Ao declarar a regra nova no `politica.yaml`, batizei uma chave
+`custo_por_operacao.e_uma_decisao_nao_uma_omissao` — mesmo **nome de folha** de uma que
+já existia em `promocional`. A chave antiga **desapareceu da auditoria de órfãs.**
+
+O `chaves_orfas.py` deduplicava por nome de folha, então a segunda ocorrência de qualquer
+nome no mesmo arquivo sumia: nem órfã, nem lida, **invisível**. Eram **42 de 67**.
+`bc_procedentes` aparecia para o Itaú e calava para as outras oito casas.
+
+> **Uma guarda que emudece porque alguém escolheu um nome é pior que guarda nenhuma** — e
+> o sintoma é a linha de base **encolher**, que é a direção que parece progresso.
+
+As 42 escondidas são **nove espécies**, e todas já tinham o motivo escrito na linha de
+base para *uma* instância: a linha declarava uma e cobria N em silêncio. Por isso a
+correção foi barata — entrou `ESPECIES`, com glob e o motivo na espécie. E a guarda nova
+me pegou na mesma rodada: pus um glob por simetria e o teste de *"espécie que não casa com
+órfã nenhuma"* reprovou.
+
+### A decisão 1 achou um zero adormecido (P-83)
+
+Fui implementar a sua decisão de 13/09 — *"custo por operação entra no ranking: sim"* — e
+**medi os campos antes de escrever a dimensão**. A medição derrubou a premissa: dos três
+campos autorizados, `corretagem_fii` tem **um único valor** em 11 casas (0,0) e
+`exercicio_opcao_pct` tem **um único valor** em 4 (0,005). Uma dimensão construída sobre
+constantes adiciona peso e não muda ordenação nenhuma.
+
+E embaixo disso estava o achado. `corretagem_etf_pct: 0.0` e `corretagem_pct: 0.0`
+estavam escritos em **nove casas cuja própria `fonte` diz "custos NÃO OBTIDOS"**, e cujo
+`corretagem_rv` é `null` — *não sei*. **Zero é o melhor valor possível.** É o F-02 na
+letra, e só não mordeu porque os campos eram mortos: **a decisão 1 é exatamente o que os
+acordaria.**
+
+> **Insumo ausente adormecido num campo morto continua sendo insumo ausente.** O campo
+> morto não é o defeito — é o anestésico.
+
+O zero tinha um segundo andar, o `default` do dataclass, e limpar só o YAML o deixaria
+morando um nível acima. Corrigido nos dois, com `pontuar()` recusando a dimensão quando
+qualquer das parcelas é desconhecida. **O ranking saiu byte a byte idêntico** — a
+correção é inerte hoje, e é esse o ponto.
+
+**E a medição cobrou um pedágio próprio (P-85):** eu tentei usar a saída do
+`corretoras.py` como instantâneo dourado e ela **mudava de texto entre execuções** — um
+`set` impresso sem ordenar. O `refinar.py` já tinha aprendido isso e escrito o motivo no
+código; a lição não atravessou de módulo para módulo. É o A-07 com o irmão sendo um
+módulo inteiro.
+
 ### A P-80 cobrou em menos de uma hora (P-82)
 
 Registrei a P-80 e, no commit seguinte, ela mordeu. O `git rm` apagou os cinco

@@ -20,6 +20,7 @@ Para fechar uma orfa ha exatamente dois caminhos honestos:
 Mover para a linha de base e o terceiro caminho, e ele exige escrever POR QUE ali.
 """
 
+import fnmatch
 import os
 import subprocess
 import sys
@@ -63,6 +64,10 @@ CONHECIDAS = {
     # le-las. Ficaram aqui sem dono de 12 a 16/09 -- o inverso do E-03, e a razao de o
     # segundo teste deste arquivo existir: linha de base que nao encolhe vira deposito.
     "instituicoes.itau.facilidade.home_broker_web",
+    # `instituicoes.itau.custos.corretagem_etf_pct` e
+    # `corretora.promocional.e_uma_decisao_nao_uma_omissao` SAIRAM em 16/09: a
+    # primeira passou a ser lida pela dimensao `corretagem` (P-84); a segunda pelo
+    # `regras()`, ao lado da chave nova de `custo_por_operacao`.
     # numeros historicos do M-01, guardados para comparacao. Nao sao entrada.
     "fase_A_recalculada.antes_dizia.premissa_de_reserva",
     "fase_A_recalculada.reserva_inicial",
@@ -91,13 +96,55 @@ CONHECIDAS = {
     # `mesa_minimo` e o unico que ainda separa: `corretagem_fii` (11/24 declaram, todos
     # 0,0) e `exercicio_opcao_pct` (4/24, todos 0,005) ja sairam por leitura do codigo.
     "instituicoes.inter.custos.mesa_minimo",
-    "instituicoes.itau.custos.corretagem_etf_pct",
     "instituicoes.itau.reclamacoes.bc_clientes",
     "instituicoes.itau.reclamacoes.bc_procedentes",
     # F-03/P-05: porte do fundo, escrito para julgar liquidez da rota de ETF de renda
     # fixa. Entra quando a rota entrar -- hoje ela esta barrada por falta do regulamento.
     "etf.IMAB11.pl_medio_3a",
 }
+
+
+# ── ESPECIES, e elas nasceram de um defeito da propria ferramenta (16/09/2026).
+#
+# Ate hoje o `chaves_orfas.py` deduplicava por NOME DE FOLHA: a segunda ocorrencia de
+# um nome no mesmo arquivo sumia do relatorio -- nem orfa, nem lida, invisivel. Eram
+# **42 de 67**. Corrigido para dedupe por caminho, e o que apareceu foram zero especies
+# novas: `bc_procedentes` das outras oito casas, `variantes_permitidas` das outras sete
+# estrategias, e assim por diante. **A linha de base declarava UMA instancia e cobria N
+# em silencio.**
+#
+# Listar as 42 uma a uma seria copiar o mesmo porque 42 vezes. O motivo mora na
+# ESPECIE, e e la que ele fica escrito. O glob tem precedente na casa
+# (`test_alocacao.py` usa `corretora.*.e_uma_decisao_nao_uma_omissao`).
+ESPECIES = (
+    # E-06 -- resultado JA GRAVADO do pre-registro e limite anti-p-hacking declarado.
+    # Sao SAIDA registrada e regra de processo, nao parametro de entrada do motor.
+    ("estrategias_pre_registradas.*.ordem_de_execucao", "E-06"),
+    ("estrategias_pre_registradas.*.variantes_permitidas", "E-06"),
+    ("estrategias_pre_registradas.*.resultado.*", "E-06"),
+    # P-78 -- procedencia do indice do BC: `test_corretoras.py` RECALCULA o indice a
+    # partir das partes, entao elas sao o insumo que prova o numero derivado.
+    ("instituicoes.*.reclamacoes.bc_clientes", "P-78"),
+    ("instituicoes.*.reclamacoes.bc_procedentes", "P-78"),
+    # P-84 -- exibidos e nunca pontuados, por decisao medida em 16/09 (constantes entre
+    # quem declara, ou cobertura baixa demais para separar ausencia de produto de
+    # ausencia de pesquisa).
+    ("instituicoes.*.custos.mesa_minimo", "P-84"),
+    # P-78 -- dimensao `facilidade` declarada e nao pontuada; `regras()` RECUSA liga-la.
+    ("instituicoes.*.facilidade.home_broker_web", "P-78"),
+    # `exporta_csv` NAO entra: nenhuma casa o declara no YAML hoje, e a guarda nova
+    # de "especie que nao casa com nada" me pegou tentando por o glob por simetria.
+    # P-81 -- declaracao de DECISAO, nao parametro: registra um julgamento tomado, e o
+    # teste a le para fixar o registro. Procedencia, nao divida.
+    ("*.tem_piso_legal", "P-81"),
+    ("corretora.*.e_uma_decisao_nao_uma_omissao", "P-81"),
+    # M-01 -- numeros historicos guardados para comparacao. Nao sao entrada.
+    ("fase_A_recalculada.*.premissa_de_reserva", "M-01"),
+)
+
+
+def _declarada(chave):
+    return chave in CONHECIDAS or any(fnmatch.fnmatch(chave, g) for g, _ in ESPECIES)
 
 
 def _orfas():
@@ -116,7 +163,7 @@ def test_nenhuma_chave_orfa_NOVA():
     exatamente essa a forma do E-03: `politica.yaml` declarava `ativo` para os nove
     portoes e dois nao liam. Os dois estavam `true`, entao arquivo e codigo
     concordavam POR ACIDENTE."""
-    novas = _orfas() - CONHECIDAS
+    novas = {c for c in _orfas() if not _declarada(c)}
     assert not novas, (
         "chave(s) declarada(s) que codigo nenhum le:\n  - " + "\n  - ".join(sorted(novas))
         + "\n\nOu o codigo passa a ler, ou a chave sai do YAML. Pos-la na linha de base"
@@ -128,7 +175,15 @@ def test_a_linha_de_base_nao_guarda_chave_ja_resolvida():
     """O inverso, e ele evita que a linha de base vire deposito: chave que o codigo
     JA le nao pode continuar listada como orfa conhecida -- se continuar, a proxima
     pessoa acredita que ainda ha pendencia onde nao ha."""
-    resolvidas = CONHECIDAS - _orfas()
+    hoje = _orfas()
+    resolvidas = CONHECIDAS - hoje
+    orfas_sem_especie = {c for g, _ in ESPECIES for c in hoje if fnmatch.fnmatch(c, g)}
+    mortas = [g for g, _ in ESPECIES
+              if not any(fnmatch.fnmatch(c, g) for c in hoje)]
+    assert not mortas, (
+        "especie declarada que nao casa com orfa nenhuma -- apague o glob:\n  - "
+        + "\n  - ".join(mortas))
+    assert orfas_sem_especie or not ESPECIES
     assert not resolvidas, (
         "chave(s) na linha de base que o codigo agora LE -- tire(m) da lista:\n  - "
         + "\n  - ".join(sorted(resolvidas)))
@@ -168,3 +223,29 @@ def test_E03_todo_portao_declarado_le_o_proprio_interruptor():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+def test_a_ferramenta_NAO_deduplica_por_nome_de_folha(tmp_path):
+    """A guarda da guarda, 16/09/2026.
+
+    O `chaves_orfas.py` deduplicava por NOME DE FOLHA: a segunda ocorrencia de um nome
+    no mesmo arquivo sumia do relatorio -- nem orfa, nem lida, **invisivel**. Eram 42 de
+    67 chaves. `bc_procedentes` aparecia para o Itau e calava para as outras oito casas.
+
+    **Peguei sem procurar**, e e isso que torna o defeito caro: batizei uma chave nova
+    com o mesmo nome de folha de uma existente, e a EXISTENTE desapareceu da auditoria.
+    Uma guarda que emudece porque alguem escolheu um nome e pior que guarda nenhuma --
+    e o sintoma e a linha de base ENCOLHER, que e a direcao que parece progresso."""
+    y = tmp_path / "x.yaml"
+    y.write_text("um:\n  nunca_lida_por_ninguem: 1\ndois:\n  nunca_lida_por_ninguem: 2\n",
+                 encoding="utf-8")
+    r = subprocess.run([sys.executable, SCRIPT, str(tmp_path), str(y)],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    achadas = [ln for ln in r.stdout.splitlines() if "nunca_lida_por_ninguem" in ln]
+    assert len(achadas) == 2, (
+        "o mesmo nome de folha em dois ramos: a ferramenta reportou %d de 2. Ela voltou "
+        "a deduplicar por NOME em vez de por CAMINHO, e a segunda chave ficou "
+        "invisivel.\n%s" % (len(achadas), r.stdout[-800:]))
+    assert "um.nunca_lida_por_ninguem" in r.stdout
+    assert "dois.nunca_lida_por_ninguem" in r.stdout

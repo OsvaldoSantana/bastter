@@ -393,9 +393,14 @@ instituicoes:
     nome: "Clear (marca XP Inc.)"
     pegadinha: "página de custos devolveu HTTP 403"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "site oficial Clear (status societário) — custos NÃO OBTIDOS"
@@ -441,9 +446,14 @@ instituicoes:
     nome: "BTG Pactual digital"
     pegadinha: "site é SPA sem HTML servido; nenhum custo operacional pôde ser lido"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 (porte) — custos NÃO OBTIDOS"
@@ -476,9 +486,14 @@ instituicoes:
     nome: "Bradesco / Ágora"
     pegadinha: "páginas servem só metadados; PDF de tarifas não pôde ser baixado"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 (porte) — custos NÃO OBTIDOS"
@@ -644,9 +659,14 @@ instituicoes:
     nome: "Mirae Asset (Brasil)"
     pegadinha: "HTTP 403 em todas as tentativas; mirae.com.br não resolve DNS"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 — custos NÃO OBTIDOS"
@@ -669,9 +689,14 @@ instituicoes:
     nome: "Órama"
     pegadinha: "site é SPA sem conteúdo textual"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 (status)"
@@ -688,9 +713,14 @@ instituicoes:
     nome: "Guide Investimentos"
     pegadinha: "site devolveu HTTP 404 nas páginas de custos"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 (ausência de registro)"
@@ -707,9 +737,14 @@ instituicoes:
     nome: "Necton"
     pegadinha: "domínio só resolve em IPv6"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 (status)"
@@ -726,9 +761,14 @@ instituicoes:
     nome: "Vitreo / Empiricus Investimentos"
     pegadinha: "domínios não resolvem DNS"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026 (status)"
@@ -745,9 +785,14 @@ instituicoes:
     nome: "Avenue (braço Brasil)"
     pegadinha: "não é corretora de B3 no varejo; foco EUA"
     custos:
+      # F-02, 16/09/2026: estes dois eram `0.0`, e a `fonte` desta casa diz
+      # "custos NAO OBTIDOS". Zero e o MELHOR valor possivel: insumo ausente
+      # renderizado como zero, e vencendo -- o mesmo defeito do BOVV11. Nao
+      # mordeu ate hoje so porque os campos eram mortos; no dia em que o
+      # ranking os ler, nove casas nao pesquisadas ganham custo zero de graca.
       corretagem_rv: null
-      corretagem_pct: 0.0
-      corretagem_etf_pct: 0.0
+      corretagem_pct: null
+      corretagem_etf_pct: null
       procedencia:
         status: NAO_CONFIRMADO
         fonte: "BCB IF.data 03/2026"

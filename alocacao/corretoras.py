@@ -57,7 +57,7 @@ class Instituicao:
     id: str
     nome: str
     corretagem_rv: float | None      # R$ por ordem no autoatendimento; None = nao confirmado
-    corretagem_pct: float = 0.0      # parte percentual, se houver
+    corretagem_pct: float | None = None   # parte percentual; None = nao medida
     custodia_absorvida: bool | None = None
     tesouro_taxa_propria_zero: bool | None = None
     pl_conglomerado: float | None = None      # R$ milhoes, BCB IF.data 03/2026
@@ -80,7 +80,7 @@ class Instituicao:
     ra_reclamacoes: int | None = None
     # ── custo por operacao, detalhado ─────────────────────────────────────────
     corretagem_fii: float | None = None      # None = mesma da acao
-    corretagem_etf_pct: float = 0.0          # XP cobra 0,50% em ETF
+    corretagem_etf_pct: float | None = None  # XP cobra 0,50% em ETF; None = nao medida
     exercicio_opcao_pct: float | None = None
     mesa_minimo: float | None = None
     # ── facilidade: proxies objetivos ─────────────────────────────────────────
@@ -242,6 +242,17 @@ def regras(P=None):
         raise NotImplementedError(
             "politica.yaml diz corretora.facilidade.pontua: true, e nao ha dimensao de "
             "facilidade em pontuar() — a pesquisa de 31/08 nao obteve proxy objetivo.")
+    if c["custo_por_operacao"]["pontua"]:
+        # 16/09/2026. O interruptor existe e RECUSA: `corretagem_fii`,
+        # `exercicio_opcao_pct` e `mesa_minimo` sao exibidos, nunca pontuados, porque
+        # medidos em 16/09 os dois primeiros tem UM valor so entre quem os declara. O
+        # E-03 foi sobre interruptor declarado e nao ligado em nada -- este esta ligado
+        # aqui, e falha alto.
+        raise NotImplementedError(
+            "politica.yaml diz corretora.custo_por_operacao.pontua: true, e os tres "
+            "campos exibidos sao CONSTANTES entre as casas que os declaram: pontuar "
+            "adicionaria peso sem mudar ordenacao nenhuma. A parcela que pontua e a "
+            "corretagem de ETF, e ela ja entra dentro da dimensao `corretagem`.")
     if c["promocional"]["peso"] != 0:
         # Campo morto ate 11/09 (auditoria de 10/09): trocar o peso no YAML nao mudava
         # nada. O zero e DECISAO declarada; outro valor exige a dimensao em pontuar().
@@ -262,14 +273,43 @@ def pontuar(inst: Instituicao, pesos: dict, aporte: float, horizonte_anos: float
     notas: list[str] = []
 
     # corretagem: custo da ordem como % do aporte, invertido
-    if inst.corretagem_rv is None:
+    #
+    # F-02, 16/09/2026: o default destes campos era `0.0`. Zero e o MELHOR valor
+    # possivel, entao uma casa que nao declarasse a parte percentual entrava no
+    # ranking como se ela fosse zero -- insumo ausente virando o numero mais
+    # favoravel, que e o defeito que o BOVV11 custou. Agora o default e None, e
+    # `None` em QUALQUER das duas parcelas tira a dimensao: meio custo conhecido
+    # nao e um custo, e somar a metade que se sabe com um zero inventado seria
+    # pior que nao pontuar.
+    # DECISAO DELE, 13/09/2026: custo por operacao entra no ranking. Implementado em
+    # 16/09 como SEGUNDA PARCELA desta dimensao, e nao como dimensao nova -- custo de
+    # ordem e custo de ordem, e criar dimensao exigiria um peso que ninguem mediu.
+    #
+    # PIOR CASO entre as duas rotas, e a escolha tem precedente na casa: a reserva se
+    # julga por `liquidez_pior_caso_dias`, nao pela media. Aqui vale pelo mesmo motivo --
+    # a nota tem de descrever a ordem que vai doer, nao a que sai mais barata.
+    #
+    # AS DUAS ROTAS SAO EXIGIDAS, e isso descarta informacao de proposito. A XP tem
+    # `corretagem_etf_pct` COMPLETO (0,50%) e `corretagem_rv` BLOQUEADO para o ranking
+    # (E-08: `xp_swing` e PARCIAL e nomeia este consumidor). Pontuar so pela parcela
+    # conhecida daria 0,50%; a parcela desconhecida, quando media, era R$4,90 em R$500 =
+    # 0,98% -- **o dobro**. Ou seja: usar a metade conhecida seria otimista por um fator
+    # de dois, na direcao exata do F-02. Perder a dimensao inteira custa `cobertura`, que
+    # e penalidade; e a direcao conservadora.
+    if inst.corretagem_rv is None or inst.corretagem_pct is None:
         d["corretagem"] = None
         notas.append("corretagem NÃO CONFIRMADA")
+    elif inst.corretagem_etf_pct is None:
+        d["corretagem"] = None
+        notas.append("corretagem de ETF NÃO CONFIRMADA")
     else:
-        custo = inst.corretagem_rv/aporte + inst.corretagem_pct
+        custo_acao = inst.corretagem_rv/aporte + inst.corretagem_pct
+        custo = max(custo_acao, inst.corretagem_etf_pct)
         d["corretagem"] = max(0.0, 100*(1 - custo/R["custo_nota_zero"]))
         if custo > 0:
-            notas.append(f"corretagem consome {custo*100:.2f}% de um aporte de R${aporte:,.0f}")
+            qual = "ETF" if inst.corretagem_etf_pct > custo_acao else "ação"
+            notas.append(f"corretagem consome {custo*100:.2f}% de um aporte de "
+                         f"R${aporte:,.0f} (pior caso: {qual})")
 
     d["custodia"] = (100.0 if inst.custodia_absorvida else
                      0.0 if inst.custodia_absorvida is False else None)
@@ -320,6 +360,31 @@ def pontuar(inst: Instituicao, pesos: dict, aporte: float, horizonte_anos: float
     cobertura = peso_total/sum(pesos.values())
     return dict(total=bruto*mult*cobertura, bruto=bruto, dim=d, notas=notas,
                 multiplicador=mult, cobertura=cobertura)
+
+def custo_por_operacao(inst: Instituicao, P=None):
+    """Custos por operacao EXIBIDOS e nunca pontuados. Mesmo molde do `reclame_aqui`.
+
+    Decisao dele de 13/09 (*custo por operacao entra no ranking: sim*), medida antes de
+    virar codigo: dos tres campos coletados, `corretagem_fii` tem um unico valor entre as
+    11 casas que o declaram (0,0) e `exercicio_opcao_pct` tem um unico valor entre as 4
+    (0,005). **Campo constante nao discrimina** -- uma dimensao sobre ele adiciona peso e
+    nao muda ordenacao nenhuma. `mesa_minimo` varia, mas 20 de 24 nao declaram e nao ha
+    como separar "nao tem mesa" de "nao pesquisei".
+
+    Exibir e o ponto: quem for operar FII ou opcao precisa do numero, e o ranking nao
+    precisa fingir que o compara. Devolve None quando o arquivo manda nao exibir ou
+    quando a casa nao declara nenhum dos tres."""
+    global _POLITICA
+    if P is None:
+        if _POLITICA is None: _POLITICA = carregar_politica()
+        P = _POLITICA
+    c = P["corretora"]["custo_por_operacao"]
+    if not c["exibe"]:
+        return None
+    fora = {campo: getattr(inst, campo) for campo in c["exibidos"]
+            if getattr(inst, campo, None) is not None}
+    return fora or None
+
 
 def reclame_aqui(inst: Instituicao, P=None):
     """N-01. `corretora.reclame_aqui.exibe: true` era a ultima frase da secao que nao
@@ -409,6 +474,27 @@ if __name__ == "__main__":
               f"· voltaria {ra['voltaria']:.1f}% · {ra['reclamacoes']:,} reclamacoes{marca}")
 
     print("\n" + "="*104)
+    print("CUSTO POR OPERACAO — exibido, NUNCA pontuado "
+          "(politica.yaml: pontua false, exibe true)")
+    print("="*104)
+    rotulo = {"corretagem_fii": "FII", "exercicio_opcao_pct": "exercicio de opcao",
+              "mesa_minimo": "minimo de mesa"}
+    algum = False
+    for i in catalogo_instituicoes():
+        cpo = custo_por_operacao(i, P)
+        if not cpo: continue
+        algum = True
+        partes = ["%s %s" % (rotulo.get(k, k),
+                             ("R$%.2f" % v) if k == "mesa_minimo" else ("%.2f%%" % (v*100)))
+                  for k, v in cpo.items()]
+        print(f"   {i.nome[:32]:<34} " + " · ".join(partes))
+    if not algum:
+        print("   (nenhuma casa declara)")
+    print("   Constantes entre quem declara (medido 16/09): FII 0,00% em 11/11 casas, "
+          "exercicio 0,50% em 4/4.")
+    print("   A parcela que PONTUA e a corretagem de ETF, dentro da dimensao corretagem.")
+
+    print("\n" + "="*104)
     print("ROBUSTEZ — o vencedor depende dos pesos que eu escolhi?")
     print("="*104)
     rb = robustez(pesos, ap)
@@ -416,7 +502,13 @@ if __name__ == "__main__":
     for nome, top in rb.items():
         t = top + ["—"]*(3-len(top))
         print(f"{nome:<24}{t[0][:29]:<30}{t[1][:29]:<30}{t[2][:19]:<20}")
-    primeiros = {v[0] for v in rb.values() if v}
+    # N-01 de LICAO, 16/09/2026: `set` nao tem ordem, e este print mudava de TEXTO
+    # entre duas execucoes com o MESMO dado -- peguei isso tentando usar a saida
+    # como instantaneo dourado. O `refinar.py` ja tinha aprendido a licao e ate a
+    # escreveu ("Ordem ESTAVEL. Sem isso o instantaneo dourado acusa diferenca a cada
+    # rodada e para de servir como rede"), e ela nao atravessou para ca. Regra
+    # aplicada num lugar so e a forma que o A-07 tem quando o irmao e um MODULO.
+    primeiros = sorted({v[0] for v in rb.values() if v})
     print(f"\n  vencedores distintos entre {len(rb)} configurações: "
           f"{len(primeiros)} — {', '.join(primeiros)}")
     if len(primeiros) == 1:
