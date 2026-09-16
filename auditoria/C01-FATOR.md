@@ -146,8 +146,84 @@ A recusa faz parte da regra, e é o ponto dela: a regra cobre o que foi **observ
   bonificações com percentual não redondo, coisa comum. Eles não contradizem a regra, mas
   também não a confirmam — quem confirma são os redondos.
 
-## O que ainda não foi feito
+## IMPLEMENTADO em 16/09/2026
 
-`refinar.py` **não foi alterado**. A regra acima é proposta, não implementada: quem
-escolhe regra neste projeto é você. Implementá-la muda 180 das 738 linhas do silver e
-`FACTOR_AMBIGUO` deve cair a ~2 (as incorporações).
+Confirmado pelo Osvaldo no mesmo dia, e aplicado em `fase0/refinar.py`.
+
+`fator_de_quantidade(factor, tipo)` devolve **multiplicador de PREÇO** — a mesma
+convenção de `fator_de_provento`, para as duas colunas `fator` do mesmo CSV não
+significarem coisas diferentes sem nada avisar:
+
+```
+GRUPAMENTO                   fator = 1 / factor          (exige 0 < factor < 1)
+DESDOBRAMENTO, BONIFICACAO   fator = 1 / (1 + factor/100) (exige factor > 0)
+resto, ou fora da faixa      FACTOR_FORA_DA_REGRA, e a linha entra marcada
+```
+
+### O resultado, medido contra o instantâneo dourado
+
+O silver de `dt_captura=2026-09-11` antes da mudança: `sha256 324f3054…`, 738 linhas,
+`FACTOR_AMBIGUO 180`. Depois:
+
+| | antes | depois |
+|---|---|---|
+| CALCULADO | 0 | **178** |
+| FACTOR_AMBIGUO | 180 | 0 |
+| FACTOR_FORA_DA_REGRA | — | **2** |
+| SEM_PRECO · SEM_FATOR · TIPO_DESCONHECIDO | 458 · 62 · 38 | 458 · 62 · 38 |
+
+Comparação coluna a coluna: **a ordem das linhas é idêntica e nenhuma coluna herdada
+mudou de valor.** Só `fator` e `fator_status` se moveram, mais as colunas novas. As duas
+`FACTOR_FORA_DA_REGRA` são as INCORPORAÇÕES previstas: `NATU` (factor 100) e `TEND`
+(factor 20,5).
+
+Amostra dos fatores produzidos, conferida um a um:
+
+```
+DESDOBRAMENTO  factor=100   -> 0,5                  (1:2)
+DESDOBRAMENTO  factor=200   -> 0,3333…              (1:3)
+DESDOBRAMENTO  factor=400   -> 0,2                  (1:5)
+BONIFICACAO    factor=5     -> 0,952380…            (5%)
+BONIFICACAO    factor=50    -> 0,6666…              (50%)
+GRUPAMENTO     factor=0,001 -> 1000                 (1000:1)
+```
+
+### A data ex, derivada — e o módulo novo
+
+A coluna `data_ex` guardava `lastDatePrior`, que é o **último dia com direito**. Ela foi
+renomeada para `ultimo_dia_com_direito`, e entraram `data_ex` (derivada) e
+`data_ex_status`.
+
+`fase0/calendario.py` é a fonte: **dia em que o COTAHIST registra negociação é pregão.**
+Não há lista de feriados escrita de cabeça — isso seria inventar insumo. Fora da janela
+observada a função devolve `None`, e a linha diz `FORA_DA_COBERTURA` em vez de chutar o
+próximo dia útil. Com o acervo de hoje (só 2023):
+
+```
+DERIVADA              1     <- FLRY, 12/06/2023 -> 13/06/2023
+FORA_DA_COBERTURA   737
+```
+
+A cobertura cresce sozinha a cada ano de COTAHIST que entrar em `data/bronze/b3/`. Não
+há o que mudar no código para isso acontecer.
+
+### Provas
+
+- **Mutação:** aplicando a regra do desdobramento também ao grupamento, os quatro testes
+  do C-01 reprovam. Um deles existe só para guardar o número do erro:
+  `1/(1 + 0,001/100) = 1,00001` — um grupamento de 1000:1 passaria **sem degrau**, e
+  nenhum teste de "veio número?" notaria.
+- **Espelho:** `test_C01_o_que_a_regra_RECUSA` cobre incorporação, cisão, grupamento com
+  `factor >= 1`, zero e negativo.
+- **Convenção:** `test_C01_o_fator_e_multiplicador_de_PRECO_como_no_provento` prende as
+  duas colunas `fator` ao mesmo significado.
+- **Calendário:** 7 testes em `fase0/test_calendario.py`, incluindo o Carnaval de 2023 —
+  o caso que derruba qualquer regra genérica de dia útil.
+
+### O que continua aberto
+
+- **INCORPORAÇÃO (2 casos).** Fora da regra, marcada. Fechar exige medir mais casos.
+- **Corroboração de preço: um caso.** Baixar o COTAHIST de **2021** (19 eventos) e
+  **2025** (31) levaria de 1 para 51 — e, de graça, ampliaria a cobertura da data ex.
+- **A regra do grupamento não tem confirmação de preço nenhuma**: os 41 grupamentos são
+  todos fora de 2023. A distribuição sustenta; o preço ainda não foi perguntado.

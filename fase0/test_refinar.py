@@ -100,20 +100,66 @@ def test_fator_de_provento_preco_zero_nao_divide():
     assert f is None and st == r.PRECO_INVALIDO
 
 
-def test_C01_fator_de_quantidade_NAO_escolhe_a_leitura():
-    """ACHADO C-01, e este teste guarda uma RECUSA, nao um calculo.
+def test_C01_a_regra_e_DUPLA_e_o_rotulo_e_que_separa():
+    """ACHADO C-01, medido e fechado em 16/09/2026.
 
-    `factor: 100` com `DESDOBRAMENTO` admite duas leituras -- percentual (fator 0,5) ou
-    multiplicador (fator 0,01) -- e elas diferem por 50x. Nao ha fonte que desempate, e
-    o suplemento nao traz preco para medir.
+    Ate 16/09 esta funcao RECUSAVA escolher (`FACTOR_AMBIGUO`), e a recusa estava certa:
+    nao havia medicao. A medicao veio da DISTRIBUICAO dos 180 eventos do acervo, nao de
+    um caso: lidos como percentual, os onze valores distintos de `factor` dos
+    desdobramentos caem em cima de razoes canonicas (100->2x, 400->5x, 9900->100x); lidos
+    como multiplicador dariam 101, 401, 9901.
 
-    Enquanto isso for verdade, a funcao devolve FACTOR_AMBIGUO. Se um dia alguem
-    implementar uma das duas, este teste quebra -- e a quebra e o pedido de que a
-    escolha venha com a MEDICAO contra o COTAHIST, nao com uma opiniao."""
-    for valor in (Decimal("100"), Decimal("2"), Decimal("0.5"), None):
-        f, st = r.fator_de_quantidade(valor)
-        assert f is None, "nao escolha a leitura de `factor` sem medir (C-01)"
-        assert st == r.FACTOR_AMBIGUO
+    E a regra NAO e uma so. No GRUPAMENTO o campo ja e o multiplicador de quantidade, e
+    e menor que 1. Este teste guarda as duas, porque confundi-las e o erro caro: aplicar
+    a regra do desdobramento num grupamento de 1000:1 daria fator 1,00001 -- a serie
+    passaria pelo degrau SEM DEGRAU, em silencio."""
+    # desdobramento e bonificacao: `factor` e PERCENTUAL de novas por 100 existentes
+    assert r.fator_de_quantidade(Decimal("100"), "DESDOBRAMENTO") == (Decimal("0.5"), r.CALCULADO)
+    assert r.fator_de_quantidade(Decimal("400"), "DESDOBRAMENTO")[0] == Decimal("0.2")
+    assert r.fator_de_quantidade(Decimal("9900"), "DESDOBRAMENTO")[0] == Decimal("0.01")
+    f, st = r.fator_de_quantidade(Decimal("5"), "BONIFICACAO")
+    assert st == r.CALCULADO and abs(f - Decimal("0.952380952")) < Decimal("1e-9")
+
+    # grupamento: `factor` JA E o multiplicador de quantidade, e e < 1
+    assert r.fator_de_quantidade(Decimal("0.001"), "GRUPAMENTO") == (Decimal("1000"), r.CALCULADO)
+    assert r.fator_de_quantidade(Decimal("0.1"), "GRUPAMENTO")[0] == Decimal("10")
+
+
+def test_C01_confundir_as_duas_regras_seria_o_erro_CARO():
+    """O numero que o defeito produziria, escrito para nao se esquecer dele. Um
+    grupamento de 1000:1 lido pela regra do desdobramento da 1,00001 -- indistinguivel
+    de "nada aconteceu" para qualquer teste de "veio numero?"."""
+    correto, _ = r.fator_de_quantidade(Decimal("0.001"), "GRUPAMENTO")
+    errado = Decimal(1)/(1 + Decimal("0.001")/100)          # a regra do desdobramento
+    assert correto == Decimal("1000")
+    assert abs(errado - 1) < Decimal("0.0001"), "o erro seria INVISIVEL, e e esse o ponto"
+
+
+def test_C01_o_que_a_regra_RECUSA():
+    """A recusa e parte da regra. INCORPORACAO tem 2 observacoes no acervo -- duas nao
+    sustentam regra, e ela e relacao de troca entre DUAS empresas, que pode nao ser a
+    mesma aritmetica. Valor fora da faixa do rotulo tambem recusa: grupamento com
+    `factor >= 1` seria desdobramento com etiqueta errada, e escolher qual dos dois esta
+    errado seria escrever ausencia de criterio no lugar de criterio."""
+    for factor, tipo in ((Decimal("100"), "INCORPORACAO"), (Decimal("2"), "CISAO"),
+                         (Decimal("1"), "GRUPAMENTO"), (Decimal("2"), "GRUPAMENTO"),
+                         (Decimal("0"), "GRUPAMENTO"), (Decimal("-1"), "DESDOBRAMENTO"),
+                         (Decimal("0"), "BONIFICACAO"), (None, "DESDOBRAMENTO")):
+        f, st = r.fator_de_quantidade(factor, tipo)
+        assert f is None and st == r.FACTOR_FORA_DA_REGRA, (factor, tipo)
+
+
+def test_C01_o_fator_e_multiplicador_de_PRECO_como_no_provento():
+    """A convencao tem de ser UMA. `fator_de_provento` devolve `(P-valor)/P`, que e o
+    que multiplica o preco historico. Se o de quantidade devolvesse multiplicador de
+    QUANTIDADE, as duas colunas `fator` do mesmo CSV significariam coisas diferentes --
+    e nada no arquivo avisaria."""
+    # desdobramento 1:2 -> a acao vale metade, e o preco historico se multiplica por 0,5
+    assert r.fator_de_quantidade(Decimal("100"), "DESDOBRAMENTO")[0] < 1
+    # grupamento 10:1 -> a acao vale dez vezes mais
+    assert r.fator_de_quantidade(Decimal("0.1"), "GRUPAMENTO")[0] > 1
+    # provento: preco cai, fator < 1 -- mesma direcao
+    assert r.fator_de_provento(Decimal("1"), Decimal("10"))[0] < 1
 
 
 # ──────────────────────────────────────────────── leitura do bronze real
@@ -151,7 +197,8 @@ def test_suplemento_le_o_formato_real_do_acervo(tmp_path):
     jcp = next(l for l in linhas if l["tipo"] == "JRS CAP PROPRIO")
     assert jcp["trading_name"] == "AMBEV S/A", "o padding da B3 tem de ser removido"
     assert jcp["code_cvm"] == "23264", "a chave estavel (A-03) viaja para o silver"
-    assert jcp["data_ex"] == dt.date(2026, 6, 22), "data_ex e lastDatePrior, nao payment"
+    assert jcp["ultimo_dia_com_direito"] == dt.date(2026, 6, 22), \
+        "a coluna guarda lastDatePrior, e o NOME dela passou a dizer isso (16/09)"
     assert jcp["data_pagamento"] == dt.date(2026, 12, 31)
     assert jcp["valor"] == Decimal("0.04490000000")
     assert jcp["fator_status"] == r.SEM_PRECO
@@ -206,14 +253,14 @@ def test_csv_e_deterministico_e_a_ordem_e_estavel(tmp_path):
     servir como rede -- e uma rede que grita sempre e pior que nenhuma."""
     linhas = [
         dict(origem="paginado", cod="VALE", code_cvm="4170", trading_name="VALE",
-             isin="", type_stock="ON", tipo="DIVIDENDO", data_ex=dt.date(2020, 3, 1),
+             isin="", type_stock="ON", tipo="DIVIDENDO", ultimo_dia_com_direito=dt.date(2020, 3, 1),
              data_aprovacao=None, data_pagamento=None, valor=Decimal("1.5"),
              ratio=None, preco_vespera=Decimal("50"), fator=Decimal("0.97"),
              fator_status=r.CALCULADO, dt_captura="2026-09-11",
              arquivo_origem="a", sha256_origem="x"),
         dict(origem="suplemento", cod="ABEV", code_cvm="23264", trading_name="AMBEV S/A",
              isin="BRABEVACNOR1", type_stock="", tipo="JRS CAP PROPRIO",
-             data_ex=dt.date(2026, 6, 22), data_aprovacao=None, data_pagamento=None,
+             ultimo_dia_com_direito=dt.date(2026, 6, 22), data_aprovacao=None, data_pagamento=None,
              valor=Decimal("0.0449"), ratio=None, preco_vespera=None, fator=None,
              fator_status=r.SEM_PRECO, dt_captura="2026-09-11",
              arquivo_origem="b", sha256_origem="y"),
@@ -229,7 +276,7 @@ def test_csv_e_deterministico_e_a_ordem_e_estavel(tmp_path):
 
 def test_csv_grava_Decimal_exato_e_nunca_notacao_de_float(tmp_path):
     linhas = [dict(origem="p", cod="X", code_cvm="", trading_name="", isin="",
-                   type_stock="", tipo="DIVIDENDO", data_ex=dt.date(2020, 1, 2),
+                   type_stock="", tipo="DIVIDENDO", ultimo_dia_com_direito=dt.date(2020, 1, 2),
                    data_aprovacao=None, data_pagamento=None,
                    valor=Decimal("0.04490000000"), ratio=None, preco_vespera=None,
                    fator=None, fator_status=r.SEM_PRECO, dt_captura="2026-09-11",

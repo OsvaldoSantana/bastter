@@ -43,6 +43,8 @@ So biblioteca padrao. Fora da impressao do ambiente, de proposito.
 """
 
 import argparse, csv, datetime as dt, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import calendario                                                   # noqa: E402
 from decimal import Decimal, InvalidOperation
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -62,7 +64,8 @@ SAIDA_PADRAO = os.path.join("data", "silver")
 
 COLUNAS = (
     "origem", "cod", "code_cvm", "trading_name", "isin", "type_stock",
-    "tipo", "data_ex", "data_aprovacao", "data_pagamento",
+    "tipo", "ultimo_dia_com_direito", "data_ex", "data_ex_status",
+    "data_aprovacao", "data_pagamento",
     "valor", "ratio", "preco_vespera", "fator", "fator_status",
     "dt_captura", "arquivo_origem", "sha256_origem",
 )
@@ -70,9 +73,15 @@ COLUNAS = (
 # fator_status -- a coluna que impede a tabela de mentir por omissao
 CALCULADO      = "CALCULADO"
 SEM_PRECO      = "SEM_PRECO"        # provento do suplemento: nao ha preco de vespera
-FACTOR_AMBIGUO = "FACTOR_AMBIGUO"   # ver o bloco C-01 abaixo
+FACTOR_FORA_DA_REGRA = "FACTOR_FORA_DA_REGRA"   # rotulo ou faixa fora do observado
 SEM_FATOR      = "SEM_FATOR"        # subscricao: nao e evento de ajuste de preco
 PRECO_INVALIDO = "PRECO_INVALIDO"   # preco zero ou negativo: divisao impossivel
+
+# data_ex_status -- `lastDatePrior` e o ULTIMO DIA COM DIREITO; a data ex e o pregao
+# SEGUINTE, e saber qual e ele exige calendario observado (ver `calendario.py`).
+DERIVADA           = "DERIVADA"            # o calendario cobre, e o proximo pregao saiu
+SEM_CALENDARIO     = "SEM_CALENDARIO"      # nao ha COTAHIST nenhum no acervo
+FORA_DA_COBERTURA  = "FORA_DA_COBERTURA"   # ha calendario, mas nao alcanca esta data
 
 
 # ── A-05, 12/09/2026: enumeracao OBSERVADA, e a guarda que faltava ────────────
@@ -154,34 +163,61 @@ def fator_de_provento(valor, preco_vespera):
     return (preco_vespera - valor) / preco_vespera, CALCULADO
 
 
-def fator_de_quantidade(factor):
-    """(fator, status) para desdobramento, grupamento e bonificacao.
+def fator_de_quantidade(factor, tipo):
+    """(fator, status) para evento de QUANTIDADE. `fator` e multiplicador de PRECO,
+    a mesma convencao de `fator_de_provento`.
 
-    ACHADO C-01, 12/09/2026 -- E ELE CORRIGE UM ERRO MEU, REPETIDO EM VARIOS ARQUIVOS.
+    ACHADO C-01 -- aberto em 12/09/2026, MEDIDO e fechado em 16/09.
 
-    Eu escrevi, no CLAUDE.md e em dois documentos de fonte, que a PETR "desdobrou 100:1
-    em 25/04/2008" e que "o preco cai 99% num dia". O registro traz
-    `factor: '100,00000000000'` com `label: DESDOBRAMENTO`.
+    A pergunta era: `factor` e percentual ou multiplicador? As duas leituras produzem
+    numero, e uma delas erra por ate 50x. Ate 16/09 este modulo RECUSAVA escolher e
+    devolvia `FACTOR_AMBIGUO` para os 180 eventos de quantidade do acervo -- que foi a
+    decisao certa, porque nao havia medicao.
 
-    Mas `factor` quase certamente e PERCENTUAL, nao multiplicador: a Petrobras fez um
-    desdobramento de 100% em abril de 2008 -- cada acao virou DUAS, e o preco caiu pela
-    METADE, nao 99%. Nessa leitura:
+    O QUE DECIDIU NAO FOI O PRECO, FOI A DISTRIBUICAO. Os 65 desdobramentos do acervo
+    usam onze valores distintos de `factor`, e lidos como PERCENTUAL todos caem em cima
+    de razoes canonicas:
 
-        fator = 1 / (1 + factor/100)      # factor=100 -> 0,5
+        100 -> 2x    200 -> 3x    300 -> 4x    400 -> 5x
+        900 -> 10x   1900 -> 20x  4900 -> 50x  7900 -> 80x   9900 -> 100x
 
-    E NA OUTRA LEITURA, a que eu tinha:
+    Lidos como multiplicador dariam 101, 201, 901, 9901 -- e o `...01` e a propria
+    denuncia: sao `(fator-1)*100`. Onze valores caindo por acaso a um centesimo de uma
+    razao inteira nao e plausibilidade, e assinatura aritmetica.
 
-        fator = 1 / factor                # factor=100 -> 0,01
+    E A REGRA NAO E UMA SO, e essa foi a parte que eu nao esperava. Os 41 GRUPAMENTOS
+    trazem 0,1 · 0,01 · 0,001 · 0,00002 -- **ali `factor` JA E o multiplicador de
+    quantidade**, e menor que 1. Aplicar a regra do desdobramento num grupamento daria
+    fator 1,00001: a serie passaria por um grupamento de 1000:1 SEM DEGRAU, em silencio,
+    e na direcao pior. Um campo, dois significados, separados pelo rotulo.
 
-    As duas produzem numero. Uma delas erra por um fator de cinquenta, e NENHUM teste de
-    "veio numero?" distingue as duas. Nao ha documentacao da B3 sobre este campo, e o
-    acervo nao tem como desempatar: o suplemento nao traz preco.
+    A TESTEMUNHA, que confirma a ordem de grandeza e nao mais que isso: FLRY,
+    BONIFICACAO `factor: 5`, `lastDatePrior: 12/06/2023`. No COTAHIST 2023 a maior queda
+    do FLRY3 no ano inteiro (-7,78%, 4,2 sigma) esta em 13/06 -- o pregao seguinte. Uma
+    bonificacao de 5% pede -4,76%; a leitura como multiplicador pediria -83%. O COTAHIST
+    resolve 50x com folga e NAO resolve 5% na casa decimal (sigma diario = 1,87%) -- e a
+    pergunta era 50x.
 
-    ENTAO ESTE MODULO NAO ESCOLHE. Grava `ratio` cru e devolve `FACTOR_AMBIGUO`.
-    A desambiguacao e MEDICAO, nao leitura: com o COTAHIST, a razao entre o fechamento
-    de 24/04/2008 e o de 25/04/2008 responde em uma consulta. Ate la, a P1 manda
-    bloquear -- e esta e exatamente a situacao para a qual ela foi escrita."""
-    return None, FACTOR_AMBIGUO
+    O QUE ELA RECUSA, e a recusa e parte da regra: INCORPORACAO (2 observacoes), CISAO e
+    CISAO PARCIAL saem como `FACTOR_FORA_DA_REGRA`. Duas observacoes nao sustentam
+    regra, e incorporacao e relacao de troca entre DUAS empresas -- pode nao ser a mesma
+    aritmetica. Valor fora da faixa do rotulo tambem recusa: grupamento com `factor >= 1`
+    seria um desdobramento com etiqueta errada, e adivinhar qual dos dois esta errado
+    seria escrever ausencia de criterio no lugar de criterio.
+
+    A regra cobre o que foi OBSERVADO nos 180. P6: o resto vira lacuna declarada."""
+    if factor is None:
+        return None, FACTOR_FORA_DA_REGRA
+    t = (tipo or "").strip().upper()
+    if t == "GRUPAMENTO":
+        if not (0 < factor < 1):
+            return None, FACTOR_FORA_DA_REGRA
+        return Decimal(1)/factor, CALCULADO
+    if t in ("DESDOBRAMENTO", "BONIFICACAO"):
+        if factor <= 0:
+            return None, FACTOR_FORA_DA_REGRA
+        return Decimal(1)/(1 + factor/100), CALCULADO
+    return None, FACTOR_FORA_DA_REGRA
 
 
 # ──────────────────────────────────────────────────────── leitura do bronze
@@ -249,7 +285,7 @@ def linhas_do_suplemento(caminho, dia, desconhecidos=None, multiplos=None):
         fora.append(dict(base, origem="suplemento",
                          isin=(e.get("isinCode") or "").strip(), type_stock="",
                          tipo=(e.get("label") or "").strip(),
-                         data_ex=data_br(e.get("lastDatePrior")),
+                         ultimo_dia_com_direito=data_br(e.get("lastDatePrior")),
                          data_aprovacao=data_br(e.get("approvedOn")),
                          data_pagamento=data_br(e.get("paymentDate")),
                          valor=valor, ratio=None, preco_vespera=None,
@@ -257,12 +293,12 @@ def linhas_do_suplemento(caminho, dia, desconhecidos=None, multiplos=None):
 
     for e in (d.get("stockDividends") or []):
         ratio = dec_br(e.get("factor"))
-        f, st = fator_de_quantidade(ratio)
+        f, st = fator_de_quantidade(ratio, e.get("label"))
         if not conferir_tipo(e.get("label"), desconhecidos): st = TIPO_DESCONHECIDO
         fora.append(dict(base, origem="suplemento",
                          isin=(e.get("isinCode") or "").strip(), type_stock="",
                          tipo=(e.get("label") or "").strip(),
-                         data_ex=data_br(e.get("lastDatePrior")),
+                         ultimo_dia_com_direito=data_br(e.get("lastDatePrior")),
                          data_aprovacao=data_br(e.get("approvedOn")),
                          data_pagamento=None,
                          valor=None, ratio=ratio, preco_vespera=None,
@@ -276,7 +312,7 @@ def linhas_do_suplemento(caminho, dia, desconhecidos=None, multiplos=None):
         fora.append(dict(base, origem="suplemento",
                          isin=(e.get("isinCode") or "").strip(), type_stock="",
                          tipo=(e.get("label") or "").strip(),
-                         data_ex=data_br(e.get("lastDatePrior")),
+                         ultimo_dia_com_direito=data_br(e.get("lastDatePrior")),
                          data_aprovacao=data_br(e.get("approvedOn")),
                          data_pagamento=data_br(e.get("subscriptionDate")),
                          valor=dec_br(e.get("priceUnit")),
@@ -318,7 +354,7 @@ def linhas_do_paginado(pasta, dia, cabecalho, desconhecidos=None, multiplos=None
             fora.append(dict(base, origem="paginado", isin="",
                              type_stock=(e.get("typeStock") or "").strip(),
                              tipo=(e.get("corporateAction") or "").strip(),
-                             data_ex=data_br(e.get("lastDatePriorEx")),
+                             ultimo_dia_com_direito=data_br(e.get("lastDatePriorEx")),
                              data_aprovacao=data_br(e.get("dateApproval")),
                              data_pagamento=None,
                              valor=valor, ratio=dec_br(e.get("ratio")),
@@ -340,7 +376,7 @@ def gravar_csv(linhas, caminho):
     """Ordem ESTAVEL. Sem isso o instantaneo dourado acusa diferenca a cada rodada e
     para de servir como rede -- o defeito custa mais que a ausencia da rede."""
     def chave(ln):
-        return (ln["cod"], ln["origem"], _texto(ln["data_ex"]), ln["tipo"],
+        return (ln["cod"], ln["origem"], _texto(ln["ultimo_dia_com_direito"]), ln["tipo"],
                 ln["type_stock"], ln["isin"], _texto(ln["valor"]), _texto(ln["ratio"]))
     os.makedirs(os.path.dirname(caminho) or ".", exist_ok=True)
     with open(caminho, "w", encoding="utf-8", newline="\n") as f:
@@ -393,13 +429,33 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
         else:
             sem_paginado.append(em)
 
+    # ── a data ex, DERIVADA do calendario observado (16/09/2026) ───────────────
+    # `lastDatePrior` e o ULTIMO DIA COM DIREITO: o degrau de preco cai no pregao
+    # SEGUINTE. Ate 16/09 a coluna se chamava `data_ex` e guardava o outro dia -- nome
+    # que mente e o defeito recorrente deste projeto, e aqui ele deslocaria TODO ajuste
+    # de preco em um pregao. O calendario vem do COTAHIST do proprio acervo; onde ele
+    # nao alcanca, a linha diz que nao sabe em vez de chutar o proximo dia util.
+    datas, cobertura = calendario.pregoes(raiz)
+    for ln in linhas:
+        d = calendario.proximo_pregao(ln["ultimo_dia_com_direito"], datas, cobertura)
+        ln["data_ex"] = d
+        ln["data_ex_status"] = (DERIVADA if d else
+                                (SEM_CALENDARIO if not datas else FORA_DA_COBERTURA))
+
     destino = os.path.join(saida, "eventos_silver_%s.csv" % dia)
     gravar_csv(linhas, destino)
 
-    porc = {}
-    for ln in linhas: porc[ln["fator_status"]] = porc.get(ln["fator_status"], 0) + 1
+    porc, pdat = {}, {}
+    for ln in linhas:
+        porc[ln["fator_status"]] = porc.get(ln["fator_status"], 0) + 1
+        pdat[ln["data_ex_status"]] = pdat.get(ln["data_ex_status"], 0) + 1
     print("captura %s -- %d emissoras, %d linhas" % (dia, emissoras, len(linhas)))
-    for st in sorted(porc): print("  %-16s %6d" % (st, porc[st]))
+    print("  fator:")
+    for st in sorted(porc): print("    %-22s %6d" % (st, porc[st]))
+    print("  data ex (calendario de pregoes: %s):"
+          % ("%s a %s, %d pregoes" % (cobertura[0], cobertura[1], len(datas))
+             if datas else "AUSENTE -- nenhum COTAHIST no acervo"))
+    for st in sorted(pdat): print("    %-22s %6d" % (st, pdat[st]))
     print("  -> %s" % os.path.abspath(destino))
     if sem_paginado:
         print("\nSEM historico longo (%d): %s" % (len(sem_paginado),
@@ -425,11 +481,17 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
         print("\nPAGINA QUE NAO DESEMBRULHA PARA OBJETO (A-07) -- %d:" % len(nao_objeto))
         for a in nao_objeto: print("  " + a)
         print("Estas paginas NAO entraram no silver. O bronze continua no disco.")
-    if porc.get(FACTOR_AMBIGUO):
-        print("\n%d evento(s) de quantidade com FATOR NAO CALCULADO (C-01): a leitura de"
-              "\n`factor` -- percentual ou multiplicador -- muda o resultado por ate 50x"
-              "\ne nao ha fonte que desempate. Desambigua com o COTAHIST, medindo."
-              % porc[FACTOR_AMBIGUO])
+    if porc.get(FACTOR_FORA_DA_REGRA):
+        print("\n%d evento(s) com FATOR FORA DA REGRA: rotulo ou faixa que a medicao do"
+              "\nC-01 (16/09/2026) nao cobre -- INCORPORACAO, CISAO, ou valor fora da"
+              "\nfaixa do rotulo. A linha ENTROU na tabela, marcada. Fechar exige medir"
+              "\nmais casos, nunca estender a regra por analogia."
+              % porc[FACTOR_FORA_DA_REGRA])
+    if pdat.get(FORA_DA_COBERTURA) or pdat.get(SEM_CALENDARIO):
+        print("\n%d linha(s) SEM data ex derivada: o calendario de pregoes vem do COTAHIST"
+              "\ndo acervo e nao alcanca essas datas. Cada ano de COTAHIST que entrar em"
+              "\n`data/bronze/b3/` amplia a cobertura sozinho -- nao ha o que mudar no codigo."
+              % (pdat.get(FORA_DA_COBERTURA, 0) + pdat.get(SEM_CALENDARIO, 0)))
     # O codigo de saida e o resumo honesto da corrida: zero so quando nada ficou
     # pendurado. `multiplos` NAO entra -- ele e informacao para conferir, nao defeito.
     return 1 if (desconhecidos or nao_objeto) else 0

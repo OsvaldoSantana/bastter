@@ -2044,6 +2044,42 @@ COTAHIST**. Não tem. Tem **um ano**: `COTAHIST_A2023.ZIP` (70 MB) e o `.TXT` ex
 do C-01 existe, e cobre **2023**. A amostra de eventos que ele consegue arbitrar é a das
 datas-ex de 2023, não a série inteira.
 
+### C-01 fechado, e quem decidiu não foi o preço
+
+A pergunta estava aberta desde 12/09: `factor` é percentual ou multiplicador? As duas
+leituras produzem número e diferem por até 50x, e `refinar.py` recusava escolher — 180
+das 738 linhas sem fator. A recusa estava certa: não havia medição.
+
+**O árbitro que eu ia usar era o errado.** O plano era o COTAHIST. Mas o acervo tem um
+ano (2023) e, dos 180 eventos ambíguos, **exatamente um** tem data nele. Um caso não
+decide regra — é a própria doutrina do projeto.
+
+Quem decidiu foi a **distribuição**. Os 65 desdobramentos usam onze valores distintos de
+`factor`; lidos como percentual, todos caem em cima de razões canônicas — 100→2x,
+200→3x, 400→5x, 900→10x, 9900→100x. Lidos como multiplicador dariam 101, 201, 901, 9901,
+e esse `…01` é a denúncia: são `(fator−1)×100`. Onze valores caindo por acaso a um
+centésimo de uma razão inteira não é plausibilidade, é assinatura aritmética.
+
+**E a regra não é uma só** — essa foi a parte que eu não esperava. Os 41 grupamentos
+trazem 0,1 · 0,01 · 0,001 · 0,00002: ali `factor` **já é** o multiplicador de quantidade.
+Aplicar a regra do desdobramento num grupamento de 1000:1 daria fator **1,00001** — a
+série passaria pelo degrau sem degrau, em silêncio, e nenhum teste de "veio número?"
+notaria. Um campo, dois significados, separados pelo rótulo.
+
+> **Um instrumento errado não é um instrumento fraco.** Eu ia medir preço para
+> responder uma pergunta que estava escrita na tabela.
+
+O COTAHIST virou testemunha e disse duas coisas, uma delas fora da pergunta: a maior
+queda do FLRY3 em 2023 inteiro (−7,78 %, 4,2 σ) está em **13/06** — o pregão *seguinte*
+ao `lastDatePrior: 12/06`. Ou seja, **a coluna `data_ex` do silver guardava o último dia
+COM direito.** Nome que mente é o defeito recorrente deste projeto, e aqui ele deslocaria
+todo ajuste de preço em um pregão.
+
+`fase0/calendario.py` corrige isso sem inventar insumo: **dia em que o COTAHIST registra
+negociação é pregão.** Nada de lista de feriados escrita de cabeça — o Carnaval de 2023
+derruba qualquer regra genérica de dia útil, e escrever a lista seria citar a mim mesmo.
+Fora da janela observada, a função devolve "não sei" e a linha diz `FORA_DA_COBERTURA`.
+
 ### A P-80 cobrou em menos de uma hora (P-82)
 
 Registrei a P-80 e, no commit seguinte, ela mordeu. O `git rm` apagou os cinco
