@@ -36,6 +36,8 @@ deixou de ser citada e passou a ser medida.
 
 USO
     python fase0/manifesto_cvm.py --manifesto data/bronze/cvm
+        grava em docs/acervo/cvm/dt_captura=AAAA-MM-DD.csv -- FORA do `data/`, que o
+        .gitignore ignora. Manifesto ignorado pelo git nao prova nada a terceiro.
     python fase0/manifesto_cvm.py --comparar a.zip b.zip
 """
 from __future__ import annotations
@@ -90,7 +92,43 @@ def manifesto(raiz, quando=None):
     return linhas
 
 
+def raiz_do_repositorio(partida):
+    """Sobe ate achar o `pyproject.toml`. E o mesmo ancoradouro que o `ambiente.py` usa,
+    e nao o `.git`: o manifesto tem de saber onde fica o repositorio mesmo num clone
+    sem historico."""
+    d = os.path.abspath(partida)
+    while True:
+        if os.path.exists(os.path.join(d, "pyproject.toml")): return d
+        pai = os.path.dirname(d)
+        if pai == d: return None
+        d = pai
+
+
+def destino_padrao(raiz_acervo, hoje):
+    """`docs/acervo/<nome>/dt_captura=AAAA-MM-DD.csv`, e NAO dentro do acervo.
+
+    18/09/2026, e o defeito e meu. A primeira versao gravava em
+    `data/bronze/cvm/manifesto/`, o `CVM-PRIMEIRO-RETRATO.md` afirmava que *"o manifesto
+    entra no repositorio"*, e o `.gitignore` ignora `data/` inteiro desde sempre. O
+    arquivo foi gravado, o commit passou, e o manifesto **nao entrou** -- justamente o
+    arquivo cujo unico proposito e tornar a procedencia verificavel por terceiro.
+
+    O documento declarava um comportamento que o sistema nao tinha, e os dois
+    concordaram porque ninguem olhou a saida do `git commit`. E o defeito recorrente do
+    projeto, desta vez cometido no mesmo dia em que o instrumento nasceu."""
+    base = raiz_do_repositorio(raiz_acervo) or os.path.abspath(raiz_acervo)
+    nome = os.path.basename(os.path.abspath(raiz_acervo).rstrip(os.sep)) or "acervo"
+    return os.path.join(base, "docs", "acervo", nome, f"dt_captura={hoje}.csv")
+
+
 def gravar(linhas, destino):
+    partes = os.path.abspath(destino).replace("\\", "/").split("/")
+    if "data" in partes:
+        raise ValueError(
+            f"recusando gravar o manifesto em {destino}: o caminho passa por `data/`, e "
+            f"`data/` esta no .gitignore. Manifesto que nao entra no repositorio nao e "
+            f"procedencia de ninguem -- e o unico proposito dele e ser verificavel sem "
+            f"os 700 MB do acervo.")
     os.makedirs(os.path.dirname(destino) or ".", exist_ok=True)
     with open(destino, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=COLUNAS, delimiter=";")
@@ -160,8 +198,7 @@ def main(argv=None):
                   f"'nao ha acervo'. Confira o caminho antes de concluir.", file=sys.stderr)
             return 1
         hoje = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
-        destino = a.saida or os.path.join(a.manifesto, "manifesto",
-                                          f"dt_captura={hoje}.csv")
+        destino = a.saida or destino_padrao(a.manifesto, hoje)
         gravar(linhas, destino)
         print(f"{len(linhas)} arquivos, {sum(x['bytes'] for x in linhas)/1e6:.0f} MB")
         print(f"manifesto: {destino}")

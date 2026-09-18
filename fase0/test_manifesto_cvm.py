@@ -119,3 +119,38 @@ def test_sha256_le_em_blocos_e_bate_com_a_leitura_inteira(tmp_path):
     p = tmp_path/"g.bin"
     p.write_bytes(os.urandom(3_000_000))
     assert M.sha256(str(p), bloco=4096) == hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def test_o_manifesto_NAO_pode_ser_gravado_dentro_de_data(tmp_path):
+    """O defeito de 18/09, virado guarda. A primeira versao gravava em
+    `data/bronze/cvm/manifesto/`, o documento afirmava que o manifesto entrava no
+    repositorio, e o `.gitignore` ignora `data/` desde sempre: o arquivo existiu, o
+    commit passou, e a procedencia nao chegou a ninguem.
+
+    Mutacao: tire a guarda de `gravar` e este teste reprova."""
+    import pytest
+    alvo = tmp_path/"data"/"bronze"/"cvm"/"manifesto"/"m.csv"
+    with pytest.raises(ValueError, match="gitignore"):
+        M.gravar([{c: "x" for c in M.COLUNAS}], str(alvo))
+    assert not alvo.exists()
+
+
+def test_o_destino_padrao_fica_FORA_do_acervo_e_dentro_do_repositorio(tmp_path):
+    """`docs/acervo/<nome>/` na raiz do repositorio, achada pelo `pyproject.toml`."""
+    (tmp_path/"pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    acervo = tmp_path/"data"/"bronze"/"cvm"
+    acervo.mkdir(parents=True)
+    d = M.destino_padrao(str(acervo), "2026-09-18")
+    assert d.replace("\\", "/").endswith("docs/acervo/cvm/dt_captura=2026-09-18.csv")
+    assert "/data/" not in d.replace("\\", "/")
+    assert M.raiz_do_repositorio(str(acervo)) == str(tmp_path)
+
+
+def test_sem_pyproject_o_destino_cai_no_acervo_e_a_guarda_RECUSA(tmp_path):
+    """Sem raiz de repositorio nao ha onde gravar procedencia, e a resposta certa e
+    parar. Cair de volta para dentro do acervo seria o F-02: insumo ausente virando um
+    caminho qualquer, e o arquivo sumindo do git em silencio."""
+    import pytest
+    acervo = tmp_path/"data"/"cvm"; acervo.mkdir(parents=True)
+    with pytest.raises(ValueError, match="gitignore"):
+        M.gravar([{c: "x" for c in M.COLUNAS}], M.destino_padrao(str(acervo), "2026-09-18"))

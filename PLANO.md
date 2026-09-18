@@ -106,8 +106,9 @@ e o **valor** move 33 — e nenhum portão decide o segundo.
 
 ### ~~1 · Baixar a CVM~~ — **FEITO em 18/09/2026.** 33 ZIPs, acervo completo
 
-> Falta o **manifesto** (`py -3.11 fase0\manifesto_cvm.py --manifesto data\bronze\cvm`):
-> sem sha256 e data, o acervo é um conjunto de arquivos e não um retrato. E o download
+> Manifesto gravado em 18/09 — **39 arquivos, 716 MB** —, mas no lugar errado
+> (`data/`, que o git ignora) e por defeito meu; corrigido para `docs/acervo/cvm/`, e
+> precisa ser regravado uma vez. E o download
 > rendeu um achado que muda o desenho da rotina semanal — ver `auditoria/CVM-PRIMEIRO-RETRATO.md`
 > e a **P-91**: comparar por hash de arquivo declara reapresentação onde houve só
 > reordenação de linhas.
@@ -142,6 +143,22 @@ degrau de preço **desaparece** quando o fator é aplicado. Se não desaparecer,
 errado e é melhor descobrir com um ano do que com vinte.
 
 **O que impede hoje:** nada. Os dois insumos já estão no disco.
+
+**A especificação, para a sessão do Claude Code abrir com ela na mão:**
+
+| | |
+|---|---|
+| **entra** | `fase0/refinar.py` (silver de eventos, 9.272 linhas) + `data\…\COTAHIST_A2023.TXT` (557 MB, layout de 245 posições) |
+| **sai** | `fase0/ajustar.py` + `test_ajustar.py`, e uma série ajustada por ticker para 2023 |
+| **a regra** | fator acumulado **de trás para frente**: o preço de antes da data-ex é multiplicado pelo produto dos fatores de todos os eventos posteriores. `data_ex` já é o **primeiro dia SEM** o direito (corrigido em 16/09) |
+| **o teste que decide** | pegar os eventos de 2023 com fator calculado e medir o retorno do dia da data-ex **antes e depois** do ajuste. Se o degrau não encolher, o C-01 está errado |
+| **o controle** | dias **sem** evento não podem mudar de retorno. Se mudarem, o ajuste vazou para onde não devia |
+| **o que NÃO fazer** | não recalcular `factor`; não inventar preço para `SEM_PRECO`; não ajustar linha com `fator_status != CALCULADO` — essas entram na série com a lacuna declarada, nunca corrigidas por interpolação |
+
+**Por que o teste decide alguma coisa:** o C-01 foi fechado por **assinatura aritmética**
+(onze valores caindo em razões canônicas), não por preço. Esta é a primeira vez que a
+regra encosta em preço de verdade — e um ano de COTAHIST é amostra suficiente para
+derrubá-la se ela estiver errada.
 
 ### 3 · Bitemporalidade — `dt_captura` × `DT_REFER` · ⚙ Claude Code
 
