@@ -25,6 +25,7 @@ observou -- e "nao sei" e uma resposta, "provavelmente segunda-feira" nao e.
 """
 
 import datetime as dt
+import io
 import os
 import zipfile
 
@@ -32,53 +33,67 @@ TIPO_COTACAO = "01"          # TIPREG: 00=header, 01=cotacao, 99=trailer
 POS_DATA = (2, 10)           # DATA, posicoes 3-10 no layout de 245 posicoes da B3
 
 
-def _datas_do_texto(linhas):
-    fora = set()
-    for raw in linhas:
-        if raw[:2] != TIPO_COTACAO:
-            continue
-        t = raw[POS_DATA[0]:POS_DATA[1]]
-        try:
-            fora.add(dt.date(int(t[:4]), int(t[4:6]), int(t[6:8])))
-        except ValueError:
-            continue
-    return fora
+def data_de(raw):
+    """A data de um registro de cotacao, ou None quando o campo nao e data."""
+    t = raw[POS_DATA[0]:POS_DATA[1]]
+    try:
+        return dt.date(int(t[:4]), int(t[4:6]), int(t[6:8]))
+    except ValueError:
+        return None
 
 
-def _datas_do_arquivo(caminho):
-    import io
-    if caminho.lower().endswith(".zip"):
-        with zipfile.ZipFile(caminho) as z:
-            nomes = [n for n in z.namelist() if n.upper().endswith(".TXT")]
-            fora = set()
-            for n in nomes:
-                with z.open(n) as f:
-                    fora |= _datas_do_texto(io.TextIOWrapper(f, encoding="latin-1"))
-            return fora
-    with open(caminho, encoding="latin-1") as f:
-        return _datas_do_texto(f)
+def arquivos(raiz):
+    """{base: caminho} dos COTAHIST do acervo. O `.ZIP` GANHA do `.TXT` de mesmo ano:
+    sao o mesmo dado, e ler o comprimido e uma ordem de grandeza mais barato.
 
-
-def pregoes(raiz):
-    """(datas, cobertura). `datas` e um set de `dt.date`; `cobertura` e (menor, maior)
-    ou (None, None) quando nao ha COTAHIST nenhum no acervo.
-
-    Prefere o `.ZIP` ao `.TXT` extraido do mesmo ano: sao o mesmo dado, e ler o
-    comprimido e uma ordem de grandeza mais barato."""
+    Mora aqui, e nao em quem chama, porque em 18/09/2026 nasceu o segundo leitor de
+    COTAHIST do projeto (`ajustar.py`). Duas leituras da mesma regra de descoberta
+    concordam por acidente ate o dia em que o acervo ganha um ano so em `.TXT` -- e ai
+    um modulo enxerga o ano e o outro nao, sem ninguem levantar a mao (N-01)."""
     if not os.path.isdir(raiz):
-        return set(), (None, None)
+        return {}
     achados = {}
     for nome in sorted(os.listdir(raiz)):
         base, ext = os.path.splitext(nome)
         if not base.upper().startswith("COTAHIST") or ext.upper() not in (".ZIP", ".TXT"):
             continue
-        # o .ZIP ganha do .TXT de mesmo nome
         if base in achados and achados[base].lower().endswith(".zip"):
             continue
         achados[base] = os.path.join(raiz, nome)
+    return achados
+
+
+def registros(caminho):
+    """Itera as linhas de COTACAO (TIPREG=01) de um COTAHIST, `.zip` ou `.txt`.
+
+    Header e trailer NAO saem daqui: os dois carregam data, e contar um deles como
+    pregao poria no calendario um dia que nunca foi pregao. O filtro e unico, para os
+    dois consumidores -- a data (aqui) e o preco (`ajustar.py`)."""
+    if caminho.lower().endswith(".zip"):
+        with zipfile.ZipFile(caminho) as z:
+            for n in z.namelist():
+                if not n.upper().endswith(".TXT"):
+                    continue
+                with z.open(n) as f:
+                    for raw in io.TextIOWrapper(f, encoding="latin-1"):
+                        if raw[:2] == TIPO_COTACAO:
+                            yield raw
+        return
+    with open(caminho, encoding="latin-1") as f:
+        for raw in f:
+            if raw[:2] == TIPO_COTACAO:
+                yield raw
+
+
+def pregoes(raiz):
+    """(datas, cobertura). `datas` e um set de `dt.date`; `cobertura` e (menor, maior)
+    ou (None, None) quando nao ha COTAHIST nenhum no acervo."""
     datas = set()
-    for caminho in achados.values():
-        datas |= _datas_do_arquivo(caminho)
+    for caminho in arquivos(raiz).values():
+        for raw in registros(caminho):
+            d = data_de(raw)
+            if d is not None:
+                datas.add(d)
     if not datas:
         return set(), (None, None)
     return datas, (min(datas), max(datas))

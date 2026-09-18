@@ -691,7 +691,7 @@ reserva é **zero**. São 56 meses, não 42.
 
 | camada | estado |
 |---|---|
-| 0 · pipeline de dados | **em andamento.** B3: acervo de eventos completo (74 emissoras, ~8 mil proventos, `dt_captura=2026-09-11`) e o primeiro **silver** escrito (`refinar.py`, 41 testes). CVM: política **confirmada na fonte**, download **manual pendente** (robots). COTAHIST: **não localizado**. Bitemporalidade: desenhada, não implementada |
+| 0 · pipeline de dados | **em andamento.** B3: acervo de eventos completo (74 emissoras, ~8 mil proventos, `dt_captura=2026-09-11`), **silver** escrito (`refinar.py`) e, desde 18/09, a **série de preços AJUSTADA** de 2023 (`ajustar.py`, medida — C-02). CVM: **baixada em 18/09**, 33 ZIPs. COTAHIST: **1 ano**, e é a régua de todo o resto (P-92). Bitemporalidade: desenhada, não implementada |
 | 1 · motor de custo | completa |
 | 2 · portões G0–G8 | completa |
 | 3 · alocação alvo | completa |
@@ -2276,3 +2276,97 @@ Nada aqui teria pego o `Risk_Free` invertido do E-06. E entra um limite novo: o 
 reamostra **meses independentes** — se houver dependência serial, o corte medido está
 **subestimado**, na mesma direção do achado. Medir isso pede *block bootstrap*, e não está
 feito.
+
+---
+
+## 18/09/2026, segunda rodada — o degrau encolheu, e a medição diz exatamente quanto
+
+*Laudo em `auditoria/C02-O-DEGRAU-MEDIDO.md`. `fase0/ajustar.py` + 32 testes; `pytest fase0`
+fecha em **148 passed**, `ruff` e `mypy` em zero nas três pastas.*
+
+O passo 2 do `PLANO.md` era: juntar o silver de eventos com o COTAHIST e perguntar ao preço
+se o C-01 está certo. **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360%
+(t = −0,29)** em 293 datas-ex de 2023, com o controle em 86.736 pares de pregões sem evento
+divergindo no máximo **1e-27** — arredondamento de `Decimal`, trinta ordens de grandeza
+abaixo do centavo.
+
+### O que decide não é o resultado, são as mutações
+
+Reintroduzi os dois erros, nos **mesmos 293 dias**:
+
+| | média no dia ex | t |
+|---|---|---|
+| ajuste correto | −0,04% | −0,29 |
+| **data ex deslocada** (`lastDatePrior`) | −1,63% | −9,88 |
+| … e na véspera, um degrau **falso** | +1,91% | +11,20 |
+| **fator invertido** (1/f) | −3,16% | −12,98 |
+
+> **Não existe leitura errada de fator que encolha um degrau.** Ela inverte ou aumenta — e é
+> isso que separa este resultado de uma coincidência.
+
+E a primeira linha responde, com 293 casos, uma coisa que em 16/09 tinha **um**: um dia de
+erro na data ex não "erra um pouco". Deixa o degrau onde estava *e* cria outro, do mesmo
+tamanho e sinal contrário, um pregão antes.
+
+### A régua §5-B aplicada contra mim, e ela mudou o texto que eu ia imprimir
+
+Eu ia escrever, no relatório do próprio módulo, *"é o que sustenta a regra do C-01"*. A
+pergunta 1 da régua — *escreva em uma frase o que a medição mediu* — derrubou a frase:
+
+**Das 293 datas-ex, 292 são provento em dinheiro e UMA é evento de quantidade.** O C-01 é
+sobre o campo `factor` dos eventos de **quantidade**. Então a medição confirma a **data ex**,
+o **sentido** do fator e a **fórmula do provento**, com 293 casos — e a leitura percentual
+do `factor` continua com a distribuição mais **um** caso de preço. O relatório do módulo
+agora imprime as duas metades, a que confirma e a que não.
+
+**Foi a décima segunda vez na régua, e a primeira em que eu peguei antes de publicar.**
+
+### Três achados, e o do meio é o que eu não esperava
+
+**A-09 — a B3 devolve o mesmo provento duas vezes, byte a byte.** `ALOS/pagina-001.json`
+traz o dividendo de 28/04/2023 repetido, campo a campo, na mesma página; são 334 duplicatas
+exatas no silver. Somar as duas subtrai o dividendo duas vezes. **Colapsar não é suposição:
+é medido** — nos 13 casos de 2023, o resíduo médio vai de **+0,28%** (contando as duas) para
+**−0,62%** (colapsando), e só o segundo cabe no ruído do dia.
+
+**A-08 — o evento na borda é o único defeito que não muda número nenhum hoje.** Oito eventos
+com último dia com direito em **28/12/2023**, o último pregão observado: a data ex é
+02/01/2024, o calendário não alcança, o fator não entra. Ele multiplicaria a série
+**inteira**, então **todo retorno de dentro continua certo e o nível fica deslocado**. Não
+aparece no degrau, não aparece no controle, não aparece na suíte. Aparece na emenda com
+2024, como um salto na virada do ano. Sete tickers marcados `NIVEL_INCERTO`.
+
+> E a distinção é o achado, não o caso: **1.368** eventos têm data ex *posterior* à janela e
+> também não entraram — e isso é **propriedade** do ajuste retroativo, que reescala o passado
+> a partir do fim da série. Marcar os dois juntos poria 1.368 linhas no relatório e ensinaria
+> a ignorá-lo. *Um alarme que dispara sempre é um alarme desligado.*
+
+**P-93 — o A-03 chegou ao preço.** 13 eventos de 2023 não encontram ticker nenhum, porque a
+emissora trocou de código (AXIA→ELET, AZZA→ARZZ, ISAE→TRPL, MOTV→CCRO) e o preço de 2023 está
+sob o código antigo. `ajustar.py` acusa e sai com código ≠ 0, **e não remenda**: casar por
+nome parecido seria o A-01 de novo.
+
+### Duas fontes independentes conferiram, e a segunda eu não estava procurando
+
+**O `closingPricePriorExDate` da B3 bate com o fechamento do COTAHIST em 352 de 352**, ao
+centavo. São as mesmas duas bases da B3 que divergiram sobre o *nome* da empresa no B-02 e no
+B-03. Isto é o que prova que o casamento evento↔ticker está certo: ticker errado não dá preço
+parecido, dá o preço de outra empresa.
+
+**E o COTAHIST escreve a data ex dentro do próprio arquivo de preço.** O campo ESPECI não é
+só `ON`/`PN` — carrega a marca de ex (`ON  ED  NM`, `PN  EJ  N1`, `ON  EG`). Em **284 das
+293** datas-ex derivadas do calendário ele muda exatamente naquele dia, contra **1,59%** de
+taxa de fundo nos 86.736 pares sem evento; e em **nenhuma** das 293 o dia ex vem sem marca.
+**É uma terceira fonte para a data ex que não depende de preço nenhum.**
+
+Ela não entra em conta nenhuma, de propósito: usá-la exige enumerar as marcas, e a tabela
+ESPECI do layout publicado está **incompleta** — 2023 traz `EX`, `EC`, `EBG`, `ERC`, `EDG`,
+`ERG`, `EDC` e `EDS`, que ela não lista, e o `docs/fontes/SeriesHistoricas_Layout.md` declara
+incompletas só as de CODBDI e TPMERC. P-95.
+
+### O refactor, com instantâneo dourado
+
+`calendario.py` ganhou `arquivos()`, `registros()` e `data_de()`, porque em 18/09 nasceu o
+**segundo** leitor de COTAHIST do projeto e a descoberta de arquivo ia ser redigitada (N-01).
+`pregoes()` antes e depois: **248 pregões**, `sha256 e4a9d81d3d6d4cb8810b86322de3d08415f7a3fed23b32d923b4291c13bd551c`
+— idêntico.

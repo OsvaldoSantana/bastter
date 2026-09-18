@@ -1636,11 +1636,117 @@ falta é a decisão de desenho:** a rotina semanal guarda o delta de *quê* — 
 ou das linhas com chave `(CNPJ, DT_REFER, ORDEM_EXERC, conta)`? A terceira é a única que
 sobrevive a uma mudança de separador ou de codificação, e é a mais cara.
 
+---
+
+## P-92 · O acervo tem UM ano de preço, e ele é a régua de todo o resto
+
+**Dono:** Osvaldo (download) · **Gatilho:** antes de qualquer execução do pré-registro ·
+**Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
+
+`fase0/ajustar.py` existe e foi medido contra o mercado (`auditoria/C02-O-DEGRAU-MEDIDO.md`):
+a série ajustada de **2023** está de pé, com 293 datas-ex medidas e controle em 86.736
+pares. O módulo não tem mais nada a fazer — **o que falta é preço.**
+
+Um ano não é backtest. E há um segundo ganho, que é o mais barato do projeto hoje:
+
+| ano | eventos de QUANTIDADE que ele corrobora |
+|---|---|
+| 2025 | 31 |
+| 2021 | 19 |
+| 2023 (no acervo) | **1** |
+
+A leitura percentual do campo `factor` — a decisão do C-01 — tem hoje **uma** corroboração
+de preço. Com 2021 e 2025 ela passa a ter **51**, e são os casos **grandes**, que o preço
+resolve com folga. Baixar dois arquivos fecha uma questão metodológica *e* amplia a
+cobertura da data ex, sem uma linha de código nova: o `calendario.py` e o `ajustar.py` leem
+o que estiver na pasta.
+
+**A regra que vale a pena carregar:** ordem por evento de quantidade, não por
+proximidade — 2025 antes de 2024.
+
+---
+
+## P-93 · Treze eventos de 2023 não encontram ticker, e o preço deles fica sem ajuste
+
+**Dono:** próxima sessão · **Gatilho:** antes de usar a série ajustada em qualquer conta ·
+**Classe:** `BLOQUEIA_O_SISTEMA`
+
+O A-03/A-04 chegou ao preço. A emissora troca de código, o evento chega com o código
+**novo** e o preço de 2023 está sob o **antigo**:
+
+| emissora no evento | ticker de 2023 | eventos dentro da janela |
+|---|---|---|
+| AXIA (ON, PNA, PNB) | ELET3 / ELET5 / ELET6 | 3 |
+| AZZA (ON) | ARZZ3 | 4 |
+| ISAE (ON, PN) | TRPL3 / TRPL4 | 4 |
+| MOTV (ON) | CCRO3 | 2 |
+
+`ajustar.py` acusa os 13 e sai com código ≠ 0 — **e não remenda**, porque não há a quem
+atribuir a marca: as séries de ELET3, ARZZ3, TRPL4 e CCRO3 saem `AJUSTADO` ou
+`SEM_EVENTO_CAPTURADO` sem que nada nelas diga que falta um provento.
+
+**O que resolve não é casar nome parecido** — seria o A-01 outra vez, dado do ativo errado
+com aparência perfeita. É a ponte ticker↔`codeCVM`↔data, que o A-03 já pediu por outro
+motivo: o `codeCVM` vem no mesmo objeto do suplemento e é **estável quando o ticker não é**.
+
+---
+
+## P-94 · O evento na borda desloca o nível e não aparece em teste nenhum — achado A-08
+
+**Dono:** próxima sessão · **Gatilho:** quando o SEGUNDO ano de COTAHIST entrar no acervo ·
+**Classe:** `BLOQUEIA_O_SISTEMA`
+
+Oito eventos com `ultimo_dia_com_direito = 28/12/2023` — o **último pregão observado**. A
+data ex é 02/01/2024, que o calendário não alcança, então não foi derivada, então o fator
+não foi aplicado. Ele multiplicaria a série **inteira**: nenhum retorno de dentro de 2023
+muda, e o **nível** fica deslocado.
+
+**É o único defeito do módulo que não muda número nenhum hoje.** Não aparece no degrau, não
+aparece no controle, não aparece na suíte. Aparece na hora de emendar 2023 com 2024 — com
+um salto artificial exatamente na virada do ano. Sete tickers marcados `NIVEL_INCERTO`:
+B3SA3, CMIN3, ENGI3, ENGI4, ENGI11, ITUB3, ITUB4.
+
+**O que NÃO é isto**, e a distinção é o achado: 1.368 eventos têm data ex *posterior* à
+janela e também não entraram. Isso é **propriedade** do ajuste retroativo — ele reescala o
+passado a partir do fim da série, então todo ano novo reescala tudo. Contar os dois juntos
+poria 1.368 linhas no relatório e ensinaria a ignorá-lo.
+
+**Ao entrar o ano seguinte, a borda resolve sozinha** (o calendário passa a alcançar a data
+ex). O que esta pendência guarda é a **conferência**: o número de `NIVEL_INCERTO` tem de
+cair para zero na emenda, e se não cair é porque a borda mudou de lugar em vez de fechar.
+
+---
+
+## P-95 · O COTAHIST escreve a data ex, e o layout publicado não lista todas as marcas
+
+**Dono:** próxima sessão · **Gatilho:** nenhum — vale como conferência barata a qualquer
+momento · **Classe:** `DECISAO_DE_DESENHO`
+
+Achado lateral de 18/09, e ele é gratuito: o campo **ESPECI** do COTAHIST não é só
+`ON`/`PN` — carrega a marca de ex (`ON  ED  NM`, `PN  EJ  N1`, `ON  EB  NM`, `ON  EG`).
+Medido: em **284 das 293** datas ex derivadas do calendário, o ESPECI muda exatamente
+naquele dia, contra uma taxa de fundo de **1,59%** nos 86.736 pares sem evento; e em
+**nenhuma** das 293 o dia ex vem sem marca. As 9 restantes são datas ex consecutivas, em
+que a véspera já estava marcada — inconclusivas, não contrárias.
+
+**É uma terceira fonte para a data ex, dentro do mesmo arquivo de preço, que não depende de
+preço nenhum.** Hoje ela fica em bruto em duas colunas do `degrau_datas_ex_*.csv`, para
+conferência humana, e não entra em conta nenhuma.
+
+**O que impede usá-la, e é o mesmo padrão do A-05:** usar exige enumerar as marcas, e a
+tabela ESPECI do layout publicado está **incompleta** — 2023 traz `EX`, `EC`, `EBG`, `ERC`,
+`EDG`, `ERG`, `EDC` e `EDS`, que ela não lista. A enumeração tem de sair do **dado
+observado**, com falha ruidosa no que estiver fora dela, e o `docs/fontes/SeriesHistoricas_Layout.md`
+precisa registrar que a tabela dele não é exaustiva — hoje o arquivo diz que as tabelas
+incompletas são as de CODBDI e TPMERC, e a de ESPECI foi transcrita como "integral".
+
 
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| C-01, a corroboração de preço | a regra do `factor` tinha sido fechada pela **distribuição**, com UM caso de preço, e a data ex derivada também tinha UM. A série de preços ajustada não existia | 18/09 — `fase0/ajustar.py` + `fase0/test_ajustar.py` (32 testes, 8 contra o acervo). **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360% (t = −0,29) em 293 datas-ex**, com controle em 86.736 pares de pregões sem evento (pior divergência 1e-27, arredondamento de `Decimal`). Duas mutações presas na suíte: data ex deslocada deixa o degrau **inteiro** e cria um **falso** na véspera (+1,91%, t = +11,20); fator invertido **dobra** o degrau (−3,16%). Ver `auditoria/C02-O-DEGRAU-MEDIDO.md` |
+| — | `calendario.py` era o único leitor de COTAHIST; o segundo (`ajustar.py`) ia redigitar a descoberta de arquivo e a posição da data | 18/09 — extraídos `arquivos()`, `registros()` e `data_de()`. Um fato, um dono. Instantâneo dourado de `pregoes()` antes e depois: **248 pregões, `sha256 e4a9d81d…` idêntico** |
 | manifesto da CVM | gravado em `data/bronze/cvm/manifesto/` — dentro do caminho que o `.gitignore` ignora na linha 12. **Não entrou no commit `64a5c97`**, e o `CVM-PRIMEIRO-RETRATO.md` afirmava que entrava | 18/09 — destino padrão passou a ser `docs/acervo/cvm/`, achado pela raiz do repositório; `gravar()` **recusa** qualquer caminho sob `data/`. 3 testes, um provado por mutação. Encontrado lendo a lista de `create mode` do commit dele e não achando o manifesto lá |
 | P-87 | uma segunda cópia do projeto na máquina, no OneDrive, com `.git` próprio parado em 09/09 — e foi a pasta que a sessão de nuvem recebeu conectada | 18/09 — **apagada por ele.** `Desktop\Bastter` é o caminho único |
 | passo 1 do `PLANO.md` | CVM não baixada — o bloqueio de que os outros três marcos dependiam | 18/09 — **33 ZIPs**, DFP 2010–2026 e ITR 2011–2026, em `data\bronze\cvm\`. Acervo completo, cauda congelada incluída. Falta o manifesto (`fase0/manifesto_cvm.py --manifesto`), e sem ele o acervo é um conjunto de arquivos, não um retrato datado |
@@ -1730,6 +1836,37 @@ sobrevive a uma mudança de separador ou de codificação, e é a mais cara.
 ---
 
 ## Ao voltar ao desktop
+
+### 18/09/2026, segunda rodada — `fase0/ajustar.py`, e a série de 2023 está de pé
+
+Gravado em `C:\Users\osvaldo.junior\Desktop\Bastter`, nada pendente de escrita:
+
+```
+fase0/ajustar.py             novo     o ajuste de preco por evento
+fase0/test_ajustar.py        novo     32 testes, 8 deles contra o acervo real
+fase0/calendario.py          mudado   arquivos() / registros() / data_de() extraidos
+auditoria/C02-O-DEGRAU-MEDIDO.md      o laudo da medicao
+```
+
+```powershell
+cd $HOME\Desktop\Bastter
+py -3.11 fase0\ajustar.py                   # sai com codigo 1: os 13 eventos da P-93
+py -3.11 -m pytest fase0 -q                 # esperado: 148 passed
+py -3.11 -m ruff check alocacao fase0 auditoria
+git add -A
+git commit -m "C-02: o degrau do dia ex encolhe de -1,63% para -0,04% em 293 datas-ex"
+```
+
+**A única coisa que precisa de você, e ela é um download:** o COTAHIST de **2025** e de
+**2021** (P-92). Dois arquivos, mesma página de séries históricas da B3 de onde veio o de
+2023. Nenhuma linha de código muda — o `calendario.py` e o `ajustar.py` leem o que estiver
+na pasta, e a cobertura da data ex cresce sozinha.
+
+O ganho não é só "mais um ano": são **50 eventos de quantidade** a mais para corroborar a
+leitura do `factor`, contra **1** hoje. É a questão metodológica mais barata que está
+aberta no projeto.
+
+---
 
 ### 18/09/2026 — o que esta rodada deixou pronto, e a única coisa que precisa de você
 

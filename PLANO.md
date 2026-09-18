@@ -81,7 +81,7 @@ pela porta da frente. E M4 sem M2 é automatizar uma esteira que ainda não exis
 |---|---|
 | **B3 — eventos societários** | **completo.** 74/74 emissoras, ~8 mil proventos, `dt_captura=2026-09-11`. Acervo bruto com sha256 |
 | **B3 — silver** | **escrito.** `refinar.py`, 9.272 linhas, `factor` desambiguado (C-01), `data_ex` derivada por calendário real de pregão |
-| **COTAHIST** | **1 ano (2023).** Serve de testemunha; não cobre a série |
+| **COTAHIST** | **1 ano (2023)**, e já virou produto: a série **ajustada** de 2023, medida contra 293 datas-ex (C-02). Um ano não é backtest — e a janela isolada tem **duas bordas**, ver passo 3 |
 | **CVM — DFP/ITR** | **baixada em 18/09.** 33 ZIPs: DFP 2010–2026, ITR 2011–2026. Falta o manifesto com sha256 |
 | **CVM — cadastro** | **obtido em 03/09**, status COMPLETO. É por ele que a ponte ticker↔CD_CVM se faz |
 | **bitemporalidade** | desenhada (`DESENHO-PIPELINE.md`), **não implementada** |
@@ -135,6 +135,38 @@ registrados junto — *um retrato sem hash não é um retrato: é um arquivo*.
 
 </details>
 
+### ~~2 · A série ajustada de 2023~~ — **FEITO em 18/09/2026**
+
+```
+O DEGRAU DO DIA DA DATA EX -- 293 casos
+  retorno BRUTO     media -1.6265%   t  -9.88
+  retorno AJUSTADO  media -0.0360%   t  -0.29
+  CONTROLE: 86.736 pares sem evento; divergencia maxima 1.0e-27 (arredondamento)
+```
+
+`fase0/ajustar.py` + 32 testes (8 contra o acervo). Duas mutações presas na suíte: data-ex
+deslocada devolve o degrau inteiro (−1,63%, t −9,88) **e cria um falso na véspera**
+(+1,91%, t +11,20); fator invertido **dobra** o degrau (−3,16%, t −12,98). *Nenhuma
+leitura errada de fator encolhe um degrau* — é isso que faz da medição uma prova.
+
+> **CORREÇÃO DA MINHA ESPECIFICAÇÃO, e ela é o ponto desta rodada.** Eu escrevi aqui que
+> o teste *"responde se o degrau desaparece quando o fator é aplicado; se não desaparecer,
+> o C-01 está errado"*. **A população não dá esse poder ao teste.** Das 293 datas-ex de
+> 2023, **292 são provento em dinheiro e apenas UMA é evento de quantidade** (a bonificação
+> da FLRY). O C-01 é sobre o campo `factor` dos eventos de **quantidade** — e a leitura
+> percentual continua apoiada na **distribuição** dos 180 valores mais **um** caso de preço,
+> que é exatamente o que já era.
+>
+> **O que a medição DE FATO confirmou, e não é pouco — são três coisas, em 293 casos:**
+> a **data-ex derivada do calendário observado** (que tinha 1 caso em 16/09), o **sentido
+> do fator** (multiplicador de preço, e não o inverso) e a **fórmula do fator de provento**.
+>
+> A régua §5-B pegou isto antes da publicação, do lado de lá: *a conclusão que eu ia
+> imprimir é mais larga que a medição*. O relatório do módulo agora imprime as duas
+> metades separadas — o que confirma e o que não confirma. Ver `auditoria/C02-O-DEGRAU-MEDIDO.md`.
+
+<details><summary>a especificação, como estava</summary>
+
 ### 2 · A série ajustada de 2023 — o primeiro produto ponta a ponta · ⚙ Claude Code
 
 **O que destrava:** a confiança no pipeline, antes de investir mais dado nele. Junta as duas
@@ -154,19 +186,54 @@ errado e é melhor descobrir com um ano do que com vinte.
 | **o teste que decide** | pegar os eventos de 2023 com fator calculado e medir o retorno do dia da data-ex **antes e depois** do ajuste. Se o degrau não encolher, o C-01 está errado |
 | **o controle** | dias **sem** evento não podem mudar de retorno. Se mudarem, o ajuste vazou para onde não devia |
 | **o que NÃO fazer** | não recalcular `factor`; não inventar preço para `SEM_PRECO`; não ajustar linha com `fator_status != CALCULADO` — essas entram na série com a lacuna declarada, nunca corrigidas por interpolação |
+| **o parser do COTAHIST JÁ EXISTE** | `fase0/calendario.py` tem `TIPO_COTACAO = "01"`, `POS_DATA`, e a varredura que abre ZIP **ou** TXT. **Extrair de lá, nunca reescrever** — duas leituras do mesmo layout de 245 posições concordam por acidente até o dia em que não concordam, e foi exatamente isso o A-06. O que falta é só acrescentar as posições de papel e de fechamento, no mesmo lugar |
+
+> **Um aviso para quem abrir esta especificação:** o degrau de preço **não é prova sozinho**.
+> Um provento em dinheiro também derruba o preço na data-ex, e a queda medida é a soma dos
+> dois efeitos. O teste tem de separar: use os eventos de **quantidade** (desdobramento,
+> grupamento, bonificação) para medir o ajuste de fator, e trate os de **caixa** à parte —
+> senão o resultado mistura duas coisas e "o degrau encolheu" deixa de significar algo.
 
 **Por que o teste decide alguma coisa:** o C-01 foi fechado por **assinatura aritmética**
 (onze valores caindo em razões canônicas), não por preço. Esta é a primeira vez que a
 regra encosta em preço de verdade — e um ano de COTAHIST é amostra suficiente para
 derrubá-la se ela estiver errada.
 
-### 3 · Bitemporalidade — `dt_captura` × `DT_REFER` · ⚙ Claude Code
+</details>
+
+### 3 · COTAHIST 2021 a 2025 — **contíguos**, e não só 2021 e 2025 · ⚙ desktop
+
+**O que destrava:** duas coisas ao mesmo tempo, e a segunda não estava na proposta.
+
+**(a) A corroboração por preço sai de 1 para ~51 eventos de quantidade.** É o único
+caminho para o C-01 deixar de se apoiar em distribuição mais um caso — e 2025 traz 31
+dos eventos, incluindo os grandes, que o preço resolve com folga.
+
+**(b) A CONTIGUIDADE elimina bordas, e isso não é detalhe.** O ajuste é retroativo: ele
+reescala o passado a partir do **fim** da série, então todo evento cuja data-ex caia
+depois do fim da janela **não entra**, e desloca o nível *sem produzir degrau visível* —
+é a P-94, e ela é invisível no controle e na suíte.
+
+| acervo | blocos | **bordas** |
+|---|---|---|
+| só 2023 | 1 | 2 |
+| 2021 + 2023 + 2025 | **3** | **6** |
+| **2021…2025** | **1** | **2** |
+
+**Baixar os cinco anos custa o mesmo trabalho manual que baixar dois** — é a mesma página,
+três cliques a mais, ~350 MB — e **elimina quatro das seis bordas.** Anos salteados não
+formam série: o ajuste retroativo só atravessa um bloco contíguo, e 2022 e 2024 são a
+emenda. **2024 em particular é o que fecha a borda de 2023**, o bloco que já está medido.
+
+**O que impede hoje:** nada além de estar na máquina.
+
+### 4 · Bitemporalidade — `dt_captura` × `DT_REFER` · ⚙ Claude Code
 
 **O que destrava:** o direito de dizer que o backtest não vaza futuro. Está desenhada e não
 existe em código; o acervo já guarda `dt_captura` no caminho, então o custo é de leitura, não
 de coleta.
 
-### 4 · O bloco C sobre dado real — o primeiro portão que olha empresa
+### 5 · O bloco C sobre dado real — o primeiro portão que olha empresa
 
 **O que destrava:** o M3. É o primeiro momento em que o sistema aplica régua a uma empresa,
 e ele é de **exclusão**, não de ordenação — a evidência local sustenta excluir as ruins e
@@ -174,7 +241,7 @@ não sustenta ordenar as boas (`criterio_nao_e_previsao`).
 
 **O que impede hoje:** o passo 1.
 
-### 5 · A rotina semanal sem humano · ⚙ decisão + Claude Code
+### 6 · A rotina semanal sem humano · ⚙ decisão + Claude Code
 
 **O que destrava:** o M4, e a honestidade do acervo. Enquanto o download for manual, a P7
 manda **declarar a limitação** — e ela está declarada. GitHub Actions em repositório público
@@ -204,7 +271,7 @@ manda **declarar a limitação** — e ela está declarada. GitHub Actions em re
 | # | bloqueio | classe | o que o levanta |
 |---|---|---|---|
 | 1 | ~~CVM não baixada~~ — **levantado em 18/09** | — | o acervo existe; falta o manifesto |
-| 2 | COTAHIST cobre 1 ano | `BLOQUEIA_O_SISTEMA` | baixar 2021 e 2025 (barato, sem prazo) |
+| 2 | COTAHIST cobre 1 ano, e a janela isolada tem duas bordas | `BLOQUEIA_O_SISTEMA` | baixar **2021 a 2025 contíguos** — ver passo 3 |
 | 3 | bitemporalidade não implementada | `BLOQUEIA_O_SISTEMA` | passo 3 |
 | 4 | a segunda esteira — nota explicativa e IPE — **nunca orçada** (X-01) | `BLOQUEIA_O_SISTEMA` | precisa de decisão de escopo antes de código |
 | 5 | ~~duas cópias do projeto na máquina (P-87)~~ — **apagada por ele em 18/09** | — | resolvido |
