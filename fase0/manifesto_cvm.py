@@ -45,6 +45,7 @@ import argparse
 import csv
 import datetime as dt
 import hashlib
+import io
 import os
 import sys
 import zipfile
@@ -130,10 +131,38 @@ def gravar(linhas, destino):
             f"procedencia de ninguem -- e o unico proposito dele e ser verificavel sem "
             f"os 700 MB do acervo.")
     os.makedirs(os.path.dirname(destino) or ".", exist_ok=True)
+    novo = io.StringIO()
+    w = csv.DictWriter(novo, fieldnames=COLUNAS, delimiter=";")
+    w.writeheader()
+    w.writerows(linhas)
+    texto = novo.getvalue()
+
+    # 18/09, e o caso apareceu na primeira hora de uso: o manifesto do acervo da B3 foi
+    # gravado com UM arquivo (so o COTAHIST de 2023), e os outros quatro anos seriam
+    # baixados em seguida -- no MESMO dia. O nome e `dt_captura=AAAA-MM-DD.csv`, entao a
+    # segunda gravacao apagaria a primeira sem dizer nada.
+    #
+    # E o retrato apagado seria justamente a prova de que, as 14h, o acervo tinha so 2023.
+    # O manifesto existe porque a CVM sobrescreve arquivo sob o mesmo nome -- e ele estava
+    # fazendo exatamente isso consigo. O instrumento com o defeito que ele mede.
+    #
+    # A saida NAO e travar (o fluxo legitimo e baixar mais e regravar) nem versionar tudo
+    # (rodar duas vezes sem mudanca criaria lixo). E: identico nao reescreve, diferente
+    # PRESERVA o anterior com a impressao do proprio conteudo no nome.
+    anterior = None
+    if os.path.exists(destino):
+        with open(destino, encoding="utf-8", newline="") as f:
+            velho = f.read()
+        if velho == texto:
+            return destino                      # idempotente: duas execucoes, um arquivo
+        raiz, ext = os.path.splitext(destino)
+        anterior = f"{raiz}.{hashlib.sha256(velho.encode('utf-8')).hexdigest()[:12]}{ext}"
+        os.replace(destino, anterior)
+        print(f"AVISO: ja havia manifesto para hoje, com CONTEUDO DIFERENTE -- o acervo "
+              f"mudou dentro do mesmo dia.\n  o retrato anterior foi PRESERVADO em "
+              f"{os.path.basename(anterior)}", file=sys.stderr)
     with open(destino, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=COLUNAS, delimiter=";")
-        w.writeheader()
-        w.writerows(linhas)
+        f.write(texto)
     return destino
 
 

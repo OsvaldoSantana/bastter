@@ -154,3 +154,36 @@ def test_sem_pyproject_o_destino_cai_no_acervo_e_a_guarda_RECUSA(tmp_path):
     acervo = tmp_path/"data"/"cvm"; acervo.mkdir(parents=True)
     with pytest.raises(ValueError, match="gitignore"):
         M.gravar([{c: "x" for c in M.COLUNAS}], M.destino_padrao(str(acervo), "2026-09-18"))
+
+
+def _linha(**kw):
+    return {**{c: "x" for c in M.COLUNAS}, **kw}
+
+
+def test_gravar_DUAS_VEZES_sem_mudanca_nao_cria_arquivo_novo(tmp_path):
+    """Idempotencia pela regua §5-B: a unica forma de testar e RODAR DUAS VEZES."""
+    d = str(tmp_path/"m.csv")
+    M.gravar([_linha(caminho="a.zip")], d)
+    M.gravar([_linha(caminho="a.zip")], d)
+    assert [p.name for p in tmp_path.iterdir()] == ["m.csv"]
+
+
+def test_manifesto_DIFERENTE_no_mesmo_dia_PRESERVA_o_retrato_anterior(tmp_path, capsys):
+    """O caso real de 18/09: o manifesto da B3 foi gravado com UM arquivo, e os outros
+    quatro anos seriam baixados no mesmo dia. O nome e por DIA, entao a segunda gravacao
+    apagaria a primeira -- e a apagada seria a prova de que, aquela hora, so havia 2023.
+
+    O manifesto existe porque a CVM sobrescreve arquivo sob o mesmo nome. Ele estava
+    fazendo o mesmo consigo.
+
+    Mutacao: tire o `os.replace` de `gravar` e este teste reprova."""
+    d = str(tmp_path/"m.csv")
+    M.gravar([_linha(caminho="2023.zip")], d)
+    M.gravar([_linha(caminho="2023.zip"), _linha(caminho="2024.zip")], d)
+    nomes = sorted(p.name for p in tmp_path.iterdir())
+    assert len(nomes) == 2 and "m.csv" in nomes
+    preservado = [n for n in nomes if n != "m.csv"][0]
+    assert "2024.zip" not in (tmp_path/preservado).read_text(encoding="utf-8"), \
+        "o preservado tem de ser o ANTIGO, nao o novo"
+    assert "2024.zip" in (tmp_path/"m.csv").read_text(encoding="utf-8")
+    assert "PRESERVADO" in capsys.readouterr().err
