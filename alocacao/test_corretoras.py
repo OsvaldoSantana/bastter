@@ -3,6 +3,7 @@
 import os, sys, copy
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pytest
+import corretoras as K
 from corretoras import catalogo_instituicoes, pontuar, ranking, robustez, AQUI
 from alocacao import carregar_politica
 
@@ -499,3 +500,88 @@ def test_P84_a_exibicao_obedece_o_arquivo():
     P2["corretora"]["custo_por_operacao"]["exibe"] = False
     assert custo_por_operacao(inter, P2) is None
     assert custo_por_operacao(INST["btg"], P) is None, "casa sem nenhum dos tres"
+
+
+# ── P-90: informacao obtida nao se descarta ──────────────────────────────────
+# Correcao dele, 18/09/2026: *"se a informacao existe e voce nao conseguiu, o item nao
+# deve ser excluido -- mas o problema de conseguir a informacao deve ser resolvido"*.
+def _pontuadas():
+    P = carregar_politica()
+    pesos = P["corretora"]["pesos"]
+    ap = P["corretora"]["aporte_de_referencia"]
+    return [(i, K.pontuar(i, pesos, ap, 10)) for i in K.catalogo_instituicoes()]
+
+
+def test_P90_os_dois_caminhos_de_pontuar_devolvem_as_MESMAS_chaves():
+    """A-07 dentro de uma funcao so: `pontuar` tinha dois `return` com formatos
+    diferentes -- o degenerado nao trazia `bruto` nem `cobertura` e trazia um `motivo`
+    que o outro nao tem. Quem consome nao tinha como saber qual recebeu.
+
+    Mutacao: tire `parcial=0.0` do return degenerado e este teste reprova."""
+    chaves = [set(p) - {"motivo"} for _, p in _pontuadas()]
+    assert len(set(map(frozenset, chaves))) == 1, \
+        f"formatos diferentes de saida: {[sorted(c) for c in chaves[:3]]}"
+    for c in chaves:
+        assert {"total", "parcial", "bruto", "cobertura", "avaliadas", "nao_avaliadas"} <= c
+
+
+def test_P90_a_casa_nao_ordenada_tem_nota_e_ela_NAO_e_zero():
+    """O defeito que ele pegou: o multiplicador N=0 zerava o `total` e com ele sumia
+    tudo que o sistema sabia da casa. Medido, o BTG tem 65% de cobertura e nota 54,0 --
+    posicao de 7o entre 15 ordenadas. Zero era a resposta errada para 'quanto se sabe'."""
+    ausentes = [(i, p) for i, p in _pontuadas()
+                if i.confirmacao == "N" and p["parcial"] > 0]
+    assert len(ausentes) >= 3, "cenario mudou: reveja este teste antes de o afrouxar"
+    btg = [p for i, p in ausentes if "BTG" in i.nome]
+    assert btg, "o BTG saiu do catalogo"
+    assert btg[0]["parcial"] > 50 and btg[0]["total"] == 0.0
+    assert btg[0]["cobertura"] > 0.6
+
+
+def test_P90_a_punicao_nao_cai_sobre_o_dado_que_veio_de_OUTRA_fonte():
+    """O que falhou foi o SITE DA CORRETORA. As dimensoes que sobrevivem ao fracasso
+    vem do Ranking de Reclamacoes do BCB e do balanco -- fontes que nada tem a ver com
+    aquele site. Zera-las era punir o dado errado."""
+    for i, p in _pontuadas():
+        if i.confirmacao != "N" or p["parcial"] <= 0: continue
+        assert "solidez" in p["avaliadas"]
+        assert set(p["nao_avaliadas"]) >= {"corretagem", "custodia"}, \
+            f"{i.nome}: o que falta tem de ser o que o site da corretora publicaria"
+
+
+def test_P90_zero_MEDIDO_e_zero_por_AUSENCIA_sao_distinguiveis():
+    """Os dois zeros diziam a mesma coisa e sao afirmacoes opostas: a Clear tem
+    `entidade_independente = False`, e isso e uma MEDICAO cujo resultado e zero; o BTG
+    tem custo desconhecido, e isso e uma LACUNA. Indistinguiveis de fora, era esse o
+    defeito -- a mesma forma do E-02, onde ausente e vazio devolviam o mesmo."""
+    medido = {i.nome for i, p in _pontuadas() if p["total"] <= 0 and p["parcial"] <= 0}
+    ausente = {i.nome for i, p in _pontuadas() if p["total"] <= 0 and p["parcial"] > 0}
+    assert medido and ausente and not (medido & ausente)
+    for i, p in _pontuadas():
+        if i.nome in medido and i.confirmacao == "N":
+            assert not i.entidade_independente or not p["avaliadas"], \
+                f"{i.nome}: zero sem medicao e sem lacuna declarada"
+
+
+def test_P90_a_correcao_NAO_mexeu_na_ordenacao():
+    """Prova de inercia, e ela e o ponto: a decisao de nao ordenar quem tem custo
+    desconhecido CONTINUA (G5/F-02 -- status e pre-condicao de comparacao de custo). O
+    que mudou foi o sistema parar de esconder o que sabe. `total` continua sendo
+    exatamente `parcial` vezes o multiplicador, e nada mais."""
+    for i, p in _pontuadas():
+        assert abs(p["total"] - p["parcial"]*p["multiplicador"]) < 1e-12, i.nome
+        if i.confirmacao == "C":
+            assert abs(p["total"] - p["parcial"]) < 1e-12, i.nome
+
+
+def test_P90_toda_casa_tem_ao_menos_uma_dimensao_avaliavel():
+    """A invariante que dispensa o ramo morto de `pontuar`.
+
+    `sobrevivencia` vem de `entidade_independente`, que e um bool e nunca e None -- logo
+    `validas` nunca fica vazio. Era por isso que a prova por mutacao do teste de formato
+    passava: o ramo que eu queria guardar nao tem como ser executado.
+
+    Este teste e o que autoriza a remocao. Se ele cair, o ramo precisa voltar."""
+    for i, p in _pontuadas():
+        assert p["avaliadas"], f"{i.nome}: nenhuma dimensao avaliavel"
+        assert "sobrevivencia" in p["avaliadas"]

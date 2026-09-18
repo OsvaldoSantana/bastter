@@ -21,8 +21,6 @@ se a escolha fosse outra.
 
 ### O que este sistema NÃO é
 
-- Não é um robô de recomendação. Ele **recusa-se a nomear empresas** enquanto a
-  decisão A05 (núcleo indexado × seleção ativa) estiver pendente.
 - Não é um otimizador. DeMiguel, Garlappi & Uppal (2009): 14 modelos de
   otimização, nenhum bateu 1/N fora da amostra. Para 25 ativos seriam necessários
   ~3.000 meses de dados. Regra declarada e testável, nunca ótimo derivado.
@@ -1245,12 +1243,21 @@ só será usada em 2031.
 > > m=8 (as pré-registradas) → **2,754**; m=13 (o orçamento inteiro, soma dos
 > > `variantes_permitidas`) → **2,913**.
 > >
-> > **O HML (t = 2,94) sobrevive até o corte mais severo — por 0,027 de um t.** Não o
+> > **O HML (t = 2,94) sobrevive até o corte mais severo — por 0,027 de um t.** ⚠️
+> > **RETIFICADO em 18/09 — ver a seção de 18/09/2026 no fim deste arquivo.** Medido, o
+> > `t` estimado **não** se distribui como a tabela de Student: a cauda é ~7% mais gorda,
+> > o corte de m=13 sobe de 2,9131 para **3,1473**, e a folga de +0,027 vira um déficit de
+> > **−0,212**. O HML **não** sobrevive ao orçamento. Não o
 > > invalida; recoloca. "t = 2,94" soa como p ≈ 0,003; corrigido pela família que o
 > > próprio projeto pré-registrou, é significância **na margem** — coerente com as
-> > quatro razões que o registro já dava para não agir sobre ele. Ressalva contra mim:
+> > quatro razões que o registro já dava para não agir sobre ele. ~~Ressalva contra mim:
 > > Bonferroni **superestima** a correção com testes correlacionados, e estes são (mesma
-> > série, mesmos cinco fatores). O corte verdadeiro fica entre 1,96 e 2,891.
+> > série, mesmos cinco fatores). O corte verdadeiro fica entre 1,96 e 2,891.~~
+> > **RETIRADA em 18/09: a correlação medida entre as duas estatísticas é −0,064** — o
+> > próprio "alfa contra os DEMAIS" já particiona os fatores comuns, e resíduos de
+> > regressões que partilham regressores não andam juntos. O corte verdadeiro fica
+> > **acima** de 2,913, não abaixo. Eu inferi dependência da origem comum dos dados em
+> > vez de medi-la.
 >
 > > **E `pesquisa_id` não pode ser declarado.** Ele viu o buraco — *"alguém cria
 > > Conjunto A, B, C e reseta o contador"* — e fechou com julgamento. Julgamento é
@@ -1661,6 +1668,14 @@ só será usada em 2031.
 > `hml_puro_v1` o tem de fato.
 
 ### Próximo passo, em ordem de valor
+
+> **18/09/2026 — a fila mudou de casa.** O destino do projeto, o que já está feito e a
+> ordem do que falta passaram a viver em **`PLANO.md`**, na raiz. Ele nasceu porque a
+> pergunta *"você tem um arquivo de planejamento?"* não tinha resposta: este arquivo tem
+> doutrina e história, o `PENDENCIAS.md` tem 64 itens sem ordem entre si, e nenhum dos
+> dois dizia **onde queremos chegar**. A lista abaixo fica como registro de 06/09 — se ela
+> discordar do `PLANO.md` sobre o que vem primeiro, **o `PLANO.md` ganha.**
+
 
 *Revisado em 06/09/2026 pela pesquisa de bases e APIs (`docs/fontes/pesquisa-bases-e-apis-2026-09.md`).
 A fila **mudou de primeiro lugar**, e a razão está no achado V-01 abaixo.*
@@ -2160,3 +2175,104 @@ A-06 sobreviveu quatro dias e a linha de base das órfãs apodreceu. É a P7 apl
 própria rotina. Hoje as três suítes estão verdes ao mesmo tempo, que é a janela em que
 unificar é barato.
 
+
+---
+
+## 18/09/2026 — as três decisões de 13/09, e o corte que estava sendo suposto
+
+*Documento completo em `auditoria/ROMANO-WOLF.md`. 107 testes novos; `alocacao/` fecha em
+**501 passed, 4 skipped**, com `ruff` e `mypy` em zero nas três pastas.*
+
+Fechadas: **Romano-Wolf por bootstrap** (decisão 2), **o `m` dos dois lados, calculado**
+(decisão 3) e **divergência bloqueia** (decisão 4). Nasceram `alocacao/multiplicidade.py`,
+`alocacao/preregistro.py` e a seção `politica.yaml → pesquisa` (versão **1.20.0**).
+
+### O achado, e ele não é sobre multiplicidade
+
+Todos os cortes que este arquivo vinha citando saem de uma **tabela** — supõem que o `t`
+estimado segue uma t de Student com 301 gl. Dá para medir, e o bootstrap mede.
+Decomposição do corte da família executada (m = 2):
+
+| corte | valor | o que supõe |
+|---|---|---|
+| Student + Bonferroni | 2,2527 | marginal **tabelada** · independência pela união |
+| bootstrap + Bonferroni | 2,4033 | marginal **medida** · independência pela união |
+| bootstrap + Romano-Wolf | 2,3256 | marginal **medida** · dependência **medida** |
+
+> **A suposição de distribuição vale mais que a estrutura de dependência** — +0,151 contra
+> −0,095 — **e só a segunda estava sendo discutida.** A t de Student é o padrão silencioso
+> de toda regressão, e por isso ninguém tinha olhado para ela.
+
+Um oráculo separa dado de defeito e está preso num teste: quando a amostra reamostrada
+**vem** de uma t de Student, o corte medido coincide com o tabelado dentro de 0,02. A
+diferença acima é propriedade da série, não da implementação.
+
+### A consequência: o HML não sobrevive ao orçamento que ele mesmo pré-registrou
+
+| m | Bonferroni-Student | Bonferroni-**medido** | HML, t = 2,9351 |
+|---|---|---|---|
+| 2 | 2,2527 | 2,4033 | rejeita |
+| 8 | 2,7537 | 2,9337 | **NÃO_CONFIRMADO** — a margem (0,0014) é menor que o ruído |
+| **13** | **2,9131** | **3,1473** | **não rejeita**, por −0,212 |
+
+Precisão declarada: com 10.000 repetições o quantil 1 − α/13 vive na ponta da reamostragem.
+Medido em **12 sementes**, o corte de m=13 fica em **3,107 ± 0,075**, mínimo 2,986 — e o `t`
+do HML está abaixo do **menor** dos doze. O veredito é robusto; margens menores que 0,08
+nesta família são `NAO_CONFIRMADO`, que é por que a linha de m=8 está marcada.
+
+**O veredito de 05/09 não muda** — já era conservador por quatro razões independentes do
+corte. **A frase é que muda.** A medição não derrubou uma decisão: derrubou uma frase que
+soava mais confortável do que os dados permitiam.
+
+### Duas coisas que a decisão 2 ensinou sobre a decisão 3
+
+**Os dois `m` usam instrumentos diferentes por necessidade, não por escolha.** Romano-Wolf
+precisa da estatística de cada hipótese; no lado orçado, **11 dos 13 testes nunca rodaram**
+e não há o que reamostrar. Sobra a união de Boole, que vale sob qualquer dependência e só
+precisa da marginal desta hipótese. O lado executado descreve a evidência e aceita o
+instrumento fino; o orçado descreve a disciplina e só aceita o grosso.
+
+**E a decisão 4 ganhou o primeiro caso no dia em que nasceu, num lugar que não estava
+previsto.** A regra foi escrita para R1 contra uma extensão Rn; o que apareceu foi os
+**dois lados do `m` divergindo sobre a mesma execução** (executado REJEITA, orçado
+NÃO_REJEITA). O portão foi escrito sobre *vereditos divergentes, venham de onde vierem* —
+generalizar custou menos que abrir uma exceção, e cláusula de exceção é a superfície por
+onde o contorno entra. O operativo é o **orçado**: é o único dos dois que não pode ter sido
+escolhido depois de ver o resultado.
+
+### O `m` deixou de ser afirmado, e a P-29 fechou por cobrança da própria guarda
+
+`preregistro.py` passou a somar `variantes_permitidas`, e três instrumentos do projeto
+cobraram a mudança **no mesmo minuto**, cada um do seu lado:
+
+- `test_P28_especificacao_e_uma_promessa_com_numero` reprovou: a seção estava declarada
+  ESPECIFICACAO ("escrito e não ligado") e um módulo passou a lê-la. Ela **não** virou
+  OPERACIONAL — 67 das suas chaves nunca serão lidas porque são **testemunho** (D1–D7,
+  `origem`, os `resultado` de 05/09), e inventariá-las como dívida seria registrar 67
+  promessas que ninguém pretende cumprir. Virou **REGISTRO**, e o papel de ESPECIFICACAO
+  virou **número**: `m_orcado − m_executado` = **11 testes pré-registrados que nunca foram
+  ao dado**, com teste que o prende. Contagem que decai vale mais que 67 linhas de promessa.
+- `test_a_linha_de_base_nao_guarda_chave_ja_resolvida` mandou apagar a espécie
+  `estrategias_pre_registradas.*.variantes_permitidas` do `chaves_orfas`. **A linha de base
+  encolheu por conserto**, que é a única direção legítima de encolher.
+- `chaves_orfas` acusou `corte_executado`/`corte_orcado` como **lidas só por teste** (P-77).
+  A conferência do registro contra a medição virou `preregistro.conferir_registro()`.
+  **Conferir o registro é trabalho do módulo; o teste só chama.**
+
+### E dois defeitos meus, um deles do jeito mais silencioso possível
+
+**`t_quantil` saturava na borda.** Bissecava num intervalo fixo de ±1000; com 1 grau de
+liberdade o quantil 99,99% fica em ~3183 e a função devolvia **1000,0**, sem erro nenhum.
+É o F-02 em aritmética — **número de borda tem a mesma cara de número certo.** Quem pegou
+foi o `test_ida_e_volta`, e é por isso que a identidade `cdf(quantil(p)) == p` está na
+suíte ao lado da tabela publicada: **a tabela não tem essa casa.**
+
+**A guarda de campo morto pegou meu lixo pela segunda vez em dois dias** — `CAMPOS_MEDIDOS`
+em 18/09, depois de `PONTAS_DIVERGENTES` em 16/09. Mesma mão, mesmo erro.
+
+### O que este aparato continua não protegendo (P5)
+
+Nada aqui teria pego o `Risk_Free` invertido do E-06. E entra um limite novo: o bootstrap
+reamostra **meses independentes** — se houver dependência serial, o corte medido está
+**subestimado**, na mesma direção do achado. Medir isso pede *block bootstrap*, e não está
+feito.

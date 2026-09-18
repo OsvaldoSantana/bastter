@@ -123,24 +123,39 @@ ticker não é.
 O arquivo que faz a ponte é o **cadastro de companhias abertas**, e ele é pequeno:
 
 ```
-https://dados.cvm.gov.br/dados/CIA_ABERTA/CAD/DADOS/
+https://dados.cvm.gov.br/dados/CIA_ABERTA/CAD/DADOS/cad_cia_aberta.csv
 ```
 
-procurando por `cad_cia_aberta.csv`.
+> **CORRIGIDO EM 18/09/2026 — este parágrafo estava desatualizado, e do jeito mais caro:
+> ele mandava você buscar um arquivo que já estava no projeto.**
+>
+> O texto anterior marcava o caminho e o nome como `NAO_CONFIRMADO`, *"vêm do meu
+> conhecimento geral da estrutura da CVM, não de uma leitura da página"*, e pedia que
+> você baixasse e mandasse o cabeçalho. **Você já tinha feito isso em 03/09/2026.** O
+> resultado está em `docs/fontes/cvm-cadastro-companhias-abertas.md`, status **COMPLETO**,
+> com o dicionário de 44 campos, o cabeçalho literal de 47 colunas e duas linhas de dado
+> reais. A URL acima é a que foi de fato acessada, às 15:29:58 daquele dia.
+>
+> **E a pergunta da Marfrig está respondida:** `CD_CVM 20788`, situação ATIVO — e esse é
+> exatamente o `codeCVM` que a B3 devolve no `MBRF.json`. A ponte que o A-04 precisava
+> **existe**, e o que falta é usá-la, não obtê-la.
+>
+> *Por que isso importa mais que a economia de um download:* um documento de instrução que
+> pede dado já obtido faz você gastar tempo provando algo provado, e — pior — sugere que a
+> pergunta continua aberta quando ela está fechada. É o defeito recorrente do projeto na
+> camada da prosa: **o arquivo declara um estado que o repositório não tem.**
 
-> **`NAO_CONFIRMADO`:** este caminho e este nome de arquivo vêm do meu conhecimento
-> geral da estrutura da CVM, **não** de uma leitura da página — o portal me bloqueia.
-> Se o diretório ou o nome forem outros, **me diga o que você viu**, e eu corrijo antes
-> de escrever qualquer coisa que dependa disso. Não registro como fonte até você
-> confirmar.
-
-Baixe-o para `data\bronze\cvm\cad\` e me mande o cabeçalho:
+**O que ainda vale baixar do cadastro, e só isso:** um retrato **novo**, com `sha256` e
+hora, para `data\bronze\cvm\cad\`. O de 03/09 foi lido como documento, não registrado
+como observação datada — não tem hash. Enquanto não tiver, ele prova a **estrutura** do
+arquivo e não prova **o que a CVM dizia naquele dia**.
 
 ```powershell
-Get-Content data\bronze\cvm\cad\cad_cia_aberta.csv -TotalCount 3
+Get-FileHash data\bronze\cvm\cad\cad_cia_aberta.csv -Algorithm SHA256
 ```
 
-Com o CNPJ e o CD_CVM da Marfrig eu fecho o A-04 com a lacuna medida em vez de suposta.
+O A-04 fecha comparando o `CD_CVM 20788` contra o acervo da B3 — e isso roda sem download
+nenhum, assim que você quiser.
 
 ---
 

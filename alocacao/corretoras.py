@@ -351,15 +351,29 @@ def pontuar(inst: Instituicao, pesos: dict, aporte: float, horizonte_anos: float
     mult = R["mult"][inst.confirmacao]
 
     validas = {k: v for k, v in d.items() if v is not None}
+    # 18/09: aqui havia um segundo `return`, com CHAVES DIFERENTES do de baixo (A-07
+    # dentro de uma funcao so). A prova por mutacao reprovou o TESTE, nao o codigo: o
+    # ramo e inalcancavel, porque `sobrevivencia` sai de um bool e nunca e None. Ramo
+    # morto nao falha, logo nao se testa. `test_P90_toda_casa_tem_ao_menos_uma_dimensao_
+    # avaliavel` prende a invariante que o dispensa; se ela cair, o ramo volta.
     if not validas:
-        return dict(total=0.0, dim=d, notas=notas, multiplicador=mult,
-                    motivo="nenhuma dimensão pôde ser avaliada")
+        raise AssertionError(
+            f"{inst.nome}: nenhuma dimensao avaliavel. Isto era um ramo silencioso ate "
+            f"18/09 e agora e erro duro -- a invariante que o dispensava caiu, e o "
+            f"conserto e reescrever o ramo com o MESMO formato do return de baixo.")
     peso_total = sum(pesos[k] for k in validas)
     bruto = sum(validas[k]*pesos[k] for k in validas)/peso_total
     # dimensao ausente e penalidade, nao neutralidade: quem nao publica, perde
     cobertura = peso_total/sum(pesos.values())
-    return dict(total=bruto*mult*cobertura, bruto=bruto, dim=d, notas=notas,
-                multiplicador=mult, cobertura=cobertura)
+    # P-90, correcao dele em 18/09: `parcial` e a nota com tudo que o sistema DE FATO
+    # sabe da casa, ja penalizada pela cobertura e ANTES do multiplicador. O N=0 nao
+    # apagava a casa do catalogo, mas apagava o que se sabia dela -- e o BTG tem 54,0
+    # com 65% de cobertura, 7o de 15. O multiplicador CONTINUA zerando o `total` (G5/
+    # F-02: status e pre-condicao de comparacao de custo); o que muda e o sistema parar
+    # de esconder o que sabe. Documento em `auditoria/P90-INFORMACAO-NAO-OBTIDA.md`.
+    return dict(total=bruto*mult*cobertura, parcial=bruto*cobertura, bruto=bruto,
+                dim=d, notas=notas, multiplicador=mult, cobertura=cobertura,
+                avaliadas=sorted(validas), nao_avaliadas=sorted(set(d) - set(validas)))
 
 def custo_por_operacao(inst: Instituicao, P=None):
     """Custos por operacao EXIBIDOS e nunca pontuados. Mesmo molde do `reclame_aqui`.
@@ -442,6 +456,51 @@ def robustez(pesos_base, aporte=500.0, n=None):
         out[nome] = [i.nome for i, _ in r[:3]]
     return out
 
+def _nao_ordenadas(pesos, ap, ordenadas):
+    """As casas que o multiplicador zerou — e o que o sistema JÁ SABE sobre cada uma.
+
+    P-90, correção dele em 18/09/2026. A versão anterior imprimia só o nome e o motivo, e
+    descartava a `parcial` que `pontuar()` já calculava. Duas coisas se perdiam:
+
+      1. ZERO MEDIDO e ZERO POR AUSÊNCIA saíam com a mesma cara. A Clear tem
+         `entidade_independente = False` — isso é medição, e o zero é o resultado dela.
+         O BTG tem 65% de cobertura e nota 54,0 — isso é ausência, e o zero é a decisão
+         de não ordenar quem tem custo desconhecido. São afirmações diferentes.
+      2. A posição que a casa OCUPARIA nunca aparecia, e é ela que mostra o tamanho do
+         que se está deixando de fora.
+
+    O `pegadinha` dessas casas descreve um FRACASSO DE COLETA — "HTTP 403", "site é SPA",
+    "domínio não resolve DNS" —, e isso é propriedade do meu método, não da instituição.
+    Por isso a seção termina apontando a pendência em vez de encerrar o assunto."""
+    linhas = [(i, pontuar(i, pesos, ap, 10)) for i in catalogo_instituicoes()]
+    medido = [(i, p) for i, p in linhas if p["total"] <= 0 and p["parcial"] <= 0]
+    ausente = [(i, p) for i, p in linhas if p["total"] <= 0 and p["parcial"] > 0]
+    notas_ordenadas = [p["total"] for _, p in ordenadas]
+
+    print("\n" + "="*104)
+    print("NÃO ORDENADAS POR AUSÊNCIA DE DADO — e o que o sistema JÁ SABE sobre elas")
+    print("="*104)
+    print("  O multiplicador de confirmação N=0 tira a casa da ORDENAÇÃO, porque custo")
+    print("  desconhecido não se compara com custo conhecido (G5/F-02). Ele NÃO é um")
+    print("  veredito sobre a instituição, e a nota abaixo é o que se sabe hoje.")
+    for i, p in sorted(ausente, key=lambda x: -x[1]["parcial"]):
+        pos = sum(1 for n in notas_ordenadas if n > p["parcial"]) + 1
+        print(f"\n    {i.nome:<34} nota parcial {p['parcial']:.1f} · cobertura "
+              f"{p['cobertura']:.0%} · ficaria em {pos}º de {len(ordenadas)+len(ausente)}")
+        print(f"       sabe-se: {', '.join(p['avaliadas'])}")
+        print(f"       falta:   {', '.join(p['nao_avaliadas'])}")
+        print(f"       a coleta falhou assim: {i.pegadinha[:78]}")
+    if medido:
+        print("\n  ZERO MEDIDO, e isto é um resultado, não uma lacuna:")
+        for i, p in medido:
+            motivo = ("não é entidade independente" if not i.entidade_independente
+                      else "nenhuma dimensão pôde ser avaliada")
+            print(f"    {i.nome:<34} {motivo}")
+    if ausente:
+        print("\n  O fracasso acima é do MÉTODO DE COLETA, não da instituição — 403, SPA e")
+        print("  DNS descrevem o meu raspador. Resolver isso é a P-90, com dono e gatilho.")
+
+
 if __name__ == "__main__":
     P = carregar_politica()
     pesos = P["corretora"]["pesos"]
@@ -519,9 +578,5 @@ if __name__ == "__main__":
   ponderação. É o mesmo teste de dominância que o G4 faz com as rotas, aplicado às
   casas. Um ranking cujo topo muda com os pesos mede a opinião de quem os escolheu.""")
 
-    print("\nFORA DA ORDENAÇÃO (nota zero):")
-    for i, p in [(i, pontuar(i, pesos, ap, 10)) for i in catalogo_instituicoes()]:
-        if p["total"] <= 0:
-            motivo = ("dados não confirmados" if i.confirmacao == "N" else
-                      "entidade não independente" if not i.entidade_independente else "?")
-            print(f"    {i.nome:<34} {motivo} — {i.pegadinha[:60]}")
+    _nao_ordenadas(pesos, ap, r)
+

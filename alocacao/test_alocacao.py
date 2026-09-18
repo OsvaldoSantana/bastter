@@ -352,8 +352,28 @@ REGIME_DAS_SECOES = {
     "doutrina_P6":   (REGISTRO,      "a doutrina e as tres vezes em que eu a violei"),
     "fase_A_recalculada": (REGISTRO, "o recalculo M-01 e o que ele mediu"),
     "limitacoes_declaradas": (REGISTRO, "o que o motor NAO faz, com a direcao do vies"),
-    "estrategias_pre_registradas": (ESPECIFICACAO, "P-29: o pre-registro e lido pelos "
-                                     "testes e pelo backtest_h1_h3, nunca pelo motor"),
+    # 18/09: era ESPECIFICACAO com a pendencia P-29, e deixou de ser. O E-06 dizia que
+    # o pre-registro declarava guardas que nada executava; `preregistro.py` passou a ler
+    # `variantes_permitidas` (o `m` orcado) e os nomes das estrategias (integridade do
+    # diario), e a propria guarda cobrou a reclassificacao. NAO virou OPERACIONAL: 67
+    # das suas chaves nunca serao lidas por codigo nenhum, porque sao TESTEMUNHO —
+    # D1..D7, `origem`, `nota_do_custo`, os `resultado` de 05/09. Inventaria-las como
+    # divida seria registrar 67 promessas que ninguem pretende cumprir, e o
+    # `test_P28_a_divida_de_cobertura_nao_apodrece` as guardaria para sempre.
+    # O papel de ESPECIFICACAO nao se perdeu — virou NUMERO: `m_orcado - m_executado`
+    # conta quantos testes pre-registrados nunca rodaram, e
+    # `test_preregistro.py::test_o_que_o_pre_registro_promete_e_nao_executou_e_CONTADO`
+    # o prende. Contagem que decai vale mais que 67 linhas de promessa.
+    "estrategias_pre_registradas": (REGISTRO, "o que foi pre-registrado e o que "
+                                     "aconteceu; a unica chave operacional e "
+                                     "`variantes_permitidas`, lida por preregistro.py "
+                                     "para calcular o `m` orcado (P-29 fechada)"),
+    "pesquisa":      (OPERACIONAL,   "a familia de testes e o corte que ela exige; "
+                                     "preregistro.py le TODA chave daqui — foi de "
+                                     "proposito que este bloco nasceu pequeno e "
+                                     "OPERACIONAL em vez de crescer dentro do "
+                                     "`estrategias_pre_registradas`, que e "
+                                     "ESPECIFICACAO e nao cobra leitura de ninguem"),
     "bloco_C_solvencia":            (ESPECIFICACAO, "P-30: especificado em 05/09, "
                                      "nenhum modulo aplica"),
     "regime_instituicao_financeira":(ESPECIFICACAO, "P-31: especificado em 05/09, "

@@ -13,10 +13,27 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.19.0
+  versao: 1.20.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.20.0: >-
+      18/09/2026. As tres decisoes de 13/09 que faltavam, e a secao `pesquisa` nasceu
+      para elas. (2) O corte do backtest deixou de ser 1,96 por omissao: o lado
+      EXECUTADO usa Romano-Wolf por bootstrap conjunto, o ORCADO usa Bonferroni sobre a
+      marginal MEDIDA. Nao e a mesma correcao duas vezes -- 11 dos 13 testes orcados
+      nunca produziram estatistica, e nao ha o que reamostrar num teste que nao rodou.
+      (3) Os dois `m` sao CALCULADOS: o executado sai do `diario`, o orcado da soma dos
+      `variantes_permitidas`, e o `pesquisa_id` sai do sha256 da fonte mais a regra de
+      amostra -- renomear o conjunto nao reinicia contador nenhum. (4) Divergencia de
+      veredito BLOQUEIA ate estar escrita, e o primeiro caso apareceu no mesmo dia: o
+      HML rejeita contra a familia executada e NAO rejeita contra a orcada.
+      O NUMERO QUE MUDA UMA AFIRMACAO DO PROJETO: medido, o t estimado nao se distribui
+      como a tabela de Student -- a cauda e ~7% mais gorda. O corte orcado sobe de
+      2,9131 para 3,1473 e o HML (t 2,9351) deixa de sobreviver ao orcamento que ele
+      mesmo pre-registrou. A folga de +0,027 que o CLAUDE.md anunciava era artefato da
+      suposicao, nao margem. O veredito registrado em 05/09 nao muda -- ja era
+      conservador por quatro razoes independentes do corte.
     1.19.0: >-
       16/09/2026. Decisao dele de 13/09 implementada: custo por operacao entra no
       ranking. Entrou como SEGUNDA PARCELA da dimensao `corretagem` (pior caso entre
@@ -1684,6 +1701,138 @@ estrategias_pre_registradas:
     D5: "busca de parametros reportada como resultado, sem correcao para testes multiplos"
     D6: "dependencia de periodo — cinco estudos, cinco janelas, resultados 3x diferentes"
     D7: "decaimento pos-publicacao nao testado (Piotroski adaptado circula ha ~20 anos)"
+
+# ── PESQUISA: a familia de testes, e o corte que ela exige ────────────────────
+# Fecha as tres decisoes de 13/09 que faltavam. O E-06 mediu o buraco: o
+# `rejeita_se` das oito estrategias diz "alfa nao distinguivel de zero" e NAO diz
+# a que corte -- entao o corte era 1,96 por omissao, oito vezes. E 1,96 e a NORMAL;
+# este teste tem 301 graus de liberdade e nunca foi uma normal.
+#
+# Quem le este bloco e `preregistro.py`, e ele calcula o que aqui NAO esta escrito:
+# o `pesquisa_id`, os dois `m` e os dois cortes. O que esta escrito sao as regras e
+# o registro do que ja aconteceu. Um numero que quem registra pode escolher nao
+# julga quem registra -- foi essa a exigencia dele.
+pesquisa:
+  fonte:
+    arquivo: "dados/nefin_factors.csv"
+    sha256_12: "619991c2192c"
+  amostra_regra:
+    inicio: "2001-01"
+    fim: ULTIMA_DISPONIVEL      # REGRA, nao data. A extensao deixa de precisar de excecao,
+                                # e a data literal vira SAIDA da execucao, nao entrada do registro.
+    filtros: ["n_dias >= 15"]
+    fatores: [Rm_minus_Rf, SMB, HML, WML, IML]
+  familia:
+    alfa_familiar: 0.05
+    bilateral: true             # o 1,96 que se usava por omissao e bilateral; trocar a
+                                # lateralidade junto com a correcao esconderia qual delas moveu o numero
+    correcao_executado: ROMANO_WOLF
+    correcao_orcado: BONFERRONI_MEDIDO
+    repeticoes_bootstrap: 10000
+    semente: 20260905
+    por_que_dois_instrumentos: >
+      Nao e a mesma correcao aplicada duas vezes: os dois lados tem INSUMOS
+      diferentes e por isso aceitam instrumentos diferentes. O lado executado tem
+      estatistica em toda hipotese, entao o Romano-Wolf pode medir a dependencia
+      entre elas em vez de supo-la. O lado orcado tem 11 de 13 testes que nunca
+      rodaram -- nao ha o que reamostrar num teste sem estatistica --, e sobra a
+      uniao de Boole, que vale sob qualquer dependencia e so precisa da marginal
+      desta hipotese. Descobrir isso mudou a leitura da decisao 3: "os dois m lado
+      a lado" nao e a mesma medida feita duas vezes, e sim duas medidas com
+      instrumentos diferentes, por necessidade e nao por escolha.
+    precisao_do_corte_orcado: >
+      O quantil 1-alfa/13 vive na ponta da reamostragem: com 10.000 repeticoes sao
+      ~38 observacoes acima do corte. Medido em 12 sementes, o corte orcado do HML
+      fica em 3,107 com desvio 0,075 (minimo 2,986, maximo 3,211). O veredito e
+      robusto a isso -- o t do HML e 2,9351, abaixo do MENOR dos 12 --, mas uma
+      margem menor que 0,08 nesta familia e NAO_CONFIRMADA sem mais repeticoes.
+  divergencia:
+    politica: BLOQUEIA
+    operativo_quando_divergem: ORCADO
+    por_que_bloqueia: >
+      Sem regra, "preservar tudo" vira "escolha o que preferir" -- p-hacking com
+      auditoria completa. E o bloqueio e o ponto, nao o efeito colateral: um
+      veredito que se inverte conforme a familia e o evento mais informativo que
+      este aparato pode produzir, e merece uma parada e nao uma linha de log.
+    por_que_o_orcado_e_o_operativo: >
+      O orcado descreve o que ele se autorizou a tentar ANTES de ver qualquer
+      resultado, e portanto e o unico dos dois que nao pode ter sido escolhido pelo
+      resultado. O executado descreve a evidencia e cresce so quando alguem roda
+      mais coisa -- e quem roda ja viu o numero anterior.
+  diario:
+    - id: R1
+      estrategia: hml_puro_v1
+      tipo: ORIGINAL
+      data: 2026-09-05
+      amostra_realizada: "2001-01 a 2026-06, 306 meses"
+      t: 2.9351
+      veredito: NAO_REJEITA_PARA_EFEITO_DE_DECISAO
+      ambiente: "7565df1381e2c1ed"
+      nota: >
+        O veredito de 05/09 nao veio de corte nenhum -- veio das quatro razoes
+        listadas em hml_puro_v1.resultado.por_que_nao_rejeita_apesar_do_t. O corte
+        so foi especificado em 18/09, e e por isso que R3 existe.
+    - id: R2
+      estrategia: tamanho_smb_v1
+      tipo: ORIGINAL
+      data: 2026-09-05
+      amostra_realizada: "2001-01 a 2026-06, 306 meses"
+      t: 0.2829
+      veredito: HIPOTESE_NULA_SOBREVIVE
+      ambiente: "7565df1381e2c1ed"
+    - id: R3
+      estrategia: hml_puro_v1
+      tipo: CORTE_ESPECIFICADO
+      data: 2026-09-18
+      amostra_realizada: "2001-01 a 2026-06, 306 meses"
+      t: 2.9351
+      veredito: NAO_REJEITA
+      ambiente: "7565df1381e2c1ed"
+      corte_executado: 2.3256
+      corte_orcado: 3.1473
+      veredito_executado: REJEITA
+      veredito_orcado: NAO_REJEITA
+      nota: >
+        Mesma execucao de R1, julgada pelo corte que passou a existir. Os dois lados
+        DIVERGEM, e a divergencia esta escrita abaixo. Nao gasta variante: nao houve
+        escolha entre duas leituras de uma especificacao, e sim o preenchimento de um
+        campo que o pre-registro deixara vazio -- e preencher depois de ver o dado e
+        um grau de liberdade, declarado aqui como tal.
+    - id: R4
+      estrategia: tamanho_smb_v1
+      tipo: CORTE_ESPECIFICADO
+      data: 2026-09-18
+      amostra_realizada: "2001-01 a 2026-06, 306 meses"
+      t: 0.2829
+      veredito: NAO_REJEITA
+      ambiente: "7565df1381e2c1ed"
+      corte_executado: 2.3256
+      corte_orcado: 2.7855
+      veredito_executado: NAO_REJEITA
+      veredito_orcado: NAO_REJEITA
+      nota: >
+        Nao diverge, e nao muda nada: a hipotese nula do tamanho sobrevivia a 1,96 e
+        sobrevive a qualquer corte maior. Esta aqui porque um diario que so registra
+        os casos interessantes nao e um diario.
+  divergencias_escritas:
+    - estrategia: hml_puro_v1
+      entre: [R3.executado, R3.orcado]
+      escrita_em: 2026-09-18
+      leitura: >
+        O HML rejeita a nula contra a familia EXECUTADA (t 2,9351 contra corte
+        2,3256, p ajustado 0,0086) e NAO rejeita contra a familia ORCADA (corte
+        3,1473). Nao ha contradicao: sao duas perguntas. "Isto se destaca entre as
+        duas coisas que eu de fato testei" e "isto se destaca entre as treze que eu
+        me autorizei a testar" tem respostas diferentes, e o segundo e o compromisso
+        que ele assinou antes de olhar o dado. Por isso o operativo e o orcado, e por
+        isso o veredito registrado em 05/09 -- NAO_REJEITA_PARA_EFEITO_DE_DECISAO --
+        nao muda: ele ja era conservador por quatro razoes independentes do corte.
+        O que muda e a AFIRMACAO. O projeto vinha dizendo que o HML "sobrevive ao
+        corte mais severo por 0,027 de um t". Isso valia sob a suposicao de que o t
+        estimado se distribui como a tabela de Student. Medido nesta serie, ele nao
+        se distribui: a cauda e ~7% mais gorda, o corte orcado sobe de 2,9131 para
+        3,1473, e a folga de +0,027 vira um deficit de -0,212. O HML nao sobrevive ao
+        orcamento que o proprio pre-registro fixou.
 
 # ── DECISOES EM ABERTO ────────────────────────────────────────────────────────
 # Uma decisao PENDENTE bloqueia o que ela sustenta. Nao ha default silencioso.

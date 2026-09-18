@@ -35,9 +35,11 @@ PACOTE = os.path.join(RAIZ, "alocacao")
 # ── A LINHA DE BASE. E DADO, nao codigo (P2): cada linha tem de ter um porque.
 # Medida em 12/09/2026 sobre o instantaneo de 06/09. RECONFERIR na maquina real.
 CONHECIDAS = {
-    # E-06 -- o pre-registro declara guardas que ninguem executa. ABERTO.
+    # E-06 -- o pre-registro declara guardas que ninguem executa.
+    # `variantes_permitidas` SAIU em 18/09: `preregistro.py` passa a soma-lo para
+    # obter o `m` orcado, e a linha de base encolheu por conserto e nao por dedupe.
+    # `verificar_monotonicidade` continua ABERTO -- depende da Fase 0.
     "estrategias_pre_registradas.greenblatt_v1.verificar_monotonicidade",
-    "estrategias_pre_registradas.hml_puro_v1.variantes_permitidas",
     # resultado ja registrado do backtest: e SAIDA gravada, nao parametro de entrada
     "estrategias_pre_registradas.hml_puro_v1.ordem_de_execucao",
     "estrategias_pre_registradas.hml_puro_v1.resultado.alfa_bruto_aa",
@@ -120,7 +122,10 @@ ESPECIES = (
     # E-06 -- resultado JA GRAVADO do pre-registro e limite anti-p-hacking declarado.
     # Sao SAIDA registrada e regra de processo, nao parametro de entrada do motor.
     ("estrategias_pre_registradas.*.ordem_de_execucao", "E-06"),
-    ("estrategias_pre_registradas.*.variantes_permitidas", "E-06"),
+    # ("estrategias_pre_registradas.*.variantes_permitidas", "E-06") SAIU em 18/09 --
+    # a especie deixou de casar com orfa nenhuma porque o `m` orcado passou a soma-la,
+    # e foi o proprio `test_a_linha_de_base_nao_guarda_chave_ja_resolvida` quem cobrou
+    # a remocao. Inventario que encolhe por conserto e o ponto dele.
     ("estrategias_pre_registradas.*.resultado.*", "E-06"),
     # P-78 -- procedencia do indice do BC: `test_corretoras.py` RECALCULA o indice a
     # partir das partes, entao elas sao o insumo que prova o numero derivado.

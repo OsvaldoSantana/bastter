@@ -74,7 +74,8 @@ def tratamento_de(corpo):
                 tratos.add(NEUTRO)
             elif isinstance(v, ast.Constant) and v.value in (None, 0, False, "", 0.0):
                 tratos.add(NEUTRO)
-            elif isinstance(v, (ast.List, ast.Dict, ast.Tuple)) and not getattr(v, "elts", getattr(v, "keys", [1])):
+            elif isinstance(v, (ast.List, ast.Dict, ast.Tuple)) \
+                    and not getattr(v, "elts", getattr(v, "keys", [1])):
                 tratos.add(NEUTRO)
             else:
                 tratos.add("RET_VALOR")

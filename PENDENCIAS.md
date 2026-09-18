@@ -1525,10 +1525,130 @@ mutação.
 
 ---
 
+## P-87 · Existe uma SEGUNDA cópia do projeto na máquina, com `.git` próprio
+
+**Dono:** Osvaldo · **Gatilho:** nenhum — antes do próximo pacote ou sessão de nuvem ·
+**Classe:** `BLOQUEIA_O_SISTEMA`
+
+O repositório vivo é `C:\Users\osvaldo.junior\Desktop\Bastter`. Existe **outro**, em
+`C:\Users\osvaldo.junior\OneDrive - VOLGA …\Área de Trabalho\Bastter`, com `.git`
+próprio cujo último `index` é de **09/09/2026**, `corretoras.py` de 18 KB contra os 28 KB
+do vivo, e ainda com os cinco `*-patch.py` e a pasta `pacote_segunda/` que o P-82 removeu.
+
+**Foi essa a pasta que a sessão da nuvem recebeu como pasta conectada em 18/09**, e eu
+estive a um `device_commit_files` de escrever o trabalho de três dias dentro dela. O que
+impediu foi conferir tamanho e `mtime` antes de gravar — não uma guarda.
+
+> **É a armadilha do `pesquisa-custos-2026-08/calc/` e do `pacote_segunda/` num terceiro
+> andar, e é o pior dos três:** os dois primeiros moram *dentro* do repositório e o
+> `test_p82_copia_do_projeto.py` os mede pelo índice do git. Este mora **fora**, tem git
+> próprio, e nenhum teste do projeto pode alcançá-lo — um teste mede o repositório em que
+> roda, e o problema é justamente haver dois.
+
+**Contexto, corrigido por ele em 18/09:** tirar o projeto do OneDrive **foi decisão
+tomada e executada** — a pasta do servidor é o original abandonado, não um espelho vivo.
+Isso explica a pasta e **não a torna inofensiva**: ela continua sendo um repositório
+completo, com `.git` próprio, no caminho que a nuvem recebeu como pasta conectada.
+
+**O que fazer (decisão dele, não minha):** ou a cópia do OneDrive é apagada, ou é renomeada
+para algo que não se confunda (`Bastter-ARQUIVO-09set`), ou o `Desktop\Bastter` passa a ser
+o único caminho aceito. Enquanto houver duas, toda sessão de nuvem precisa conferir qual
+recebeu — e **P7: conferência que depende de alguém lembrar não é conferência.**
+
+---
+
+## P-88 · O bootstrap reamostra meses independentes, e ninguém mediu a dependência serial
+
+**Dono:** próxima sessão · **Gatilho:** antes de usar o corte medido para decidir algo ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+O corte de 18/09 sai de um bootstrap que sorteia **meses soltos**. Se os fatores tiverem
+dependência serial, a distribuição da estatística é outra e o corte medido está
+**subestimado** — na mesma direção do achado (o HML fica ainda mais longe de sobreviver),
+o que torna a limitação conservadora e não convidativa.
+
+Medir pede *block bootstrap* com blocos de comprimento declarado. O custo é baixo; o que
+falta é escolher o comprimento do bloco **com medição de sensibilidade**, e não por
+convenção — senão troca-se uma suposição tabelada por outra.
+
+---
+
+## P-89 · O corte de m = 8 é `NAO_CONFIRMADO`, e a margem é menor que o ruído
+
+**Dono:** próxima sessão · **Gatilho:** se alguém quiser julgar as oito pré-registradas ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+Em m = 8 o corte medido é 2,9337 e o `t` do HML é 2,9351: **0,0014 de diferença**, contra
+um desvio de reamostragem de ~0,075. O veredito ali não é "rejeita" nem "não rejeita" — é
+`NAO_CONFIRMADO`, e é assim que está escrito. Fechar exige mais repetições (100.000 já
+estabilizam a terceira casa) ou aceitar que a família de interesse são os dois `m` que o
+sistema calcula, e não o 8 que ninguém usa.
+
+
+## P-90 · Obter os custos das casas que a coleta não alcançou
+
+**Dono:** próxima sessão de pesquisa (nuvem, com subagentes) · **Gatilho:** nenhum —
+está pronta para começar · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+Correção dele, 18/09: *"se a informação existe e você não conseguiu, o item não deve ser
+excluído — mas o problema de conseguir a informação deve ser solucionado."*
+
+A metade "não excluir" está feita (`auditoria/P90-INFORMACAO-NAO-OBTIDA.md`). **Esta
+pendência é a outra metade**, e ela existe porque o campo `pegadinha` guardava um
+fracasso do meu raspador como se fosse característica da instituição:
+
+| casa | o que `pegadinha` diz | o que isso descreve |
+|---|---|---|
+| BTG Pactual digital | *site é SPA sem HTML servido* | o meu leitor, não o BTG |
+| Bradesco / Ágora | *PDF de tarifas não pôde ser baixado* | idem |
+| Mirae Asset | *HTTP 403; DNS não resolve* | idem |
+| Órama, Guide, Necton, Vitreo | SPA / 404 / IPv6 / DNS | idem |
+
+**A regra que sai disto, e ela é geral:** *"não consegui obter"* é um estado do
+INSTRUMENTO e tem de ser registrado como tal — com a data da tentativa, o método usado e
+o erro. Escrito no campo que descreve a instituição, ele vira, seis meses depois, um fato
+sobre ela. É a mesma classe do C-01 (número plausível em prosa que ninguém precisa medir
+para repetir).
+
+**Primeira tarefa, e ela não é raspar de novo:** listar as fontes que **não dependem do
+site da corretora**. O precedente já existe e é do próprio projeto — `solidez` e
+`reclamacoes` dessas casas foram obtidas assim, de balanço e do Ranking de Reclamações do
+BCB, e são justamente as que sobreviveram ao fracasso. Candidatos a verificar, nenhum
+confirmado: tabela de tarifas na página institucional de RI, taxas de custódia
+publicadas pelo Tesouro Direto por instituição habilitada, e a lista de participantes da
+B3. **Não registrar nenhuma como fonte antes de abrir e ler.**
+
+---
+
+## P-91 · Comparar retrato de CVM por hash de arquivo produz falso positivo
+
+**Dono:** próxima sessão · **Gatilho:** antes de escrever a rotina semanal automática ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+Medido em 18/09 (`auditoria/CVM-PRIMEIRO-RETRATO.md`): o `dfp_cia_aberta_2024.zip` mudou
+de sha256 em 14 dias **sem nenhuma mudança de dado** — a CVM regerou o arquivo e 8 linhas
+de 94.517 trocaram de posição. `sorted(a) == sorted(b)`.
+
+A estratégia do `CLAUDE.md` §11.6 — *"baixar, comparar, guardar o delta"* — declararia
+uma reapresentação aqui e comitaria ruído toda semana. `fase0/manifesto_cvm.py --comparar`
+já faz a comparação certa (normalizada por ordem, quatro vereditos nomeados). **O que
+falta é a decisão de desenho:** a rotina semanal guarda o delta de *quê* — do ZIP, do CSV,
+ou das linhas com chave `(CNPJ, DT_REFER, ORDEM_EXERC, conta)`? A terceira é a única que
+sobrevive a uma mudança de separador ou de codificação, e é a mais cara.
+
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| P-87 | uma segunda cópia do projeto na máquina, no OneDrive, com `.git` próprio parado em 09/09 — e foi a pasta que a sessão de nuvem recebeu conectada | 18/09 — **apagada por ele.** `Desktop\Bastter` é o caminho único |
+| passo 1 do `PLANO.md` | CVM não baixada — o bloqueio de que os outros três marcos dependiam | 18/09 — **33 ZIPs**, DFP 2010–2026 e ITR 2011–2026, em `data\bronze\cvm\`. Acervo completo, cauda congelada incluída. Falta o manifesto (`fase0/manifesto_cvm.py --manifesto`), e sem ele o acervo é um conjunto de arquivos, não um retrato datado |
+| decisão 2 de 13/09 | o corte do backtest era **1,96 por omissão** — e 1,96 é a NORMAL, num teste com 301 graus de liberdade | 18/09 — `alocacao/multiplicidade.py`: t de Student implementada em casa (sem acrescentar scipy, que mudaria a impressão do ambiente e tornaria todo resultado registrado um número novo), Bonferroni, Bonferroni sobre marginal medida e Romano-Wolf com bootstrap **conjunto**. 69 testes, com oráculo externo: tabela publicada de Student, identidade de ida-e-volta, e amostragem pelo numpy |
+| decisão 3 de 13/09 | o `m` era afirmado por quem registra, e o `pesquisa_id` era renomeável | 18/09 — `alocacao/preregistro.py`: `m_executado` sai do **diário**, `m_orcado` da **soma** dos `variantes_permitidas`, `pesquisa_id` do sha256 da fonte + regra de amostra. Renomear não reinicia contador; trocar a série levanta `FonteTrocada` |
+| decisão 4 de 13/09 | divergência de veredito não tinha regra, e "preservar tudo" viraria "escolha o que preferir" | 18/09 — portão em `preregistro.operativo()`, sobre **vereditos divergentes venham de onde vierem**, não só R1×Rn. Primeiro caso no mesmo dia: o HML diverge entre os dois lados do `m`. Operativo = **orçado**. `leitura` com menos de 120 caracteres não destrava |
+| P-29 | `estrategias_pre_registradas` declarada ESPECIFICACAO — escrito e não ligado a nada | 18/09 — reclassificada para **REGISTRO** (67 das suas chaves são testemunho e nunca serão lidas; inventariá-las como dívida seria registrar 67 promessas falsas). O papel de ESPECIFICACAO virou **número**: `m_orcado − m_executado` = **11** testes pré-registrados que nunca foram ao dado, com teste que o prende |
+| — | `politica.yaml` sem bump desde 16/09 | 18/09 — **1.19.0 → 1.20.0**, changelog com o corte medido e a retificação do HML |
+| — | `ruff` acusava 1 erro em `auditoria/pares_irmaos.py` (E501), fora do portão da P-40 | 18/09 — corrigido; `ruff check alocacao fase0 auditoria` passa limpo. Um passo da **P-80**, que continua aberta (o `testpaths` ainda cobre um terço) |
 | P-84 | a decisão dele de 13/09 — custo por operação no ranking — sem implementação | 16/09 — `corretagem_etf_pct` entrou como **segunda parcela** da dimensão `corretagem` (pior caso entre ação e ETF), sem inventar peso. Os outros três são **exibidos e nunca pontuados** (`politica.yaml → corretora.custo_por_operacao`), porque medidos são constantes entre quem os declara. **A tabela do ranking não mudou**, e o motivo está preso num teste: a única casa com ETF ≠ 0 é a XP, cuja dimensão já estava `None` pelo E-08 |
 | P-86 | o `chaves_orfas.py` deduplicava por NOME DE FOLHA e escondia **42 de 67** chaves — a segunda ocorrência de um nome sumia do relatório | 16/09 — dedupe por caminho; linha de base recortada por **espécie** (glob + motivo), porque as 42 são nove espécies já declaradas para uma instância. Guarda da guarda com prova por mutação |
 | — | `politica.yaml` sem bump de versão desde 11/09 (passo 9 do protocolo, sete commits) | 16/09 — **1.18.0 → 1.19.0**, com o changelog registrando a decisão do custo por operação e a lacuna acumulada |
@@ -1609,6 +1729,32 @@ mutação.
 ---
 
 ## Ao voltar ao desktop
+
+### 18/09/2026 — o que esta rodada deixou pronto, e a única coisa que precisa de você
+
+Tudo abaixo **já está gravado** em `C:\Users\osvaldo.junior\Desktop\Bastter`. Falta
+commitar — e resolver a P-87 antes de qualquer pacote novo.
+
+```powershell
+cd $HOME\Desktop\Bastter
+py -3.11 -m pytest -q                       # esperado: 501 passed, 4 skipped
+py -3.11 -m pytest auditoria fase0 -q       # as outras duas suítes
+py -3.11 -m ruff check alocacao fase0 auditoria
+py -3.11 -m mypy alocacao fase0 auditoria
+py -3.11 alocacao\backtest_h1_h3.py        # o relatório novo, com os dois cortes
+git add -A
+git commit -m "decisoes 2/3/4 de 13/09: Romano-Wolf, o m dos dois lados, divergencia bloqueia"
+```
+
+**E o que continua esperando por você há 16 commits: nada foi empurrado para
+`origin/main`.** Isso não é higiene — é o único pilar do pré-registro que a evidência
+sustenta. O `auditoria/PREREGISTRO-EVIDENCIA.md` conclui que todo benefício medido de
+pré-registro vem de arranjos com **verificador externo**, e que o que salva este desenho é
+o repositório público com commits datados. **Enquanto não houver push, esse verificador não
+existe** — e o registro de 18/09, que é o mais forte que o projeto já produziu, vale
+exatamente o que vale uma anotação privada.
+
+---
 
 *Reescrito em 06/09/2026. A versão anterior era de 05/09 e citava 149/158 testes — hoje
 são 269. Fila desatualizada é pior que fila nenhuma: ela parece confiável.*
