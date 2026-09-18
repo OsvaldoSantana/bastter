@@ -167,6 +167,17 @@ Sem a URL não dá para checar se existe revisão 03.
 
 **Gatilho:** antes de escrever o parser do COTAHIST.
 
+> **18/09/2026 — medido, e reclassifica a pendência.** As duas páginas públicas da série
+> histórica foram lidas nesta data (a atual da B3 e o formulário no host legado) e
+> **nenhuma linka documento de leiaute** — não é "eu não procurei a URL", é *a página
+> onde ela deveria estar não a tem*. Transcrição em
+> `docs/fontes/b3-series-historicas-cotahist.md` §5.
+>
+> A P-06 deixa de ser *achar um link* e passa a ser *decidir o que fazer sem ele*, e a
+> saída provável é limitação declarada: o layout que o projeto usa é cópia sem fonte
+> verificável, e a enumeração real tem de sair do **dado observado** com falha ruidosa
+> fora dela — que é o que a P-95 já mandava, por outro motivo.
+
 ---
 
 ## P-08 · Constantes vencendo — macro renovadas em 05/09
@@ -1741,6 +1752,192 @@ precisa registrar que a tabela dele não é exaustiva — hoje o arquivo diz que
 incompletas são as de CODBDI e TPMERC, e a de ESPECI foi transcrita como "integral".
 
 
+## P-96 · ~~Ano fechado do COTAHIST muda?~~ **FECHADA em 18/09 — não muda, medido**
+
+**Dono:** Osvaldo (download) · **Gatilho:** junto com o download dos quatro anos ·
+**Classe:** `DECISAO_DE_DESENHO` · ⚙ **exige o desktop**
+
+A limitação `captura_do_cotahist_passa_por_captcha` (política 1.21.0) diz que o custo do
+portão manual é **um número fixo de cliques, uma vez** — e diz isso apoiada numa
+suposição minha: *ano fechado não muda*. **A B3 não afirma isso em lugar nenhum**; as
+duas páginas públicas não publicam política de atualização (lido em 18/09/2026).
+
+> **18/09 — a medição aconteceu sozinha.** O download dos 41 anos rebaixou o
+> `COTAHIST_A2023.ZIP` e ele veio com **70.216.090 bytes — exatamente o tamanho do que
+> está no acervo desde 04/09.** Falta uma linha para fechar:
+>
+> ```powershell
+> Get-FileHash "docs\fontes\series-historicas-cotahist\COTAHIST_A2023.ZIP" -Algorithm SHA256
+> #   ad1603788d78aaa1de806498572277f1d9443f88ae116452751b5800cb23523e  -> congelado
+> ```
+>
+> Tamanho igual é evidência forte e não é prova: dois arquivos do mesmo tamanho podem
+> diferir. O hash decide.
+>
+> **FECHADA — o hash foi medido no arquivo rebaixado:**
+>
+> ```
+> ad1603788d78aaa1de806498572277f1d9443f88ae116452751b5800cb23523e   rebaixado 18/09
+> ad1603788d78aaa1de806498572277f1d9443f88ae116452751b5800cb23523e   acervo     04/09
+> ```
+>
+> **Idênticos.** Ano fechado do COTAHIST é congelado — deixou de ser suposição minha e
+> virou medição, com 14 dias de intervalo.
+
+- **Igual** → congelado, medido em vez de suposto. A P7 encolhe para o ano corrente.
+- **Diferente** → existe rotina periódica, ela é manual, e a limitação muda de peso.
+
+E vale o aprendizado da CVM antes de concluir: **hash diferente não é reapresentação.**
+`manifesto_cvm.py --comparar` separa `REORDENADO` de `REAPRESENTADO`; na CVM, comparar
+por hash deu **100% de falso positivo** em 18/09.
+
+---
+
+## P-97 · A procedência do `COTAHIST_A2023.ZIP` que já está no acervo
+
+**Dono:** Osvaldo · **Gatilho:** antes de escrever o `origem.csv` do b3 ·
+**Classe:** `DADO_DE_UM_USUARIO`
+
+O arquivo está em `data\bronze\b3\` desde 04/09/2026 e **não se sabe de onde veio**.
+O manifesto conta isso: `P-06: 1 de 1 arquivo(s) tem sha256 e NAO tem de onde vieram`.
+
+Não dá para supor que veio da página de séries anuais — inventar procedência no arquivo
+cuja única função é não inventar procedência seria o pior lugar possível para um chute.
+Duas saídas legítimas: ele confirma a origem, ou a linha do `origem.csv` registra origem
+**desconhecida** e a contagem continua em 1 até alguém rebaixar o arquivo por um caminho
+conhecido. A segunda é honesta; a primeira é melhor.
+
+---
+
+## P-98 · 507 MB entraram em `docs/fontes/` sem casar com nenhum padrão do `.gitignore`
+
+**Dono:** próxima sessão (feito: guarda escrita) · **Gatilho:** **antes do próximo
+`git add`** · **Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
+
+O acervo COTAHIST (6,0 GB) foi baixado para `docs\fontes\series-historicas-cotahist\`
+— **dentro do repositório, que é público.** O `.gitignore` cobria
+`docs/fontes/**/*.zip` e `**/*.txt`, e por isso 65 dos 81 arquivos estavam cobertos.
+
+**Os 16 de 1986–2001 não.** O ZIP da B3 muda de convenção no meio da série e esses anos
+saem **sem extensão** (`COTAHIST.A1986`, `COTAHIST_A2001`). São **507 MB** que padrão
+nenhum pegava, a um `git add -A` de virar histórico permanente — blob commitado não se
+apaga com `git rm`, só com reescrita de histórico, e depois de um push nem isso.
+
+**É a P-82 pela segunda vez em dois dias:** *regra escrita numa lista de nomes não é
+regra, é lembrete.* Lá era uma lista de **pastas**; aqui é uma lista de **extensões**,
+e estendê-la exigiria saber de antemão como um publicador nomeia o conteúdo de um ZIP
+de 1986. Ninguém sabe.
+
+**Fechado nesta sessão, nos dois níveis:** `.gitignore` ganhou a pasta, e
+`alocacao/test_p98_acervo_fora_do_indice.py` mede **tamanho no índice do git** — bytes
+não dependem de alguém ter acertado o nome. 5 testes, com prova por mutação usando os
+números reais do incidente. **Falta rodar `git status` antes do próximo commit** para
+confirmar que nada já entrou.
+
+---
+
+## P-99 · O COTAHIST muda de convenção de nome dentro da própria série, e o parser não vê
+
+**Dono:** próxima sessão · **Gatilho:** antes de estender `calendario.py`/`ajustar.py`
+para além de 2023 · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+| faixa | nome dentro do ZIP |
+|---|---|
+| 1986–2000 | `COTAHIST.A1986` … `COTAHIST.A2000` — **ponto**, sem extensão |
+| 2001 | `COTAHIST_A2001` — **sublinhado**, sem extensão |
+| 2002–2025 | `COTAHIST_A2002.TXT` — sublinhado **e** `.TXT` |
+
+> **18/09 — medido, e a notícia é boa: o problema é SÓ o nome.** Abri os três ZIPs e
+> comparei o conteúdo. O layout é **idêntico** nos 41 anos — 245 posições, CRLF,
+> `TIPREG=01`, `DATA` em 3–10, `CODNEG` em 13–24, `MOEDA` em 53–56:
+>
+> ```
+> COTAHIST_A1986.ZIP -> 'COTAHIST.A1986'      245 pos.  '00COTAHIST.1986BOVESPA 19991210'
+> COTAHIST_A2001.ZIP -> 'COTAHIST_A2001'      245 pos.  '00COTAHIST.2001BOVESPA 20060331'
+> COTAHIST_A2023.ZIP -> 'COTAHIST_A2023.TXT'  245 pos.  '00COTAHIST.2023BOVESPA 20231228'
+> ```
+>
+> **A correção certa não é uma lista de nomes** — seria o mesmo erro da P-98 e da P-82
+> pela terceira vez. É ler o **membro único do ZIP** (`namelist()[0]`) e validar pelo
+> conteúdo: cabeçalho `00COTAHIST.<ANO>` e registros de 245 posições. Nome é a
+> propriedade que varia; o layout é a que identifica.
+
+`fase0/calendario.py` varre ZIP **ou** TXT; `ajustar.py` lê o que estiver na pasta.
+**Nenhum dos dois encontra os 16 primeiros**, e o modo de falha é o mais caro do
+projeto: eles não quebram — **não veem o ano.** A série passaria a começar em 2002 sem
+ninguém ter decidido isso, e nenhum teste de "veio número?" notaria.
+
+A correção é a do A-05: enumeração vinda do **dado observado**, com falha ruidosa fora
+dela. E um teste que liste os anos efetivamente lidos e compare com os anos presentes
+na pasta — **contagem que decai**, não suposição.
+
+---
+
+## P-100 · O `COTAHIST_A2026.ZIP` não é um ZIP completo
+
+**Dono:** Osvaldo (rebaixar) · **Gatilho:** quando o ano corrente for necessário ·
+**Classe:** `DECISAO_DE_DESENHO` · ⚙ **exige o desktop**
+
+38.328.935 bytes baixados; a extração falha com *"O registro Final de Diretório Central
+não foi localizado"* — o fim do arquivo não chegou.
+
+> **18/09 — medido o que o arquivo é.** Não é página de erro nem HTML: o cabeçalho é
+> `PK\x03\x04`, com o membro `COTAHIST_A2026.TXT` declarado e **flag 0x0808** — bit 3
+> ligado, isto é, **ZIP em streaming**, com os tamanhos num descritor no fim. É a forma
+> de quem **gera o arquivo na hora**, coerente com o ano corrente ainda estar aberto. O
+> download foi **cortado**, não recusado.
+>
+> Consequência para a rotina automática: um ZIP em streaming **não dá para validar pelo
+> tamanho esperado**, porque não há tamanho esperado. O coletor tem de **abrir o ZIP e
+> ler o membro até o fim** antes de aceitar o arquivo — conferir depois de gravar é
+> conferir tarde.
+
+**É a armadilha do `CLAUDE.md` §11.6, e desta vez ela gritou por sorte do formato:**
+*"um download que devolve 404 mais um unzip vazio produzem 'nenhuma mudança',
+indistinguível de 'a B3 não mudou nada'"*. Um ZIP truncado quebra alto; um TXT truncado
+teria entrado calado. **Ausência de mudança precisa ser afirmada, nunca inferida da
+ausência de erro** — e isso vale agora para o coletor que a rotina automática vai usar:
+ele tem de conferir o ZIP antes de aceitar o arquivo, não depois.
+
+---
+
+## P-101 · Quatro moedas no acervo, e uma quebra de 2,75x que nenhum evento societário explica
+
+**Dono:** próxima sessão · **Gatilho:** antes de estender `ajustar.py` para além de 1995 ·
+**Classe:** `BLOQUEIA_O_SISTEMA` · *(achado C-03, em `auditoria/C03-A-QUEBRA-DE-MOEDA.md`)*
+
+A série agora começa em 02/01/1986 e atravessa seis planos econômicos. O campo `MOEDA`
+(posições 53–56) muda **dentro do mesmo arquivo anual**: `CR$`, `CZ$`, `NCZ$`, `R$`.
+
+**Medido — razão do mesmo ticker, mercado à vista, com controle do dia anterior:**
+
+| troca | pares | mediana | |
+|---|---|---|---|
+| 1986 Cruzado (1.000:1) | 274 | 1,197 | **sem quebra** — já reexpresso |
+| 1989 Verão (1.000:1) | 198 | 0,968 | **sem quebra** |
+| 1993 Cruzeiro Real (1.000:1) | 182 | 0,998 | **sem quebra** — e a `MOEDA` nem distingue as duas |
+| 1990 Collor | **2** | — | `NAO_CONFIRMADO` — o mercado parou |
+| **1994 Real (CR$ 2.750 = R$ 1)** | 136 | **0,364** | **QUEBRA**, contra controle de 1,011 |
+
+**Três das quatro trocas não deixam quebra.** A suposição natural — *"toda troca de moeda
+é uma quebra"* — erra em 3 de 4, e só a medição diz qual. A tabela de planos econômicos
+teria acusado quatro e acertado uma.
+
+**A do Real é real:** 1/0,364 = **2,744**, consistente com os 2,750 da lei, com o resto
+sendo variação de um pregão. E ela entra na série ajustada como **−63,6% no mercado
+inteiro, em um dia, sem causa** — porque troca de moeda não é evento societário, não tem
+`factor`, não tem data-ex e não existe no silver.
+
+**É o F-02 na forma mais cara:** não é insumo ausente virando zero — é insumo
+**presente, correto e anunciado** que ninguém lê. E é o C-01 em escala de mercado.
+
+**O que falta, e é pouco:** varrer os 33 arquivos não abertos para fechar a enumeração
+`OBSERVADO` de `MOEDA`; medir o fator de cada quebra encontrada (nunca tabelar); e decidir
+se a série utilizável começa em **04/07/1994** ou em **02/01/1986** — decisão que entra em
+`limitacoes_declaradas` ou vira trabalho, mas não fica em silêncio.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
@@ -1837,129 +2034,93 @@ incompletas são as de CODBDI e TPMERC, e a de ESPECI foi transcrita como "integ
 
 ## Ao voltar ao desktop
 
-### 18/09/2026, segunda rodada — `fase0/ajustar.py`, e a série de 2023 está de pé
+*Reescrita em 18/09/2026. A versão anterior era de **06/09** e mandava criar o
+repositório no GitHub (existe), rodar `coletar_b3.py --eventos` (rodou, 74/74) e o
+`-SoConferir` da CVM (feito). `CLAUDE.md` §5-A avisa que **fila desatualizada é pior que
+fila nenhuma: ela parece confiável** — e esta seção passou doze dias sendo o exemplo.
+O texto antigo não foi perdido: ele descreve o estado de 06/09 e está no histórico do
+git.*
 
-Gravado em `C:\Users\osvaldo.junior\Desktop\Bastter`, nada pendente de escrita:
-
-```
-fase0/ajustar.py             novo     o ajuste de preco por evento
-fase0/test_ajustar.py        novo     32 testes, 8 deles contra o acervo real
-fase0/calendario.py          mudado   arquivos() / registros() / data_de() extraidos
-auditoria/C02-O-DEGRAU-MEDIDO.md      o laudo da medicao
-```
+### 1. Conferir e commitar o que esta sessão escreveu
 
 ```powershell
-cd $HOME\Desktop\Bastter
-py -3.11 fase0\ajustar.py                   # sai com codigo 1: os 13 eventos da P-93
-py -3.11 -m pytest fase0 -q                 # esperado: 148 passed
+cd C:\Users\osvaldo.junior\Desktop\Bastter
+py -3.11 -m pytest fase0 -q                     # o teste novo é fase0/test_p7_captura_declarada.py
+py -3.11 -m pytest alocacao -q ; py -3.11 -m pytest auditoria -q
 py -3.11 -m ruff check alocacao fase0 auditoria
-git add -A
-git commit -m "C-02: o degrau do dia ex encolhe de -1,63% para -0,04% em 293 datas-ex"
+git add -A ; git commit -m "P7 declarada: as duas capturas manuais entram em limitacoes_declaradas (politica 1.21.0)"
 ```
 
-**A única coisa que precisa de você, e ela é um download:** o COTAHIST de **2025** e de
-**2021** (P-92). Dois arquivos, mesma página de séries históricas da B3 de onde veio o de
-2023. Nenhuma linha de código muda — o `calendario.py` e o `ajustar.py` leem o que estiver
-na pasta, e a cobertura da data ex cresce sozinha.
+O que chegou: `politica.yaml` **1.21.0** com duas limitações novas e o campo `acervos`;
+`manifesto_cvm.acervos_sem_regime()`; `fase0/test_p7_captura_declarada.py` (10 testes,
+com prova por mutação); `docs/fontes/b3-series-historicas-cotahist.md`; P-96 e P-97 aqui.
 
-O ganho não é só "mais um ano": são **50 eventos de quantidade** a mais para corroborar a
-leitura do `factor`, contra **1** hoje. É a questão metodológica mais barata que está
-aberta no projeto.
+### 2. Corrigir a mensagem de um commit que afirma trabalho que não existe — **antes de empurrar**
 
----
-
-### 18/09/2026 — o que esta rodada deixou pronto, e a única coisa que precisa de você
-
-Tudo abaixo **já está gravado** em `C:\Users\osvaldo.junior\Desktop\Bastter`. Falta
-commitar — e resolver a P-87 antes de qualquer pacote novo.
+O commit `7178756` diz **"COTAHIST 2021-2025"**. Isso não aconteceu: o acervo tem
+`COTAHIST_A2023.ZIP` e mais nada. **A mensagem foi escrita por mim, antes do trabalho
+existir** — é o C-01 no lugar mais caro que há, porque mensagem de commit é o registro
+datado em que o pré-registro deste projeto se apoia.
 
 ```powershell
-cd $HOME\Desktop\Bastter
-py -3.11 -m pytest -q                       # esperado: 501 passed, 4 skipped
-py -3.11 -m pytest auditoria fase0 -q       # as outras duas suítes
-py -3.11 -m ruff check alocacao fase0 auditoria
-py -3.11 -m mypy alocacao fase0 auditoria
-py -3.11 alocacao\backtest_h1_h3.py        # o relatório novo, com os dois cortes
-git add -A
-git commit -m "decisoes 2/3/4 de 13/09: Romano-Wolf, o m dos dois lados, divergencia bloqueia"
+git log --oneline -1 7178756
+git rebase -i --autosquash 7178756~1   # ou, se ele ainda for o HEAD:
+git commit --amend -m "manifesto preserva retrato do mesmo dia"
 ```
 
-**E o que continua esperando por você há 16 commits: nada foi empurrado para
-`origin/main`.** Isso não é higiene — é o único pilar do pré-registro que a evidência
-sustenta. O `auditoria/PREREGISTRO-EVIDENCIA.md` conclui que todo benefício medido de
-pré-registro vem de arranjos com **verificador externo**, e que o que salva este desenho é
-o repositório público com commits datados. **Enquanto não houver push, esse verificador não
-existe** — e o registro de 18/09, que é o mais forte que o projeto já produziu, vale
-exatamente o que vale uma anotação privada.
+**Só é possível porque nada foi empurrado.** Depois do push, a mentira fica no histórico
+público e a correção vira uma retratação, não uma emenda.
 
----
+### 3. Empurrar os commits — e isto não é higiene, é o verificador
 
-*Reescrito em 06/09/2026. A versão anterior era de 05/09 e citava 149/158 testes — hoje
-são 269. Fila desatualizada é pior que fila nenhuma: ela parece confiável.*
+São **19 commits** que nunca saíram da máquina. O laudo `auditoria/PREREGISTRO-EVIDENCIA.md`
+mediu que auto-registro **sem leitor externo** é justamente o caso em que os estudos não
+acham efeito, e que o que salva este projeto é o repositório público com commits datados:
+*a especificação commitada antes do resultado, num histórico que não se reescreve sem
+rastro.* **Enquanto nada é empurrado, esse verificador não existe** — e todo o aparato de
+pré-registro de 18/09 está apoiado nele.
 
-### 0. Antes de tudo — a ordem importa
+Ordem: corrigir o `7178756` **primeiro**, empurrar depois.
 
-1. Extrair o zip `bastter-06set2026.zip` por cima da pasta (ele traz **tudo** desde
-   sexta 18h).
-2. `cd alocacao ; python ambiente.py` — confere o ambiente **antes** de acreditar em
-   qualquer número.
-3. `python -m pytest -q` — esperado: **269 passed**.
-4. `ruff check . && mypy .` — ambos em **zero**.
+### 4. O download do COTAHIST — manual, e é o preço inteiro pago uma vez
 
-### 1. O que precisa ser gravado na pasta (4ª leva, tudo posterior a sexta 18h)
+Não há automação: o portão é CAPTCHA, e eu não passo por ele. O detalhe do caminho e o
+porquê estão em `docs/fontes/b3-series-historicas-cotahist.md`.
 
-| arquivo | destino | o que é |
+```
+https://bvmf.bmfbovespa.com.br/pt-br/cotacoes-historicas/FormSeriesHistoricasArq.asp
+  Séries Anuais -> escolher o ano -> resolver o CAPTCHA -> Download
+```
+
+**Ordem por evento de quantidade corroborado (P-92), não cronológica:**
+
+| ordem | ano | o que ele destrava |
 |---|---|---|
-| `alocacao.py` | `alocacao\` | P-24 (`teto_de_saldo`, `compor_reserva`), P-36 (catálogo em YAML), P-37 (`alocar()` em 6 passos), S-01, S-02 |
-| `catalogo.yaml` | `alocacao\` | **novo** — 25 rotas, valores por referência ao `custos.yaml` |
-| `instituicoes.yaml` | `alocacao\` | **novo** — 24 instituições, procedência por grupo de campos |
-| `ambiente.py` | `alocacao\` | **novo** — P-15 |
-| `impacto.py` | `alocacao\` | **novo** — P-39, mapa de dependências |
-| `conftest.py` | `alocacao\` | **novo** — P-38, guarda de estado compartilhado |
-| `estado.exemplo.yaml` | `alocacao\` | **novo** — cadastro mínimo (U-01) |
-| `test_usuario_novo.py` | `alocacao\` | **novo** — 13 testes, U-01 |
-| `test_p40_lint.py` | `alocacao\` | **novo** — ruff/mypy como portão da suíte |
-| `test_alocacao.py`, `test_motor.py`, `test_impacto.py`, `test_corretoras.py` | `alocacao\` | atualizados |
-| `motor.py`, `politica.yaml`, `custos.yaml`, `corretoras.py`, `cenarios.py`, `demo_aporte.py`, `estado_io.py`, `fatores.py`, `reserva.py`, `aporte.py`, `tese.py` | `alocacao\` | lint/tipos em zero |
-| `pyproject.toml` | raiz | **novo** — P-15 + P-40 |
-| `CLAUDE.md` | raiz | §7 refeita (V-01), §11.2 **corrigida**, §11.3 reescrita |
-| `PENDENCIAS.md` | raiz | este arquivo |
-| `ACHADOS.md` | raiz | **novo** — a história, migrada para fora do CLAUDE.md |
-| `pesquisa-bases-e-apis-2026-09.md` | `docs\fontes\` | **novo** — a pesquisa de 06/09 |
-| `fase0\` (pasta inteira) | raiz | **novo** — `LEIA-PRIMEIRO.md`, `CELULAR-CVM.md`, `fase0.ps1`, `coletar_b3.py` |
-| `gitignore-ATUALIZADO.txt` | vira `.gitignore` | acrescenta `.mypy_cache`, `.ruff_cache` |
-| `dot-claude\` | renomear para `.claude\` | as 3 skills do projeto |
+| 1º | **2025** | 31 eventos de quantidade |
+| 2º | **2021** | 19 |
+| 3º | 2024 | contiguidade |
+| 4º | 2022 | contiguidade |
+| 5º | 2023 **de novo**, em pasta separada | a medição da **P-96** |
 
-### 2. Comandos que só a sessão local pode dar
+Salvar em `data\bronze\b3\`, **`.zip` inteiro, sem descompactar**.
+
+Depois:
 
 ```powershell
-# a) O dado PERECÍVEL primeiro. É o único item da lista que pode deixar de existir.
-python fase0\coletar_b3.py --indice IBOV
-python fase0\coletar_b3.py --eventos
-
-# b) Só então a CVM, e SEM baixar nada ainda:
-.\fase0.ps1 -SoConferir
-
-# c) git — o repositório ainda não existe no GitHub
-#    gh não está instalado: criar em github.com/new, PRIVADO, sem README/gitignore/licença
-git add -A
-git commit -m "P-15/24/36/37/38/39/40, U-01, V-01: pesquisa de bases e coletor da B3"
-git remote add origin <url>
-git push -u origin main
+py -3.11 fase0\manifesto_cvm.py --manifesto data\bronze\b3
+# o manifesto agora imprime também a linha da P7, e continua cobrando o origem.csv
+Get-FileHash data\bronze\b3-conferencia\COTAHIST_A2023.ZIP -Algorithm SHA256
+#   igual a ad1603788d78aaa1... -> ano fechado é congelado (P-96 fecha medida)
 ```
 
-### 3. Contas pendentes de dado, que só rodam aí
+E escrever `docs\acervo\b3\origem.csv` (`caminho;origem;acesso`), uma linha por
+arquivo — modelo no §7 do documento de fonte. A linha do 2023 antigo depende da **P-97**.
+
+### 5. Contas pendentes de dado, que só rodam aí
 
 - **P-17** — reconciliar C-04 e C-05 com `auditoria/escopo-campos-de-analise.md`.
 - **P-18** — contar `SETOR_ATIV` nos ZIPs da CVM.
-- **P-06** — registrar a URL do PDF do layout do COTAHIST.
 
-### 4. O que o celular pode antecipar em dois dias
+### 6. Vencimento a conferir
 
-`fase0/CELULAR-CVM.md`. A Tarefa 1 leva 2 minutos e fecha o `NAO_CONFIRMADO` que decide
-se a Fase 0 é urgente — a mesma pergunta que o `-SoConferir` responde na terça.
-
-### 5. Vencimento a conferir
-
-`macro.poupanca_am` vence em **28/09/2026**. `motor.val()` avisa em stderr. Ainda não
-venceu; só não deixe passar.
+`macro.poupanca_am` vence em **28/09/2026** — dez dias. `motor.val()` avisa em stderr.

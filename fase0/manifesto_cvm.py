@@ -51,7 +51,9 @@ import sys
 import zipfile
 
 BLOCO = 1 << 20
-COLUNAS = ("caminho", "bytes", "sha256", "mtime_utc", "dt_captura")
+COLUNAS = ("caminho", "bytes", "sha256", "mtime_utc", "dt_captura", "origem", "acesso")
+COLUNAS_ORIGEM = ("caminho", "origem", "acesso")
+ORIGEM = "origem.csv"
 
 
 def sha256(caminho, bloco=BLOCO):
@@ -76,21 +78,92 @@ def zips(raiz):
     return sorted(out)
 
 
-def manifesto(raiz, quando=None):
-    """Uma linha por ZIP: o que se tem, e desde quando se sabe que se tem."""
+def origem_declarada(pasta):
+    """De ONDE cada arquivo veio, lido de `origem.csv` ao lado do manifesto.
+
+    O sha256 prova QUAL arquivo voce tem. Ele nao prova DE ONDE ele veio -- e a P-06
+    esta aberta desde 05/09 exatamente por isso: o `COTAHIST_A2023.ZIP` entrou no acervo
+    com 70 MB, hash, e nenhuma origem escrita.
+
+    E um arquivo A PARTE, e nao um campo do manifesto, porque as duas coisas tem ciclos
+    de vida diferentes: o manifesto e reescrito a cada captura; a origem de um arquivo
+    ja baixado nao muda nunca. Misturar os dois faria a origem ser reescrita -- e
+    perdida -- toda vez que alguem rodasse o manifesto."""
+    p = os.path.join(pasta, ORIGEM)
+    if not os.path.exists(p): return {}
+    with open(p, encoding="utf-8", newline="") as f:
+        return {r["caminho"]: r for r in csv.DictReader(f, delimiter=";")
+                if r.get("caminho")}
+
+
+def manifesto(raiz, quando=None, origens=None):
+    """Uma linha por ZIP: o que se tem, desde quando se sabe, e de onde veio."""
     quando = quando or dt.datetime.now(dt.timezone.utc)
+    origens = origens or {}
     linhas = []
     for caminho in zips(raiz):
         st = os.stat(caminho)
+        rel = os.path.relpath(caminho, raiz).replace("\\", "/")
+        o = origens.get(rel, {})
         linhas.append({
-            "caminho": os.path.relpath(caminho, raiz).replace("\\", "/"),
+            "caminho": rel,
             "bytes": st.st_size,
             "sha256": sha256(caminho),
             "mtime_utc": dt.datetime.fromtimestamp(
                 st.st_mtime, dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
             "dt_captura": quando.strftime("%Y-%m-%d"),
+            # vazio NAO e zero: e "nao sei", e a linha seguinte o conta em voz alta
+            "origem": o.get("origem", ""),
+            "acesso": o.get("acesso", ""),
         })
     return linhas
+
+
+def sem_origem(linhas):
+    """Quantos arquivos do acervo tem hash e nao tem de onde vieram. E a P-06 virando
+    NUMERO -- e um numero que decai, em vez de uma frase num arquivo de pendencias."""
+    return [x["caminho"] for x in linhas if not x["origem"]]
+
+
+POLITICA = os.path.join("alocacao", "politica.yaml")
+ACERVO = os.path.join("docs", "acervo")
+
+
+def acervos_sem_regime(raiz_repo):
+    """P7 virada NUMERO: quantos acervos existem sem regime de captura declarado.
+
+    Devolve `(sem_declaracao, declarados_sem_pasta)` -- dois conjuntos de nomes de
+    pasta de `docs/acervo/`. O primeiro sao acervos que existem e cujo regime ninguem
+    escreveu; o segundo sao nomes que a politica declara e que nao correspondem a
+    acervo nenhum, isto e, declaracao apodrecida.
+
+    O QUE ISTO MEDE, e o alcance e mais estreito que o nome (P5 aplicada ao proprio
+    instrumento): mede que cada subpasta de `docs/acervo/` e NOMEADA por alguma entrada
+    de `limitacoes_declaradas.*.acervos`. NAO mede que a captura seja de fato manual,
+    nem que alguem a tenha rodado, nem quando. Mede uma coisa so -- que nenhum acervo
+    exista sem alguem ter escrito sob que regime ele e capturado.
+
+    POR QUE ELE MORA AQUI E NAO NUM TESTE. A P-77 ensinou que campo lido so por teste e
+    campo que o motor nao usa: o teste prova o esquema e ninguem prova o comportamento.
+    `acervos` e lido por esta funcao, e o teste so a chama -- mesmo desenho do
+    `preregistro.conferir_registro()`.
+
+    E ele e da familia do `sem_origem()`: contagem que DECAI. O dia em que a captura da
+    CVM virar rotina automatica, `cvm` sai de `acervos` e a contagem sobe -- o teste
+    reprova, e a atualizacao e cobrada no mesmo minuto em que o mundo muda. Linha de
+    base que so encolhe por conserto e a unica que vale (P-86)."""
+    import yaml
+    caminho = os.path.join(raiz_repo, POLITICA)
+    with io.open(caminho, encoding="utf-8") as f:
+        P = yaml.safe_load(f)
+    declarados = set()
+    for lim in (P.get("limitacoes_declaradas") or {}).values():
+        if isinstance(lim, dict):
+            declarados.update(lim.get("acervos") or ())
+    base = os.path.join(raiz_repo, ACERVO)
+    existem = {n for n in os.listdir(base)
+               if os.path.isdir(os.path.join(base, n))} if os.path.isdir(base) else set()
+    return existem - declarados, declarados - existem
 
 
 def raiz_do_repositorio(partida):
@@ -221,7 +294,9 @@ def main(argv=None):
         # REAPRESENTADO e o unico que exige acao humana; sair != 0 para o chamador saber
         return 2 if v == "REAPRESENTADO" else 0
     if a.manifesto:
-        linhas = manifesto(a.manifesto)
+        hoje_pasta = os.path.dirname(a.saida) if a.saida else None
+        linhas = manifesto(a.manifesto, origens=origem_declarada(
+            hoje_pasta or os.path.dirname(destino_padrao(a.manifesto, "x"))))
         if not linhas:
             print(f"nenhum .zip sob {a.manifesto} -- e isso NAO e 'nada mudou': e "
                   f"'nao ha acervo'. Confira o caminho antes de concluir.", file=sys.stderr)
@@ -232,7 +307,27 @@ def main(argv=None):
         print(f"{len(linhas)} arquivos, {sum(x['bytes'] for x in linhas)/1e6:.0f} MB")
         print(f"manifesto: {destino}")
         for x in linhas:
-            print(f"  {x['sha256'][:16]}  {x['bytes']:>12,}  {x['caminho']}")
+            print(f"  {x['sha256'][:16]}  {x['bytes']:>12,}  {x['caminho']}"
+                  + ("" if x["origem"] else "   <- SEM ORIGEM"))
+        faltam = sem_origem(linhas)
+        if faltam:
+            print(f"\nP-06: {len(faltam)} de {len(linhas)} arquivo(s) tem sha256 e NAO tem "
+                  f"de onde vieram.\n  O hash prova QUAL arquivo e; ele nao prova a "
+                  f"procedencia. Declare em\n  {os.path.join(os.path.dirname(destino), ORIGEM)}"
+                  f"  (colunas: {';'.join(COLUNAS_ORIGEM)})", file=sys.stderr)
+        else:
+            print(f"\nP-06: os {len(linhas)} arquivos tem origem declarada.")
+        raiz_repo = raiz_do_repositorio(a.manifesto)
+        if raiz_repo:
+            sem, orfas = acervos_sem_regime(raiz_repo)
+            if sem:
+                print(f"\nP7: {len(sem)} acervo(s) sem regime de captura declarado: "
+                      f"{', '.join(sorted(sem))}.\n  Rotina que depende de alguem lembrar "
+                      f"nao e rotina. Ou ela roda sozinha, ou entra em\n  "
+                      f"{POLITICA} -> limitacoes_declaradas.*.acervos", file=sys.stderr)
+            if orfas:
+                print(f"\nP7: {len(orfas)} declaracao(oes) sem acervo: "
+                      f"{', '.join(sorted(orfas))}. Declaracao apodrecida.", file=sys.stderr)
         return 0
     p.print_help()
     return 1

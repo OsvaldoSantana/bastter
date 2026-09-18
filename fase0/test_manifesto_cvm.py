@@ -187,3 +187,56 @@ def test_manifesto_DIFERENTE_no_mesmo_dia_PRESERVA_o_retrato_anterior(tmp_path, 
         "o preservado tem de ser o ANTIGO, nao o novo"
     assert "2024.zip" in (tmp_path/"m.csv").read_text(encoding="utf-8")
     assert "PRESERVADO" in capsys.readouterr().err
+
+
+# ── P-06: o hash prova QUAL arquivo; nao prova DE ONDE ele veio ──────────────
+def test_sem_origem_declarada_o_manifesto_CONTA_em_vez_de_calar(tmp_path, capsys):
+    """A P-06 esta aberta desde 05/09: o `COTAHIST_A2023.ZIP` entrou no acervo com 70 MB,
+    sha256, e nenhuma origem escrita. Ate 18/09 isso era uma frase no PENDENCIAS.md.
+
+    Agora e um numero na saida do instrumento, e ele decai sozinho quando a origem for
+    declarada. Frase nao encolhe; contagem sim."""
+    (tmp_path/"pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    ac = tmp_path/"data"/"b3"; ac.mkdir(parents=True)
+    _zip(ac/"COTAHIST_A2023.ZIP", {"x.csv": LINHAS})
+    assert M.main(["--manifesto", str(ac)]) == 0
+    saida = capsys.readouterr()
+    assert "SEM ORIGEM" in saida.out
+    assert "P-06: 1 de 1" in saida.err
+
+
+def test_com_origem_declarada_o_numero_CAI(tmp_path, capsys):
+    """Prova por mutacao do contador: declarar a origem tem de faze-lo cair a zero. Um
+    contador que nao muda quando o buraco fecha e decoracao."""
+    (tmp_path/"pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    ac = tmp_path/"data"/"b3"; ac.mkdir(parents=True)
+    _zip(ac/"COTAHIST_A2023.ZIP", {"x.csv": LINHAS})
+    docs = tmp_path/"docs"/"acervo"/"b3"; docs.mkdir(parents=True)
+    (docs/M.ORIGEM).write_text(
+        "caminho;origem;acesso\nCOTAHIST_A2023.ZIP;https://exemplo/x.zip;2026-09-18\n",
+        encoding="utf-8")
+    assert M.main(["--manifesto", str(ac)]) == 0
+    saida = capsys.readouterr()
+    assert "SEM ORIGEM" not in saida.out
+    assert "os 1 arquivos tem origem declarada" in saida.out
+    gravados = [p for p in docs.iterdir() if p.name.startswith("dt_captura=")]
+    assert len(gravados) == 1
+    assert "https://exemplo/x.zip" in gravados[0].read_text(encoding="utf-8")
+
+
+def test_a_origem_NAO_e_reescrita_pelo_manifesto(tmp_path):
+    """Por que `origem.csv` e um arquivo a parte: o manifesto e reescrito a cada captura,
+    e a origem de um arquivo ja baixado nao muda nunca. Se fosse campo do manifesto, uma
+    execucao sem a informacao apagaria a informacao -- que e o F-02 na camada do registro."""
+    (tmp_path/"pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    ac = tmp_path/"data"/"b3"; ac.mkdir(parents=True)
+    _zip(ac/"a.zip", {"x.csv": LINHAS})
+    docs = tmp_path/"docs"/"acervo"/"b3"; docs.mkdir(parents=True)
+    alvo = docs/M.ORIGEM
+    alvo.write_text("caminho;origem;acesso\na.zip;https://ex/a.zip;2026-09-18\n",
+                    encoding="utf-8")
+    antes = alvo.read_text(encoding="utf-8")
+    M.main(["--manifesto", str(ac)])
+    _zip(ac/"b.zip", {"y.csv": LINHAS})
+    M.main(["--manifesto", str(ac)])
+    assert alvo.read_text(encoding="utf-8") == antes

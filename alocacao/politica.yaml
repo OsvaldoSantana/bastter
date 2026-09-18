@@ -13,10 +13,36 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.20.0
+  versao: 1.22.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.22.0: >-
+      18/09/2026, algumas horas depois da 1.21.0, e e uma RETRATACAO. Eu declarei em
+      `captura_do_cotahist_passa_por_captcha` que *"nao existe automacao deste
+      download"*. E FALSO. O Osvaldo baixou os 41 anos (1986-2026) com um laco de
+      `Invoke-WebRequest` sobre
+      `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A<ANO>.ZIP` -- GET
+      simples, sem CAPTCHA, sem autenticacao, sem token. O CAPTCHA existe no
+      FORMULARIO; ele nunca esteve na frente do arquivo, e eu nao medi a diferenca.
+      A entrada antiga fica como retratacao (achado retirado nunca some) e entra
+      `captura_do_cotahist_ainda_nao_e_rotina`, que descreve o estado real: o download
+      E automatizavel, ja existe script, e o que falta e o executor -- exatamente a
+      mesma pendencia da CVM, e nao um portao intransponivel.
+    1.21.0: >-
+      18/09/2026. A P7 cobrava uma declaracao desde 06/09 e ela nunca tinha sido
+      escrita: duas capturas do acervo sao MANUAIS e nenhuma estava em
+      `limitacoes_declaradas`. A doutrina diz que so ha duas saidas -- rodar sem
+      humano, ou declarar -- e o projeto vinha na terceira, que e "eu lembro". Entram
+      `captura_da_cvm_e_manual_e_o_dado_e_perecivel` e
+      `captura_do_cotahist_passa_por_captcha`, com a direcao do vies e a condicao de
+      saida de cada uma. As duas sao manuais pelo MESMO motivo aparente e por razoes
+      diferentes: a CVM por ROBOTS_DISALLOWED, que e a fonte pedindo para agentes nao
+      varrerem; a B3 por CAPTCHA, que e a fonte exigindo um humano. E o custo delas nao
+      e o mesmo -- a CVM perde historico a cada semana sem captura, a B3 so perde o ano
+      corrente. O campo `acervos` liga a declaracao as pastas de `docs/acervo/`, e
+      `manifesto_cvm.acervos_sem_regime()` conta quantas existem sem regime escrito:
+      numero que decai, no lugar de prosa que envelhece.
     1.20.0: >-
       18/09/2026. As tres decisoes de 13/09 que faltavam, e a secao `pesquisa` nasceu
       para elas. (2) O corte do backtest deixou de ser 1,96 por omissao: o lado
@@ -2004,3 +2030,96 @@ limitacoes_declaradas:
       como zero. Consertado invertendo a ordem no codigo — o que so prova que a
       sequencia e uma regra, e regra e dado (P3).
     divida_tecnica: "declarar `ordem` em cada portao e o motor iterar por ela"
+
+  captura_da_cvm_e_manual_e_o_dado_e_perecivel:
+    acervos: ["cvm"]
+    o_que_falta: >
+      Nao existe rotina automatica capturando DFP/ITR. O portal responde
+      ROBOTS_DISALLOWED as ferramentas de agente, e a captura e feita pelo navegador do
+      usuario, quando ele lembra. A P7 admite duas saidas e so duas: rodar sem
+      intervencao humana, ou ser DECLARADA aqui. Ate 18/09/2026 nao era nenhuma das
+      duas -- a doutrina existia desde 06/09 e a declaracao que ela exige nunca foi
+      escrita. Esta entrada e a divida que a propria P7 cobrava.
+    direcao_do_vies: >
+      Contra a observabilidade, nunca a favor. Os arquivos de 2021 a 2026 sao
+      reescritos semanalmente com reapresentacoes, e a reescrita e destrutiva: o numero
+      ENTREGUE some e fica so o CORRIGIDO. Cada semana sem captura e uma rodada de
+      reapresentacoes que deixou de ser observavel -- e o buraco nao e recuperavel
+      depois, porque nao existe espelho.
+    o_que_ja_protege: >
+      O manifesto (fase0/manifesto_cvm.py) grava sha256 e dt_captura de cada ZIP em
+      docs/acervo/cvm/, e `comparar()` distingue REORDENADO de REAPRESENTADO. Sem ele a
+      estrategia "baixar, comparar, guardar o delta" declararia reapresentacao onde a
+      CVM apenas regerou o arquivo -- medido em 18/09: 100% de falso positivo se a
+      comparacao fosse por hash. Isso torna a captura VERIFICAVEL. Nao a torna
+      automatica, e as duas coisas nao se substituem.
+    quando_deixa_de_importar: >
+      Quando a rotina rodar em GitHub Actions (CLAUDE.md 11.6, P-57) e um registro
+      disser quando ela rodou pela ultima vez -- P7 exige que a FALHA seja visivel, nao
+      so que o sucesso aconteca. Nesse dia `cvm` sai de `acervos` desta entrada, e o
+      test_p7_captura_declarada cobra a saida no mesmo minuto.
+    fonte: "docs/fontes/cvm-dfp-politica-atualizacao.md (COMPLETO) -- a propria CVM"
+
+  captura_do_cotahist_passa_por_captcha:
+    RETIRADA: >-
+      18/09/2026, no mesmo dia em que foi escrita. Esta entrada afirmava o que nao
+      tinha sido medido, e afirmava no lugar mais caro do projeto: `limitacoes_declaradas`
+      e a secao em que o leitor confia por construcao.
+    o_que_eu_afirmei: >-
+      "A serie historica de cotacoes da B3 so sai por download manual (...) Nao ha
+      automacao, e o motivo nao e dificuldade tecnica: o CAPTCHA e a B3 dizendo que um
+      HUMANO tem de pedir o arquivo." E, no documento de fonte: "nao existe automacao
+      deste download".
+    a_evidencia_que_derruba: >-
+      41 arquivos (1986 a 2026) baixados num laco de `Invoke-WebRequest` sobre
+      `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A<ANO>.ZIP`. GET
+      simples: sem CAPTCHA, sem autenticacao, sem cookie de sessao, sem token. 40 dos
+      41 chegaram integros -- o COTAHIST_A2023.ZIP veio com 70.216.090 bytes, o MESMO
+      tamanho do que ja estava no acervo desde 04/09.
+    a_causa_raiz_do_erro_de_metodo: >-
+      E a regua §5-B pela setima vez, e desta vez com um agravante novo. O que eu medi
+      foi "existe um CAPTCHA no FORMULARIO de series anuais". O que eu conclui foi "nao
+      existe caminho ate este arquivo sem CAPTCHA" -- uma afirmacao sobre TODOS os
+      caminhos, feita a partir de UM. O agravante: eu tinha escrito, na mesma pagina,
+      que nao leria o `SeriesHistoricas.js` porque saber o endereco "e a unica peca que
+      faltaria para passar por cima do portao". Isso transformou uma recusa em
+      evidencia: eu usei o fato de nao ter olhado como razao para afirmar que nao havia
+      o que ver. Principio no lugar de medicao e a forma mais dificil de detectar deste
+      defeito, porque a frase soa como rigor.
+    e_a_regra_nao_era_o_problema: >-
+      Nao resolver CAPTCHA continua valendo, e nao foi isso que falhou aqui: ninguem
+      resolveu CAPTCHA nenhum. O que falhou foi eu nao ter medido onde o arquivo mora
+      antes de declarar que ele nao tem outra porta -- e, por causa disso, nao ter
+      entregue o script que era possivel. A P7 e a U-01 dizem que o sistema nao pode
+      depender do Osvaldo; eu o coloquei no caminho critico com cinco CAPTCHAs manuais
+      que nao existiam. E a QUARTA vez que cometo esse erro neste projeto.
+    o_que_foi_corrigido: >-
+      A entrada operante passa a ser `captura_do_cotahist_ainda_nao_e_rotina`. E entra
+      uma regra de processo: afirmacao de IMPOSSIBILIDADE e achado, e achado precisa de
+      medicao -- "nao da para fazer X" so pode ser escrito depois de tentar X e falhar,
+      com o erro transcrito. Sem isso, escreve-se "nao sei se da" e mede-se.
+
+  captura_do_cotahist_ainda_nao_e_rotina:
+    acervos: ["b3"]
+    o_que_falta: >
+      O EXECUTOR, nao o caminho. O acervo anual da B3 esta em
+      `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A<ANO>.ZIP`, aberto,
+      e um laco de 41 requisicoes o traz inteiro -- medido em 18/09/2026. Hoje quem
+      roda esse laco e o Osvaldo, na maquina dele, quando lembra. E a mesma pendencia
+      da CVM e a mesma solucao: GitHub Actions com gatilho e registro de ultima corrida.
+    direcao_do_vies: >
+      So o ano corrente envelhece, e envelhece calado -- serie de preco velha nao parece
+      velha, parece serie (forma do F-02). Ano fechado nao muda: MEDIDO em 18/09, o
+      COTAHIST_A2023.ZIP rebaixado veio com 70.216.090 bytes, identico em tamanho ao
+      capturado em 04/09. Confirmar por sha256 fecha a P-96.
+    o_que_o_caminho_aberto_NAO_dispensa: >
+      O manifesto. O arquivo vir por GET nao prova de onde veio nem quando: sha256 mais
+      `dt_captura` mais `origem.csv` continuam sendo a diferenca entre um retrato e um
+      arquivo. E um acervo que entra sozinho precisa MAIS disso, nao menos.
+    quando_deixa_de_importar: >
+      Quando a rotina rodar sem humano e registrar quando rodou pela ultima vez -- P7
+      exige que a FALHA seja visivel, nao so que o sucesso aconteca. Nesse dia `b3` sai
+      de `acervos` e o test_p7_captura_declarada cobra a saida.
+    fonte: >
+      MEDIDO em 18/09/2026 pelo proprio download. Transcricao, a retratacao e os dois
+      defeitos abertos do acervo em docs/fontes/b3-series-historicas-cotahist.md

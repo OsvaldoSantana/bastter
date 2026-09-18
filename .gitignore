@@ -111,3 +111,15 @@ Claude Outputs/
 # O `dot-claude/` virou `.claude/` em 08/09. A pasta velha resistiu ao
 # Remove-Item porque o OneDrive segurava o lock. Ignorada para nao voltar.
 dot-claude/
+
+# ── 18/09/2026 — P-98. O acervo COTAHIST inteiro caiu DENTRO de docs/fontes/ ──────
+# As linhas de docs/fontes/** acima cobrem por EXTENSAO, e o arquivo da B3 muda de
+# convencao dentro do proprio ZIP: de 1986 a 2001 o conteudo sai SEM extensao
+# (COTAHIST.A1986 ... COTAHIST_A2001). Sao 507 MB que padrao nenhum pegava, num
+# repositorio PUBLICO, onde blob no historico e permanente e nao se desfaz com rm.
+#
+# Regra escrita numa lista de extensoes nao e regra: e lembrete — P-82, e a mesma
+# licao pela segunda vez. O portao de verdade e
+# alocacao/test_p98_acervo_fora_do_indice.py, que mede TAMANHO no indice do git:
+# bytes nao dependem de alguem ter acertado o nome do arquivo.
+docs/fontes/series-historicas-cotahist/

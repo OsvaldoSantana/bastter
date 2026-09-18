@@ -225,7 +225,28 @@ três cliques a mais, ~350 MB — e **elimina quatro das seis bordas.** Anos sal
 formam série: o ajuste retroativo só atravessa um bloco contíguo, e 2022 e 2024 são a
 emenda. **2024 em particular é o que fecha a borda de 2023**, o bloco que já está medido.
 
-**O que impede hoje:** nada além de estar na máquina.
+**O que impede hoje:** nada além de estar na máquina — e **um CAPTCHA por ano**.
+
+> **18/09/2026 — o caminho foi medido, e a automação está fora.** Escolher o ano abre uma
+> janela com **CAPTCHA**; só depois aparece o botão
+> `AbrirArquivo('COTAHIST_A<ANO>.ZIP')`. **Eu não passo por CAPTCHA**, e a decisão não é
+> técnica: é a B3 dizendo que um humano tem de pedir o arquivo. Um script que o obtenha
+> sem esse pedido contorna o que a fonte declarou — e contorna igual por qualquer
+> endereço, o que torna irrelevante qual endereço o JS monta. Detalhe, transcrição e a
+> regra que sai daí (*a porta que o publicador abriu para máquina é a que a máquina usa*)
+> em `docs/fontes/b3-series-historicas-cotahist.md`. Declarada em `politica.yaml`
+> 1.21.0 → `limitacoes_declaradas.captura_do_cotahist_passa_por_captcha`.
+>
+> **E isso pesa menos do que parece.** O arquivo anual de um ano fechado não tem motivo
+> para mudar: baixado uma vez, está baixado para sempre. O custo total do histórico é um
+> número fixo de cliques, **uma vez** — não é dívida técnica, é o preço inteiro. A P7 só
+> morde no arquivo do **ano corrente**, de que o projeto ainda não depende.
+>
+> *(Que ano fechado não muda é suposição minha — a B3 não afirma isso em lugar nenhum.
+> A **P-96** mede, e custa um sexto CAPTCHA: rebaixar 2023 e comparar o sha256.)*
+
+**A ordem é por evento corroborado, não cronológica (P-92):** 2025 (31 eventos), 2021
+(19), depois 2024 e 2022 pela contiguidade.
 
 ### 4 · Bitemporalidade — `dt_captura` × `DT_REFER` · ⚙ Claude Code
 
