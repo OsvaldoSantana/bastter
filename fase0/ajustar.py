@@ -52,8 +52,21 @@ da data nao sao redigitadas aqui, e a descoberta de arquivo nao e reimplementada
 (N-01). Ate 18/09/2026 so havia um leitor de COTAHIST no projeto e a pergunta nao
 existia; hoje ha dois.
 
+A JANELA CONTIGUA (21/09/2026, PLANO passo 3)
+`--anos 2021-2025` le so esses anos do acervo -- um FILTRO sobre `calendario.arquivos()`,
+nunca uma segunda descoberta de arquivo. E a data ex e REDERIVADA com o calendario da
+propria janela, pela mesma `calendario.proximo_pregao` que o `refinar.py` usa: o silver
+de 11/09 foi gravado com o calendario de 2023 so, e para ele todo evento de outro ano e
+`FORA_DA_COBERTURA`. Onde o silver ja tinha derivado, as duas derivacoes tem de
+concordar -- se discordarem, os dois calendarios divergem sobre o que foi pregao, e o
+modulo PARA em vez de escolher (`DataExDivergente`).
+
+Janela com buraco e recusada: o ajuste retroativo so atravessa um bloco contiguo, e um
+ano faltando no meio viraria "um pregao" entre dezembro e o janeiro de dois anos depois.
+
 USO
     python ajustar.py                        # o silver mais recente, acervo padrao
+    python ajustar.py --raiz data/bronze/b3/cotahist --anos 2021-2025
     python ajustar.py --silver data/silver/eventos_silver_2026-09-11.csv
     python ajustar.py --raiz data/bronze/b3 --saida data/silver
 
@@ -66,6 +79,7 @@ from decimal import Decimal, InvalidOperation
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import calendario                                                       # noqa: E402
+from refinar import DERIVADA, FORA_DA_COBERTURA, SEM_CALENDARIO         # noqa: E402
 
 RAIZ_PADRAO = os.path.join("data", "bronze", "b3")
 SAIDA_PADRAO = os.path.join("data", "silver")
@@ -98,6 +112,9 @@ SEM_EVENTO = "SEM_EVENTO_CAPTURADO"  # nenhum evento CAPTURADO alcanca esta seri
 
 Papel = collections.namedtuple("Papel", "ticker especi isin arquivo")
 Acervo = collections.namedtuple("Acervo", "precos especi papeis fatcot_fora arquivos")
+Medicao = collections.namedtuple(
+    "Medicao", "acervo evs dup casados sem_ticker fat ajustadas diag posteriores degraus "
+               "cobertura rederivadas concordantes")
 Degrau = collections.namedtuple(
     "Degrau", "ticker data_ex data_vespera tipos n_eventos fator preco_vespera preco_ex "
               "retorno_bruto retorno_ajustado especi_vespera especi_ex")
@@ -105,8 +122,43 @@ Degrau = collections.namedtuple(
 
 # ─────────────────────────────────────────────────────────── leitura do COTAHIST
 
-def cotacoes(raiz):
-    """Le todo COTAHIST do acervo e devolve um `Acervo`.
+# ─────────────────────────────────────────────────────────────── a janela
+
+class JanelaComBuraco(ValueError):
+    """A janela pedida nao e um bloco contiguo de anos presentes no acervo."""
+
+
+class DataExDivergente(ValueError):
+    """O silver derivou uma data ex e o calendario da janela deriva outra."""
+
+
+def janela(texto):
+    """`"2021-2025"` -> (2021, ..., 2025); `"2023"` -> (2023,). Quatro digitos, sempre:
+    `21-25` seria um palpite sobre o seculo."""
+    partes = texto.split("-")
+    if len(partes) not in (1, 2) or not all(len(x) == 4 and x.isdigit() for x in partes):
+        raise ValueError("janela e AAAA ou AAAA-AAAA, nao %r" % texto)
+    ini, fim = int(partes[0]), int(partes[-1])
+    if ini > fim:
+        raise ValueError("janela ao contrario: %r" % texto)
+    return tuple(range(ini, fim + 1))
+
+
+def conferir_janela(raiz, anos):
+    """Levanta `JanelaComBuraco` se os anos nao forem contiguos ou se algum faltar no
+    acervo. Presenca, nao legibilidade: um arquivo ilegivel levanta `AcervoIlegivel` na
+    leitura, que e onde se descobre."""
+    anos = sorted(anos)
+    if anos != list(range(anos[0], anos[-1] + 1)):
+        raise JanelaComBuraco("anos salteados nao formam serie: %s" % anos)
+    presentes = {int(k[-4:]) for k in calendario.arquivos(raiz, anos)}
+    faltam = [a for a in anos if a not in presentes]
+    if faltam:
+        raise JanelaComBuraco("faltam no acervo %s: %s" % (os.path.abspath(raiz), faltam))
+
+
+def cotacoes(raiz, anos=None):
+    """Le todo COTAHIST do acervo -- ou so os `anos` -- e devolve um `Acervo`.
 
     SO o mercado a vista em lote padrao (CODBDI 02, TPMERC 010). O filtro nao e
     conveniencia: o mesmo prefixo de quatro letras aparece em opcao (`ALOSA250`), termo
@@ -122,7 +174,7 @@ def cotacoes(raiz):
     precos = collections.defaultdict(dict)
     espec = collections.defaultdict(dict)
     papeis, fatcot_fora, arqs = {}, collections.Counter(), {}
-    for base, caminho in sorted(calendario.arquivos(raiz).items()):
+    for base, caminho in sorted(calendario.arquivos(raiz, anos).items()):
         arqs[base] = caminho
         for raw in calendario.registros(caminho):
             if raw[POS_CODBDI[0]:POS_CODBDI[1]] != CODBDI_LOTE_PADRAO:
@@ -183,6 +235,35 @@ def eventos(caminho):
     return fora, dup
 
 
+def rederivar_data_ex(evs, datas, cobertura):
+    """(linhas, rederivadas). A data ex de cada evento, pelo calendario da JANELA.
+
+    A regra e uma so, e mora no `calendario.py`: o pregao observado seguinte ao ultimo
+    dia com direito. O que muda e o calendario -- e ele tem de ser o dos precos que o
+    ajuste vai tocar, porque o degrau cai num dia DESTA serie.
+
+    Onde o silver ja trazia `DERIVADA`, a janela tem de dar o mesmo dia. Se der outro, os
+    dois calendarios discordam sobre o que foi pregao, e escolher um em silencio seria
+    decidir sem medir qual fonte errou. `rederivadas` conta so as linhas que GANHARAM
+    data ex aqui."""
+    fora, rederivadas, divergem = [], 0, []
+    for r in evs:
+        d = calendario.proximo_pregao(_data(r["ultimo_dia_com_direito"]), datas, cobertura)
+        novo = d.isoformat() if d else ""
+        if r["data_ex_status"] == DERIVADA and novo and novo != r["data_ex"]:
+            divergem.append("%s %s: silver %s, janela %s"
+                            % (r["cod"], r["tipo"], r["data_ex"], novo))
+        elif novo and r["data_ex_status"] != DERIVADA:
+            rederivadas += 1
+        fora.append(dict(r, data_ex=novo, data_ex_status=(
+            DERIVADA if d else (FORA_DA_COBERTURA if datas else SEM_CALENDARIO))))
+    if divergem:
+        raise DataExDivergente("%d evento(s) com data ex diferente entre o silver e o "
+                               "calendario da janela:\n  %s"
+                               % (len(divergem), "\n  ".join(divergem[:20])))
+    return fora, rederivadas
+
+
 def indice_de_papeis(papeis):
     """(por_isin, por_par). `por_par` e {(prefixo, ESPECI): [tickers]} -- lista, e nao
     ticker, porque ambiguidade tem de ser VISIVEL em vez de resolvida pela ordem."""
@@ -215,12 +296,32 @@ def ticker_de(evento, por_isin, por_par):
     return None, "AMBIGUO"
 
 
-def casar(evs, papeis):
-    """(casados, nao_casados). `casados` ganha as chaves `_ticker` e `_como`."""
+def vigente(evento, cands, precos):
+    """Os candidatos cuja serie OBSERVADA alcanca a data ex do evento.
+
+    21/09/2026, na primeira corrida da janela: o BPAC13 -- uma UNT que so negociou em 2021
+    -- passou a disputar o par (BPAC, UNT) com o BPAC11 nos cinco anos, e os JCPs do
+    BPAC11 de 2023, que o ano isolado aplicava, viraram AMBIGUO. Uma janela mais larga nao
+    pode casar PIOR que uma estreita. O criterio e observado, nao nome parecido: um papel
+    que nao negociava entre o primeiro e o ultimo pregao em torno da data ex nao e o papel
+    daquele evento. Quando os dois negociam, a ambiguidade continua de pe."""
+    d = _data(evento["data_ex"])
+    if d is None or precos is None:
+        return cands
+    return [tk for tk in cands if precos.get(tk) and min(precos[tk]) <= d <= max(precos[tk])]
+
+
+def casar(evs, papeis, precos=None):
+    """(casados, nao_casados). `casados` ganha as chaves `_ticker` e `_como`. Com `precos`,
+    a ambiguidade de par e desfeita pela VIGENCIA (ver `vigente`)."""
     por_isin, por_par = indice_de_papeis(papeis)
     casados, fora = [], []
     for r in evs:
         tk, como = ticker_de(r, por_isin, por_par)
+        if como == "AMBIGUO":
+            v = vigente(r, por_par[(r["cod"], r["type_stock"])], precos)
+            if len(v) == 1:
+                tk, como = v[0], "PREFIXO+ESPECI+VIGENCIA"
         if tk is None:
             fora.append(dict(r, _motivo=como))
             continue
@@ -392,6 +493,28 @@ def resumo(lista):
     return n, media, (media / ep if ep else 0.0)
 
 
+def controle_por_ano(acervo, ajustadas, fat):
+    """{ano: (pares, divergentes, pior)}, pelo ano do SEGUNDO pregao do par. E o
+    `controle` fatiado -- o agregado sai daqui, para que as duas contas nao possam
+    discordar."""
+    fora = {}
+    for tk, serie in acervo.precos.items():
+        dias = sorted(serie)
+        for i in range(1, len(dias)):
+            d0, d1 = dias[i - 1], dias[i]
+            if (tk, d1) in fat:
+                continue
+            if serie[d0] <= 0 or ajustadas[tk][d0][0] <= 0:
+                continue
+            p, dv, pr = fora.get(d1.year, (0, 0, 0.0))
+            r0 = serie[d1] / serie[d0]
+            r1 = ajustadas[tk][d1][0] / ajustadas[tk][d0][0]
+            if r0 != r1:
+                dv, pr = dv + 1, max(pr, abs(float(r1 - r0)))
+            fora[d1.year] = (p + 1, dv, pr)
+    return fora
+
+
 def controle(acervo, ajustadas, fat):
     """(pares, divergentes, pior). O CONTROLE do experimento: em todo par de pregoes
     consecutivos SEM evento no segundo dia, o retorno tem de ser o mesmo antes e depois
@@ -404,23 +527,36 @@ def controle(acervo, ajustadas, fat):
     acumulado e um Decimal de 28 digitos significativos, e (p*k)/(q*k) arredonda na
     ultima casa. O pior caso medido no acervo e 1e-27 -- trinta ordens de grandeza abaixo
     do centavo. O teste exige uma tolerancia, e a tolerancia esta escrita nele."""
-    pares = divergentes = 0
-    pior = 0.0
-    for tk, serie in acervo.precos.items():
-        dias = sorted(serie)
-        for i in range(1, len(dias)):
-            d0, d1 = dias[i - 1], dias[i]
-            if (tk, d1) in fat:
-                continue
-            if serie[d0] <= 0 or ajustadas[tk][d0][0] <= 0:
-                continue
-            pares += 1
-            r0 = serie[d1] / serie[d0]
-            r1 = ajustadas[tk][d1][0] / ajustadas[tk][d0][0]
-            if r0 != r1:
-                divergentes += 1
-                pior = max(pior, abs(float(r1 - r0)))
-    return pares, divergentes, pior
+    pa = controle_por_ano(acervo, ajustadas, fat).values()
+    return (sum(v[0] for v in pa), sum(v[1] for v in pa),
+            max((v[2] for v in pa), default=0.0))
+
+
+# Os tres rotulos cujo `factor` o C-01 leu -- o fator deles muda a QUANTIDADE de acoes.
+TIPOS_DE_QUANTIDADE = frozenset({"BONIFICACAO", "DESDOBRAMENTO", "GRUPAMENTO"})
+
+
+def e_de_quantidade(tipos):
+    """`tipos` e o campo do `Degrau`, "A+B". Compara rotulo inteiro, nao pedaco de texto:
+    um rotulo novo que CONTIVESSE "GRUPAMENTO" entraria calado numa busca por substring."""
+    return any(t in TIPOS_DE_QUANTIDADE for t in tipos.split("+") if t)
+
+
+def degraus_por_ano(gs):
+    """{ano da data ex: dict(n, media_bruta, t_bruto, media_ajustada, t_ajustado,
+    quantidade)}. A pergunta do C-02, feita ano a ano: um agregado de cinco anos
+    esconderia um ano ruim atras de quatro bons."""
+    por = collections.defaultdict(list)
+    for g in gs:
+        por[g.data_ex.year].append(g)
+    fora = {}
+    for ano, lista in sorted(por.items()):
+        n, mb, tb = resumo([g.retorno_bruto for g in lista])
+        _n, ma, ta = resumo([g.retorno_ajustado for g in lista])
+        fora[ano] = dict(n=n, media_bruta=mb, t_bruto=tb, media_ajustada=ma,
+                         t_ajustado=ta,
+                         quantidade=sum(1 for g in lista if e_de_quantidade(g.tipos)))
+    return fora
 
 
 # ──────────────────────────────────────────────────────────────── escrita
@@ -498,26 +634,53 @@ def ultimo_silver(saida):
     return os.path.join(saida, nomes[-1]) if nomes else None
 
 
-def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO):
+def medir(raiz, silver, anos=None):
+    """A medicao inteira, sem gravar nada -- o que a corrida e a suite compartilham.
+
+    `evs` sao as linhas do silver como vieram (depois do A-09); `casados` ja carregam a
+    data ex REDERIVADA pelo calendario da janela."""
+    if anos is not None:
+        conferir_janela(raiz, anos)
+    acervo = cotacoes(raiz, anos)
+    datas, cobertura = calendario.pregoes(raiz, anos)
+    evs, dup = eventos(silver)
+    redev, rederivadas = rederivar_data_ex(evs, datas, cobertura)
+    concordantes = sum(1 for a, b in zip(evs, redev)
+                       if a["data_ex_status"] == DERIVADA and b["data_ex"] == a["data_ex"])
+    casados, sem_ticker = casar(redev, acervo.papeis, acervo.precos)
+    fat = fatores(casados)
+    ajustadas = ajustar_tudo(acervo, fat)
+    diag, posteriores = diagnostico(acervo, casados, fat)
+    return Medicao(acervo, evs, dup, casados, sem_ticker, fat, ajustadas, diag,
+                   posteriores, degraus(acervo, ajustadas, fat), cobertura, rederivadas,
+                   concordantes)
+
+
+def _sufixo(anos):
+    """A corrida padrao grava com o nome de sempre; a da janela carrega os anos no nome,
+    para que as duas nao se sobrescrevam e nenhum CSV finja ser o outro."""
+    return "" if anos is None else "_%d-%d" % (min(anos), max(anos))
+
+
+def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO, anos=None):
     silver = silver or ultimo_silver(saida)
     if not silver or not os.path.isfile(silver):
         print("nao ha silver de eventos em %s -- rode o refinar.py antes."
               % os.path.abspath(saida), file=sys.stderr)
         return 2
 
-    acervo = cotacoes(raiz)
+    try:
+        m = medir(raiz, silver, anos)
+    except JanelaComBuraco as e:
+        print("JANELA RECUSADA: %s" % e, file=sys.stderr)
+        return 2
+    acervo, evs, dup, casados, sem_ticker = m.acervo, m.evs, m.dup, m.casados, m.sem_ticker
+    fat, ajustadas, diag, posteriores, gs = m.fat, m.ajustadas, m.diag, m.posteriores, m.degraus
     if not acervo.precos:
         print("nenhum COTAHIST em %s -- sem preco nao ha o que ajustar."
               % os.path.abspath(raiz), file=sys.stderr)
         return 2
-
-    evs, dup = eventos(silver)
     captura = (evs[0].get("dt_captura", "") if evs else "")
-    casados, sem_ticker = casar(evs, acervo.papeis)
-    fat = fatores(casados)
-    ajustadas = ajustar_tudo(acervo, fat)
-    diag, posteriores = diagnostico(acervo, casados, fat)
-    gs = degraus(acervo, ajustadas, fat)
 
     cob = (min(min(s) for s in acervo.precos.values() if s),
            max(max(s) for s in acervo.precos.values() if s))
@@ -526,8 +689,8 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO):
     orfaos = [r for r in sem_ticker
               if _data(r["data_ex"]) and cob[0] < _data(r["data_ex"]) <= cob[1]]
 
-    destino = os.path.join(saida, "precos_ajustados_%s.csv" % captura)
-    destino_g = os.path.join(saida, "degrau_datas_ex_%s.csv" % captura)
+    destino = os.path.join(saida, "precos_ajustados_%s%s.csv" % (captura, _sufixo(anos)))
+    destino_g = os.path.join(saida, "degrau_datas_ex_%s%s.csv" % (captura, _sufixo(anos)))
     gravar_precos(acervo, ajustadas, fat, diag, destino, captura)
     gravar_degraus(gs, destino_g, captura)
 
@@ -541,6 +704,9 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO):
     print("eventos %s -- %d linhas, %d duplicata(s) exata(s) colapsada(s), %d casadas, "
           "%d aplicadas" % (os.path.basename(silver), len(evs) + dup, dup, len(casados),
                             len(fat)))
+    print("  data ex pelo calendario da janela (%s a %s): %d ganharam data ex aqui, %d "
+          "concordam com o silver" % (m.cobertura[0], m.cobertura[1], m.rederivadas,
+                                      m.concordantes))
     print("  %d evento(s) com data ex POSTERIOR a janela nao entraram -- e propriedade,"
           "\n  nao defeito: o ajuste retroativo reescala o passado a partir do FIM da"
           "\n  serie, entao cada ano novo de COTAHIST reescala a serie inteira."
@@ -555,8 +721,7 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO):
     print("  retorno AJUSTADO media %+8.4f%%   t %+7.2f" % (100 * ma, ta))
     print("  CONTROLE: %d pares de pregoes SEM evento; %d com retorno diferente "
           "(pior %.1e)" % (pares, div, pior))
-    quant = sum(1 for g in gs if "BONIFICACAO" in g.tipos or "DESDOBRAMENTO" in g.tipos
-                or "GRUPAMENTO" in g.tipos)
+    quant = sum(1 for g in gs if e_de_quantidade(g.tipos))
     if n and abs(ma) < abs(mb):
         print("  O degrau ENCOLHEU. Nenhuma leitura errada de fator encolhe um degrau --"
               "\n  ela o inverte ou o aumenta, e as duas mutacoes estao na suite.")
@@ -569,6 +734,9 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO):
         print("  O DEGRAU NAO ENCOLHEU. Isto REPROVA o ajuste como esta escrito: leitura"
               "\n  do `factor`, sentido do fator, ou a data ex derivada. Nao siga para o"
               "\n  backtest com esta serie.")
+
+    _imprimir_por_ano(gs, controle_por_ano(acervo, ajustadas, fat))
+    _imprimir_residuo(residuo_de_mercado(m))
 
     if acervo.fatcot_fora:
         print("\nFATOR DE COTACAO DIFERENTE DE 1 (%d ticker(s)):" % len(acervo.fatcot_fora))
@@ -607,13 +775,149 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO):
     return 1 if (orfaos or incompletos or acervo.fatcot_fora) else 0
 
 
+# ─────────────────────── o residuo, descontado o mercado (POS-HOC, 21/09/2026)
+#
+# O criterio do C-02 -- "o retorno ajustado do dia ex e zero em media" -- passou em 2023 e
+# reprovou em quatro dos cinco anos da janela. Medido depois de ver, e por isso POS-HOC:
+# o nulo estava errado em duas coisas. O dia ex tem o retorno do MERCADO daquele dia (e
+# as datas ex se amontoam em poucos dias), e o preco nao cai exatamente o provento -- no
+# dividendo cai mais. Em 2023 o mercado subiu, em media, nos dias ex, e escondeu isso.
+
+def marca_de_ex(especi):
+    """O token de ex do ESPECI (`ON  EDB N1` -> `EDB`), ou "". Testemunha, nao insumo: a
+    tabela ESPECI publicada esta incompleta (P-95), e a letra so e LIDA aqui para separar
+    os dias em que o COTAHIST declara um evento que o silver nao tem."""
+    return next((t for t in especi.split()[1:] if t.startswith("E") and len(t) <= 4), "")
+
+
+def mercado_do_dia(acervo, fat, tickers, minimo=20):
+    """{data: mediana do retorno BRUTO dos `tickers` sem evento naquele dia}. Mediana e nao
+    media: um papel com evento nao capturado nao pode arrastar o mercado. Dia com menos de
+    `minimo` papeis fica de fora -- um "mercado" de tres acoes nao e mercado."""
+    por = collections.defaultdict(list)
+    for tk in tickers:
+        s = acervo.precos.get(tk, {})
+        dias = sorted(s)
+        for d0, d1 in zip(dias, dias[1:]):
+            if (tk, d1) in fat or s[d0] <= 0:
+                continue
+            por[d1].append(float(s[d1] / s[d0] - 1))
+    fora = {}
+    for d, v in por.items():
+        if len(v) >= minimo:
+            v.sort()
+            k = len(v) // 2
+            fora[d] = v[k] if len(v) % 2 else (v[k - 1] + v[k]) / 2
+    return fora
+
+
+def classe_do_degrau(g, sem_fator):
+    """QUANTIDADE, MARCA_SEM_EVENTO (o ESPECI declara bonificacao/grupamento e o silver
+    nao traz evento de quantidade), CONTAMINADO (ha evento SEM fator no mesmo dia) ou
+    LIMPO. So o LIMPO mede o ajuste de provento; os outros medem o acervo."""
+    if e_de_quantidade(g.tipos):
+        return "QUANTIDADE"
+    mk = marca_de_ex(g.especi_ex)
+    if "B" in mk[1:] or "G" in mk[1:]:
+        return "MARCA_SEM_EVENTO"
+    if (g.ticker, g.data_ex) in sem_fator:
+        return "CONTAMINADO"
+    return "LIMPO"
+
+
+def residuo_de_mercado(m):
+    """[(degrau, classe, excesso, rendimento)] para todo degrau cujo dia tem mercado.
+    `rendimento` e 1 - fator: a fracao do preco que o evento declarou tirar."""
+    sem_fator = {(r["_ticker"], _data(r["data_ex"])) for r in m.casados
+                 if r["data_ex_status"] == DERIVADA and r["fator_status"] != "CALCULADO"}
+    merc = mercado_do_dia(m.acervo, m.fat, {r["_ticker"] for r in m.casados})
+    return [(g, classe_do_degrau(g, sem_fator), g.retorno_ajustado - merc[g.data_ex],
+             float(1 - g.fator)) for g in m.degraus if g.data_ex in merc]
+
+
+def queda_por_provento(pontos):
+    """(n, razao). Razao entre a queda de preco e o provento, pela inclinacao do excesso
+    sobre o rendimento, pela origem: 1 + excesso/rendimento. 1,0 e o que o ajuste supoe."""
+    num = sum(e * y for e, y in pontos)
+    den = sum(y * y for _e, y in pontos)
+    return len(pontos), (1 - num / den if den else float("nan"))
+
+
+def _so(tipos, rotulo):
+    return set(tipos.split("+")) == {rotulo}
+
+
+def _imprimir_residuo(res):
+    print("\nO RESIDUO, DESCONTADO O MERCADO DO DIA (pos-hoc) -- so dias LIMPOS")
+    print("  ano     n   excesso%       t | fora: quant  marca_B/G  contaminado")
+    por = collections.defaultdict(list)
+    fora = collections.defaultdict(collections.Counter)
+    for g, c, e, _y in res:
+        if c == "LIMPO":
+            por[g.data_ex.year].append(e)
+        else:
+            fora[g.data_ex.year][c] += 1
+    for ano in sorted(set(por) | set(fora)):
+        n, me, t = resumo(por.get(ano, []))
+        f = fora[ano]
+        print("  %d %5d %+9.4f %+7.2f | %11d %10d %12d" % (ano, n, 100 * me, t,
+              f["QUANTIDADE"], f["MARCA_SEM_EVENTO"], f["CONTAMINADO"]))
+    for rotulo in ("DIVIDENDO", "JRS CAP PROPRIO"):
+        n, q = queda_por_provento([(e, y) for g, c, e, y in res
+                                   if c == "LIMPO" and _so(g.tipos, rotulo)])
+        print("  queda do preco / provento, so %-16s n=%4d  %.3f" % (rotulo, n, q))
+    marcados = sorted((g for g, c, _e, _y in res if c == "MARCA_SEM_EVENTO"),
+                      key=lambda g: (g.data_ex, g.ticker))
+    if marcados:
+        print("  o COTAHIST declara bonificacao/grupamento que o silver NAO tem (%d):"
+              % len(marcados))
+        for g in marcados:
+            print("    %-8s %s %-6s ajustado %+7.2f%%" % (g.ticker, g.data_ex,
+                                                        marca_de_ex(g.especi_ex),
+                                                        100 * g.retorno_ajustado))
+
+
+def _imprimir_por_ano(gs, ctrl):
+    """A tabela que o C-02 fez para 2023, uma linha por ano, com o controle ao lado -- e,
+    embaixo, cada evento de QUANTIDADE, porque ali o caso e a evidencia: o degrau de um
+    desdobramento e grande demais para o ruido do dia esconder."""
+    pa = degraus_por_ano(gs)
+    print("\nPOR ANO -- degrau do dia ex, bruto e ajustado, e o controle dos pares sem evento")
+    print("  ano     n   bruto%       t  ajust.%       t  quant |  pares  difer.    pior")
+    for ano in sorted(set(pa) | set(ctrl)):
+        a = pa.get(ano)
+        p, dv, pr = ctrl.get(ano, (0, 0, 0.0))
+        if a:
+            print("  %d %5d %+8.4f %+6.2f %+8.4f %+6.2f %5d | %6d %7d %7.1e"
+                  % (ano, a["n"], 100 * a["media_bruta"], a["t_bruto"],
+                     100 * a["media_ajustada"], a["t_ajustado"], a["quantidade"],
+                     p, dv, pr))
+        else:
+            print("  %d %5d %45s | %6d %7d %7.1e" % (ano, 0, "", p, dv, pr))
+    q = sorted((g for g in gs if e_de_quantidade(g.tipos)),
+               key=lambda g: (g.data_ex, g.ticker))
+    if q:
+        print("\nEVENTOS DE QUANTIDADE (%d) -- a leitura do `factor` (C-01) contra o preco"
+              % len(q))
+        print("  %-8s %-10s %-26s %12s %9s %9s"
+              % ("ticker", "data ex", "tipos", "fator", "bruto%", "ajust.%"))
+        for g in q:
+            print("  %-8s %-10s %-26s %12.6f %+9.2f %+9.2f"
+                  % (g.ticker, g.data_ex, g.tipos[:26], float(g.fator),
+                     100 * g.retorno_bruto, 100 * g.retorno_ajustado))
+        enc = sum(1 for g in q if abs(g.retorno_ajustado) < abs(g.retorno_bruto))
+        print("  encolheram %d de %d" % (enc, len(q)))
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="Silver de eventos + COTAHIST -> precos ajustados.")
     p.add_argument("--raiz", default=RAIZ_PADRAO)
     p.add_argument("--saida", default=SAIDA_PADRAO)
     p.add_argument("--silver", help="CSV do refinar.py (padrao: o mais recente em --saida)")
+    p.add_argument("--anos", type=janela, metavar="AAAA-AAAA",
+                   help="janela CONTIGUA de anos do acervo (padrao: todos os da --raiz)")
     a = p.parse_args(argv)
-    return ajustar(a.raiz, a.silver, a.saida)
+    return ajustar(a.raiz, a.silver, a.saida, a.anos)
 
 
 if __name__ == "__main__":

@@ -224,9 +224,13 @@ def data_de(raw):
         return None
 
 
-def arquivos(raiz):
+def arquivos(raiz, anos=None):
     """{base: caminho} dos COTAHIST do acervo. O `.ZIP` GANHA do `.TXT` de mesmo ano:
     sao o mesmo dado, e ler o comprimido e uma ordem de grandeza mais barato.
+
+    `anos` e um FILTRO, e so isso (21/09/2026, PLANO passo 3): a janela 2021-2025 do
+    `ajustar.py` le cinco dos 41 anos, e a regra de descoberta continua uma so. `None`
+    devolve tudo, como antes.
 
     Mora aqui, e nao em quem chama, porque em 18/09/2026 nasceu o segundo leitor de
     COTAHIST do projeto (`ajustar.py`). Duas leituras da mesma regra de descoberta
@@ -238,6 +242,8 @@ def arquivos(raiz):
     for nome in sorted(os.listdir(raiz)):
         ano = ano_de(nome)
         if ano is None:
+            continue
+        if anos is not None and int(ano) not in anos:
             continue
         # P-99: a chave e NORMALIZADA para `COTAHIST_A<ANO>`. Antes ela saia de
         # `splitext`, e `COTAHIST.A1986` virava a chave `COTAHIST` -- a MESMA para
@@ -275,11 +281,12 @@ def registros(caminho):
         raise AcervoIlegivel(f"{os.path.basename(caminho)}: {type(e).__name__}: {e}") from e
 
 
-def pregoes(raiz):
+def pregoes(raiz, anos=None):
     """(datas, cobertura). `datas` e um set de `dt.date`; `cobertura` e (menor, maior)
-    ou (None, None) quando nao ha COTAHIST nenhum no acervo."""
+    ou (None, None) quando nao ha COTAHIST nenhum no acervo. `anos` filtra como em
+    `arquivos()`."""
     datas, self_ilegiveis = set(), []
-    for caminho in arquivos(raiz).values():
+    for caminho in arquivos(raiz, anos).values():
         try:
             for raw in registros(caminho):
                 d = data_de(raw)

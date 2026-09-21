@@ -81,7 +81,7 @@ pela porta da frente. E M4 sem M2 é automatizar uma esteira que ainda não exis
 |---|---|
 | **B3 — eventos societários** | **completo.** 74/74 emissoras, ~8 mil proventos, `dt_captura=2026-09-11`. Acervo bruto com sha256 |
 | **B3 — silver** | **escrito.** `refinar.py`, 9.272 linhas, `factor` desambiguado (C-01), `data_ex` derivada por calendário real de pregão |
-| **COTAHIST** | **1 ano (2023)**, e já virou produto: a série **ajustada** de 2023, medida contra 293 datas-ex (C-02). Um ano não é backtest — e a janela isolada tem **duas bordas**, ver passo 3 |
+| **COTAHIST** | **41 anos no disco**; série **ajustada** de 2021–2025 contíguos desde 21/09 (C-02 na janela), com o controle fechando nos cinco anos. Antes de 2024 ela carrega bonificações que o silver não tem (A-11, P-112) |
 | **CVM — DFP/ITR** | **baixada em 18/09.** 33 ZIPs: DFP 2010–2026, ITR 2011–2026. Falta o manifesto com sha256 |
 | **CVM — cadastro** | **obtido em 03/09**, status COMPLETO. É por ele que a ponte ticker↔CD_CVM se faz |
 | **bitemporalidade** | desenhada (`DESENHO-PIPELINE.md`), **não implementada** |
@@ -202,6 +202,13 @@ derrubá-la se ela estiver errada.
 </details>
 
 ### 3 · COTAHIST 2021 a 2025 — **contíguos**, e não só 2021 e 2025 · ⚙ desktop
+
+> **FEITO em 21/09/2026.** `python fase0/ajustar.py --raiz data/bronze/b3/cotahist --anos
+> 2021-2025`. Destravou o que prometia: **(a)** o C-01 tem 54 eventos de quantidade com preço
+> (49 encolhem; os primeiros grupamentos confirmados); **(b)** as duas bordas de 2023 fecharam.
+> E trouxe o que não prometia: o critério por ano **reprovou em 4 de 5** porque o nulo estava
+> errado (o dividendo tira do preço 1,16× o que paga), e o silver não tem bonificações
+> anteriores a 2025 que o COTAHIST marca (A-11, P-112). Ver `auditoria/C02-JANELA-2021-2025.md`.
 
 **O que destrava:** duas coisas ao mesmo tempo, e a segunda não estava na proposta.
 

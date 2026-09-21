@@ -2268,10 +2268,60 @@ que pula quando o `tiktoken` não está instalado e diz isso na razão do skip
 
 ---
 
+## P-112 · Eventos de quantidade antigos faltam no silver, e o COTAHIST sabe onde
+
+**Dono:** Claude Code · **Gatilho:** antes de usar qualquer série ajustada anterior a 2024 em
+backtest · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+A-11: o ESPECI marca `EDB`/`EJB` em 11 papéis-dia de 2021–2024 sem evento de quantidade no
+silver, e a série da CMIG fica −27% num dia. O suplemento da B3 devolve janela **recente**.
+**Primeiro passo, e ele é barato:** rodar a testemunha sobre o acervo **inteiro** (1986–2025)
+e contar papéis-dia com marca B/G e sem evento — mede o tamanho da lacuna **antes** de
+procurar fonte para ela. Sem isso, qualquer série antes de 2024 carrega degrau não removido
+e o `ajuste_status` diz `AJUSTADO`.
+
+## P-113 · 160 proventos sem preço de véspera deixam 78 séries `INCOMPLETO`
+
+**Dono:** Osvaldo decide, Claude Code executa · **Gatilho:** antes do passo 5 do PLANO (bloco
+C sobre dado real) · **Classe:** `DECISAO_DE_DESENHO`
+
+Na janela, 185 eventos derivados ficam sem fator, **160 `SEM_PRECO`** — provento do suplemento
+sem `closingPricePriorExDate`. O COTAHIST tem o fechamento da véspera, e as duas fontes
+concordaram em **todos** os casos da janela em que ambas existem (≥ 1.000, zero diferentes).
+A decisão é se o COTAHIST pode **substituir** o campo da B3 quando ele falta — trocar a fonte
+de um insumo é P1, não conveniência. Conferir junto: `diagnostico()` conta `SEM_FATOR`
+(subscrição, que por desenho não ajusta preço) como insumo ausente.
+
+## P-114 · `refinar.py` e `ajustar.py` apontam para uma raiz que não tem o acervo
+
+**Dono:** Osvaldo decide · **Gatilho:** a próxima vez que o `refinar.py` rodar · **Classe:**
+`DECISAO_DE_DESENHO`
+
+`RAIZ_PADRAO = data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos estão em
+`data/bronze/b3/cotahist/`, e a raiz padrão só enxerga o `COTAHIST_A2023.ZIP` avulso. O
+`refinar.py` imprime que *"cada ano de COTAHIST que entrar em `data/bronze/b3/` amplia a
+cobertura sozinho"* — falso para o disco como ele está. O `ajustar.py` contorna rederivando a
+data ex com o calendário da janela (21/09); o silver continua com data ex só de 2023. A
+escolha é onde o acervo mora, e muda o silver inteiro quando for feita.
+
+## P-115 · O critério do degrau precisa ser re-pré-registrado antes da próxima janela
+
+**Dono:** Osvaldo decide · **Gatilho:** antes de medir qualquer janela nova (2016–2020, ou o
+acervo inteiro) · **Classe:** `DECISAO_DE_DESENHO`
+
+O critério do C-02 reprovou em 4 de 5 anos (`auditoria/C02-JANELA-2021-2025.md`) e o nulo
+estava errado: o dia ex ajustado tem o retorno do mercado, e o dividendo tira do preço 1,16×
+o que paga. O critério corrigido — dias **limpos**, **descontado o mercado** do dia, razão
+queda/provento **por tipo** — foi desenhado **depois** de ver 2021–2025, então só vale como
+pré-registro para dado que ainda não foi medido.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| PLANO passo 3 | a série ajustada cobria só 2023, com duas bordas, e o C-01 tinha **um** caso de preço | 21/09 — `ajustar.py --anos 2021-2025` + `fase0/test_ajustar_janela.py`. Controle fecha nos cinco anos (632.384 pares, pior 1e-27); **C-01 com 54 eventos de quantidade**, 49 encolhem, os dois primeiros grupamentos com preço (MGLU3 +896% → −0,38%; HAPV3 +1378% → −1,46%); as duas bordas de 2023 fecharam. O critério por ano **reprovou em 4 de 5** e fica em `xfail` estrito (P-115). Achados A-10 e A-11. Ver `auditoria/C02-JANELA-2021-2025.md` |
 | C-01, a corroboração de preço | a regra do `factor` tinha sido fechada pela **distribuição**, com UM caso de preço, e a data ex derivada também tinha UM. A série de preços ajustada não existia | 18/09 — `fase0/ajustar.py` + `fase0/test_ajustar.py` (32 testes, 8 contra o acervo). **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360% (t = −0,29) em 293 datas-ex**, com controle em 86.736 pares de pregões sem evento (pior divergência 1e-27, arredondamento de `Decimal`). Duas mutações presas na suíte: data ex deslocada deixa o degrau **inteiro** e cria um **falso** na véspera (+1,91%, t = +11,20); fator invertido **dobra** o degrau (−3,16%). Ver `auditoria/C02-O-DEGRAU-MEDIDO.md` |
 | — | `calendario.py` era o único leitor de COTAHIST; o segundo (`ajustar.py`) ia redigitar a descoberta de arquivo e a posição da data | 18/09 — extraídos `arquivos()`, `registros()` e `data_de()`. Um fato, um dono. Instantâneo dourado de `pregoes()` antes e depois: **248 pregões, `sha256 e4a9d81d…` idêntico** |
 | manifesto da CVM | gravado em `data/bronze/cvm/manifesto/` — dentro do caminho que o `.gitignore` ignora na linha 12. **Não entrou no commit `64a5c97`**, e o `CVM-PRIMEIRO-RETRATO.md` afirmava que entrava | 18/09 — destino padrão passou a ser `docs/acervo/cvm/`, achado pela raiz do repositório; `gravar()` **recusa** qualquer caminho sob `data/`. 3 testes, um provado por mutação. Encontrado lendo a lista de `create mode` do commit dele e não achando o manifesto lá |
@@ -2415,7 +2465,7 @@ máquina é o que fecha.**
 | 1 | copiar os 7 arquivos do chat (lista em `SEGUNDA-21.md`) | 5 min |
 | 2 | **as três suítes verdes** — `origin/main` está VERMELHO (P-102) | 5 min |
 | 3 | commit + push | 2 min |
-| 4 | **`ajustar.py` sobre 2021–2025 contíguos** ⚙ Claude Code | o trabalho |
+| 4 | ~~**`ajustar.py` sobre 2021–2025 contíguos**~~ **FEITO em 21/09** — `auditoria/C02-JANELA-2021-2025.md` | — |
 
 **Duas coisas com data:** `macro.poupanca_am` vence **28/09**; e a CVM reescreve DFP/ITR
 toda semana — cada semana sem captura é uma rodada de reapresentações que **não volta**.

@@ -2240,3 +2240,47 @@ Três correções que vêm junto:
 - **A B3 declara, em texto:** *"As cotações são fornecidas na moeda e forma de cotação da
   época, **sem nenhum ajuste para a inflação ou proventos**."* Ajuste de proventos é nosso, e
   agora está escrito na fonte em vez de presumido.
+
+---
+
+## C-02 na janela · O critério do degrau esperava zero, e o dia ex ajustado tem o retorno do mercado
+
+**21/09/2026.** Documento completo em `auditoria/C02-JANELA-2021-2025.md`.
+
+O critério do C-02 para 2023 foi pré-registrado para cada ano de 2021–2025 **antes** da
+primeira corrida, e reprovou em quatro dos cinco. Fica em `xfail(strict=True)`, por decisão
+dele, com a causa medida no motivo. As causas são pós-hoc, e nenhuma é o ajuste errando:
+evento de quantidade dentro da média (grupamento de 15:1 = +1378% no bruto — **erro meu no
+desenho do critério**), bonificação ausente do silver (A-11), evento sem fator no mesmo dia.
+
+**E embaixo, o que o critério escondia:** o dia ex ajustado não tem retorno zero, tem o do
+mercado — e 2023 passou em 18/09 porque o mercado subiu, em média, nos dias ex daquele ano.
+Descontada a mediana do dia, o resíduo de 2023 é −0,21% (t −1,89). E o preço **não cai o
+provento**: queda ÷ provento = **1,164** no dividendo (IC 95% [1,09; 1,24], n = 400) e
+**0,951** no JCP ([0,86; 1,04], n = 819). O número é medido; o mecanismo (dividendo isento
+× ganho de capital a 15% → 1,18) é hipótese, `NAO_CONFIRMADO`.
+
+**A regra:** um critério de "o ajuste está certo" não pode ter como nulo *"o retorno ajustado
+é zero"* — ele confunde o ajuste com o mercado e com a razão de queda. É a forma da §5-B:
+a medição de 18/09 estava certa; a pergunta que ela respondeu era mais estreita que a
+conclusão. **Guarda:** `test_POSHOC_*` em `fase0/test_ajustar_janela.py`, rotulados como
+pós-hoc — guarda de número publicado, não prova.
+
+## A-10 · A janela larga casava pior que a estreita
+
+**21/09/2026.** Com cinco anos, o **BPAC13** — UNT que só negociou em 2021 — passou a
+disputar o par `(BPAC, UNT)` com o BPAC11, e 16 JCPs que o 2023 isolado aplicava viraram
+`AMBIGUO`. Quem pegou foi o instantâneo da medição (os degraus de 2023 dentro da janela têm
+de ser os de 18/09). **Regra:** ambiguidade de par se desfaz por **vigência observada** — o
+candidato cuja série alcança a data ex —, nunca por nome ou ordem. Com os dois vigentes, a
+ambiguidade continua de pé. `ajustar.vigente()`; 16 → 0.
+
+## A-11 · O COTAHIST declara bonificação que o silver não tem
+
+**21/09/2026.** O ESPECI do dia ex marca `EDB`/`EJB` em **11 papéis-dia (6 datas)** em que o
+silver só traz o provento — CMIG3/4 em 2021 e 2022 (−27% ajustados em 02/05/2022), ITSA3/4
+de 2022 a 2024, PSSA3 em 2021. **Nenhum em 2025**: é a janela recente do
+`GetListedSupplementCompany`, já declarada, vista de dentro do arquivo de preço e com o custo
+medido. **Regra:** a marca de ex do COTAHIST é **testemunha**, não insumo — separa os dias que
+medem o acervo dos que medem o ajuste, e não vira fator (a tabela ESPECI está incompleta,
+P-95). Fechar a lacuna é a P-112.

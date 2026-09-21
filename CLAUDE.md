@@ -854,6 +854,9 @@ só será usada em 2031.
 | **JCP** | Série de alíquotas 15% → 18% (68 dias de 2016) → 15% → 17,5%. E a regra de método: ***"fonte primária ganha" não é passe livre*** — ela ganha depois de se verificar **qual dispositivo** a cláusula alcança |
 | **V-01** | Evento societário da B3 é o insumo **mais perecível** do projeto: endpoint não documentado, sem SLA, sem espelho. Série de preço sem ajuste de provento é série inútil |
 | **pré-registro** | A evidência **contrariou a minha recomendação**: o que funciona é o plano de análise detalhado, não o ato de registrar — e todo benefício medido vem de arranjo com **verificador externo**. O dele é o histórico público datado |
+| **C-02 janela** | Critério de "o ajuste está certo" **não pode ter nulo zero**: o dia ex ajustado tem o retorno do mercado, e o dividendo tira do preço **1,16×** o que paga (JCP 0,95×). Pré-registro que reprova fica em `xfail` estrito, nunca afrouxado |
+| **A-10** | Janela larga **não pode casar pior** que a estreita. Ambiguidade de par se desfaz por **vigência observada** da série, nunca por nome |
+| **A-11** | A marca de ex do ESPECI é **testemunha, não insumo**: 11 papéis-dia com bonificação que o silver não tem, nenhum em 2025 |
 
 > **Narrativa de execução que saiu inteira** (registro, não instrução): as cinco rodadas de
 > 11/09 no Claude Code, os três marcos de 12/09, a suíte que deixou de fechar verde, a

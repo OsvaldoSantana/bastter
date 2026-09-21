@@ -92,7 +92,7 @@ def _cotahist(pasta, nome, linhas):
     return str(pasta)
 
 
-def _serie_plana(pasta, ticker="TESTE3", isin="BRTESTEACNOR1", dias=None, precos=None):
+def _serie_plana(pasta, ticker="TESTE3", isin="BRTESTACNOR1", dias=None, precos=None):
     """Uma serie de 5 pregoes. Plana por padrao: qualquer degrau que aparecer foi posto
     pelo teste, nunca pelo ruido."""
     dias = dias or ["20230102", "20230103", "20230104", "20230105", "20230106"]
@@ -411,7 +411,7 @@ def test_A08_evento_na_BORDA_marca_NIVEL_INCERTO(tmp_path):
     no dia em que o COTAHIST de 2024 entrar e as duas pontas forem emendadas -- com um
     salto artificial exatamente na virada do ano."""
     d, _post = _diag(tmp_path, _evento(
-        cod="TEST", type_stock="ON", isin="BRTESTEACNOR1",
+        cod="TEST", type_stock="ON", isin="BRTESTACNOR1",
         ultimo_dia_com_direito="2023-01-06", data_ex="", data_ex_status="FORA_DA_COBERTURA",
         fator="0.99"))
     assert d["status"] == A.NIVEL_INCERTO and d["na_borda"] == 1
@@ -423,7 +423,7 @@ def test_A08_evento_POSTERIOR_a_janela_nao_e_defeito(tmp_path):
     a partir do fim da janela, e todo ano novo reescala tudo. Marcar isto como defeito
     poria 1.368 eventos no relatorio e ensinaria a ignora-lo."""
     d, post = _diag(tmp_path, _evento(
-        cod="TEST", type_stock="ON", isin="BRTESTEACNOR1",
+        cod="TEST", type_stock="ON", isin="BRTESTACNOR1",
         ultimo_dia_com_direito="2024-05-10", data_ex="", data_ex_status="FORA_DA_COBERTURA",
         fator="0.99"))
     assert d["status"] == A.SEM_EVENTO and d["na_borda"] == 0 and post == 1
@@ -433,7 +433,7 @@ def test_evento_ANTERIOR_ao_primeiro_pregao_nao_alcanca_a_serie(tmp_path):
     """A outra ponta: data ex <= primeiro pregao observado. O fator so valeria para dias
     ANTES dele, e nao ha nenhum. Nao e borda, nao e defeito, nao e nada."""
     d, post = _diag(tmp_path, _evento(
-        cod="TEST", type_stock="ON", isin="BRTESTEACNOR1",
+        cod="TEST", type_stock="ON", isin="BRTESTACNOR1",
         ultimo_dia_com_direito="2022-12-29", data_ex="", data_ex_status="FORA_DA_COBERTURA",
         fator="0.99"))
     assert d["status"] == A.SEM_EVENTO and d["na_borda"] == 0 and post == 0
@@ -443,7 +443,7 @@ def test_evento_sem_fator_DENTRO_da_janela_marca_INCOMPLETO(tmp_path):
     """Este muda numero, e por isso e o unico dos tres que e defeito. O degrau do dia ex
     continua de pe na serie ajustada, e nada no numero denuncia. A marca e o que denuncia."""
     d, _post = _diag(tmp_path, _evento(
-        cod="TEST", type_stock="ON", isin="BRTESTEACNOR1",
+        cod="TEST", type_stock="ON", isin="BRTESTACNOR1",
         ultimo_dia_com_direito="2023-01-03", data_ex="2023-01-04",
         data_ex_status="DERIVADA", fator="", fator_status="SEM_PRECO"))
     assert d["status"] == A.INCOMPLETO and d["sem_fator"] == 1
@@ -482,7 +482,7 @@ def test_a_corrida_inteira_fecha_e_escreve_os_dois_csv(tmp_path):
     raiz = _serie_plana(tmp_path, precos=[1000, 1000, 950, 950, 950])
     saida = os.path.join(str(tmp_path), "silver")
     os.makedirs(saida)
-    _silver(saida, [_evento(cod="TEST", type_stock="ON", isin="BRTESTEACNOR1",
+    _silver(saida, [_evento(cod="TEST", type_stock="ON", isin="BRTESTACNOR1",
                             ultimo_dia_com_direito="2023-01-03", data_ex="2023-01-04",
                             valor="0.50", preco_vespera="10.00", fator="0.95")])
     assert A.ajustar(raiz, None, saida) == 0
