@@ -158,7 +158,7 @@ função `PROTECAO_REAL` que não paga a custódia de 0,20% a.a. da B3.
 
 ---
 
-## P-06 · `Fonte: NAO_REGISTRADA` no layout do COTAHIST
+## P-06 · ~~`Fonte: NAO_REGISTRADA` no layout do COTAHIST~~ **FECHADA em 19/09**
 
 O `SeriesHistoricas_Layout.md` não registra de onde veio o PDF. Pesa porque o
 achado central daquele arquivo é que as tabelas anexas da **revisão 02 (05/10/2020)**
@@ -173,8 +173,18 @@ Sem a URL não dá para checar se existe revisão 03.
 > onde ela deveria estar não a tem*. Transcrição em
 > `docs/fontes/b3-series-historicas-cotahist.md` §5.
 >
-> A P-06 deixa de ser *achar um link* e passa a ser *decidir o que fazer sem ele*, e a
-> saída provável é limitação declarada: o layout que o projeto usa é cópia sem fonte
+> **RETIRADO em 19/09, no dia seguinte.** O leiaute EXISTE e tem URL:
+> `www.b3.com.br/data/files/33/67/B9/50/D84057102C784E47AC094EA8/SeriesHistoricas_Layout.pdf`
+> — **revisão 02 de 05/10/2020**, a mesma que o projeto transcrevia. **Não há revisão 03**,
+> que era a pergunta da pendência. Fonte em `docs/fontes/b3-cotahist-leiaute.md`.
+>
+> Ele está numa **terceira** página — *Cotações Históricas*, não *Séries Históricas*. Eu
+> tinha lido duas e concluído sobre "a página onde ela deveria estar". §5-B.13 dois dias
+> seguidos. **A pendência fecha, e o que sobra é a P-95:** o leiaute **não traz tabela de
+> valores para `MODREF`** — não é tabela incompleta, é inexistente.
+>
+> ~~A P-06 deixa de ser *achar um link* e passa a ser *decidir o que fazer sem ele*, e a
+> saída provável é limitação declarada:~~ o layout que o projeto usa é cópia sem fonte
 > verificável, e a enumeração real tem de sair do **dado observado** com falha ruidosa
 > fora dela — que é o que a P-95 já mandava, por outro motivo.
 
@@ -1568,10 +1578,54 @@ recebeu — e **P7: conferência que depende de alguém lembrar não é conferê
 
 ---
 
-## P-88 · O bootstrap reamostra meses independentes, e ninguém mediu a dependência serial
+## P-88 · ~~Ninguém mediu a dependência serial~~ **MEDIDA em 19/09 — existe, e são ~8%**
 
-**Dono:** próxima sessão · **Gatilho:** antes de usar o corte medido para decidir algo ·
-**Classe:** `DECISAO_DE_DESENHO`
+**Dono:** próxima sessão (integrar no `multiplicidade.py`) · **Gatilho:** quando o
+`multiplicidade.py` estiver em mãos · **Classe:** `DECISAO_DE_DESENHO` ·
+*(laudo em `auditoria/P88-DEPENDENCIA-SERIAL.md`)*
+
+> **A previsão desta pendência estava certa.** Ljung-Box(12) no **resíduo** — a série que o
+> bootstrap de fato reamostra: **HML p = 0,031** (tem dependência), **SMB p = 0,166** (não
+> tem). O SMB virou o **controle**, e ele não foi construído: estava ali, com a mesma `n`, a
+> mesma `k` e o mesmo procedimento.
+>
+> | L | blocos | HML | vs iid | SMB (controle) | vs iid | líquido |
+> |---|---|---|---|---|---|---|
+> | 1 | 306 | 3,1099 | — | 2,8473 | — | — |
+> | 2 | 153 | 3,2909 | +5,8% | 2,7736 | −2,6% | **+8,4%** |
+> | 3 | 102 | 3,3133 | +6,5% | 2,7695 | −2,7% | **+9,3%** |
+> | 6 | 51 | 3,2145 | +3,4% | 2,6991 | −5,2% | **+8,6%** |
+> | 24 | **13** | 2,9624 | −4,7% | 2,7573 | −3,2% | −1,6% |
+>
+> **Sinais opostos na faixa informativa** (L = 2 a 8, ≥ 39 blocos). Corte iid 3,1099 →
+> **~3,36**; folga do HML de −0,175 → **~−0,45**. O veredito **não muda**, e a conclusão
+> **não exige escolher um L** — que era exatamente o que esta pendência pedia evitar.
+>
+> **Sem o controle, a leitura teria sido a oposta:** em L = 24 são 13 blocos distintos, o
+> reamostrador degenera e o corte cai **por artefato**. Eu teria lido *"a dependência não
+> importa"*, a conclusão errada pelo motivo errado.
+>
+> `auditoria/p88_block_bootstrap.py` + 18 testes. **`L=1` reproduz 3,1473**, o número
+> registrado em 18/09 — sem essa calibração, um corte maior não provaria nada: poderia ser a
+> minha implementação diferindo da registrada.
+
+**O que continua aberto, e é pouco:**
+
+1. **Romano-Wolf não entrou.** O container tinha a versão do `backtest_h1_h3.py` *anterior* a
+   18/09, sem `bootstrap_conjunto`. Integrar `corte_*_por_bloco` no
+   `alocacao/multiplicidade.py` é o passo, e só então o número absoluto vale para as duas
+   correções.
+2. **O "líquido" é inferência, não medição** — supõe que o artefato da degeneração é igual nas
+   duas séries (plausível: mesma `n`, mesma `k`, mesmo procedimento). `NAO_CONFIRMADO` para os
+   ~3,36; **MEDIDO** para o sinal, a faixa e o veredito.
+3. ~~A última versão do teste não foi executada.~~ **Executada: 18 passed, ruff limpo** —
+   mas o caminho até lá rendeu um achado de método, registrado na §6 do laudo: quando o shell
+   voltou, a suíte falhou com o **nome antigo** do teste, e foi essa mensagem que revelou que
+   **a chamada que aplicava a correção era justamente a que o shell havia derrubado.** Eu
+   documentei como *"corrigido, sem rodar"* algo que estava *"não corrigido, sem rodar"* —
+   e foi a nota de incerteza que fez o par ser conferido em vez de acreditado.
+
+<details><summary>o texto original desta pendência, mantido</summary>
 
 O corte de 18/09 sai de um bootstrap que sorteia **meses soltos**. Se os fatores tiverem
 dependência serial, a distribuição da estatística é outra e o corte medido está
@@ -1581,6 +1635,8 @@ o que torna a limitação conservadora e não convidativa.
 Medir pede *block bootstrap* com blocos de comprimento declarado. O custo é baixo; o que
 falta é escolher o comprimento do bloco **com medição de sensibilidade**, e não por
 convenção — senão troca-se uma suposição tabelada por outra.
+
+</details>
 
 ---
 
@@ -1836,10 +1892,23 @@ confirmar que nada já entrou.
 
 ---
 
-## P-99 · O COTAHIST muda de convenção de nome dentro da própria série, e o parser não vê
+## P-99 · ~~O COTAHIST muda de convenção de nome~~ **CONSERTADA em 19/09, falta aplicar**
 
-**Dono:** próxima sessão · **Gatilho:** antes de estender `calendario.py`/`ajustar.py`
-para além de 2023 · **Classe:** `BLOQUEIA_O_SISTEMA`
+**Dono:** Osvaldo (copiar os arquivos) · **Gatilho:** segunda 21/09, passo 1 de
+`SEGUNDA-21.md` · **Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
+
+> **Consertada em 19/09, e eram TRÊS defeitos, não um.** Medido nos 9 ZIPs que estavam no
+> container: **7 de 9 devolviam ZERO registros em silêncio**; `arquivos()` faria quinze anos
+> disputarem a chave `COTAHIST`; e `pregoes()` **morria inteiro** num `BadZipFile` — o 2026
+> truncado apagava o calendário do acervo todo.
+>
+> `fase0/calendario.py` + `fase0/test_calendario_p99.py` (24 testes). **Instantâneo dourado:
+> 2023 em 248 pregões, sha256 `e4a9d81d…d551c`, idêntico ao de 18/09.**
+>
+> **Risco declarado:** eu não pude ver `test_calendario.py` nem `test_ajustar.py` — nunca
+> passaram pelo container. Se algum falhar, é o contrato do `registros()`, que agora confere
+> cabeçalho. Já reduzi: arquivo que começa direto em registro de cotação é aceito, e a
+> primeira linha não se perde. Mas testei contra a minha suposição, não contra eles.
 
 | faixa | nome dentro do ZIP |
 |---|---|
@@ -1878,6 +1947,10 @@ na pasta — **contagem que decai**, não suposição.
 **Dono:** Osvaldo (rebaixar) · **Gatilho:** quando o ano corrente for necessário ·
 **Classe:** `DECISAO_DE_DESENHO` · ⚙ **exige o desktop**
 
+> **21/09 — agora bloqueia a família ML.** O teste do `preregistro-ml-v1.md` vai de
+> jan/2020 até o fim do COTAHIST; sem 2026 íntegro, ou o período termina em dez/2025 escrito
+> no §2, ou a família espera este arquivo. Ver P-107.
+
 38.328.935 bytes baixados; a extração falha com *"O registro Final de Diretório Central
 não foi localizado"* — o fim do arquivo não chegou.
 
@@ -1903,8 +1976,41 @@ ele tem de conferir o ZIP antes de aceitar o arquivo, não depois.
 
 ## P-101 · Quatro moedas no acervo, e uma quebra de 2,75x que nenhum evento societário explica
 
-**Dono:** próxima sessão · **Gatilho:** antes de estender `ajustar.py` para além de 1995 ·
-**Classe:** `BLOQUEIA_O_SISTEMA` · *(achado C-03, em `auditoria/C03-A-QUEBRA-DE-MOEDA.md`)*
+**Dono:** próxima sessão · **Gatilho:** **só quando a janela do `ajustar.py` passar de
+04/07/1994** · **Classe:** `BLOQUEIA_O_SISTEMA` · *(achado C-03)*
+
+> **19/09 — MEDIDA e instrumentada, ainda NÃO aplicada.** Nasceu `fase0/moeda.py`: varre o
+> acervo, acha as fronteiras de `MODREF`, mede o fator pela razão do mesmo `CODNEG` com o
+> controle do dia anterior ao lado, e devolve `QUEBRA_MEDIDA` / `SEM_QUEBRA` /
+> `NAO_CONFIRMADO`. 19 testes.
+>
+> ```
+> COTAHIST_A1986  19860227->19860304  CR$->CZ$    274  1.1973  ctrl 1.0000 (n=339)      --  SEM_QUEBRA
+> COTAHIST_A1989  19890113->19890118  CZ$->NCZ$   198  0.9677  ctrl 1.0000 (n=307)      --  SEM_QUEBRA
+> COTAHIST_A1990  19900313->19900319  NCZ$->CR$     2  0.7142  ctrl 1.0000 (n=238)      --  NAO_CONFIRMADO
+> COTAHIST_A1994  19940630->19940704  CR$->R$     136  0.3644  ctrl 1.0106 (n=251)  2.7440  QUEBRA_MEDIDA
+> ```
+>
+> **Ele NÃO aplica a reexpressão, e há um teste que prende isso.** Escolher a base —
+> reexpressar tudo para R$? manter cada ano na moeda dele? — é **decisão de desenho sua**,
+> e a P6 manda deixar a lacuna declarada em vez de inventar critério. Mesmo desenho do
+> `refinar.py` com o `FACTOR_AMBIGUO`.
+>
+> **Achado lateral, e ele veio de imprimir o `n` do controle:** nas fronteiras de 1986,
+> 1989 e 1990 o controle mede **1,0000 exato** com 339, 307 e 238 pares — em plena
+> hiperinflação. Não é mercado estável: é a **maioria dos papéis repetindo o preço** do dia
+> anterior, mercado raso. Isso *fortalece* a leitura — se o dia comum de 1986 mede 1,0000,
+> a fronteira medindo 1,1973 teve mais movimento que o normal, e ainda assim nada perto de
+> 1.000x.
+
+> **19/09 — NÃO está no caminho crítico hoje, e isso é decisão de ordem, não de mérito.** O
+> próximo passo é `ajustar.py` sobre **2021–2025**, e essa janela está **inteira em `R$`**.
+> Pôr a P-101 na frente por ser o achado mais novo seria escolher tarefa pelo frescor — o
+> erro que a P-44 registra.
+>
+> E a explicação do achado avançou: o header mostra que 1986–1995 foram **todos gerados em
+> 19991210**. `MODREF` é **rótulo histórico**, não a unidade gravada — ver
+> `docs/fontes/b3-cotahist-leiaute.md` §4.
 
 A série agora começa em 02/01/1986 e atravessa seis planos econômicos. O campo `MOEDA`
 (posições 53–56) muda **dentro do mesmo arquivo anual**: `CR$`, `CZ$`, `NCZ$`, `R$`.
@@ -1935,6 +2041,212 @@ inteiro, em um dia, sem causa** — porque troca de moeda não é evento societ�
 `OBSERVADO` de `MOEDA`; medir o fator de cada quebra encontrada (nunca tabelar); e decidir
 se a série utilizável começa em **04/07/1994** ou em **02/01/1986** — decisão que entra em
 `limitacoes_declaradas` ou vira trabalho, mas não fica em silêncio.
+
+---
+
+## P-103 · O `CLAUDE.md` afirmava tokens sem conta, e um plano externo calibrou nele
+
+**Dono:** próxima sessão · **Gatilho:** nenhum — fechada no que dava para fechar ·
+**Classe:** `DECISAO_DE_DESENHO` · *(retratação na §11.4; laudo em
+`auditoria/AUDITORIA-PLANO-DE-TOKENS.md`)*
+
+A §11.4 declarava a leitura de sessão em **"~26 mil"** antes do corte de 06/09 e
+**"~13 mil"** depois. Medido em 19/09 com `tiktoken`: a razão real deste repositório é
+**19,0 tokens/linha**, logo os valores são **~38.400** e **~19.900** — erros de **+48%** e
+**+53%**, os dois na direção que faz o projeto parecer mais enxuto.
+
+**O custo não foi interno.** Três planos de otimização de tokens foram escritos em 19/09, e
+um deles declarou ter **calibrado a própria razão empírica** nos "~13 mil" da §11.4. Ele
+errou a leitura inicial por **90%** — e a conta dele estava certa; a fonte é que não
+estava. **Número plausível em prosa, citado por terceiro como fonte: C-01 na camada do
+token.**
+
+**Fechado no processo, não na tabela:** `auditoria/tamanho_do_contexto.py` + 8 testes, com
+prova por mutação. A §11.4 não afirma mais valor — aponta para o comando.
+
+**O que a medição abriu e continua aberto:**
+
+| # | o que | classe |
+|---|---|---|
+| 1 | ~~O cache não foi medido~~ **FECHADO em 19/09 na fonte oficial, e ele me derrubou.** O write é **2,0x** e o read 0,1x; como o fator incide sobre todo o prefixo, **cortar X% corta X% do custo, com cache ou sem** — medido, **−25%**. A inversão de prioridade que eu anunciei não existe. O risco do split é a **janela de 20 blocos**, não o prefixo. `auditoria/CACHE-E-O-CORTE.md` | — |
+| 2 | **O variável não tem instrumento.** Resposta, saída de ferramenta e arquivo reescrito são o que custa integral em todo turno, e eu não os meço | `DECISAO_DE_DESENHO` |
+| 3 | **A §11.5 está `NAO_CONFIRMADO`** — ordenação sem número, e o título dizia "medido" | — |
+| 4 | **`## Fechadas` = 7.457 tokens** (7,7% da leitura). Mover para `FECHADAS.md` é o único item de tamanho com número verificado | `DECISAO_DE_DESENHO` |
+| 5 | ~~49% do `CLAUDE.md` são blocos `>`~~ **DECISÃO C EXECUTADA em 19/09.** Critério dele: *otimização sem perder contexto* → triagem por **função**, não por percentual. Saíram 962 linhas e **20.085 tokens** (os 30 achados de 06/09–18/09); ficou um **índice** com a regra de cada um. **−17.816 tok, −33,7% do arquivo**, e **26/26 achados com endereço, medido** | — |
+| 6 | **P-45, P-46 e P-53 têm gatilho vencido há 13 dias** (push, Fase 0, `data/bronze/`). Os três "pilares" de um dos planos são essas três pendências. **O problema não é falta de plano: é que nada dispara o gatilho** — P7 | `BLOQUEIA_O_SISTEMA` |
+
+> **O achado de método, e vale para além de token:** a regra do C-01 (*"achado só entra com
+> a conta escrita"*) é de 12/09; a §11.4 é de 06/09. **Regra nova não audita o passado
+> sozinha.** Nenhum instrumento do projeto varre prosa antiga procurando número sem
+> procedência — e a §11.4 sobreviveu treze dias por isso, com a regra que a condenava
+> escrita dezoito parágrafos acima.
+
+---
+
+## P-104 · Vinte e quatro achados são citados só em código, e podem não ser achados
+
+**Dono:** próxima sessão · **Gatilho:** quando o `ACHADOS.md` estiver em mãos ·
+**Classe:** `DECISAO_DE_DESENHO` · *(levantado por `auditoria/achados_ancorados.py`)*
+
+A guarda que nasceu com a Decisão C varreu o repositório e achou **45 códigos citados sem
+definição em `.md` nenhum**. Vinte e um caem quando o `ACHADOS.md` entrar na árvore — ele
+não estava. **Os outros 24 são citados SÓ em código:**
+
+```
+B-05  B-06  B-07  B-08  D-1   H-02  K-04  K-05  K-08  K-11
+V-02  V-03  V-04  V-05  V-06  V-07  V-08  V-09  V-10  V-12
+V-13  V-14  V-15  Z-01
+```
+
+**E parte deles provavelmente não é achado.** `K-04` aparece com as teses (`teses.yaml`,
+`tese.py`), e os `V-*` aparecem no changelog do `politica.yaml` como itens de um laudo de
+agosto. **Namespaces diferentes com a mesma forma.**
+
+**Não os pus na linha de base, e a razão é a régua §5-B:** *medir levanta o candidato; quem
+o promove é a leitura* — e eu não tenho o `ACHADOS.md` nem os laudos de agosto para ler.
+Jogá-los na exclusão sem motivo seria pior que deixá-los acusados: viraria **cobertura
+falsa**. Ficam nomeados em `CANDIDATOS_19_09`, com um teste que impede que virem linha de
+base sem o motivo escrito.
+
+**O que decidir:** para cada um, ou o motivo (*"é tese"*, *"é item do laudo de agosto"*) e a
+saída para `NAO_SAO_ACHADOS`, ou a constatação de que é achado de verdade — e aí **é um nome
+que o código cita e ninguém pode consultar**, que é o defeito que esta guarda existe para
+pegar.
+
+---
+
+## P-105 · ~~O leiaute do COTAHIST estava em Python~~ **FECHADA em 19/09 — defeito meu**
+
+**Dono:** — · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA` · *(P2 violada)*
+
+O `fase0/calendario.py` nasceu em 19/09 com `POS_DATA = (2, 10)`, `POS_MODREF = (52, 56)`,
+`LARGURA = 245` e `MODREF_OBSERVADOS = (...)` **escritos em Python**, com a procedência num
+comentário. São valores de **fonte externa** — o leiaute publicado pela B3 — e a P2 é
+explícita: *"todo parâmetro vive em YAML versionado, nunca em código."*
+
+**E eu os escrevi no mesmo dia em que auditei três planos de otimização por falta de
+rigor.** A procedência ficou num comentário, que é o lugar onde ela não pode ser conferida
+por teste nenhum.
+
+**Fechada:** `docs/schemas/cotahist-v02.yaml` — revisão, URL, data de acesso e o status de
+cada enumeração ao lado dos valores. O `calendario.py` lê de lá e **recusa rodar sem o
+arquivo** (`LeiauteAusente`), sem fallback: um fallback silencioso reintroduziria o defeito
+e **funcionaria**, que é o pior resultado possível.
+
+E a conversão 1-baseada → Python mora num lugar só, porque ela é a fonte clássica de erro
+de um: o documento diz 53–56, Python quer `[52:56]`.
+
+> **A ideia não é minha.** Veio do **terceiro plano de otimização de tokens** que você mandou
+> auditar — *"schema estruturado, Knowledge Registry"* —, e era o melhor item dos três. O
+> ganho dele não é token: **é a P2.** Registro a origem porque conclusão sem procedência é o
+> que este projeto persegue.
+
+---
+
+## P-106 · ~~`modref_de()` era lida só por teste~~ **FECHADA em 19/09 — P-77 recriada por mim**
+
+**Dono:** — · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+`calendario.modref_de()` e `conferir_modref()` nasceram em 19/09 e **nenhum módulo do motor
+as chamava** — só o teste. É a **P-77 na letra**: *campo que só o teste toca é campo que o
+motor não usa*, e é categoria pior que órfã pura, porque tem testemunha — o teste prova o
+esquema e ninguém prova o comportamento. Foi assim que a P-13 anunciou correção com a suíte
+verde.
+
+**Menos de 24 horas entre a P-77 estar escrita no `CLAUDE.md` e eu recriá-la.**
+
+**Fechada:** `fase0/moeda.py` é o consumidor que faltava, e ele não é enfeite — é o
+instrumento do C-03.
+
+---
+
+## P-107 · O pré-registro de ML herdou `L = 3` de uma amostra quatro vezes maior — e não tem teste de poder
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** **antes do primeiro commit de
+`preregistro-ml-v1.md`** — ele vale *"a partir do commit que o contém"*; depois disso, cada
+correção é uma v2 · **Classe:** `DECISAO_DE_DESENHO`
+
+Auditoria completa em `auditoria/AUDITORIA-PREREGISTRO-ML-V1.md`. Medido com o instrumento
+da P-88 sobre o NEFIN recortado a n = 80 (o tamanho do teste do ML, jan/2020 em diante):
+
+| L | blocos | HML | SMB (controle) |
+|---|---|---|---|
+| 1 | 80 | 3,1045 | 4,1399 |
+| **3** | **27** | 3,4598 (+11,4%) | 3,6704 (**−11,3%**) |
+
+A faixa L = 2 a 8 da P-88 foi definida por **≥ 39 blocos** com n = 306. Com n = 80, `L = 3`
+dá 27 — está **fora** da faixa pelo próprio critério que a definiu, e o controle mostra o
+artefato: o corte **cai** 11% onde não há dependência. Anticonservador, na direção de
+aceitar um modelo que não funciona.
+
+**Recomendação (decisão sua):** corte operativo = **máximo entre L ∈ {1, 2, 3}**, com o motivo
+escrito no §6; e um **nono teste** no §8 — poder com sinal plantado, reportado ao lado do
+veredito (com c ≈ 3,1–4,1, o IC médio precisa ser ≥ 0,35–0,46 × sd para ser detectável).
+Mais quatro menores na tabela §5 da auditoria. **P-100 passa a bloquear a família ML.**
+
+**Também retratado aqui:** a minha recusa do ML em 19/09 (`AUDITORIA-PLANO-DE-TOKENS.md`
+§4.5) citou DeMiguel fora do alcance dele.
+
+---
+
+## P-108 · ~~O `origem.csv` com BOM zerava a procedência em silêncio~~ **FECHADA em 21/09 — e o roteiro que causou era meu**
+
+**Dono:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+O `SEGUNDA-21.md` mandava criar o `origem.csv` com `Out-File -Encoding utf8`. No Windows
+PowerShell 5.1 isso grava `EF BB BF` na frente — **medido no arquivo dele: 26 bytes, os três
+primeiros o BOM**. O leitor abria com `utf-8`, a primeira coluna virava `'\ufeffcaminho'`,
+e o filtro `r.get("caminho")` descartava **todas** as linhas sem erro nem aviso. Ele
+declararia as 41 origens e o contador continuaria em 42. É o F-02 na camada do registro.
+
+**Fechada:** `origem_declarada()` lê com `utf-8-sig`, e cabeçalho sem a coluna `caminho`
+**levanta** em vez de zerar (*origem ilegível não é origem ausente*).
+`fase0/test_origem_bom.py`, 5 testes, um deles reproduzindo o leitor antigo para provar que
+o defeito existia. O `origem.csv` foi escrito com as 41 linhas, sem BOM, a partir do
+manifesto dele de 21/09 e da `$baseUrl` do script de download que ele colou em 18/09.
+
+---
+
+## P-109 · ~~O `calendario.py` de 19/09 reprovava 19 testes que eu não rodei~~ **FECHADA em 21/09**
+
+**Dono:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+O `calendario.py` de 19/09 confere o header do COTAHIST (`00COTAHIST.AAAABOVESPA …`) — é o
+que pegou a P-99. Os sintéticos do `test_ajustar.py` (sem header) e do `test_calendario.py`
+(header `00` + oito zeros) não existem no acervo real, e **14 + 5 testes** reprovaram. Eu
+tinha declarado em 19/09 que não rodara esses testes; não tinha tentado — o repositório é
+público (§5-B.15).
+
+**E o roteiro mentia sobre o código.** O `SEGUNDA-21.md` de 19/09 dizia que *"arquivo que
+começa direto num registro de cotação é aceito, e a primeira linha não se perde"*. O
+`registros()` entregue não faz isso: ele exige o header e levanta. É o defeito recorrente da
+casa — *um arquivo declara um comportamento que o código não tem* —, escrito por mim no
+roteiro do dia em que você ia confiar nele.
+
+**Fechada** corrigindo o **sintético**, não o leitor: os dois `_cotahist()` agora escrevem o
+header real. O `calendario` continua recusando arquivo sem header, com aviso em stderr —
+recusar é o que protege a P-99. Medido sobre clone do `origin/main` + entrega.
+
+---
+
+## P-110 · ~~Treze `.md` da raiz sem papel, e o teto de órfãos medido na árvore errada~~ **FECHADA em 21/09**
+
+**Dono:** — · **Classe:** `DECISAO_DE_DESENHO`
+
+`test_todo_md_da_raiz_tem_PAPEL_declarado` reprovou no repositório real: `LEIA-AGORA.md`,
+`LEIA-NA-SEGUNDA.md`, `LEIA-NA-TERCA.md`, dois de prompts, `RECRIAR-REPOSITORIO.md` e sete
+laudos de agosto. **Fechada:** os treze classificados `SOB_DEMANDA`, cada um com o motivo,
+lido o título de cada um. **Nenhum entra na leitura de sessão.**
+
+O teto de 46 órfãos do `achados_ancorados.py` foi medido em 19/09 numa árvore **sem** o
+`ACHADOS.md`. No repositório real, com o `ACHADOS.md` já colado, também dá **46 — mas com
+outros 24 códigos** (os da árvore de entrega ganharam definição; entraram os `E-10`…`E-19`
+do laudo consolidado, os `T-02`…`T-05` dos escopos, `D-2`…`D-7`). O teto continua valendo,
+agora **por medição no lugar certo**, e a coincidência fica escrita aqui para ninguém ler
+como calibração.
+
+**Sobra (aberta, sem prazo):** os três `LEIA-*` são roteiros vencidos. Movê-los para
+`docs/historico/` limpa a raiz; é decisão sua, porque são arquivos seus.
 
 ---
 
@@ -2032,95 +2344,64 @@ se a série utilizável começa em **04/07/1994** ou em **02/01/1986** — decis
 
 ---
 
+## P-102 · ~~Uma guarda acessória derrubou o manifesto~~ **CONSERTADA, falta aplicar**
+
+**Dono:** Osvaldo (aplicar os arquivos) · **Gatilho:** **antes de qualquer outro commit** ·
+**Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
+
+Liguei `acervos_sem_regime()` ao `main()` do `manifesto_cvm.py` sem guarda. Em `tmp_path` o
+`raiz_do_repositorio` acha o `pyproject.toml` que o próprio teste cria, a política não existe
+ali, e o `FileNotFoundError` subiu — derrubando **três testes do `test_manifesto_cvm.py` que
+não tinham nada a ver com P7 nenhuma**. Eles foram commitados e **empurrados vermelhos, no
+primeiro push da história do repositório** (`3ee5e97`).
+
+**Dois erros meus, e o segundo vale mais:** rodei só o meu teste novo, não a suíte de `fase0`
+(passo 5 do §9, *"pytest, o júri"*, pulado na mesma resposta em que citei o protocolo); e uma
+guarda **acessória** derrubou o **trabalho principal** — o comando grava o retrato de
+procedência, conferir a P7 é um extra que eu pendurei nele.
+
+**A correção fica entre dois extremos:** `PoliticaAusente` **levanta** na função (engolir
+seria o E-02 — arquivo ausente virando *"nada declarado"*) e o `main()` **avisa que a
+conferência não rodou** e deixa o retrato de pé. *"Conferi e está certo"* e *"não consegui
+conferir"* não podem ter a mesma saída.
+
+**Medido com o PC desligado**, reconstruindo os três testes a partir do diff:
+
+```
+1 test_sem_origem_declarada_o_manifesto_CONTA_em_vez_de_calar   VERDE
+2 test_com_origem_declarada_o_numero_CAI                       VERDE
+3 test_a_origem_NAO_e_reescrita_pelo_manifesto                 VERDE
+4 politica ausente LEVANTA (nao vira "nada declarado")          VERDE
+```
+
+**O que NÃO foi medido (P5):** a suíte `fase0` inteira. O container não tem `ajustar.py`,
+`test_ajustar.py`, `test_calendario.py` nem o `coletar_b3.py` atual — o mirror é parcial.
+O que está provado é a causa raiz, que era **uma** e local ao `main()`. **Rodar a suíte na
+máquina é o que fecha.**
+
+---
+
 ## Ao voltar ao desktop
 
-*Reescrita em 18/09/2026. A versão anterior era de **06/09** e mandava criar o
-repositório no GitHub (existe), rodar `coletar_b3.py --eventos` (rodou, 74/74) e o
-`-SoConferir` da CVM (feito). `CLAUDE.md` §5-A avisa que **fila desatualizada é pior que
-fila nenhuma: ela parece confiável** — e esta seção passou doze dias sendo o exemplo.
-O texto antigo não foi perdido: ele descreve o estado de 06/09 e está no histórico do
-git.*
+> # ▶ O roteiro completo está em **`SEGUNDA-21.md`**, na raiz.
+>
+> *Reescrito em 19/09. Ele é autossuficiente: abrir e seguir de cima para baixo. Esta seção
+> só resume, para não haver duas listas discordando — foi assim que a versão de 06/09 ficou
+> doze dias mandando criar um repositório que já existia.*
 
-### 1. Conferir e commitar o que esta sessão escreveu
+**Em uma linha:** copiar 7 arquivos do chat → as três suítes verdes → commit e push →
+`ajustar.py` sobre 2021–2025 no Claude Code.
 
-```powershell
-cd C:\Users\osvaldo.junior\Desktop\Bastter
-py -3.11 -m pytest fase0 -q                     # o teste novo é fase0/test_p7_captura_declarada.py
-py -3.11 -m pytest alocacao -q ; py -3.11 -m pytest auditoria -q
-py -3.11 -m ruff check alocacao fase0 auditoria
-git add -A ; git commit -m "P7 declarada: as duas capturas manuais entram em limitacoes_declaradas (politica 1.21.0)"
-```
-
-O que chegou: `politica.yaml` **1.21.0** com duas limitações novas e o campo `acervos`;
-`manifesto_cvm.acervos_sem_regime()`; `fase0/test_p7_captura_declarada.py` (10 testes,
-com prova por mutação); `docs/fontes/b3-series-historicas-cotahist.md`; P-96 e P-97 aqui.
-
-### 2. Corrigir a mensagem de um commit que afirma trabalho que não existe — **antes de empurrar**
-
-O commit `7178756` diz **"COTAHIST 2021-2025"**. Isso não aconteceu: o acervo tem
-`COTAHIST_A2023.ZIP` e mais nada. **A mensagem foi escrita por mim, antes do trabalho
-existir** — é o C-01 no lugar mais caro que há, porque mensagem de commit é o registro
-datado em que o pré-registro deste projeto se apoia.
-
-```powershell
-git log --oneline -1 7178756
-git rebase -i --autosquash 7178756~1   # ou, se ele ainda for o HEAD:
-git commit --amend -m "manifesto preserva retrato do mesmo dia"
-```
-
-**Só é possível porque nada foi empurrado.** Depois do push, a mentira fica no histórico
-público e a correção vira uma retratação, não uma emenda.
-
-### 3. Empurrar os commits — e isto não é higiene, é o verificador
-
-São **19 commits** que nunca saíram da máquina. O laudo `auditoria/PREREGISTRO-EVIDENCIA.md`
-mediu que auto-registro **sem leitor externo** é justamente o caso em que os estudos não
-acham efeito, e que o que salva este projeto é o repositório público com commits datados:
-*a especificação commitada antes do resultado, num histórico que não se reescreve sem
-rastro.* **Enquanto nada é empurrado, esse verificador não existe** — e todo o aparato de
-pré-registro de 18/09 está apoiado nele.
-
-Ordem: corrigir o `7178756` **primeiro**, empurrar depois.
-
-### 4. O download do COTAHIST — manual, e é o preço inteiro pago uma vez
-
-Não há automação: o portão é CAPTCHA, e eu não passo por ele. O detalhe do caminho e o
-porquê estão em `docs/fontes/b3-series-historicas-cotahist.md`.
-
-```
-https://bvmf.bmfbovespa.com.br/pt-br/cotacoes-historicas/FormSeriesHistoricasArq.asp
-  Séries Anuais -> escolher o ano -> resolver o CAPTCHA -> Download
-```
-
-**Ordem por evento de quantidade corroborado (P-92), não cronológica:**
-
-| ordem | ano | o que ele destrava |
+| passo | o que | tempo |
 |---|---|---|
-| 1º | **2025** | 31 eventos de quantidade |
-| 2º | **2021** | 19 |
-| 3º | 2024 | contiguidade |
-| 4º | 2022 | contiguidade |
-| 5º | 2023 **de novo**, em pasta separada | a medição da **P-96** |
+| 1 | copiar os 7 arquivos do chat (lista em `SEGUNDA-21.md`) | 5 min |
+| 2 | **as três suítes verdes** — `origin/main` está VERMELHO (P-102) | 5 min |
+| 3 | commit + push | 2 min |
+| 4 | **`ajustar.py` sobre 2021–2025 contíguos** ⚙ Claude Code | o trabalho |
 
-Salvar em `data\bronze\b3\`, **`.zip` inteiro, sem descompactar**.
+**Duas coisas com data:** `macro.poupanca_am` vence **28/09**; e a CVM reescreve DFP/ITR
+toda semana — cada semana sem captura é uma rodada de reapresentações que **não volta**.
 
-Depois:
-
-```powershell
-py -3.11 fase0\manifesto_cvm.py --manifesto data\bronze\b3
-# o manifesto agora imprime também a linha da P7, e continua cobrando o origem.csv
-Get-FileHash data\bronze\b3-conferencia\COTAHIST_A2023.ZIP -Algorithm SHA256
-#   igual a ad1603788d78aaa1... -> ano fechado é congelado (P-96 fecha medida)
-```
-
-E escrever `docs\acervo\b3\origem.csv` (`caminho;origem;acesso`), uma linha por
-arquivo — modelo no §7 do documento de fonte. A linha do 2023 antigo depende da **P-97**.
-
-### 5. Contas pendentes de dado, que só rodam aí
-
-- **P-17** — reconciliar C-04 e C-05 com `auditoria/escopo-campos-de-analise.md`.
-- **P-18** — contar `SETOR_ATIV` nos ZIPs da CVM.
-
-### 6. Vencimento a conferir
-
-`macro.poupanca_am` vence em **28/09/2026** — dez dias. `motor.val()` avisa em stderr.
+**Uma coisa que eu não fiz:** não atualizei o `ACHADOS.md` — ele nunca passou pelo
+container, e manter atualizado um arquivo que eu não li seria escrever sobre o que suponho
+que ele diz. O bloco pronto está em `ACHADOS-19-09-PARA-COLAR.md`.

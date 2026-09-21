@@ -27,7 +27,11 @@ def _linha(data_aaaammdd, tipreg="01"):
 
 
 def _cotahist(pasta, nome, datas, extra=()):
-    linhas = [_linha("00000000", "00")]                      # header
+    # header REAL (P-109, 21/09/2026): `00COTAHIST.AAAABOVESPA AAAAMMDD`. O de antes era
+    # `00` + oito zeros, que nao existe no acervo; o `calendario` de 19/09 confere o header
+    # (e o que pegou a P-99) e passou a recusa-lo -- com AVISO, nao em silencio.
+    ano = C.ano_de(nome) or "2023"
+    linhas = [("00COTAHIST." + ano + "BOVESPA " + ano + "1228").ljust(245)]
     linhas += [_linha(d) for d in datas]
     linhas += list(extra)
     linhas += [_linha("99999999", "99")]                     # trailer

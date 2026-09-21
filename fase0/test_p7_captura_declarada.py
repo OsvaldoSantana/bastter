@@ -144,3 +144,82 @@ def test_mutacao_arquivo_no_lugar_de_pasta_nao_vira_acervo(tmp_path):
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+# ── P-102: a conferencia e ACESSORIA, e nao pode derrubar o manifesto ─────────
+# 18/09/2026, e o defeito e meu, do mesmo dia em que escrevi o arquivo acima.
+#
+# Eu liguei `acervos_sem_regime` ao `main()` sem guarda. Em `tmp_path` o
+# `raiz_do_repositorio` acha o `pyproject.toml` FALSO que o teste cria, a politica nao
+# existe ali, e o `FileNotFoundError` subiu -- derrubando TRES testes do
+# `test_manifesto_cvm.py` que nao tinham nada a ver com P7 nenhuma. Eles foram
+# commitados e EMPURRADOS vermelhos, no primeiro push da historia do repositorio.
+#
+# Sao dois erros, e o segundo vale mais que o primeiro:
+#
+#   1. eu rodei so o meu teste novo, nao a suite de `fase0`. E o passo 5 do protocolo
+#      §9 -- *"pytest, o juri, nunca o guia"* -- pulado por quem escreveu o protocolo
+#      na resposta anterior;
+#
+#   2. uma guarda ACESSORIA derrubou o TRABALHO que ela existe para proteger. O comando
+#      grava o retrato de procedencia; conferir a P7 e um extra que eu pendurei nele.
+#      Extra que mata o principal inverteu o proprio proposito -- e num instrumento cuja
+#      unica funcao e nao perder procedencia, cair e a pior saida possivel.
+#
+# E a correcao NAO e engolir o erro: isso seria o E-02, arquivo ausente virando "nada
+# declarado". E avisar que a conferencia nao rodou, e deixar o retrato de pe.
+
+def _acervo_falso(tmp_path, com_politica):
+    (tmp_path / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    ac = tmp_path / "data" / "b3"
+    ac.mkdir(parents=True)
+    import zipfile
+    with zipfile.ZipFile(ac / "x.zip", "w") as z:
+        z.writestr("a.csv", "c1;c2\n1;2\n")
+    if com_politica:
+        pol = tmp_path / "alocacao"
+        pol.mkdir()
+        (pol / "politica.yaml").write_text(yaml.safe_dump({"limitacoes_declaradas": {
+            "lim": {"acervos": ["b3"], "direcao_do_vies": "x",
+                    "quando_deixa_de_importar": "y", "fonte": "z"}}}), encoding="utf-8")
+    return ac
+
+
+def test_P102_sem_politica_o_MANIFESTO_continua_de_pe(tmp_path, capsys):
+    """O portao. Falha contra a versao de 18/09, que subia FileNotFoundError daqui."""
+    ac = _acervo_falso(tmp_path, com_politica=False)
+    assert m.main(["--manifesto", str(ac)]) == 0, "o retrato e o trabalho; ele nao cai"
+    saida = capsys.readouterr()
+    assert "manifesto:" in saida.out
+    assert (tmp_path / "docs" / "acervo" / "b3").exists()
+
+
+def test_P102_sem_politica_a_conferencia_AVISA_que_nao_rodou(tmp_path, capsys):
+    """Nao rodar em silencio seria o F-02 na camada do relato: ausencia de acusacao lida
+    como "esta tudo declarado". O aviso separa *conferi e esta certo* de *nao consegui
+    conferir* -- e e a P5 aplicada ao proprio instrumento."""
+    ac = _acervo_falso(tmp_path, com_politica=False)
+    m.main(["--manifesto", str(ac)])
+    err = capsys.readouterr().err
+    assert "a conferencia da P7 NAO rodou" in err
+    assert "sem regime de captura declarado" not in err, \
+        "sem politica nao se AFIRMA que falta regime -- nao se sabe"
+
+
+def test_P102_com_politica_a_conferencia_roda_de_verdade(tmp_path, capsys):
+    """Prova por mutacao do aviso: com a politica presente ele SOME e a conferencia
+    acontece. Aviso que nunca some e ruido; conferencia que nunca roda e enfeite."""
+    ac = _acervo_falso(tmp_path, com_politica=True)
+    assert m.main(["--manifesto", str(ac)]) == 0
+    err = capsys.readouterr().err
+    assert "a conferencia da P7 NAO rodou" not in err
+    assert "sem regime de captura declarado" not in err
+
+
+def test_P102_politica_ausente_NAO_e_lida_como_nada_declarado(tmp_path):
+    """E-02, decidido por ele em 12/09: ausente e vazio sao coisas diferentes. A funcao
+    LEVANTA em vez de devolver (set(), set()) -- devolver o par vazio seria afirmar
+    "conferi, nenhum acervo sem regime" sobre um arquivo que nunca foi aberto."""
+    (tmp_path / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    with pytest.raises(m.PoliticaAusente):
+        m.acervos_sem_regime(str(tmp_path))

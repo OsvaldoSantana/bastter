@@ -91,9 +91,17 @@ def origem_declarada(pasta):
     perdida -- toda vez que alguem rodasse o manifesto."""
     p = os.path.join(pasta, ORIGEM)
     if not os.path.exists(p): return {}
-    with open(p, encoding="utf-8", newline="") as f:
-        return {r["caminho"]: r for r in csv.DictReader(f, delimiter=";")
-                if r.get("caminho")}
+    # P-108: `utf-8-sig`, nao `utf-8`. O Windows PowerShell 5.1 grava `Out-File -Encoding
+    # utf8` COM BOM, e o roteiro de 21/09 mandava criar este arquivo exatamente assim. Com
+    # `utf-8` a primeira coluna vira '\ufeffcaminho', o `r.get("caminho")` abaixo devolve
+    # None para TODA linha, e o filtro descarta tudo EM SILENCIO: 41 origens declaradas,
+    # zero lidas, e o contador da P-06 continua em 42 sem dizer por que. F-02 no registro.
+    with open(p, encoding="utf-8-sig", newline="") as f:
+        leitor = csv.DictReader(f, delimiter=";")
+        if leitor.fieldnames and "caminho" not in leitor.fieldnames:
+            raise ValueError(f"{p}: cabecalho {leitor.fieldnames} nao tem a coluna "
+                             f"'caminho' -- origem ilegivel nao e origem ausente")
+        return {r["caminho"]: r for r in leitor if r.get("caminho")}
 
 
 def manifesto(raiz, quando=None, origens=None):
@@ -129,6 +137,15 @@ POLITICA = os.path.join("alocacao", "politica.yaml")
 ACERVO = os.path.join("docs", "acervo")
 
 
+class PoliticaAusente(FileNotFoundError):
+    """A politica nao esta onde a raiz encontrada diz que ela estaria.
+
+    NAO devolve "nada declarado". Arquivo ausente e arquivo vazio sao coisas diferentes,
+    e essa distincao foi DECIDIDA por ele no E-02 (12/09): dizer "nenhum acervo sem
+    regime" quando o que houve foi "nao achei o arquivo que diz os regimes" e mentira
+    documental -- a mesma que o `tese.carregar_registros` cometia."""
+
+
 def acervos_sem_regime(raiz_repo):
     """P7 virada NUMERO: quantos acervos existem sem regime de captura declarado.
 
@@ -154,6 +171,8 @@ def acervos_sem_regime(raiz_repo):
     base que so encolhe por conserto e a unica que vale (P-86)."""
     import yaml
     caminho = os.path.join(raiz_repo, POLITICA)
+    if not os.path.exists(caminho):
+        raise PoliticaAusente(caminho)
     with io.open(caminho, encoding="utf-8") as f:
         P = yaml.safe_load(f)
     declarados = set()
@@ -317,17 +336,26 @@ def main(argv=None):
                   f"  (colunas: {';'.join(COLUNAS_ORIGEM)})", file=sys.stderr)
         else:
             print(f"\nP-06: os {len(linhas)} arquivos tem origem declarada.")
+        # P-102: esta conferencia e ACESSORIA. O trabalho do comando e gravar o
+        # retrato; se a auditoria da P7 nao puder rodar, ela AVISA e o retrato fica de
+        # pe. Uma guarda que derruba o trabalho que ela existe para proteger inverteu o
+        # proprio proposito -- e calar seria pior ainda (F-02).
         raiz_repo = raiz_do_repositorio(a.manifesto)
-        if raiz_repo:
-            sem, orfas = acervos_sem_regime(raiz_repo)
-            if sem:
-                print(f"\nP7: {len(sem)} acervo(s) sem regime de captura declarado: "
-                      f"{', '.join(sorted(sem))}.\n  Rotina que depende de alguem lembrar "
-                      f"nao e rotina. Ou ela roda sozinha, ou entra em\n  "
-                      f"{POLITICA} -> limitacoes_declaradas.*.acervos", file=sys.stderr)
-            if orfas:
-                print(f"\nP7: {len(orfas)} declaracao(oes) sem acervo: "
-                      f"{', '.join(sorted(orfas))}. Declaracao apodrecida.", file=sys.stderr)
+        try:
+            sem, orfas = acervos_sem_regime(raiz_repo) if raiz_repo else (None, None)
+        except PoliticaAusente as e:
+            sem = orfas = None
+            print(f"\nAVISO: a conferencia da P7 NAO rodou -- politica nao encontrada em "
+                  f"{e}. O manifesto acima VALE; o que ficou por conferir e se todo "
+                  f"acervo tem regime de captura declarado.", file=sys.stderr)
+        if sem:
+            print(f"\nP7: {len(sem)} acervo(s) sem regime de captura declarado: "
+                  f"{', '.join(sorted(sem))}.\n  Rotina que depende de alguem lembrar "
+                  f"nao e rotina. Ou ela roda sozinha, ou entra em\n  "
+                  f"{POLITICA} -> limitacoes_declaradas.*.acervos", file=sys.stderr)
+        if orfas:
+            print(f"\nP7: {len(orfas)} declaracao(oes) sem acervo: "
+                  f"{', '.join(sorted(orfas))}. Declaracao apodrecida.", file=sys.stderr)
         return 0
     p.print_help()
     return 1

@@ -292,8 +292,27 @@ alocacao/
   sleeve.py        fração de RV
   cenarios.py      varredura
   dados/nefin_factors.csv    6.321 sessões, 2001-01-02 a 2026-07-03
-docs/fontes/       32 .md de fonte primária + README.md com o índice de extração
-auditoria/         laudos de escopo e definições
+docs/fontes/       34 .md de fonte primária + README.md com o índice de extração
+docs/schemas/      LEIAUTE COMO DADO (P2). `cotahist-v02.yaml`: posições, escala e a
+                   enumeração OBSERVADO do MODREF, com revisão, URL e data de acesso.
+                   Nasceu em 19/09 consertando um defeito meu — as posições estavam em
+                   Python, com a procedência num comentário (P-105)
+docs/acervo/       o manifesto de cada captura: sha256 + dt_captura, por acervo.
+                   `origem.csv` ao lado declara DE ONDE veio — o hash prova qual arquivo
+                   é, não a procedência (P-06 do manifesto)
+fase0/
+  calendario.py    o calendário de pregões e o ÚNICO leitor de COTAHIST. Acha o membro do
+                   ZIP pelo CONTEÚDO, não pela extensão (P-99), e lê o leiaute do YAML
+  moeda.py         as fronteiras de MODREF, medidas e NÃO aplicadas (C-03)
+  manifesto_cvm.py sha256 + dt_captura do acervo; `comparar()` separa REORDENADO de
+                   REAPRESENTADO — comparar por hash dá 100% de falso positivo na CVM
+  ajustar.py       a série de preços ajustada por proventos
+  refinar.py       o silver de eventos societários
+auditoria/         laudos de escopo, definições e os INSTRUMENTOS
+  chaves_orfas.py  chave de YAML que código nenhum lê
+  chaves_duplicadas.py  loader que RECUSA duplicata em vez de escolher (Y-01/E-09)
+  tamanho_do_contexto.py  quanto custa ler este projeto — a §11.4 virou comando
+  achados_ancorados.py    todo achado citado tem onde ser lido (guarda da Decisão C)
   regimes-de-leitura-de-balanco.md   por que uma régua só não serve (06/09)
   regime-incorporacao.md             o regime de construção, decidido POR ELE (06/09)
 pesquisa-custos-2026-08/   pesquisa de custos de agosto/2026
@@ -455,7 +474,7 @@ resultado possível, pior que não fazer.
 
 ---
 
-## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm
+## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm (15 linhas desde 21/09)
 
 *Escrita em 13/09/2026, a pedido dele: **régua de método, não lista de incidentes.***
 
@@ -485,6 +504,7 @@ confiança no alcance dela.**
 | — | "o catálogo duplica o literal" | eu não tinha aberto o `catalogo.yaml` (**E-08**) |
 | `C['etf']['IMAB11']` carregado | "a taxa nunca entrou no arquivo" | entrou — uma **chave duplicada** a apagava (**E-09**) |
 | chaves duplicadas nos `.py`… digo, nos YAML | "`catalogo.yaml` é ilegível" | ele usa **merge** (`<<:`), e meu loader não construía a tag |
+| um CAPTCHA no formulário de séries anuais | "não existe automação deste download" | o arquivo está num GET aberto, e eu **decidi não olhar** (§5-B.13) |
 
 ### A régua — cinco perguntas antes de promover uma medição a achado
 
@@ -549,6 +569,92 @@ eram remendos **ancorados**, que recusam aplicar quando a âncora não bate. O
 Vale sobretudo para `CLAUDE.md`, `PENDENCIAS.md` e `politica.yaml` — os três que as
 duas pontas tocam. Prosa e registro não são exceção: são justamente onde o conflito
 não estoura, porque não há teste que os leia.
+
+### 13. Afirmação de impossibilidade é achado, e achado precisa de medição
+
+Acrescentada em **18/09/2026**, e é a linha mais cara da régua até hoje. Eu escrevi, em
+`politica.yaml → limitacoes_declaradas` e num documento de fonte, que **"não existe automação
+deste download"** do COTAHIST, porque o formulário de séries anuais tem CAPTCHA.
+
+O arquivo estava num GET simples, sem CAPTCHA, sem autenticação, sem token:
+`bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A<ANO>.ZIP`. Ele baixou os 41 anos com
+um laço de `Invoke-WebRequest`.
+
+**A forma é a das outras doze, com um agravante novo.** Medi *"existe um CAPTCHA no
+formulário"*; concluí *"não existe caminho até este arquivo sem CAPTCHA"* — uma afirmação
+sobre **todos** os caminhos, a partir de **um**. O agravante está no mesmo documento: eu
+declarei que **não leria** o JS da página porque saber o endereço *"é a única peça que
+faltaria para passar por cima do portão"* — e depois usei o fato de não ter olhado como
+razão para afirmar que não havia o que ver.
+
+> **Princípio no lugar de medição é a forma mais difícil de detectar deste defeito, porque
+> a frase soa como rigor.** Uma conclusão mal medida se derruba medindo; uma recusa
+> apresentada como conclusão fecha a porta da própria verificação.
+
+**A regra:** *"não dá para fazer X"* só se escreve **depois de tentar X e falhar, com o
+erro transcrito**. Sem isso, escreve-se **"não sei se dá"** — e mede-se. E vale em dobro
+quando o destino da frase é `limitacoes_declaradas`, que é a seção em que o leitor confia
+por construção.
+
+**E o que NÃO estava errado:** não resolver CAPTCHA continua valendo, e ninguém resolveu
+CAPTCHA nenhum aqui. O que falhou foi não medir onde o arquivo mora antes de declarar que
+ele não tinha outra porta — e, por causa disso, **não entregar o script que era possível**.
+Ele escreveu sozinho o que eu devia ter entregado. Isso é a **U-01/P7 pela quarta vez**:
+pôr o Osvaldo no caminho crítico de algo que é do sistema, aqui com cinco CAPTCHAs manuais
+que não existiam.
+
+### 14. Controle sem o número de pares é decoração
+
+Acrescentada em **19/09/2026**, e ela veio de um relatório meu me corrigindo antes de eu
+publicar.
+
+O `moeda.py` imprimia, nas fronteiras de 1986, 1989 e 1990, `controle 1,0000`. Um controle
+de exatamente 1,0000 é suspeito nos dois sentidos — pode ser um mercado que não se moveu, ou
+pode ser **um par só**. Eu não tinha como saber, porque o relatório não dizia.
+
+Com o `n` ao lado: **1,0000 com 339, 307 e 238 pares.** Em plena hiperinflação. Não é
+mercado estável — é a **maioria dos papéis repetindo o preço** do dia anterior, mercado
+raso. E isso *fortalece* a conclusão em vez de enfraquecê-la: se o dia comum de 1986 mede
+1,0000, a fronteira medindo 1,1973 teve **mais** movimento que o normal, e ainda assim nada
+perto de 1.000×.
+
+> **A régua:** todo número de controle sai acompanhado do seu **n**. `1,0000 (n=1)` e
+> `1,0000 (n=339)` são a mesma string e conclusões opostas — e a primeira autoriza
+> exatamente nada.
+
+É a mesma família da regra 4 (guarda que nunca falhou é guarda que ninguém sabe se
+funciona): **instrumento que não publica o próprio tamanho de amostra não é instrumento**,
+é um número com sotaque de medição. E a §5-B inteira existe porque foi assim que onze
+conclusões passaram.
+
+### 15. Suíte verde na árvore de entrega não é suíte verde no repositório
+
+Acrescentada em **21/09/2026**, na primeira auditoria feita contra o repositório de verdade.
+Em 19/09 a entrega dizia **"95 passed, 2 skipped"** — e era verdade **na árvore de 27
+arquivos que eu montei**. Clonado o `origin/main` (o repositório é público) e aplicada a
+entrega por cima, o resultado foi outro:
+
+| suíte | na árvore de entrega | no repositório real |
+|---|---|---|
+| `fase0` | verde | **19 vermelhos** — 14 do `test_ajustar.py`, 5 do `test_calendario.py` |
+| `auditoria` | verde | **2 vermelhos** — 13 `.md` da raiz sem papel; teto de órfãos estourado |
+
+As três causas têm a mesma forma: **o instrumento foi calibrado num subconjunto e a
+conclusão foi escrita sobre o todo.** O `calendario.py` passou a exigir o header real do
+COTAHIST, e os sintéticos de 16–18/09 não tinham header (P-109). O `tamanho_do_contexto`
+nunca viu os treze `.md` antigos da raiz (P-110). E o teto de 46 órfãos foi medido numa
+árvore sem o `ACHADOS.md` — no repositório real também dá 46, **mas com outros 24 códigos**:
+bateu por coincidência, não por medição.
+
+**E o agravante é a §5-B.13 outra vez.** Eu escrevi em 19/09 que *"não pude rodar os testes
+deles"*. Podia: `git clone` de um repositório público, que é o que fiz hoje. Declarar a
+limitação foi certo (P5) — ela é o que tornou esta auditoria rápida —, mas **"não pude"
+era "não tentei"**.
+
+> **A regra:** antes de escrever "passed", aplique a entrega sobre um clone do
+> `origin/main` e rode as **três** suítes inteiras. Número de testes medido em árvore
+> parcial se escreve com o nome da árvore ao lado — *"95 passed na árvore de entrega"* —,
+> nunca como estado do projeto.
 
 ### A regra de uma linha, para quando não der tempo de ler as cinco
 
@@ -691,7 +797,7 @@ reserva é **zero**. São 56 meses, não 42.
 
 | camada | estado |
 |---|---|
-| 0 · pipeline de dados | **em andamento.** B3: acervo de eventos completo (74 emissoras, ~8 mil proventos, `dt_captura=2026-09-11`), **silver** escrito (`refinar.py`) e, desde 18/09, a **série de preços AJUSTADA** de 2023 (`ajustar.py`, medida — C-02). CVM: **baixada em 18/09**, 33 ZIPs. COTAHIST: **1 ano**, e é a régua de todo o resto (P-92). Bitemporalidade: desenhada, não implementada |
+| 0 · pipeline de dados | **em andamento.** B3: eventos de 74 emissoras (`dt_captura=2026-09-11`), **silver** (`refinar.py`) e a **série ajustada** de 2023 (`ajustar.py`, C-02). CVM: 33 ZIPs, 18/09. COTAHIST: **41 anos, 1986–2026** (5,6 GB), e desde 19/09 **o leitor enxerga todos** (P-99) — com a unidade monetária a reexpressar antes de 04/07/1994 (C-03). Leiaute com fonte primária (P-06 fechada). Bitemporalidade: desenhada, não implementada |
 | 1 · motor de custo | completa |
 | 2 · portões G0–G8 | completa |
 | 3 · alocação alvo | completa |
@@ -705,967 +811,53 @@ As duas camadas fora do plano são as que mais mudaram decisões. O blueprint fo
 escrito sem conhecer o estado financeiro real e otimizou a parte do sistema que
 só será usada em 2031.
 
-> **X-01 — o dado estruturado não alcança a decisão. 06/09/2026, e é o achado mais caro
-> desta sessão.**
+> ## ÍNDICE DE ACHADOS — 06/09 a 18/09, movidos para o `ACHADOS.md` em 19/09/2026
 >
-> O Osvaldo respondeu como se lê uma incorporadora (`auditoria/regime-incorporacao.md`).
-> A sequência dele tem dez passos. **Três são obtíveis nas 8 demonstrações estruturadas da
-> CVM.** VSO, vendas líquidas, distratos, receita a apropriar, unidades em estoque, e a
-> separação entre dívida SFH e corporativa **não existem** nos CSVs — vivem em **nota
-> explicativa** e em **release de resultados** (protocolado como IPE).
+> **Por que eles saíram, e não é economia: a §10 deste arquivo diz desde 06/09 que os
+> achados moram no `ACHADOS.md` — *"não estão aqui de propósito: misturar instrução com
+> história custava ~10 mil tokens por sessão"*. Depois disso, trinta achados entraram
+> nesta seção, e ela fechou em 20.085 tokens.** O arquivo declarava um comportamento que
+> ele mesmo não tinha, e os dois concordavam por acidente porque ninguém mediu a §7. É o
+> defeito recorrente da casa cometido pelo arquivo que o define.
 >
-> E os três obtíveis são justamente os que ele **não** colocaria em primeiro lugar.
+> **O que fica aqui é a REGRA que cada achado produziu** — é ela que impede a repetição. A
+> narrativa que a explica está no `ACHADOS.md`, e a §10 manda ler a da área antes de tocar
+> nela. Achado que virou teste está ainda mais protegido: o teste falha, o texto não.
 >
-> A Fase 0 inteira foi desenhada em cima dos CSVs de DFP/ITR. **Isto não invalida a Fase 0
-> — ela continua necessária. Mostra que ela não é suficiente**, e que existe uma segunda
-> esteira (extração de documento) de ordem de grandeza diferente, que nunca foi orçada.
-> Não há razão para supor que construção seja exceção: banco já era, e agora são dois.
->
-> **O que a doutrina obriga:** P6 — construção não sai do universo. `empresa_sem_dado` —
-> admitir com marcação. Então empresa de regime `INCORPORACAO` entra marcada, com o motivo
-> escrito e **contável**. E nasce uma camada de desenho que o projeto não tinha:
-> **portão** (automático, todo o universo, dado estruturado) × **dossiê** (manual, lista
-> curta, notas e release). Para incorporação o portão só pode dizer *"esta empresa exige
-> dossiê"* — P-64.
+| achado | a regra que ele deixou |
+|---|---|
+| **X-01** | VSO, distratos e dívida SFH **não existem** nos CSVs da CVM. Nasce a camada **portão** (automático, universo, dado estruturado) × **dossiê** (manual, lista curta, nota explicativa). Para incorporação o portão só pode dizer *"esta empresa exige dossiê"* — P-64 |
+| **Y-01** | Chave YAML duplicada é sobrescrita **em silêncio**, e a de cima morre — `IMAB11` ficou morta oito dias com fonte e valor escritos |
+| **E-09** | O mesmo defeito medido no lugar certo: eu havia concluído *"nunca entrou no arquivo"* medindo o valor **carregado**. Guarda: `auditoria/chaves_duplicadas.py`, um loader que **recusa** duplicata em vez de escolher |
+| **A-01** | Emissora derivada por "filtrar dígitos" casa com **outra empresa** e a B3 responde 200. Regra é **posicional**: 4 caracteres + dígitos. *Não é ausência de dado, é dado do ativo errado com aparência perfeita* |
+| **A-02** | Um **resumo não é uma observação**. Quando a fonte é máquina, vale o byte que ela devolve, e a prova é o bruto no acervo |
+| **A-03** | Código de emissora muda e o histórico **não vem junto**. Zero nas três listas de uma empresa do Ibovespa é quase sempre troca de código — e o `codeCVM` é estável quando o ticker não é |
+| **A-04** | E *"a história está sob o código antigo"* era suposição minha, **falsa como regra**: `BRFS` responde, `MRFG` não, mesma fusão. Buscar pelo código antigo é **tentativa**, não passo do pipeline — lacuna declarada por ativo |
+| **A-05** | Valor fora de uma lista `OBSERVADO` **falha ruidosamente**: não descarta (perderia dado), não adivinha (seria o F-02). E `INCORPORACAO` não é evento de escala, é troca de **identidade** |
+| **A-06** | **Medir a bandeira não é medir quem a honra.** `is` mede referência, não uso — e o arquivo que declarava era o *teste*. Guarda testada por mutação, senão não é guarda |
+| **A-07** | Quando a **mesma condição** aparece em dois lugares do mesmo módulo, elas concordam? A muda vence, porque é a que roda oito mil vezes |
+| **P-85** | Saída de instrumento tem de ser **ordenada** para servir de instantâneo — um `set` impresso mudava o texto entre execuções, e o `refinar.py` já sabia disso: a lição não atravessou de módulo para módulo |
+| **B-02** | O `TOTAL-ZERO` não era truncamento: as duas bases da B3 guardam o nome societário de formas diferentes. E o match é **exato** (`ITAU` → 0), então divergência dá zero, **nunca dado parcial** |
+| **B-03** | E **não há regra única**: às vezes o sufixo some (`AMBEV S/A` → `AMBEV`), às vezes é reescrito (`CURY S/A` → `CURY S.A.`). A saída é **cascata de candidatos**, guardando qual funcionou — a forma é procedência |
+| **C-01** | `factor` é **percentual** em desdobramento e **multiplicador** em grupamento — um campo, dois significados, separados pelo rótulo. Quem decidiu foi a **distribuição**, não o preço |
+| **D-01** | Os números financeiros dele **podem** ficar na prosa do repositório público — decisão declarada dele, válida para a ordem de grandeza de hoje. Cresceu ou mudou de natureza → revisitar, nunca herdar |
+| **E-01** | O `simular` de um módulo recusa rota bloqueada; o do irmão devolve número. **A bandeira estava levantada e ninguém a honrava** |
+| **E-02** | **Ausente, vazio e ilegível são três coisas.** Arquivo ausente levanta; vazio é o primeiro dia e é legítimo; ilegível levanta. A U-01 virou **parâmetro**, não padrão |
+| **E-03** | Nove interruptores declarados, dois ligados em nada — e **arquivo e código concordavam por acidente** porque os nove estavam `true`. O custo não é erro: é conclusão errada sobre o próprio sistema |
+| **E-05** | **RETIRADO** — falso positivo meu. Causa raiz: varri só os `.py` num projeto que põe regra em YAML **de propósito**. *Auditar metade do sistema e chamar de conclusão.* Fica como retratação |
+| **E-06** | **O grau de liberdade mais perigoso não é contável.** Subtrair `Risk_Free` de um fator long-short **inverte o sinal** do alfa, e nenhum contador de variantes o pegaria — o que segura é um comentário e **dois testes**. Contador é alarme, registro é defesa |
+| **E-08** | Mesma incerteza tratada de dois jeitos em dois arquivos, e **o macio vence porque é o do caminho que executa**. Seis cópias sem `expira`: o projeto construiu um relógio e metade dos números não estava ligada nele. Fechado com **resolvedor de referência** |
+| **F-03** | Remedida com a lâmina do gestor: o Tesouro IPCA+ vence o IMAB11 em **todas** as faixas, e a margem **abre** com o valor. A fragilidade era do insumo, não da conclusão |
+| **P-05** | A pendência estava **mal formulada**: não era número ausente, era **campo errado**. *"Taxa de administração"* é um componente — 0,04% adm + 0,03% custódia + 0,18% gestão — e comparar por ele subestimava em **seis vezes** |
+| **P-76** | **O status de uma conclusão é uma medição, não uma herança.** Sobrevive à faixa da incerteza → `COMPLETO` com a faixa; inverte dentro dela → `PARCIAL` com a fronteira |
+| **P-77** | **Campo que só o teste toca é campo que o motor não usa** — e é pior que órfão puro, porque tem testemunha. Mudança de *esquema* anunciada como correção de *comportamento* |
+| **JCP** | Série de alíquotas 15% → 18% (68 dias de 2016) → 15% → 17,5%. E a regra de método: ***"fonte primária ganha" não é passe livre*** — ela ganha depois de se verificar **qual dispositivo** a cláusula alcança |
+| **V-01** | Evento societário da B3 é o insumo **mais perecível** do projeto: endpoint não documentado, sem SLA, sem espelho. Série de preço sem ajuste de provento é série inútil |
+| **pré-registro** | A evidência **contrariou a minha recomendação**: o que funciona é o plano de análise detalhado, não o ato de registrar — e todo benefício medido vem de arranjo com **verificador externo**. O dele é o histórico público datado |
 
-> **Y-01 — chave YAML duplicada é sobrescrita em silêncio. 10/09/2026.**
->
-> `custos.yaml` tem **duas** entradas `etf.IMAB11` (linhas 171 e 253). O PyYAML **não
-> reclama**: fica com a última. O que o motor lê hoje é `valor: null,
-> status: NAO_CONFIRMADO` — a entrada de 05/09, com valor 0,25%, fonte e data de acesso,
-> **está morta desde que foi escrita**.
->
-> É o F-02 numa camada nova: lá insumo ausente virava zero; aqui **insumo presente é
-> sobrescrito por um ausente**. O erro é na direção conservadora (a rota fica bloqueada),
-> o que é sorte, não desenho.
->
-> **Pergunta aberta:** o registro diz "F-03 medida e refutada (IMAB11 perde do Tesouro)".
-> Se o motor lê `None`, **com que número essa medição foi feita?** Responder antes de
-> apagar qualquer das duas entradas.
->
-> **O teste que falta não é sobre IMAB11** — é uma varredura do YAML cru procurando chave
-> repetida em qualquer mapping. Um teste do IMAB11 seria patch.
-
-> **A-01 e A-02 — 11/09/2026, a primeira corrida real da Fase 0, e ela rendeu dois
-> achados que nenhuma leitura teria dado.**
->
-> **A-01 — `B3SA3` virou `BSA`, e a B3 respondeu 200.** O coletor derivava a emissora
-> filtrando dígitos do ticker. Funciona em 73 dos 74 ativos do Ibovespa e erra em
-> **B3SA3**, cujo código de emissora é `B3SA` — tem dígito no meio. O endpoint **casou
-> com outra empresa** e devolveu capital social de R$9,61 bi datado de 1981.
->
-> Este é o modo de falha mais caro do projeto inteiro: **não é ausência de dado, é dado
-> do ativo errado, com aparência perfeita.** Nenhum teste de "veio resposta?" o pega. A
-> regra certa é posicional — ticker da B3 é 4 caracteres de emissora + dígitos —, e o
-> coletor agora imprime o nome da empresa em cada linha, para que a divergência seja
-> visível a olho.
->
-> **A-02 — eu registrei o formato do endpoint errado.** `docs/fontes/pesquisa-bases-e-apis-2026-09.md`
-> diz que `GetListedSupplementCompany` devolve um **objeto**. Devolve uma **lista**. As 74
-> emissoras vieram como lista, sem exceção. A leitura original passou por uma ferramenta
-> de resumo, que desembrulhou a lista de um elemento **sem avisar**, e eu transcrevi a
-> conclusão dela como se fosse o dado.
->
-> É a mesma classe do F-05/N-01 com um intermediário novo: **um resumo não é uma
-> observação.** Quando a fonte é máquina, o que vale é o byte que ela devolve, e a única
-> prova é o arquivo bruto gravado no acervo.
->
-> **O acerto de desenho, e vale registrar porque foi barato:** a guarda escrita em 10/09
-> — *"resposta estranha é evidência, não lixo: grave o bruto e acuse no fim"* — fez o
-> coletor sobreviver às 74 e trazer a forma real de volta, em vez de morrer na primeira.
-> A versão anterior perdia 75 ativos por causa de um.
-
-> **A-03 — o código da emissora muda, e a história não vem junto. 11/09/2026.**
->
-> `MBRF` voltou com `tradingName: MARFRIG`, `codeCVM: 20788`, e **as três listas de
-> eventos vazias**. Não é falha de rede nem chave errada: o código mudou (`MRFG` → `MBRF`,
-> na fusão com a BRF) e o histórico **ficou sob o código antigo**.
->
-> Zero numa lista é comum e legítimo — há empresa que nunca desdobrou. **Zero nas três,
-> numa empresa do Ibovespa, é quase sempre troca de código.** Das 74 emissoras, só a MBRF
-> caiu nesse caso, o que torna a guarda barata e precisa.
->
-> É a confirmação concreta do que a pesquisa de 06/09 tinha previsto em abstrato: **o
-> mapeamento ticker ↔ CNPJ ↔ CD_CVM também precisa ser bitemporal**, senão o join vaza
-> futuro. Aqui ele não vaza futuro — ele **apaga passado**, que é o outro lado da mesma
-> moeda. Série de preços sem ajuste de proventos é série inútil.
->
-> Note o que salvou: `codeCVM` vem no mesmo objeto. **O CNPJ/CD_CVM é estável quando o
-> ticker não é** — é por ele que a ponte para o código antigo se faz.
-
-> **11/09/2026 — cinco rodadas no Claude Code, e o saldo real.**
->
-> Fechadas e commitadas: **P-69/Y-01** (`258ca3b`), **P-70** (`9e1aa8a` + `e15d205`),
-> **P-71/P-72** (`4f54f31` + `c989ac6`), **campos mortos** (`fb8ce78`), e a esteira
-> `--proventos-completos` escrita com testes sem rede.
->
-> **A pergunta do Y-01 foi respondida:** a F-03 foi medida **à mão, com 0,25%, fora do
-> motor** — está em `politica.yaml → fora_de_escopo.ETF_renda_fixa`. O valor nunca passou
-> por `val()`, então a duplicata não a contaminou. Mas abriu a **P-76**: a conclusão foi
-> registrada como *"refutada"* e o insumo que a sustenta é `PARCIAL`. Se 0,25% for o
-> **teto** do regulamento, a taxa efetiva pode ficar abaixo de 0,20% e **a comparação
-> inverte**. *Uma conclusão medida herda o status do insumo mais fraco dela?* — é a P1
-> aplicada ao relato de uma medição, e ainda não tem resposta.
->
-> **O achado de maior valor não estava em nenhum prompt: P-77.** `retorno_liquido_aa` faz
-> `ir = 0.0 if r.isento_ir else ...`, e `isento_ir` resolve por `isento_ir_rendimento` —
-> então, para o FII, **o IR de ganho de capital vira zero**. É exatamente o defeito que a
-> P-13 foi criada para corrigir, vivo, no código. Hoje não produz número errado **só
-> porque o FII está bloqueado por falta de insumo** — o bloqueio está *escondendo* o bug.
-> É o F-02 ao contrário: lá a ausência virava zero; aqui a ausência **esconde** um zero
-> que já está errado.
->
-> **O portão da P-40, instalado em 11/09:** `ruff check .` → **All checks passed**.
-> `mypy` **não rodou**: parou nos stubs do numpy com *"Type statement is only supported in
-> Python 3.12 and greater"*.
->
-> **Isso não é dívida de código — é a P-73 pela terceira vez.** O `pyproject.toml` declara
-> `python_version = "3.11"`, a máquina roda **3.13**, e o numpy instalado traz stubs com
-> sintaxe de 3.12+. O mypy **nunca vai passar nessa máquina** enquanto a divergência
-> existir. Instalar o Python 3.11 deixou de ser preferência de reprodutibilidade e virou
-> **requisito operacional**: sem ele, metade do portão está permanentemente desligada.
->
-> E nenhum commit fez o bump de versão do `politica.yaml` nem o changelog — passo 9 do
-> protocolo, cinco commits seguidos.
-
-> **B-02 — a causa do TOTAL-ZERO não era truncamento. Medida em 11/09/2026.**
->
-> A esteira de proventos fechou **71 de 74** emissoras — mais de **8 mil registros**, com
-> ITUB em 956, BBDC em 902, ITSA em 506 e PETR em 343. Falharam três: **ABEV, CURY,
-> KLBN**, todas com `totalRecords: 0`.
->
-> O código supunha **truncamento no campo de 12 posições**. Nenhuma das três estava
-> truncada: `AMBEV S/A` tem 9 caracteres, `CURY S/A` tem 8, `KLABIN S/A` tem 10.
->
-> **O que elas têm em comum é a barra.** Chamei o endpoint com os nomes sem o sufixo e ele
-> respondeu: **`AMBEV` → 134 registros. `KLABIN` → 18.** Com `S/A`, zero. E os nomes com
-> `S.A.` **de ponto** — SUZANO, RUMO, VIVARA, IGUATEMI — passaram todos.
->
-> **A causa real: os dois endpoints da B3 guardam o nome comercial de formas diferentes.**
-> O suplemento devolve `AMBEV S/A`; a tabela de proventos guarda `AMBEV`. Não é bug de
-> codificação nosso — é divergência entre duas bases da mesma casa.
->
-> **E o teste que importava mais deu a resposta tranquilizadora:** chamei com `ITAU`
-> (prefixo de `ITAUUNIBANCO`) e voltou **zero**. Ou seja, **o match é exato, não por
-> prefixo nem por conteúdo.** Isso fecha a dúvida que eu tinha e que valia mais que as
-> três falhas: **não existe match parcial silencioso.** Ou o nome bate e vem tudo, ou não
-> bate e vem zero — e zero é visível. **O acervo das 71 está íntegro**, e `ITAUUNIBANCO`,
-> com exatamente 12 caracteres, é o nome real e não um nome cortado.
->
-> **Corrigido e commitado (`b02b789`), 13 testes novos.** O coletor tenta o nome como veio
-> e, **só depois de um zero**, sem o sufixo societário; a forma usada vai para o manifesto,
-> porque **a forma é procedência, não detalhe de implementação** — quem reprocessar precisa
-> saber qual nome trouxe o dado.
->
-> Dois testes valem por si: um garante que a segunda tentativa **nunca acontece antes** de
-> um zero (resposta fora do formato não é culpa do nome, e trocar o nome mascararia o
-> defeito); outro garante que zero **nas duas formas** continua sendo `TOTAL-ZERO`, e não
-> vira "empresa sem proventos". As duas respostas ficam no acervo como evidência, com a
-> forma no nome do arquivo.
->
-> E os comentários do código que culpavam o truncamento foram corrigidos. **Uma hipótese
-> errada deixada num comentário engana a próxima sessão com a autoridade de um fato.**
-
-> **A suíte deixou de ficar verde nesta máquina — e isso agora é o caminho crítico.**
->
-> Enquanto `ruff` e `mypy` não estavam instalados, o `test_p40_lint.py` **pulava** e a
-> suíte fechava verde. Instalados em 11/09, o ruff passou em `alocacao/` e em `fase0/`
-> (zero), e o **mypy falha em toda rodada** — nos stubs do numpy, que exigem Python 3.12+.
->
-> **Não é dívida de código. É a P-73**, e ela mudou de natureza: deixou de ser uma questão
-> de reprodutibilidade de backtest e virou operacional. **Uma suíte permanentemente
-> vermelha deixa de ser sinal** — em duas semanas ninguém olha mais, e o dia em que um
-> teste de verdade quebrar, ele vai entrar no meio do vermelho de sempre.
->
-> Instalar o Python 3.11 é o que devolve o verde. Não é preferência.
->
-> *(O ruff na raiz acusa 20 erros, **14 deles em `pesquisa-custos-2026-08/calc/`** — a
-> cópia congelada de agosto que o §4 marca como armadilha. Corretamente não tocada.)*
-
-> **B-03 — não há regra única, e isso muda a estratégia. Medido em 11/09/2026.**
->
-> A correção do B-02 fechou **ABEV (134)** e **KLBN (18)**, exatamente os números previstos.
-> **CURY falhou nas duas formas.** Fui atrás e achei:
->
-> | emissora | suplemento guarda | tabela de proventos guarda | o que aconteceu |
-> |---|---|---|---|
-> | ABEV | `AMBEV S/A` | `AMBEV` | sufixo **removido** |
-> | KLBN | `KLABIN S/A` | `KLABIN` | sufixo **removido** |
-> | **CURY** | `CURY S/A` | **`CURY S.A.`** → **20 registros** | sufixo **reescrito**: barra vira ponto |
->
-> **As duas bases da B3 divergem sem regra.** Às vezes o sufixo societário some, às vezes
-> ele muda de grafia. Uma normalização determinística — "tire o sufixo" — **não cobre os
-> três casos**, e foi exatamente por isso que a correção do B-02, que estava certa, ainda
-> deixou uma de fora.
->
-> A estratégia certa não é uma regra: é uma **cascata de candidatos** — como veio, sem
-> sufixo, sufixo com pontos, sufixo sem pontuação — parando no primeiro que responder, e
-> **registrando qual funcionou**. O acervo precisa guardar a forma, não a regra.
->
-> **O que NÃO está em risco, e vale dizer:** o match é exato (`ITAU` → 0), então as 73 que
-> bateram bateram **exatamente**. Divergência de grafia produz zero, nunca dado parcial.
-> **O acervo é íntegro ou visivelmente incompleto — nunca silenciosamente errado.**
-
-> **12/09/2026 — três marcos no mesmo dia, e um deles é inédito.**
->
-> **1. O ambiente reproduz o registrado.** `ambiente.py` no Python 3.11.9, com numpy
-> 2.4.4, pandas 3.0.2, PyYAML 6.0.3 e pytest 9.1.1: *"O ambiente instalado E o
-> registrado."* **Desde que o P-15 foi escrito em 05/09, nenhuma máquina havia rodado o
-> que o projeto declara.** A impressão é `7565df1381e2c1ed`.
->
-> **2. A suíte fechou verde sem nenhum `s`.** Antes havia dois skips — ruff e mypy
-> ausentes. O portão da P-40 **rodou de verdade** e passou. **P-73 fechada.**
->
-> **3. O acervo de eventos fechou em 74/74.** A CURY veio pela terceira forma da cascata
-> (`CURY S/A` → `CURY` → **`CURY S.A.` → 20 registros**), exatamente como o B-03 previa.
->
-> **A Fase 0 mudou de estado: deixou de ser coleta e virou refino.** O desenho está em
-> `DESENHO-PIPELINE.md`, e o achado que o organiza é este: **cada registro de provento
-> traz `closingPricePriorExDate`**, o fechamento na véspera do ex. **A série de fatores
-> de ajuste pode ser construída inteira sem tocar no COTAHIST** — o preço só entra depois,
-> para aplicar. As duas metades do problema se separam, e a metade difícil já está no disco.
-
-> **C-01 — eu errei um número e ele se propagou por três arquivos. 12/09/2026.**
->
-> Escrevi, aqui e em dois documentos de fonte, que a PETR *"desdobrou 100:1"* e que *"o
-> preço cai 99% num dia"*. O registro traz `factor: "100,00000000000"` com
-> `label: DESDOBRAMENTO`.
->
-> **`factor` quase certamente é percentual, não multiplicador.** Um desdobramento de 100%
-> faz cada ação virar duas e o preço cair **pela metade** — não 99%.
->
-> ```
-> leitura percentual     fator = 1/(1 + 100/100) = 0,5
-> leitura multiplicador  fator = 1/100           = 0,01
-> ```
->
-> **As duas produzem número, e diferem por cinquenta vezes.** Nenhum teste de "veio
-> número?" distingue. Não há documentação da B3 sobre o campo, e o suplemento não traz
-> preço de véspera para desempatar.
->
-> **`refinar.py` não escolhe.** Grava `ratio` cru e devolve `FACTOR_AMBIGUO`. A
-> desambiguação é **medição**: com o COTAHIST, a razão entre o fechamento de 24/04/2008 e
-> o de 25/04/2008 responde em uma consulta.
->
-> **O que me incomoda mais que o erro:** ele durou seis dias e apareceu em três arquivos
-> porque era uma afirmação *plausível* que ninguém precisava medir para repetir. O projeto
-> tem doutrina contra número sem procedência **em YAML**; não tinha nada contra número sem
-> procedência **em prosa**. Agora tem: achado só entra no `CLAUDE.md` com a conta escrita
-> ou com o `NAO_CONFIRMADO` explícito.
-
-> **D-01 — a guarda do segredo mede o arquivo, e o dado sai pela prosa. 12/09/2026.**
->
-> A P-62 decidiu que `estado.yaml` não entra no repositório, e o `test_p67_segredo.py`
-> garante isso medindo o **índice do git**. Funciona.
->
-> **Só que eu escrevi os mesmos números na prosa deste arquivo e do `PENDENCIAS.md`** —
-> saldo dos cofrinhos, aporte, reserva — e esses dois **entram**. O repositório é público
-> desde 11/09.
->
-> É o padrão do projeto contra ele mesmo: um guarda que checa nome de arquivo não vê
-> conteúdo, e quem escreveu o guarda escreveu o vazamento na mesma semana.
->
-> **Decisão dele, 12/09: `DECISAO_DO_USUARIO` — pode ficar.** *"Não me incomoda."* Fica
-> registrado como escolha declarada, não como descuido.
->
-> **O que a decisão NÃO cobre:** ela vale para o que existe hoje, com a ordem de grandeza
-> de hoje. Se o patrimônio crescer, ou se entrar dado de outra natureza — corretora, conta,
-> valor de posição —, **a decisão precisa ser revisitada, não herdada.** Uma escolha feita
-> sobre R$8 mil não se estende sozinha a R$800 mil.
-
-> **A-04 — "a história está sob o código antigo" era uma suposição minha, e ela é falsa
-> como regra. 12/09/2026.**
->
-> O A-03 acima termina com uma frase que eu escrevi sem medir: *"o histórico ficou sob o
-> código antigo"*. Fui medir. **Não há regra.**
->
-> | código antigo | o endpoint responde? |
-> |---|---|
-> | `MRFG` (Marfrig) | **vazio** — nem `tradingName`, nem conteúdo |
-> | `BRFS` (BRF) | **responde** — `BRF SA`, `codeCVM 16292`, 2 `cashDividends`, 2 `stockDividends` |
->
-> Duas empresas da **mesma fusão**, dois comportamentos opostos. E há um detalhe que
-> fecha o círculo: entre os `stockDividends` que o `BRFS` devolve está **a própria
-> incorporação**. O evento que apagou o código está registrado sob o código que ele
-> apagou.
->
-> **O que isso corrige na fila:** "buscar pelo código antigo" não é um passo do pipeline
-> — é uma tentativa, que às vezes funciona. Um ativo cujo emissor mudou de código tem a
-> **lacuna declarada por ativo**, com status, e não uma correção presumida. A P5 na veia:
-> limitação declarada vale mais que remendo silencioso.
->
-> **O que continua aberto:** a MBRF. A história da Marfrig não está sob `MRFG` nem sob
-> `MBRF`. Ou ela vem de outra fonte — CVM, que é por `CD_CVM` e imune a troca de ticker —
-> ou o ativo entra com a lacuna escrita.
-
-> **A-05 — o `refinar.py` violava uma regra que o próprio projeto tinha escrito.
-> 12/09/2026.**
->
-> `docs/fontes/cvm-enumeracoes-observadas.md` diz, com todas as letras: *"um parser que
-> encontre valor fora de uma lista OBSERVADO deve falhar ruidosamente — nunca tratar como
-> um dos valores conhecidos por padrão, nunca ignorar a linha em silêncio."*
->
-> O `refinar.py` aceitava **qualquer** `label` calado. Só apareceu porque o `BRFS` do
-> A-04 devolveu um tipo que eu nunca tinha visto: **`INCORPORACAO`**.
->
-> **E `INCORPORACAO` não é mais um tipo na lista.** Os outros eventos de quantidade mudam
-> o *preço* de um ativo. A incorporação troca ações de uma empresa por ações de **outra**,
-> numa relação de troca: é mudança de **identidade** do ativo, não de escala. Tratá-la
-> como evento comum **junta duas séries diferentes** e o gráfico fica lindo.
->
-> **A correção:** `TIPOS_OBSERVADOS` (caixa, quantidade, direito), `conferir_tipo()` que
-> **acumula** o desconhecido, marca a linha com `fator_status = TIPO_DESCONHECIDO`,
-> **não descarta** (descartar perderia dado) e **não adivinha** (adivinhar seria o F-02).
-> No fim, relatório em voz alta e **código de saída ≠ 0**.
->
-> **A regra que fica:** regra escrita num documento de fonte não é regra até existir um
-> teste que a meça. O projeto tinha a frase desde 06/09 e o parser que a violava desde
-> 12/09 — e os dois conviviam sem se ver.
-
-> **A-06 — a guarda contra duplicação passou um dia inteiro medindo o sintoma errado.
-> 12/09/2026. É o pior achado da semana.**
->
-> O `refinar.py` importa `desembrulhar` de `coletar_b3` em vez de reimplementá-la, porque
-> duas leituras da mesma regra concordam por acidente até o dia em que não concordam
-> (N-01). Havia teste para isso, e ele era verde:
->
-> ```python
-> assert r.desembrulhar is coletar_b3.desembrulhar
-> ```
->
-> **`desembrulhar` não existia no `coletar_b3.py` de produção.** A lógica estava
-> **embutida** dentro de `coletar_eventos`. O nome só existia numa **cópia de teste** que
-> eu mesmo escrevi aqui, com o comentário *"réplica local para teste; a versão de produção
-> está no repositório dele"* — uma afirmação que eu nunca conferi.
->
-> Ou seja: **existiam exatamente as duas implementações que a guarda existia para
-> proibir, e a guarda dizia que não.**
->
-> O defeito não era o código — era a **medição**. `is` mede se duas variáveis apontam
-> para o mesmo objeto. Apontavam. O que ninguém media era se o **coletor usava a própria
-> função que exporta**.
->
-> **É o padrão recorrente do projeto na sua forma mais cara** — *um arquivo declara um
-> comportamento que o código não tem, e os dois concordam por acidente* — com um
-> agravante: aqui o arquivo que declarava era **o teste**. Teste verde é a coisa que a
-> gente não volta a ler.
->
-> **Como teria aparecido sem mim:** na segunda-feira, na primeira execução real. O
-> `refinar.py` não falha em silêncio — o `try/except ImportError` levanta `SystemExit`
-> com o texto do N-01. O desenho segurou; a **entrega** é que não.
->
-> **A correção, e ela é dupla:**
-> 1. `desembrulhar(texto) -> (dados, n_registros)` extraída de verdade para o
->    `coletar_b3.py`, com `coletar_eventos` **chamando-a**;
-> 2. o teste reescrito para medir a **ausência de duplicata**: lê o código-fonte de
->    `coletar_eventos` e exige que ele chame `desembrulhar` e **não** contenha
->    `json.loads(texto)` nem `isinstance(dados, list)`.
->
-> A guarda nova foi **testada contra a mutação**: reintroduzi o desembrulho embutido e ela
-> falhou. Guarda que nunca falhou é guarda que ninguém sabe se funciona — foi essa a
-> lição inteira.
-
-> **A-07 — a mesma falha era barulhenta numa função e muda na vizinha. 12/09/2026.**
->
-> Dois silêncios, achados ao arrumar o A-06:
->
-> **1. Mais de um registro para a mesma emissora.** `desembrulhar` já contava quantos
-> vinham, e o coletor imprimia o número. O `refinar.py` **descartava a contagem e usava o
-> primeiro**. Mais de um registro não é erro — é informação. Mas escolher um deles sem
-> dizer é escrever **ausência de critério no lugar de critério**, que é a P6 ao contrário.
-> A contagem agora sobe até o relatório final, com o texto que importa: *"o silver usou o
-> primeiro; isso não é uma regra, é a ordem em que a B3 devolveu."*
->
-> **2. Página que não desembrulha para objeto.** No `linhas_do_suplemento`, esse caso
-> devolve **aviso**. No `linhas_do_paginado`, era `continue` **mudo** — a página sumia do
-> silver sem deixar rastro. **A mesma condição, o mesmo módulo, duas leituras que
-> discordam — e a muda vencia, porque é a que roda oito mil vezes.**
->
-> **A pergunta que isso deixa como método:** quando a mesma condição aparece em dois
-> lugares do mesmo módulo, elas concordam? Não é uma pergunta de revisão de código — é
-> uma pergunta de auditoria, e vale para todo par de funções irmãs do projeto.
-
-> **A auditoria do A-07 — seis achados, quatro medidos. 12/09/2026.**
-> *Documento inteiro em `auditoria/AUDITORIA-A07-FUNCOES-IRMAS.md`. Status `PARCIAL`:
-> medida sobre o instantâneo de 06/09, não sobre o repositório real. Reconferir.*
->
-> **E-01 — o `simular` de um módulo recusa rota bloqueada; o do outro devolve número.**
-> `alocacao.simular_custo` levanta `InsumoBloqueado` se `not r.confiavel` (é o F-02
-> escrito na docstring). `motor.simular` **não tem a guarda** — e o `motor.Rota` tem a
-> propriedade `confiavel` e o `montar_rotas` preenche `bloqueios`. O dado está lá; a
-> função não olha. Medido: BOVV11 bloqueada devolve **custo R$1.329,68, empatada com a
-> rota que de fato não cobra nada**, e `alertas` vazio — porque a taxa desconhecida vira
-> `adm_aa = 0.0` no default do dataclass. **É o K-07/F-02 literal, vivo no módulo irmão.**
-> O teste que existia afirma `not bovv.confiavel`: confere que a bandeira está
-> levantada, não que alguém a honra. **O A-06 outra vez, em outro arquivo.**
->
-> **E-02 — arquivo ausente virou "nada registrado".** `tese.carregar_registros` faz
-> `if not os.path.exists(p): return {}, {}`. O irmão `ambiente.declarado` faz o oposto,
-> e escreveu a doutrina na própria docstring: *"NÃO tem valores de reserva: se o arquivo
-> sumir, é erro, porque sem ele não há nada a conferir."* G7/G8 falham para o lado
-> seguro, então o sistema não fica perigoso — fica **mentiroso**: você lê *"nenhuma tese
-> registrada para esta rota"* quando o fato é *"o teses.yaml não foi encontrado"*.
-> Rodando da pasta errada com vinte teses, você lê a mensagem errada vinte vezes. E
-> `teses.yaml` **é** o pré-registro: a P4 existe justamente para que não se confunda
-> *"nunca me comprometi"* com *"o registro sumiu"*. Oito carregadores, **três
-> tratamentos** para a mesma condição — e os dois que acertam são os dois que
-> escreveram a consequência na mensagem. Não é coincidência: quem escreve a
-> consequência descobre que precisa levantar.
->
-> **E-02 RESOLVIDO em 12/09, e a decisão de desenho é dele.** Perguntei se arquivo
-> ausente e arquivo vazio deviam ser a mesma coisa — porque a U-01 manda não quebrar o
-> primeiro dia de um usuário. Resposta: **são coisas diferentes.** Ficaram três estados,
-> com três mensagens: **ausente** levanta `RegistroAusente`; **vazio** (em branco, `{}`,
-> só `meta:`, seções nulas) devolve `({}, {})` e isso é legítimo — é o estado do
-> primeiro dia; **ilegível** levanta `RegistroIlegivel`, porque YAML quebrado pode ter
-> o registro inteiro dentro, ilegível por um caractere, e chamar isso de "nenhuma tese"
-> seria dizer que não há registro quando há.
->
-> A U-01 virou **parâmetro**, não padrão: `permitir_ausente=True`. Quem simula um
-> usuário novo **pede** a ausência em vez de recebê-la calado e nunca saber a diferença.
-> E o caminho do usuário novo nem passa por ali — `alocar()` aceita `teses={}` injetado,
-> que é o que o `test_usuario_novo.py` já fazia.
->
-> 13 testes, e o que dá nome ao achado é `test_a_diferenca_entre_ausente_e_vazio_e_
-> OBSERVAVEL`: antes, os dois devolviam `({}, {})` e eram **indistinguíveis de fora** —
-> e era exatamente essa indistinguibilidade o defeito.
-
-> **E-03 — o `politica.yaml` declara nove interruptores e dois não estão ligados em
-> nada.** Sete portões leem `g["ativo"]`. `g3_atrito` e `g4_dominancia` **não**. Medido:
-> `G3_atrito.ativo = false` barra **os mesmos 5 ativos de 25**. Hoje os nove estão
-> `true`, então **arquivo e código concordam por acidente** — a frase do defeito
-> recorrente, literal. O custo não é erro: é **conclusão errada sobre o próprio
-> sistema**. O dia em que você perguntar *"quanto do resultado vem do atrito?"* — que é
-> para isso que o sistema foi feito — a resposta será "nada", e será falsa. Nenhum teste
-> pega, porque nada está quebrado. P2 violada em 2 de 9 consumidores.
->
-> **E-04 — o `impacto.py` só responde quando você já desconfia.** `quem_le`,
-> `leituras_de_yaml`, `quem_usa_campo` são boas ferramentas e todas exigem que você
-> **nomeie a chave**. Ninguém ia perguntar por `portoes.G3_atrito.ativo` — justamente
-> porque ninguém suspeitava. Faltava a pergunta inversa, que não precisa de suspeita:
-> **quais chaves o YAML declara que código nenhum lê?** Agora existe:
-> `auditoria/chaves_orfas.py`.
->
-> **E-05 — RETIRADO em 12/09, no mesmo dia em que foi escrito. Era falso positivo
-> meu, e é o maior erro da auditoria.** Eu escrevi que `liquidez_media_dias: 15` e
-> `liquidez_pior_caso_dias: 29` não tinham leitor e que o G2 escolhia a rota da reserva
-> sem termo de liquidez. **As três afirmações são falsas.** O `catalogo.yaml` lê a
-> chave por `{de_campo: "cofrinho.picpay_garantia_de_limite.liquidez_pior_caso_dias"}`;
-> o portão existe (`exige_liquidez_dias`, em `g6_coerencia_funcao`); ele está declarado
-> por função (`LIQUIDEZ: 1`, `LASTRO: 5`, `DATADO: 30`); e roda **ordem 1**, antes do
-> G1 e do G2, tirando a função da rota lenta — então ela nem chega ao G2. Medido: o
-> `picpay_cofrinho` de 29 dias **nunca teve LIQUIDEZ**, declara LASTRO e perde até isso;
-> as três rotas da reserva resgatam em **zero dias**.
->
-> **A causa raiz, e ela é sobre método:** minha ferramenta varria **só os `.py`**, num
-> projeto que põe regra em YAML de propósito e cujo `impacto.py` **já mapeia** as
-> arestas YAML→YAML. Auditei metade do sistema e chamei o resultado de conclusão.
-> É o A-06 do meu lado da mesa: a ferramenta mediu o lugar errado e o verde dela me
-> convenceu. `chaves_orfas.py` agora conta `{de:}/{de_campo:}/{soma:}` como leitura.
->
-> **E o que o derrubou não foi eu conferir:** foi ele responder *"portão"* e eu ir
-> escrever o código que já existia. Um achado pode sobreviver a uma revisão e morrer
-> na primeira tentativa de agir sobre ele.
-
-> **E-06 — o pré-registro declara as próprias guardas e nada as executa.**
-> `hml_puro_v1.variantes_permitidas: 1` é o **limite anti-p-hacking**: os graus de
-> liberdade que ele se autorizou antes de olhar o resultado. Zero leituras. Nada conta,
-> nada compara, nada falha na décima variante. `greenblatt_v1.verificar_monotonicidade:
-> true` idem. **Um pré-registro que declara a guarda e não a executa vira documento
-> sobre intenções** — a P4 entrega a impressão digital e o compromisso fica em prosa.
->
-> **E-06 — as duas medições que mudaram a pergunta. 12/09/2026.**
-> *Documento em `auditoria/E06-O-QUE-CONTA-COMO-VARIANTE.md`. Decisão de desenho aberta.*
->
-> Antes de contar variantes é preciso saber o que se conta. Fui procurar, no próprio
-> pré-registro, um grau de liberdade não declarado. Achei dois candidatos, **e nenhum
-> dos dois é o que eu esperava.**
->
-> **O filtro de pregões não era p-hacking, e a medição é que diz.** O pré-registro fala
-> em 307 meses; a execução registra 306, *"filtro n_dias >= 15"* — e o 15 é um **default
-> em Python** (`fatores.premios(minimo_dias=15)`), invisível ao registro. Variando só o
-> filtro: **de 5 a 18 o alfa é idêntico ao quinto decimal** (0,00766, t = 2,94), porque
-> qualquer corte razoável corta o mesmo mês — o último, de 3 pregões. Hipótese minha,
-> medida e **caída**. Registro porque a conclusão importa nos dois sentidos: uma escolha
-> não declarada pode ser inofensiva, e a única forma de saber é medir a sensibilidade.
->
-> **O grau de liberdade que existe inverte o SINAL, e nenhum contador o pegaria.**
-> `alfa_contra_fatores` faz `y = retorno − Risk_Free`, porque foi escrita para
-> estratégia long-only. HML é long-short, de custo zero: já é excesso. Subtrair o CDI
-> brasileiro (0,938% ao mês na amostra) leva o alfa de **+0,00766 (t = 2,94, rejeita)**
-> para **−0,00178 (t = −0,68, não rejeita)**. Mesmo dado, mesma regressão, mesma
-> amostra, **veredito invertido** — e não é parâmetro, nem amostra, nem campo do
-> registro: é como se monta a variável dependente.
->
-> **E o projeto já sabia.** Eu ia publicar isto como achado e parei ao ler em volta:
-> `backtest_h1_h3.py` linha 9 avisa em português para não usar aquela função ali; o
-> idioma correto (`alfa_contra_fatores(m.HML + m.Risk_Free, m)`) está nos testes;
-> `test_h1_h3_reproduzem_o_resultado_registrado` afirma 0,00766 e t = 2,94; e
-> `test_subtrair_risk_free_de_um_fator_inverte_o_veredito` **prende a armadilha num
-> teste**, com a docstring dizendo que existe para o dia em que alguém "consertar" o
-> código. É o projeto no seu melhor.
->
-> **A consequência de desenho, e ela governa a decisão:** o grau de liberdade mais
-> perigoso do pré-registro **não é contável** por nenhuma definição de variante. O que o
-> segura é uma convenção escrita e um teste. Qualquer desenho que trate
-> `variantes_permitidas` como defesa principal protege o flanco errado — e por isso a
-> recomendação é **rebaixar o contador a alarme**: estourar o limite não bloqueia a
-> execução, exige justificativa escrita. **O que protege contra p-hacking não é o número
-> de tentativas; é o registro de todas elas.** Um limite de 1 sem registro da tentativa 2
-> é mais fraco que um limite de 5 com as cinco escritas.
->
-> **E há uma régua de sizing que ele já usa sem ter escrito:** o Greenblatt tem 3 porque
-> a especificação publicada é ambígua (`nota_definicao`: implementações honestas divergem
-> por um fator de três); o `hml_puro_v1` tem 1 porque é regressão sobre série publicada,
-> sem espaço. **O número segue a ambiguidade da fonte.**
-
-> **E-06 decidido por ele em 12/09/2026 — e a decisão corrigiu o meu desenho em três
-> pontos.** *Modelo de dados em `auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`.*
->
-> **1. Dado novo, mesma spec = EXTENSÃO**, não variante. A razão dele é de incentivo e
-> é decisiva: transformar atualização temporal em variante ensina *"não atualize o
-> estudo, isso gasta a sua única bala"* — e é o mesmo defeito que derrubou o D1, onde
-> corrigir um erro consumia a mesma bala que uma escolha metodológica.
->
-> > **Meu acréscimo:** a extensão não precisa de regra própria se a amostra for
-> > registrada como **regra** e não como data — `fim: ULTIMA_DISPONIVEL`. Aí a data
-> > literal vira **saída** da execução e não entrada do registro, e toda a tabela de
-> > classificação dele (`2001→2005` é variante, novo filtro é variante, novo fim é
-> > extensão) passa a ser **consequência do formato** em vez de lista a decorar.
-> > Cláusula de exceção é a superfície por onde o contorno entra.
->
-> **2. O controle é do CONJUNTO**, com o limite por estratégia como camada auxiliar —
-> multiplicidade é problema da família, ambiguidade metodológica é local.
->
-> > **E o conjunto tem um NÚMERO, que nem ele nem eu tínhamos.** Se cada estratégia
-> > rejeita a t > 1,96, oito testes dão **1 − 0,95⁸ ≈ 34%** de ao menos uma rejeição
-> > falsa sob a nula. Medido, com Bonferroni: m=2 (as executadas) → corte **2,253**;
-> > m=8 (as pré-registradas) → **2,754**; m=13 (o orçamento inteiro, soma dos
-> > `variantes_permitidas`) → **2,913**.
-> >
-> > **O HML (t = 2,94) sobrevive até o corte mais severo — por 0,027 de um t.** ⚠️
-> > **RETIFICADO em 18/09 — ver a seção de 18/09/2026 no fim deste arquivo.** Medido, o
-> > `t` estimado **não** se distribui como a tabela de Student: a cauda é ~7% mais gorda,
-> > o corte de m=13 sobe de 2,9131 para **3,1473**, e a folga de +0,027 vira um déficit de
-> > **−0,212**. O HML **não** sobrevive ao orçamento. Não o
-> > invalida; recoloca. "t = 2,94" soa como p ≈ 0,003; corrigido pela família que o
-> > próprio projeto pré-registrou, é significância **na margem** — coerente com as
-> > quatro razões que o registro já dava para não agir sobre ele. ~~Ressalva contra mim:
-> > Bonferroni **superestima** a correção com testes correlacionados, e estes são (mesma
-> > série, mesmos cinco fatores). O corte verdadeiro fica entre 1,96 e 2,891.~~
-> > **RETIRADA em 18/09: a correlação medida entre as duas estatísticas é −0,064** — o
-> > próprio "alfa contra os DEMAIS" já particiona os fatores comuns, e resíduos de
-> > regressões que partilham regressores não andam juntos. O corte verdadeiro fica
-> > **acima** de 2,913, não abaixo. Eu inferi dependência da origem comum dos dados em
-> > vez de medi-la.
->
-> > **E `pesquisa_id` não pode ser declarado.** Ele viu o buraco — *"alguém cria
-> > Conjunto A, B, C e reseta o contador"* — e fechou com julgamento. Julgamento é
-> > contornável por quem está de boa-fé e com pressa, que é o caso perigoso. **Ancorar
-> > no dado:** `pesquisa_id` derivado de `hash_fonte()` + regra de amostra, os dois já
-> > existentes. Renomear não reseta, porque o nome não é a chave — e `m` passa a ser
-> > **calculável** a partir do diário, não afirmado por quem registra.
->
-> **3. Erro factual é isento de variante, mas auditável e com fonte primária quando
-> material** — e a distinção dele é a que importa: erro de fato **não tem alternativa
-> defensável do outro lado**; grau de liberdade tem duas leituras e você escolheu uma. O
-> `tratamento_rf` é o caso puro de grau de liberdade disfarçado de correção.
->
-> > E ele acrescentou o quarto tipo, que fecha a porta: quando há duas leituras e
-> > **nenhuma fonte desempata**, não se declara erro factual — declara-se
-> > `NAO_CONFIRMADO` e para. É o C-01 virando regra de processo.
->
-> **4. A regra dele que vale mais que as três:** extensão nunca sobrescreve, correção
-> nunca apaga, variante nunca apaga a especificação anterior. O sistema vira uma
-> sequência de estados auditáveis em vez de uma planilha melhorada até dar o resultado
-> desejado — e é a mesma doutrina do *achado retirado fica como retratação*.
->
-> > **O que falta nela, e o sistema precisa agir:** se R1 rejeita e R2 (extensão) não,
-> > **o que o portão lê?** Sem regra, "preservar tudo" vira "escolha o que preferir" —
-> > p-hacking com auditoria completa. Proposta: a extensão mais recente é o **operativo**,
-> > e divergência de veredito entre R1 e Rn é **bloqueante** até estar escrita. Um alfa
-> > que morre ao estender é o evento mais informativo que este projeto pode produzir;
-> > merece uma parada, não uma linha de log.
->
-> **E o que este aparato NÃO protege, declarado de propósito (P5):** nada nele teria
-> pego o Risk_Free invertido. Especificação congelada, graus de liberdade, diário e
-> contador passariam por aquilo sem piscar, porque `tratamento_rf` só entra na lista se
-> alguém **souber que ele existe**. O que pegou foi um comentário em português e dois
-> testes. **A limitação declarada vale mais que a proteção presumida** — e é por isso que
-> o contador é alarme, não defesa.
-
-> **Correção dos meus próprios números do E-06, e ela aperta a margem. 13/09/2026.**
-> Calculei os cortes com a **normal**; o certo para 306 meses e 5 parâmetros é a **t de
-> Student com 301 gl**, que é um pouco mais alta. Recalculado: m=2 → **2,253**; m=8 →
-> **2,754**; m=13 → **2,913**. **A folga do HML cai de 0,049 para 0,027.** O sinal da
-> conclusão não muda — ele sobrevive — mas a margem é ainda mais fina do que escrevi.
-
-> **P-77 FECHADA em 13/09/2026 — e a pendência estava descrevendo o sintoma errado.**
-> *Documento em `auditoria/P77-CAMPO-MORTO.md`.*
->
-> A pendência dizia que *"`retorno_liquido_aa` zera o IR de ganho do FII"*. **Não zera:
-> devolve `None`** — o FII é `indexador: rv` e a função sai antes da linha do imposto.
-> Procurar pelo sintoma descrito não achava nada, e é por isso que ficou aberta.
->
-> **O defeito real:** `aliquota_ganho` tem **zero leituras no motor**. As quatro únicas
-> estão em `test_alocacao.py`. A P-13 partiu `isento_ir` em dois campos pela razão certa
-> (rendimento isento por Lei 11.033/2004; ganho a 20% por Lei 8.668/1993), criou o
-> campo, o catálogo preencheu com a lei citada — **e nenhuma linha consumiu**. Mudança
-> de ESQUEMA anunciada como correção de COMPORTAMENTO.
->
-> **Três coincidências o esconderam:** o FII é `rv`; o FII está bloqueado; e as únicas
-> outras rotas com `aliquota_ganho` são LCI/LCA, **com 0,0**, onde a diferença não
-> aparece.
->
-> **O número, medido, com a rota que vai existir amanhã:** uma debênture incentivada
-> (`isento_ir_rendimento: true`, `aliquota_ganho: 0.20`, `indexador: cdi`) devolvia
-> **0,13900** — o imposto inteiro zerado, e **exatamente o número da LCI/LCA**. O motor
-> a trataria como isenta nas duas pontas. Errado **para menos**: a rota apareceria mais
-> rentável do que é e competiria melhor no G2.
->
-> **A correção recusa em vez de chutar.** `regime_tributario()` devolve a alíquota
-> quando há uma só, e **um motivo** quando há duas. `retorno_liquido_aa` não inventa um
-> modelo de duas pontas — ela modela instrumento que ACUMULA rendimento, onde o ganho é
-> o rendimento. P6: lacuna declarada, não critério inventado. E o motivo **não some
-> junto com o `None`** — foi um `None` calado que escondeu isto por oito dias.
->
-> **A guarda que impede a próxima:** *todo campo que o `catalogo.yaml` preenche tem de
-> ser lido por um módulo que não é teste*. Rodada contra o código de antes, ela acusa
-> `aliquota_ganho` pelo nome. Teria pegado a P-77 no dia em que nasceu.
->
-> **E a lição é sobre o meu instrumento, pela quarta vez no mesmo tema.** O
-> `chaves_orfas.py` que escrevi ontem **não** pegou este campo. Fui ver por quê
-> esperando um problema de dataclass; era outra coisa: ele varre **todos** os `.py`,
-> testes inclusive. **Campo que só o teste toca é campo que o motor não usa** — e é
-> categoria pior que órfã pura, porque tem uma testemunha: o teste prova o esquema e
-> ninguém prova o comportamento. Foi assim que a P-13 anunciou correção com a suíte
-> verde. A ferramenta agora separa leitor do motor de leitor de teste e reporta
-> **"LIDA SÓ POR TESTE"** como categoria própria.
-
-> **A terceira vez no mesmo padrão, e agora é regra de método. 12/09/2026.**
->
-> Nesta auditoria eu **publiquei** o E-05 (retirado: a chave era lida por outro YAML),
-> **quase publiquei** o multiplicador de estabilidade (era leitura por índice variável) e
-> **quase publiquei** o Risk_Free acima — com o projeto já tendo um comentário, uma
-> convenção e dois testes sobre ele.
->
-> Os três têm a mesma forma: **medi, e conclui antes de ler em volta.** Os dois achados
-> que sobreviveram — E-01 e E-03 — foram confirmados **lendo**, não medindo.
->
-> **A ordem é: medir → ler a vizinhança → concluir.** Numa auditoria a medição levanta o
-> candidato; quem o promove a achado é a leitura. Eu vinha fazendo medir → concluir, e
-> lendo só quando alguma coisa me obrigava.
-
-> **O falso positivo, e ele ensina mais que dois achados.** A ferramenta acusou
-> `G2_reserva.ajuste_estabilidade.{alta,media,baixa}` — o multiplicador da reserva por
-> estabilidade de renda. **Falso:** é lido quatro vezes, com índice **variável**
-> (`g["ajuste_estabilidade"][estado.estabilidade_renda]`), e por isso o nome da folha
-> nunca aparece literal. O que pegou não foi a ferramenta — foi **ler**. Virou regra no
-> código (`pais_varridos()`: quem alcança os filhos por variável lê todos os filhos) e
-> derrubou 23 candidatos para 19 **sem derrubar nenhum achado**, que é o teste certo de
-> um filtro. E virou a razão de os dois scripts imprimirem *"candidatos"*, nunca
-> *"achados"*: **P3 aplicada à própria auditoria.**
->
-> **Uma convenção que existe e ninguém escreveu.** Sete impressões digitais, dois
-> cortes de `sha256` — e não é inconsistência: **arquivo → `[:12]`, conteúdo →
-> `[:16]`**, os sete obedecem. Só que a regra não está escrita, então a oitava é
-> cara-ou-coroa, e comparar um `[:12]` com um `[:16]` nunca bate, em silêncio.
-
-> **P-76, P-78 e B-04 — fechadas em 13/09/2026, e duas mudaram de forma ao serem
-> medidas.** *Documento em `auditoria/P76-P78-B04.md`.*
->
-> **P-76 — a doutrina, e ela vale sozinha:** uma conclusão **não herda** o status do
-> insumo mais fraco. Ela herda o resultado de uma **medição de sensibilidade** —
-> sobrevive a toda a faixa que a incerteza admite → `COMPLETO` com a faixa declarada;
-> inverte dentro da faixa → `PARCIAL` com a fronteira declarada; faixa desconhecida →
-> `NAO_CONFIRMADO`. Herdar o mais fraco enterraria conclusões robustas junto com as
-> frágeis e ensinaria a não medir. **O status de uma conclusão é uma medição, não uma
-> herança.**
->
-> > **Mas o caso F-03 não é exemplo disso — é vazamento.** `custos.yaml` diz
-> > `etf.IMAB11: valor None, status NAO_CONFIRMADO, motivo "taxa nao obtida"`. E a
-> > conclusão cita **0,25%**, que existe em **três** documentos (`PENDENCIAS.md:152`,
-> > `politica.yaml:859`, `pesquisa-bases-e-apis:293`, decomposto em adm 0,04 +
-> > custódia 0,03 + gestão 0,18) **e não existe no arquivo que o código lê**. Quem roda
-> > o motor hoje recebe o IMAB11 bloqueado enquanto os documentos dizem que a questão
-> > está resolvida. É o C-01 no lugar mais caro.
-> >
-> > **E medida, a conclusão é frágil:** 0,25% contra 0,20% são **5 pontos-base**, com o
-> > lado incerto sendo soma de três componentes de fonte secundária. A F-03 é
-> > **`PARCIAL`**, com fronteira declarável: inverte se o IMAB11 ficar abaixo de 0,20%.
-> > Não ponho o valor no `custos.yaml` sozinho — é entrada de valor com fonte, e eu não
-> > abri a página do gestor; registrar citando documento interno seria citar a mim mesmo.
->
-> **P-78 — os oito campos existem (a contagem estava certa), mas são TRÊS naturezas:**
->
-> - **procedência, e está certo (2):** `bc_procedentes`/`bc_clientes` são lidos por
->   `test_corretoras.py:90-91`, que **recalcula o índice a partir das partes**. São o
->   insumo que prova o número derivado. **Reclassificar, não consertar.**
-> - **ausência de critério declarada, e está certo (3):** `home_broker_web`,
->   `exporta_csv` e os `ra_*` — e `regras()` **levanta `NotImplementedError`** se
->   alguém ligar `facilidade.pontua`. **P6 executada corretamente**, o oposto do E-03:
->   aqui o interruptor falha alto em vez de não fazer nada.
-> - **defeito de verdade (3):** `mesa_minimo`, `corretagem_fii`, `exercicio_opcao_pct`
->   — custos por operação que `pontuar()` não considera.
->
-> > **E o `corretagem_etf_pct` — o 0,50% da XP — é N-01, não campo ignorado.** ⚠️
-> > **RETIFICADO em 13/09, ver o bloco E-08 abaixo:** eu escrevi que o `catalogo.yaml`
-> > tinha `corr_pct: 0.005` literal. **Não tem.** Ele faz
-> > `corr_pct: {de: "corretagem.xp_etf_pct"}` — referencia, exatamente como o próprio
-> > cabeçalho dele manda. O catálogo é o **contraexemplo**, não o culpado. A duplicata
-> > está em outro lugar, e são seis, não uma.
->
-> **B-04 — a correção é apagar, não construir.** `pip install -e .` falha por
-> descoberta automática com vários diretórios de topo. Declarar os pacotes seria a
-> correção óbvia e **errada**: ninguém instala este projeto —
-> `comando_de_instalacao()` monta `pip install "numpy==..."`, instala as
-> **dependências**, e nenhuma linha faz `import bastter`. `[build-system]` era uma
-> promessa que o código não usa; o `pyproject.toml` daqui é **manifesto**, lido por
-> `ambiente.declarado()` via tomllib, e é disso que a P-15 depende. **Medido antes de
-> apagar: a impressão do ambiente é `7565df1381e2c1ed` com e sem a seção** — idêntica à
-> registrada, então a remoção não invalida resultado pré-registrado nenhum.
->
-> > **E um erro meu, pego rodando duas vezes.** A primeira guarda de idempotência do
-> > `B04-patch.py` era `if "[build-system]" not in s: sair` — e a nota que o patch
-> > **insere** menciona `[build-system]` em prosa, então a segunda execução casava com
-> > o próprio comentário e aplicava de novo. **Guarda de idempotência também precisa
-> > ser testada rodando duas vezes.** Agora a marca é do patch, não da string removida.
-
-> **A série histórica do JCP FECHOU — e o fechamento corrige um erro meu. 13/09/2026.**
-> *Transcrições em `docs/fontes/lei-9249-1995-jcp-planalto.md`, todas do Planalto.*
->
-> | de | até | alíquota | norma |
-> |---|---|---|---|
-> | 01/01/1996 | 31/12/2015 | **15%** | Lei 9.249/1995 art. 9º §2º, redação original |
-> | **01/01/2016** | **08/03/2016** | **18%** | MP 694/2015 art. 1º, efeitos por art. 4º, I; encerrada pelo Ato Declaratório nº 5/2016 |
-> | 09/03/2016 | 31/12/2025 | **15%** | redação original restabelecida |
-> | 01/01/2026 | — | **17,5%** | LC 224/2025 art. 8º, vigência pelo art. 14, **III** |
->
-> **A janela do meio tem 68 dias** — 31 de janeiro + 29 de fevereiro (bissexto) + 8 de
-> março. Todo JCP pago nela sofreu 18%, e **o imposto permanece devido**: a CF art. 62
-> §11 mantém as relações regidas pela MP quando o Congresso não edita decreto
-> legislativo, e não editou. **Caducar não devolve imposto pago.**
->
-> **A CORREÇÃO, e ela é contra mim.** Em 12/09 escrevi aqui que a LC 224 vigora em
-> **01/04/2026** pelo art. 14, I, "b", e que a fonte secundária que dizia 01/01/2026
-> estava contradita pelo Planalto — *"fonte primária ganha"*. **Estava errado, e a
-> secundária estava certa.** A alínea "b" cobre **os arts. 7º e 9º**; o art. 8º — o do
-> JCP — cai no **inciso III**, *"a partir de 1º de janeiro de 2026"*.
->
-> > **O erro não foi de fonte, foi de ENDEREÇAMENTO:** li a cláusula certa e a apliquei
-> > ao artigo errado. Ler um artigo de vigência sem checar **qual item ele nomeia** é
-> > ler metade dele. E é pior que não ter consultado: usei a autoridade da fonte
-> > primária para descartar uma secundária correta, **com confiança**.
-> >
-> > **Regra que fica: "fonte primária ganha" não é passe livre.** Ela ganha depois de
-> > se verificar qual dispositivo a cláusula alcança. Procedência é sobre **verificar**,
-> > não sobre hierarquia.
->
-> **E a mesma fonte secundária errava a primeira faixa ao contrário** — dizia 18% até
-> 2015 e 15% pela MP 694, quando a original é 15% e a MP **subiu** para 18%. Duas
-> fontes secundárias, dois erros em direções opostas, e num deles ela estava certa.
->
-> **MP 1.303/2025 não entra:** o Planalto não a lista entre as que deram redação ao
-> §2º, e ela caducou em outubro/2025 (retirada de pauta na Câmara) antes de produzir
-> efeito.
->
-> **O que foi entregue:** `tributacao.ir_jcp_fonte` no `custos.yaml` com as quatro
-> vigências e a norma ao lado de cada número; `alocacao/jcp.py` com `aliquota_jcp(data,
-> C)` e `jcp_liquido()`; **16 testes**, e os que importam são os de **fronteira** — no
-> meio de uma faixa qualquer implementação acerta.
->
-> **Uma coisa declarada de propósito (lição da P-77):** `jcp.py` **não tem chamador no
-> motor hoje**, porque a série de retorno total líquida ainda não existe. Isso está
-> escrito no topo do módulo, junto com a consequência: **se a série líquida nascer sem
-> chamar esta função, é defeito.**
->
-> **E um erro que o próprio teste pegou:** eu tinha escrito "67 dias" — 2016 é
-> bissexto, e são **68**.
-
-> **E-08 — o `bloqueia` que nomeia o consumidor, e o consumidor que não pergunta.
-> 13/09/2026.** *Testes em `alocacao/test_e08_bloqueio_e_copia.py`.*
->
-> **Primeiro a retratação, porque ela vem antes do achado.** Em `P76-P78-B04.md` e aqui
-> eu escrevi que o `catalogo.yaml` carregava `corr_pct: 0.005` literal, duplicando a
-> constante. **Fui ler o arquivo e ele faz o contrário:**
->
-> ```yaml
-> bova11_xp:
->   corr_pct:    {de: "corretagem.xp_etf_pct"}
->   saida_extra: {de: "corretagem.xp_etf_pct"}
-> ```
->
-> Referencia, duas vezes, e por isso herda status, procedência e `expira` de graça. **O
-> catálogo é o contraexemplo do defeito, não o defeito.** Foi a sexta vez nesta semana
-> que concluí antes de ler o arquivo — e a segunda que a conclusão chegou a ser
-> publicada.
->
-> **O achado de verdade, medido:** `custos.yaml -> corretagem.xp_swing` é `PARCIAL` e
-> declara **`bloqueia: ["ranking_corretoras"]`** — nomeia **este** consumidor, não um
-> genérico. E o ranking **roda**: `pontuar()` devolve **46,0** para a XP, com
-> multiplicador **0,8**. Porque `pontuar()` lê `inst.corretagem_rv` do
-> `instituicoes.yaml` e **nunca chama `val()`** — então a consequência declarada não
-> chega até ele.
->
-> A mesma incerteza, sobre o mesmo número, tratada de dois jeitos: **bloqueio duro** no
-> `custos.yaml`, **multiplicador 0,8** no `instituicoes.yaml`. E o macio vence, porque é
-> o do caminho que executa.
->
-> > **E o ponto não é que alguém escolheu o multiplicador: é que ninguém escolheu.** Os
-> > dois mecanismos são deliberados, moram em arquivos diferentes e não se conhecem —
-> > **o layout dos arquivos decidiu qual vence.** É o F-05 pela metade: `bloqueia`
-> > deixou de ser prosa para quem passa por `val()`; para quem não passa, continua prosa.
->
-> **E-08b — a cópia não herda o relógio, e são SEIS.** Medindo o mesmo fato nos dois
-> arquivos (e descartando as quatro coincidências de valor — `exercicio_opcao_pct:
-> 0.005` bate com `xp_etf_pct` por acaso, 0,5% é taxa comum):
->
-> | `instituicoes.yaml` | `custos.yaml` |
-> |---|---|
-> | `xp.corretagem_rv` 4,9 | `corretagem.xp_swing` (PARCIAL) |
-> | `xp.corretagem_etf_pct` 0,005 | `corretagem.xp_etf_pct` (COMPLETO) |
-> | `caixa.corretagem_rv` 4,49 | `corretagem.caixa_fixa` |
-> | `caixa.corretagem_pct` 0,0002 | `corretagem.caixa_pct` |
-> | `safra.corretagem_rv` 4,5 | `corretagem.safra_terra` |
-> | `terra.corretagem_rv` 4,5 | `corretagem.safra_terra` |
->
-> **As cinco constantes têm `expira: 2026-12-04`. As seis cópias não têm campo de
-> validade nenhum.** Em 05/12/2026 o `val()` começa a avisar para quem **referencia** — e
-> as cópias continuam caladas, para sempre. **O projeto construiu um relógio e metade
-> dos números não está ligada nele.**
->
-> Note também que o `xp_etf_pct` é `COMPLETO` no `custos.yaml` e o bloco que o copia
-> declara `PARCIAL`: **o mesmo número com dois status.**
->
-> **A causa raiz não é de quem escreveu o número:** o `instituicoes.yaml` **não tem
-> resolvedor de referência**. O `catalogo.yaml` tem `{de:}` e por isso acerta. Enquanto
-> o formato não oferecer a alternativa, copiar é a única coisa que se pode fazer.
->
-> **14 testes**, 7 verdes e **7 `xfail(strict=True)`** — os sete medem defeito aberto, e
-> o `strict` obriga a tirar o marcador no dia do conserto.
-
-> **E-08 FECHADO em 13/09/2026 — o `instituicoes.yaml` ganhou resolvedor de
-> referência.** *Decisão dele: resolvedor, não remoção. Documento em
-> `auditoria/E08-RESOLVEDOR.md`.*
->
-> `{de: "corretagem.xp_etf_pct"}` passa a valer em qualquer campo de custo, e a
-> resolução **passa por `val()`** — é isso que faz status, procedência, `expira` e
-> `bloqueia` caírem de graça. As seis cópias viraram referência.
->
-> **Três regras, e cada uma responde a um erro anterior:** constante `COMPLETO` devolve
-> o valor; constante que **bloqueia o contexto declarado** devolve `None` com o motivo;
-> `NAO_CONFIRMADO` devolve `None` sempre. **O contexto é opcional de propósito** — *um
-> consumidor que não se nomeia não pode reivindicar um bloqueio dirigido a outro*.
->
-> E o `None` **não é um buraco**: é o valor que `pontuar()` já sabia tratar, marcando a
-> dimensão como não avaliada e deixando a `cobertura` penalizar. *"Dimensão ausente é
-> penalidade, não neutralidade"* já estava escrito lá dentro. **O resolvedor não
-> inventou tratamento nenhum — fez o dado chegar ao tratamento que existia.**
->
-> O ranking passou a **se nomear**: `catalogo_instituicoes(contexto=RANKING)`. Uma
-> linha, e é ela que transforma a frase do YAML em comportamento.
->
-> **Medido — e o número engana:**
->
-> ```
-> XP antes:   total 46,0   corretagem = 2,0     multiplicador 0,80
-> XP depois:  total 45,9   corretagem = None    "corretagem NÃO CONFIRMADA"
-> ```
->
-> > **A nota praticamente não mudou** — perder a dimensão tira um peso de 12 que valia
-> > 2,0, e os efeitos quase se cancelam. **E isso não torna a correção menor.** O que
-> > mudou não foi *quanto*, foi **o que o sistema afirma**: antes ele dizia *"a
-> > corretagem da XP é ruim, nota 2,0"*, uma asserção sobre um número que o próprio
-> > projeto declarava não conseguir ler; agora diz *"não sei ler, e isso custa
-> > cobertura"*. **Uma correção de honestidade pode não mexer no resultado e continuar
-> > sendo correção.** Chamar isso de "sem impacto" seria medir a coisa errada.
->
-> **Prova de inércia:** os conjuntos de falha da suíte são **idênticos** com e sem o
-> patch — 12 nos dois, nenhuma nova, nenhuma sumiu (as 12 são P-15 e P-40 do meu
-> ambiente). `test_corretoras.py` segue com 26 verdes. As seis referências, sem
-> contexto, devolvem exatamente os valores de antes.
->
-> **17 testes novos, zero `xfail`** — os sete que documentavam defeito aberto agora
-> medem o conserto. O melhor deles **adianta o relógio** (`motor.HOJE = 2027-01-01`) e
-> confirma que o aviso de expiração passou a sair também para o `instituicoes.yaml`.
-> **O relógio existia; faltava ligar o outro lado nele.**
-
-> **E-09 — a chave duplicada que apagou oito dias de trabalho. 13/09/2026, e é o
-> achado mais silencioso do projeto.** *Documento em `auditoria/F03-IMAB11-E09.md`.*
->
-> `custos.yaml -> etf:` tinha **`IMAB11:` duas vezes**: a de cima (05/09) com
-> `valor: 0.0025, status: PARCIAL` e a página do gestor como fonte; a de baixo, oitenta
-> linhas abaixo, com `valor: null, NAO_CONFIRMADO`. **PyYAML fica com a última, sem
-> aviso nenhum.** O `PENDENCIAS.md` dizia *"fechada 05/09 — 0,25%"*, o motor via
-> `NAO_CONFIRMADO`, e **os dois discordaram em silêncio por oito dias**.
->
-> **E eu errei sobre isto ontem:** escrevi que *"a taxa nunca entrou no arquivo que o
-> código lê"*. Entrou. Medi `C['etf']['IMAB11']` — o valor **carregado** — e concluí
-> sobre o **arquivo**. É a décima linha da régua §5-B.
->
-> **A guarda é da classe:** `auditoria/chaves_duplicadas.py`, um `SafeLoader` que
-> **recusa** duplicata em vez de escolher. Varrido sobre os sete YAMLs: **exatamente
-> uma no projeto inteiro**, e era a que importava. 10 testes, com prova por mutação — e
-> o teste mostra que o `yaml.safe_load` padrão **não reclama** da duplicata sintética.
->
-> > **E a ferramenta errou antes de acertar, na mesma manhã em que escrevi a régua.** A
-> > primeira versão reprovava o `catalogo.yaml` inteiro, porque ele usa âncora e merge
-> > (`<<: *base`) e meu loader não construía a tag. **Sobrescrever chave da âncora é o
-> > propósito do merge.** Alcance do instrumento menor que o sistema, outra vez.
-
-> **F-03 e P-05 FECHADAS — ele mandou a lâmina do gestor. 13/09/2026.**
->
-> Lâmina It Now ID ETF IMA-B, Itaú Asset, **31/08/2026**: administração **0,04%** +
-> custódia **0,03%** + gestão **0,18%** = **0,25% a.a.**, e a linha *"taxa cobrada"* é
-> **igual** à *"taxa máxima"* nas três colunas — o que responde exatamente a dúvida
-> registrada (*"é teto de regulamento ou taxa efetiva?"*) sem precisar do regulamento.
->
-> **A P-05 estava certa ao dizer que a pendência era mal formulada:** não era número
-> ausente, era **campo errado**. "Taxa de administração" é um componente, e aqui é o
-> **menor dos três** — comparar por `taxa_adm` subestimaria em **seis vezes**.
->
-> **F-03 remedida, e a conclusão ficou mais forte:** incluindo a custódia de RV da B3
-> que o ETF paga acima de R$26.471,77 e o Tesouro não, o Tesouro IPCA+ vence em **todas**
-> as faixas, e a margem **abre** de +0,05 pp (R$5 mil) para **+0,09 pp** (R$100 mil).
-> Pela régua da P-76, isso é `COMPLETO` com a faixa declarada — **a fragilidade que eu
-> apontei era do insumo, não da conclusão.**
-
-> **A evidência sobre pré-registro — e ela contraria a MINHA recomendação. 13/09/2026.**
-> *Documentos em `auditoria/PREREGISTRO-EVIDENCIA.md` e o relatório completo, 25 fontes.*
->
-> Ele confirmou o desenho e pediu evidência. A evidência apoia duas camadas, é ambígua
-> numa e **contraria a quarta — o contador como alarme, que fui eu quem recomendou.**
->
-> - **Lerner & Tetlock (1999):** *accountability* **piora** o julgamento quando a escolha
->   envolve *"options easiest to justify"* — e "rodar mais uma variante" é sempre a mais
->   fácil de justificar. Pior: audiência de visões **conhecidas** (ele mesmo) produz
->   **conformidade**, não autocrítica. **A justificativa escrita pode virar máquina de
->   licenças.**
-> - **Sharon et al. (2022)**, meta-análise: em tarefas **complexas**, *accountability* de
->   **resultado** é superior à de processo — **d ≈ −0,48**. Backtest de 8 estratégias é
->   tarefa configural por qualquer definição.
-> - **E a trava mais dura que existe — a revisão Stage 1 dos Registered Reports — é a
->   que tem os maiores efeitos medidos:** 43,7% de hipóteses apoiadas contra 96,1% da
->   literatura padrão.
-> - **Brodeur et al. (2024)**, 15.992 estatísticas: *"no evidence that pre-registration
->   in itself reduces p-hacking"*. **O que funciona é o plano de análise detalhado**, não
->   o ato de registrar.
->
-> **O problema estrutural:** todo benefício demonstrado vem de arranjos com **verificador
-> externo**. Auto-registro sem leitor é o caso em que os estudos não acham efeito.
->
-> > **Mas ele tem um verificador e talvez não tenha percebido: o repositório é público,
-> > com commits datados.** Um pré-registro commitado antes da execução, num histórico que
-> > não se reescreve sem rastro, é muito mais perto do `clinicaltrials.gov` do que de uma
-> > anotação privada. **Regra concreta que sai daí:** o commit da especificação precisa
-> > ser anterior ao commit do resultado, e isso é verificável por qualquer pessoa.
->
-> **Recomendação revista: trava, com uma saída nomeada.** Exceder o orçado não se
-> resolve com um parágrafo — cria-se um **`v2`**, com especificação e `m` próprios, e o
-> `v1` fica de pé com o resultado dele. O custo de exceder deixa de ser escrever e passa
-> a ser **admitir que é outro experimento**. E entra uma **camada zero**: o plano de
-> análise detalhado, que é o que Brodeur mede como sendo o que funciona — hoje só o
-> `hml_puro_v1` o tem de fato.
+> **Narrativa de execução que saiu inteira** (registro, não instrução): as cinco rodadas de
+> 11/09 no Claude Code, os três marcos de 12/09, a suíte que deixou de fechar verde, a
+> auditoria completa do A-07 e o falso positivo do `ajuste_estabilidade`.
 
 ### Próximo passo, em ordem de valor
 
@@ -1812,12 +1004,27 @@ e as duas maiores mudanças da semana só foram defensáveis porque a rede exist
 
 ## 10. Onde a história ficou
 
-Os achados (`F-01` … `W-01`), com medição e teste, estão em **`ACHADOS.md`**.
-Não estão aqui de propósito: misturar instrução com história custava ~10 mil tokens
-por sessão em narrativa que a tarefa do dia normalmente não precisa.
+Os achados, com medição e teste, estão em **`ACHADOS.md`**. Não estão aqui de propósito:
+misturar instrução com história custa tokens toda sessão em narrativa que a tarefa do dia
+normalmente não precisa.
 
 **Leia os achados da área que você vai tocar, antes de tocar.** Vários são reincidência
 do mesmo padrão, e reconhecer o padrão vale mais que decorar os casos.
+
+**O atalho é o índice na §7** — uma linha por achado, com a regra que ele deixou. Ele existe
+para que a sessão saiba **que o achado existe e o que ele manda** sem pagar a narrativa; a
+narrativa fica a um `grep` de distância.
+
+> **Esta seção era violada por acréscimo, e por treze dias.** Ela diz desde 06/09 que achado
+> mora no `ACHADOS.md`; entre 06/09 e 18/09 a §7 acumulou **trinta achados e 20.085
+> tokens**. *O arquivo declarava um comportamento que ele mesmo não tinha, e os dois
+> concordavam por acidente porque ninguém media a §7* — o defeito recorrente da casa
+> cometido pelo arquivo que o define.
+>
+> **A guarda que impede a volta:** `auditoria/achados_ancorados.py` mede que todo achado
+> **citado** — inclusive nos comentários do código, que é a convenção da casa — tenha
+> **endereço** em algum `.md`. A promessa *"nada some"* protege contra apagar; não protegia
+> contra **mover errado**, que é mais fácil de fazer e mais difícil de ver.
 
 ---
 
@@ -1921,19 +1128,113 @@ bloqueio (`ROBOTS_DISALLOWED` na CVM) e **os dois o respeitaram**. Conclusão qu
 porque nenhum contornou: a CVM não é alcançável de nenhum agente na nuvem, e a pergunta
 que ela responde tem que sair do desktop ou do celular.
 
-### 11.4 O que se lê toda sessão — cortado pela metade em 06/09
+### 11.4 O que se lê toda sessão — ⚠ **os números desta seção estavam errados**
 
-| | antes | depois |
-|---|---|---|
-| `CLAUDE.md` | 1.112 linhas | **482** |
-| `PENDENCIAS.md` | 911 linhas | **565** |
-| `ACHADOS.md` | — | 1.066 (lido **só** quando a tarefa toca a área) |
-| **total por sessão** | **~26 mil tokens** | **~13 mil** |
+> ## RETRATAÇÃO — 19/09/2026
+>
+> **O que esta seção afirmava, citado:**
+>
+> | | antes | depois |
+> |---|---|---|
+> | `CLAUDE.md` | 1.112 linhas | **482** |
+> | `PENDENCIAS.md` | 911 linhas | **565** |
+> | **total por sessão** | **~26 mil tokens** | **~13 mil** |
+>
+> **A evidência que derruba, medida** com `tiktoken cl100k_base` sobre os sete arquivos
+> maiores do repositório em 19/09: a razão real é **19,0 tokens/linha** e **2,96
+> chars/token**. Markdown em português, com tabelas e acentuação, custa mais que o inglês
+> de onde a razão de ~13 t/linha vem.
+>
+> | | linhas | declarado | **real** | erro |
+> |---|---|---|---|---|
+> | antes do corte | 2.023 | ~26 mil | **~38.400** | **+48%** |
+> | depois do corte | 1.047 | ~13 mil | **~19.900** | **+53%** |
+>
+> **O corte de 06/09 nunca levou o projeto a 13 mil. Levou a ~20 mil.**
+>
+> **A causa raiz, e ela não é aritmética: eu escrevi uma tabela de tokens sem escrever a
+> conta.** A seção foi redigida para relatar um corte que eu mesmo tinha feito, e o número
+> servia para mostrar que o corte funcionou. Nenhuma das quatro células tem procedência, e
+> o arquivo passou treze dias apresentando como **medido** o que era impressão.
+>
+> Este arquivo tem a regra contra isso desde 12/09 — *"achado só entra no `CLAUDE.md` com
+> a conta escrita ou com o `NAO_CONFIRMADO` explícito"* (C-01). **A §11.4 é mais velha que
+> a regra, e ninguém voltou para reconferi-la: regra nova não audita o passado sozinha.**
+>
+> **E o custo apareceu do lado de fora.** Em 19/09 um plano de otimização de tokens
+> declarou ter **calibrado a própria razão empírica** nos "~13 mil" desta seção — e errou a
+> leitura inicial do projeto por **90%** por causa disso. Número plausível em prosa,
+> citado por terceiro como fonte: **é o C-01 na camada do token**, e desta vez ele
+> contaminou alguém que não tinha como conferir.
+>
+> **O que foi corrigido no processo, e é o que faz esta retratação valer mais que a
+> correção:** trocar os números deixaria a próxima estimativa igualmente cega. Nasceu
+> `auditoria/tamanho_do_contexto.py` — **o tamanho do contexto deixou de ser frase e virou
+> comando.** Esta seção não afirma mais valor nenhum; ela aponta para ele.
+>
+> **E a medição achou um buraco que ninguém tinha visto:** *o projeto nunca declarou qual é
+> o conjunto de leitura inicial.* Sem essa lista, "a leitura de sessão custa N" é a
+> suposição de quem mediu, não um fato do projeto — foi por isso que três planos diferentes
+> chegaram a três números diferentes sem nenhum errar a própria conta. A lista agora está
+> em `SEMPRE` / `SOB_DEMANDA`, com o motivo ao lado, e `.md` novo na raiz nasce **NAO
+> CLASSIFICADO** e é acusado.
 
-Nada foi apagado. O que mudou é **quando** se paga: instrução toda sessão, história sob
-demanda. Os dois arquivos estavam fazendo dois trabalhos incompatíveis ao mesmo tempo.
+**Como se mede hoje — e não se estima:**
 
-### 11.5 Onde os tokens vão embora, medido
+```bash
+python auditoria/tamanho_do_contexto.py
+```
+
+Medido em 19/09/2026, e **este número envelhece**: leitura de sessão declarada
+(`CLAUDE.md` + `PENDENCIAS.md` + `PLANO.md`) = **5.056 linhas, ~97 mil tokens**. Metade do
+`CLAUDE.md` — **25.113 tokens, 49%** — são blocos de citação `>`: retratação e história,
+que é o alvo da **Decisão C** do `PLANO.md`.
+
+**Três limites declarados do instrumento (P5), e o terceiro muda a conclusão:**
+
+1. Ele mede `cl100k_base` (OpenAI), **não** o tokenizador do Claude. Sobrevive erro
+   relativo e ordem de grandeza; valor absoluto carrega ±10%.
+2. `tiktoken` **não** entra no `pyproject.toml` — a P-15 fecha a faixa e a impressão do
+   ambiente é `7565df1381e2c1ed`. Sem ele, o módulo usa a razão medida e **diz que usou**.
+   Mesma decisão que fez a `multiplicidade.py` implementar a t de Student à mão.
+3. **Ele mede o ESTÁVEL, e chamar isso de "custo por sessão" era o erro conceitual embaixo
+   do erro aritmético.** O que varia por turno — resposta, saída de ferramenta, arquivo
+   reescrito — custa integral em **todo** turno e **não** é medido aqui, nem foi medido por
+   nenhum dos três planos de 19/09.
+
+   > ⚠ **Retratação no mesmo dia, e é a segunda sobre cache.** Esta linha dizia que, com
+   > cache, *"o estável é pago integral uma vez e a uma fração depois"*, e no chat eu
+   > concluí que **cortar arquivo estável renderia ~10%**. Fui à fonte
+   > ([platform.claude.com/docs/en/build-with-claude/prompt-caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)):
+   > o **write é 2,0x** (TTL 1 h), não 1,0x, e o read é 0,1x.
+   >
+   > **Eu medi o read e concluí sobre o cache.** E a aritmética é mais simples do que os
+   > dois lados supunham: o cache multiplica **todo** o prefixo pelo mesmo fator, então
+   > **cortar X% do prefixo corta X% do custo — com cache ou sem.** Medido: cortar os
+   > 25.113 tokens de bloco `>` economiza **25% da leitura de sessão, em qualquer número de
+   > turnos.** Eu inventei uma inversão de prioridade que a conta não sustenta, e o "~10%"
+   > era o preço do read usado como se fosse o fator de economia — **confundi o preço com a
+   > derivada.**
+   >
+   > Conta, fonte e o risco real do split (a **janela de 20 blocos**, não a invalidação de
+   > prefixo) em `auditoria/CACHE-E-O-CORTE.md`.
+
+Nada foi apagado no corte de 06/09. O que mudou é **quando** se paga: instrução toda
+sessão, história sob demanda. Os dois arquivos estavam fazendo dois trabalhos
+incompatíveis ao mesmo tempo — isso continua verdade, e é a parte da §11.4 que a medição
+**não** derrubou.
+
+### 11.5 Onde os tokens vão embora — ordenado, **não medido**
+
+> **Corrigido em 19/09:** o título dizia *"medido"* e o conteúdo é uma **ordenação sem
+> número**. É o mesmo defeito da §11.4 em forma mais branda — e ele também cobrou do lado
+> de fora: um plano de 19/09 citou esta seção como fonte de *"respostas longas: 25–35% do
+> gasto"*. **Este texto não tem percentual nenhum.** Ordinal não é percentual, e
+> transformar um no outro é inventar a medição que falta.
+>
+> A ordem abaixo continua sendo a minha melhor leitura, e está `NAO_CONFIRMADO`. Medi-la
+> exigiria ver tokens de entrada, de saída e cache da própria sessão — **instrumento que
+> eu não tenho**.
 
 Fora a leitura inicial, os três maiores gastos desta semana, em ordem:
 
@@ -2274,8 +1575,50 @@ em 18/09, depois de `PONTAS_DIVERGENTES` em 16/09. Mesma mão, mesmo erro.
 
 Nada aqui teria pego o `Risk_Free` invertido do E-06. E entra um limite novo: o bootstrap
 reamostra **meses independentes** — se houver dependência serial, o corte medido está
-**subestimado**, na mesma direção do achado. Medir isso pede *block bootstrap*, e não está
-feito.
+**subestimado**, na mesma direção do achado. ~~Medir isso pede *block bootstrap*, e não está
+feito.~~
+
+> **MEDIDO em 19/09/2026, e a previsão estava certa.** `auditoria/p88_block_bootstrap.py`,
+> 18 testes, laudo em `auditoria/P88-DEPENDENCIA-SERIAL.md`.
+>
+> **A dependência existe, e só numa das duas séries** — Ljung-Box(12) no **resíduo**, que é o
+> que o bootstrap reamostra: **HML p = 0,031**, SMB p = 0,166. Mesma amostra, mesma `k`,
+> mesmo procedimento, e um tem e o outro não. **O controle não foi construído: estava ali.**
+>
+> | L | blocos | HML | vs iid | SMB (controle) | vs iid | líquido |
+> |---|---|---|---|---|---|---|
+> | 1 | 306 | 3,1099 | — | 2,8473 | — | — |
+> | 2 | 153 | 3,2909 | **+5,8%** | 2,7736 | −2,6% | **+8,4%** |
+> | 3 | 102 | 3,3133 | **+6,5%** | 2,7695 | −2,7% | **+9,3%** |
+> | 6 | 51 | 3,2145 | +3,4% | 2,6991 | −5,2% | **+8,6%** |
+> | 12 | 26 | 2,9970 | −3,6% | 2,6482 | −7,0% | +3,4% |
+> | 24 | **13** | 2,9624 | −4,7% | 2,7573 | −3,2% | −1,6% |
+>
+> **Os sinais são opostos na faixa informativa** (L = 2 a 8, ≥ 39 blocos), e o efeito líquido
+> fica estável em **+6,9% a +9,3%**. O corte iid vai de 3,1099 para **~3,36**, e a folga do
+> HML de **−0,175** para **~−0,45**.
+>
+> **E sem o controle a leitura teria sido a oposta.** Com n = 306, `L = 24` dá **13 blocos
+> distintos**: o reamostrador degenera e o corte **cai** — por artefato, não por menos
+> dependência. Eu teria lido isso como *"a dependência não importa"*, a conclusão errada pelo
+> motivo errado. É o `meses_que_carregam` outra vez: *se todo fator morresse igual, a medida
+> não diria nada.*
+>
+> **O veredito não muda, e a conclusão não exige escolher um L** — que era exatamente o que a
+> P-88 pedia evitar (*"e não por convenção, senão troca-se uma suposição tabelada por
+> outra"*). Em L = 1 a 8 e em todas as sementes, o HML não sobrevive. Em L = 12 e 24 a margem
+> (−0,062 e −0,027) fica **dentro do ruído de semente** (sd 0,067) e é `NAO_CONFIRMADO` — a
+> mesma régua do m=8. E são justamente os dois degenerados: a perda de reamostragem **alarga
+> o próprio ruído** que torna o veredito inconclusivo ali.
+>
+> **A limitação era conservadora, como esta seção dizia.** A margem do HML era fina, e é mais
+> larga do que se pensava — na direção de não agir. É a quarta razão independente para o
+> mesmo veredito de 05/09.
+>
+> **O que continua aberto:** Romano-Wolf não entrou (o container tinha a versão do
+> `backtest_h1_h3.py` *anterior* a 18/09, sem `bootstrap_conjunto`), e a correção pela
+> degeneração — o "líquido" — é **inferência, não medição**: supõe que o artefato é igual nas
+> duas séries. `NAO_CONFIRMADO` para os ~3,36; **MEDIDO** para o sinal, a faixa e o veredito.
 
 ---
 
@@ -2370,3 +1713,301 @@ incompletas só as de CODBDI e TPMERC. P-95.
 **segundo** leitor de COTAHIST do projeto e a descoberta de arquivo ia ser redigitada (N-01).
 `pregoes()` antes e depois: **248 pregões**, `sha256 e4a9d81d3d6d4cb8810b86322de3d08415f7a3fed23b32d923b4291c13bd551c`
 — idêntico.
+
+---
+
+## 18/09/2026, terceira rodada — o COTAHIST inteiro chegou, e ele trouxe um achado que ninguém tinha procurado
+
+*Documentos: `auditoria/C03-A-QUEBRA-DE-MOEDA.md` e `docs/fontes/b3-series-historicas-cotahist.md`
+(este último **carrega a retratação no topo**). Política em **1.22.0**.*
+
+**O marco que muda o projeto de categoria, e não é o dado: o repositório foi EMPURRADO.**
+`b1d06f4..3ee5e97`, 250 objetos, 20 commits que nunca tinham saído da máquina. O laudo
+`auditoria/PREREGISTRO-EVIDENCIA.md` mediu que auto-registro **sem leitor externo** é
+exatamente o caso em que os estudos não acham efeito, e que o que salva este projeto é o
+histórico público datado — *a especificação commitada antes do resultado, num histórico que
+não se reescreve sem rastro*. **Até ontem esse verificador não existia.** Agora existe, e a
+consequência operacional é imediata: emendar commit deixou de ser barato.
+
+### O erro grande é meu, e está na régua §5-B como linha 13
+
+Declarei impossível um download que era um `GET`. A causa raiz, o agravante (recusar medir e
+depois usar a recusa como evidência) e a regra que sai daí estão na §5-B.13 — é lá que ela
+serve, não aqui. **A retratação fica no `politica.yaml`**, com a afirmação citada, a evidência
+que a derruba e a causa raiz: a entrada `captura_do_cotahist_passa_por_captcha` continua no
+arquivo marcada `RETIRADA`, e a operante é `captura_do_cotahist_ainda_nao_e_rotina` — *falta
+o executor, não o caminho*, que é a mesma pendência da CVM.
+
+### P-98 — 507 MB a um `git add` de virarem história permanente
+
+O acervo (**5,6 GB**) foi baixado para dentro de `docs/fontes/`. O `.gitignore` cobria
+`docs/fontes/**/*.zip` e `**/*.txt`, e por isso 65 dos 81 arquivos estavam cobertos.
+
+**Os 16 de 1986–2001 não.** O ZIP da B3 muda de convenção no meio da própria série: até 2001
+o conteúdo sai **sem extensão** (`COTAHIST.A1986`, `COTAHIST_A2001`), e só de 2002 em diante
+é `.TXT`. Nada pegava esses 507 MB, num repositório que naquele mesmo dia passou a ser
+público de fato.
+
+> **É a P-82 pela segunda vez em dois dias:** *regra escrita numa lista de nomes não é regra,
+> é lembrete.* Lá a lista era de **pastas** e `pacote_segunda/` não estava nela. Aqui é de
+> **extensões**, e estendê-la exigiria saber de antemão como um publicador nomeia o conteúdo
+> de um ZIP de 1986. Ninguém sabe.
+
+`alocacao/test_p98_acervo_fora_do_indice.py` mede **tamanho no índice do git**, não nome:
+bytes não dependem de alguém ter acertado a extensão. Mesmo instrumento do `test_p67_segredo`
+(segredo) e do `test_p82_copia_do_projeto` (cópia) — **os três medem o índice, porque o
+defeito nasce no `git add`, não no disco.**
+
+### C-03 — quatro moedas no acervo, e só uma deixou quebra no arquivo
+
+A série agora começa em **02/01/1986** e atravessa seis planos econômicos. O campo `MOEDA`
+(posições 53–56) muda **dentro do mesmo arquivo anual**. Medido pela razão do mesmo `CODNEG`
+nos pregões que cercam cada troca, com o controle do dia anterior ao lado:
+
+| troca | pares | mediana | |
+|---|---|---|---|
+| 1986 Cruzado (1.000:1) | 274 | 1,197 | **sem quebra** — a B3 já reexpressou o ano |
+| 1989 Verão (1.000:1) | 198 | 0,968 | **sem quebra** |
+| 1993 Cruzeiro Real (1.000:1) | 182 | 0,998 | **sem quebra** — e a `MOEDA` nem distingue as duas |
+| 1990 Collor | **2** | — | `NAO_CONFIRMADO` — o mercado parou |
+| **1994 Real (CR$ 2.750 = R$ 1)** | 136 | **0,364** | **QUEBRA**, contra controle de 1,011 |
+
+**Três das quatro trocas não deixam quebra.** A suposição natural — *"toda troca de moeda é
+uma quebra"* — erra em 3 de 4. Uma tabela de planos econômicos teria acusado quatro e
+acertado uma; **o fator é medição, nunca tabela.**
+
+**A do Real é real:** 1/0,364 = **2,744**, consistente com os 2,750 da lei, com o resto sendo
+variação de um pregão. E ela entra na série ajustada como **−63,6% no mercado inteiro, em um
+dia, sem causa** — porque troca de moeda **não é evento societário**: não tem `factor`, não
+tem data-ex, não existe no silver.
+
+> **É o F-02 na forma mais cara que ele já tomou.** Não é insumo ausente virando zero: é
+> insumo **presente, correto e anunciado pela própria fonte** que ninguém lê. E é o C-01 em
+> escala de mercado — lá um `factor` mal lido movia um papel por até 50x; aqui uma unidade
+> não lida move **todos** por 2,75x, e o gráfico fica plausível.
+
+### O que mais foi medido de graça, porque os arquivos estavam na mão
+
+- **P-96 FECHADA.** `COTAHIST_A2023.ZIP` rebaixado tem o **mesmo sha256** do capturado em
+  04/09 (`ad1603788d78aaa1…`), 14 dias depois. **Ano fechado do COTAHIST é congelado** —
+  deixou de ser suposição minha e virou medição.
+- **P-99 é menor do que eu escrevi.** O layout é **idêntico nos 41 anos** — 245 posições,
+  CRLF, `TIPREG=01`, `DATA` em 3–10, `CODNEG` em 13–24. Só o **nome do membro** varia. E a
+  correção certa **não é uma lista de nomes** (seria a P-82 pela terceira vez): é ler o
+  membro único do ZIP e validar pelo **conteúdo** — cabeçalho `00COTAHIST.<ANO>` e registro
+  de 245 posições. *Nome é a propriedade que varia; layout é a que identifica.*
+- **P-100: o `COTAHIST_A2026.ZIP` é ZIP em streaming, cortado.** Cabeçalho `PK\x03\x04`,
+  membro declarado, **flag 0x0808** — bit 3 ligado, tamanhos num descritor no fim. É a forma
+  de quem gera o arquivo na hora. Consequência para a rotina automática: **não dá para
+  validar pelo tamanho esperado, porque não existe tamanho esperado.** O coletor tem de
+  abrir o ZIP e ler o membro até o fim **antes** de aceitar — conferir depois de gravar é
+  conferir tarde.
+
+### P-102 — e este é o pior da rodada, porque é uma guarda matando o trabalho que ela protege
+
+Liguei `acervos_sem_regime()` ao `main()` do `manifesto_cvm.py` **sem guarda**. Em `tmp_path`
+o `raiz_do_repositorio` acha o `pyproject.toml` que o próprio teste cria, a política não
+existe ali, e o `FileNotFoundError` subiu — derrubando **três testes do
+`test_manifesto_cvm.py` que não tinham nada a ver com P7 nenhuma**. Eles foram commitados e
+**empurrados vermelhos, no primeiro push da história do repositório.**
+
+**Dois erros, e o segundo vale mais:**
+
+1. **rodei só o meu teste novo, não a suíte de `fase0`.** É o passo 5 do protocolo §9 —
+   *"pytest, o júri, nunca o guia"* — pulado por quem citou o protocolo na mesma resposta.
+   E o `git add -A` que eu recomendei não tinha um *"se vermelho, pare"*.
+2. **uma guarda acessória derrubou o trabalho principal.** O comando grava o retrato de
+   procedência; conferir a P7 é um extra que eu penduro nele. Num instrumento cuja única
+   função é não perder procedência, **cair é a pior saída possível** — e ela veio da coisa
+   que eu escrevi para proteger.
+
+> **Guarda que derruba o trabalho que existe para proteger inverteu o próprio propósito.** E
+> engolir o erro seria o outro extremo: o **E-02**, arquivo ausente virando *"nada
+> declarado"*. A correção fica entre os dois — `PoliticaAusente` levanta na função, e o
+> `main()` **avisa que a conferência não rodou** e deixa o retrato de pé. *"Conferi e está
+> certo"* e *"não consegui conferir"* não podem ter a mesma saída.
+
+Quatro testes novos em `fase0/test_p7_captura_declarada.py` (14 no arquivo), e o que dá nome
+ao achado exige o **aviso** em stderr e o **código de saída 0** na mesma execução.
+
+### O que fica declarado como não medido (P5)
+
+- **A enumeração de `MOEDA` está incompleta por construção.** Quatro valores observados
+  (`CR$`, `CZ$`, `NCZ$`, `R$`) em 8 dos 41 arquivos. Os outros 33 não foram abertos.
+- **A escala em milhares** antes de 04/07/1994 é a leitura que reconcilia a lei (2.750) com a
+  medição (2,750). Não há documento da B3 em mãos que a confirme.
+- **1990 não foi medido.** Dois pares.
+- **A cobertura do backtest passou a ser DECISÃO.** Sem reexpressão, a série utilizável
+  começa em **04/07/1994**; com ela, em **02/01/1986**. Isso não se resolve em silêncio:
+  entra em `limitacoes_declaradas` ou vira trabalho.
+
+
+---
+
+## 19/09/2026 — o leitor do COTAHIST via 24 dos 41 anos, e os outros 17 sumiam calados
+
+*Sábado, com o PC dele desligado: medi e escrevi aqui, sobre os 9 ZIPs que estavam no
+container. Testes em `fase0/test_calendario_p99.py` (24). Fontes em
+`docs/fontes/b3-cotahist-leiaute.md`. Achados completos em `ACHADOS.md`.*
+
+**O que mudou de categoria:** a P-06 fechou com **fonte primária** e o leitor passou a ler
+o acervo inteiro. O que era *"o acervo tem 1 ano"* virou *"o acervo tem 41 e o código lê
+todos"* — em três dias, e sem uma linha de coleta nova.
+
+### P-99 — três defeitos, e o pior era o mudo
+
+`registros()` filtrava o membro do ZIP por `.TXT`. Dos 41 anos, **16 têm o membro sem
+extensão** (`COTAHIST.A1986` até 2000; `COTAHIST_A2001` em 2001). Medido nos 9 arquivos em
+mãos: **7 devolviam ZERO registros, sem erro e sem aviso.** O ano não quebrava — não
+existia.
+
+`arquivos()` tinha o irmão: `splitext("COTAHIST.A1986")` → `('COTAHIST', '.A1986')`, e
+**quinze anos disputariam a chave `COTAHIST`**. E `pregoes()` **morria inteiro** num
+`BadZipFile` — o 2026 truncado apagava o calendário do acervo todo.
+
+**A correção não é uma lista de nomes** (seria a P-82/P-98 pela terceira vez em três dias):
+é **um membro só, e ele tem de começar com header de COTAHIST**. *Nome é a propriedade que
+varia; leiaute é a que identifica.* E o arquivo ilegível passou a ser **acusado por nome**,
+com o ano faltando declarado — o desenho do `coletar_b3.py` de 10/09, que salvou as 74
+emissoras e **não tinha atravessado de módulo para módulo** (A-07/P-85).
+
+**Instantâneo dourado:** 2023 em **248 pregões**, `sha256 e4a9d81d…d551c` — idêntico ao de
+18/09. Entraram 17 anos sem mover um bit.
+
+> **E a tolerância trouxe armadilha própria, presa num teste.** Aceitar arquivo sem header
+> (ZIP sintético) exige `next()`, que **consome** a linha; devolvê-la é obrigatório, senão o
+> arquivo perde o primeiro pregão em silêncio — **o defeito da P-99 reintroduzido pela
+> correção dele**. O teste conta duas linhas, não uma.
+
+### C-03 — `MODREF` é rótulo, não unidade, e isso é o C-01 em outra roupa
+
+Quatro moedas no acervo (`CR$`, `CZ$`, `NCZ$`, `R$`) e **só a fronteira do Real deixou
+quebra**: 1986, 1989 e 1993 ficam dentro do ruído diário; 1994 tem razão **0,364** contra
+controle de 1,011.
+
+A peça que explica está no header: os arquivos de 1986 a 1995 foram **todos gerados em
+19991210** — mesmo dia, treze anos depois do primeiro pregão. A B3 reexpressou a série
+pré-Real ao regerá-la, e deixou a fronteira do Real como está (`NAO_CONFIRMADO`: é a leitura
+que reconcilia cinco medições, não um documento).
+
+> **Um leitor que confie em `MODREF` para converter aplica três conversões falsas e erra a
+> única verdadeira.** O rótulo muda onde o número não muda, e muda também onde o número
+> muda. *Campo que parece dizer o fator e não diz* — o `factor` do C-01, em outra roupa.
+>
+> E a suposição óbvia erra em 3 de 4: **uma tabela de planos econômicos teria acusado quatro
+> trocas e acertado uma.** O fator é medição, nunca tabela.
+
+### P-06 fechada — e é a §5-B.13 dois dias seguidos
+
+O leiaute existe, **revisão 02 de 05/10/2020**, e não há revisão 03. Estava numa **terceira**
+página — *Cotações Históricas*, não *Séries Históricas*, duas irmãs de nome quase igual. Eu
+havia escrito que *"a página onde ela deveria estar não a tem"*: conclusão sobre onde o
+documento **deveria** estar, sem procurar onde ele **está**. Uma busca resolveu.
+
+Três correções vêm junto: o campo 53–56 chama-se **`MODREF`** (eu usava `MOEDA`); o leiaute
+**não traz tabela de valores** para ele — não é tabela incompleta como o `ESPECI` da P-95, é
+**inexistente**, então a enumeração tem de sair do dado (A-05); e a B3 declara em texto que
+as cotações vêm *"na moeda e forma de cotação da época, sem nenhum ajuste para a inflação ou
+proventos"* — **ajuste de proventos é nosso, e agora está na fonte em vez de presumido.**
+
+### O que o C-03 NÃO bloqueia, e dizer isso vale mais que o achado
+
+O próximo passo é `ajustar.py` sobre **2021–2025**, e essa janela está **inteira em `R$`**.
+A quebra é de 04/07/1994. **A P-101 não entra no caminho crítico hoje** — empilhá-la na
+frente por ser o achado mais novo seria escolher a tarefa pelo frescor, não pelo valor, que
+é exatamente o erro que a P-44 registra.
+
+
+## 19/09/2026, segunda rodada — dois defeitos meus do dia anterior, e o leiaute virou dado
+
+*Com o PC dele desligado. `fase0/moeda.py`, `docs/schemas/cotahist-v02.yaml`, 40 testes
+verdes em `fase0/`. A Decisão C foi executada nesta mesma rodada — ver o índice na §7 e a
+§10.*
+
+**A ordem mudou pela restrição, e vale dizer por quê.** O próximo passo é `ajustar.py` sobre
+2021–2025, e ele precisa de 5,6 GB no disco dele e do próprio `ajustar.py` — nenhum dos dois
+alcançáveis daqui. O que sobrou foi melhor que esperar: **consertar dois defeitos que eu
+criei no dia anterior**, e os dois eram o caminho para a P-101.
+
+### P-105 — eu violei a P2 no mesmo dia em que auditei três planos por falta de rigor
+
+O `calendario.py` nasceu em 19/09 com `POS_DATA = (2, 10)`, `POS_MODREF = (52, 56)` e
+`LARGURA = 245` **escritos em Python**, com a procedência num comentário. São valores de
+**fonte externa** — o leiaute da B3 —, e a P2 é explícita: *"todo parâmetro vive em YAML
+versionado, nunca em código."*
+
+Viraram `docs/schemas/cotahist-v02.yaml`, com revisão, URL, data de acesso e o status de
+cada enumeração **ao lado dos valores**. E o módulo **recusa rodar sem o arquivo**
+(`LeiauteAusente`), **sem fallback**:
+
+> Um fallback de constante em Python reintroduziria o defeito **e funcionaria** — que é o
+> pior resultado possível, porque ninguém descobriria. É a P1 na letra: insumo ausente não
+> vira número, e ler 245 posições fixas com um palpite devolve número para tudo.
+
+A conversão 1-baseada → Python mora num lugar só, porque ela é a fonte clássica do erro de
+um: o documento diz 53–56, Python quer `[52:56]`.
+
+> **A ideia não é minha.** Veio do terceiro plano de otimização de tokens que ele mandou
+> auditar — *schema estruturado, Knowledge Registry* — e era o melhor item dos três. **O
+> ganho dele não é token: é a P2.** Registro a origem porque conclusão sem procedência é o
+> que este projeto persegue.
+
+### P-106 — recriei a P-77 em menos de 24 horas
+
+`modref_de()` e `conferir_modref()` nasceram em 19/09 e **nenhum módulo do motor as
+chamava** — só o teste. É a **P-77 na letra**: *campo que só o teste toca é campo que o motor
+não usa*, e é categoria pior que órfã pura, porque tem testemunha — o teste prova o esquema
+e ninguém prova o comportamento.
+
+**A P-77 está escrita neste arquivo, e eu a recriei no dia seguinte.** Regra escrita não
+impede a reincidência; o que impede é o instrumento — e o `chaves_orfas.py` já separa
+*"lida só por teste"* como categoria própria justamente por isso.
+
+`fase0/moeda.py` é o consumidor que faltava, e ele não é enfeite: é o instrumento do C-03.
+
+### O C-03 virou instrumento, e ele recusa aplicar
+
+```
+COTAHIST_A1986  19860227->19860304  CR$->CZ$    274  1.1973  ctrl 1.0000 (n=339)      --  SEM_QUEBRA
+COTAHIST_A1989  19890113->19890118  CZ$->NCZ$   198  0.9677  ctrl 1.0000 (n=307)      --  SEM_QUEBRA
+COTAHIST_A1990  19900313->19900319  NCZ$->CR$     2  0.7142  ctrl 1.0000 (n=238)      --  NAO_CONFIRMADO
+COTAHIST_A1994  19940630->19940704  CR$->R$     136  0.3644  ctrl 1.0106 (n=251)  2.7440  QUEBRA_MEDIDA
+```
+
+**Ele NÃO aplica a reexpressão, e há um teste que falha se alguém acrescentar um
+`aplicar()`.** Escolher a base — tudo em R$? cada ano na sua moeda? — é **decisão de desenho
+dele**, e a P6 manda deixar a lacuna declarada em vez de inventar critério. Mesmo desenho do
+`refinar.py` com o `FACTOR_AMBIGUO`.
+
+E o `fator` vem `None` quando o status não é `QUEBRA_MEDIDA`: **número de fator ao lado de um
+status que não o autoriza é a coisa mais fácil de alguém usar sem ler o status** (F-02 na
+camada do relato).
+
+**O achado lateral virou a régua §5-B.14** — o controle de 1,0000 exato com 339 pares, que é
+mercado raso e não mercado estável.
+
+### E uma coisa que quase virou N-01
+
+`calendario.py` precisava de `raiz_do_repositorio`, que mora no `manifesto_cvm.py`.
+Reimplementar são quatro linhas, e seria o N-01 — *duas leituras da mesma regra concordam
+por acidente até o dia em que não concordam*, e o dia seria aquele em que a âncora do projeto
+deixasse de ser o `pyproject.toml`. **Importei**, como o `refinar.py` faz desde o A-06, com o
+`ImportError` carregando o motivo.
+
+### O que fica declarado como não medido (P5)
+
+- **A enumeração de `MODREF` está incompleta por construção** — 4 valores em **8 dos 41**
+  arquivos. O YAML diz isso em `incompleta_por_construcao: true`, ao lado dos valores, e há
+  um teste que exige que esse fato viaje com a lista. Era o que a constante em Python não
+  conseguia carregar.
+- **A escala em milhares** antes de 04/07/1994 continua `NAO_CONFIRMADO`: é a leitura que
+  reconcilia a lei (CR$ 2.750 = R$ 1) com a medição (2,744), sem documento da B3.
+- **1990 não foi medido** — 2 pares, e o status diz isso em vez de uma mediana com cara de
+  resposta.
+- **`ajustar.py` e `refinar.py` não passaram pelo container nesta rodada.** O
+  `calendario.py` mudou de contrato (`registros()` agora confere cabeçalho; o leiaute vem do
+  YAML) e eu **não pude rodar os testes deles** — está escrito no `SEGUNDA-21.md` como o
+  primeiro lugar onde olhar se a suíte quebrar. É a regra 12 da §5-B: eu entreguei um arquivo
+  que outra ponta também toca.
+  **21/09 — medido, e quebrava: 19 testes** (P-109). E "não pude rodar" era "não tentei": o
+  repositório é público. Virou a §5-B.15.

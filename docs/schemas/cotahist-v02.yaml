@@ -1,0 +1,112 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# COTAHIST -- leiaute como DADO, nao como constante em Python.
+#
+# POR QUE ESTE ARQUIVO EXISTE, e e um defeito meu de 19/09/2026. O `calendario.py`
+# nasceu com `POS_DATA = (2, 10)`, `POS_MODREF = (52, 56)` e `LARGURA = 245` escritos em
+# Python, com a procedencia num comentario. Sao constantes de FONTE EXTERNA no codigo --
+# exatamente o que a P2 proibe (*"todo parametro vive em YAML versionado, nunca em
+# codigo"*), e eu as escrevi no mesmo dia em que auditei tres planos por falta de rigor.
+#
+# A ideia de schema-como-dado nao e minha: veio do terceiro plano de otimizacao de tokens
+# que ele mandou auditar, e era o melhor item dos tres -- e o ganho dela nao e token, e a
+# P2. Registro a origem porque conclusao sem procedencia e o que este projeto persegue.
+#
+# FONTE: LAYOUT DO ARQUIVO -- COTACOES HISTORICAS, **revisao 02 de 05/10/2020**, lida em
+# 19/09/2026 em
+# www.b3.com.br/data/files/33/67/B9/50/D84057102C784E47AC094EA8/SeriesHistoricas_Layout.pdf
+# Transcricao e o caminho de como ela foi achada em `docs/fontes/b3-cotahist-leiaute.md`.
+# **Nao existe revisao 03** -- era a pergunta da P-06, e ela fechou com isso.
+#
+# AS POSICOES SAO 1-INDEXADAS, como no documento. Quem le converte: `[inicio-1:fim]`.
+# Escrever aqui o indice de Python seria traduzir a fonte antes de registra-la, e a
+# traducao e onde o erro entra sem deixar rastro.
+# ══════════════════════════════════════════════════════════════════════════════
+
+meta:
+  fonte: "B3 -- LAYOUT DO ARQUIVO COTACOES HISTORICAS"
+  revisao: "02"
+  data_revisao: 2020-10-05
+  acesso: 2026-09-19
+  url: "https://www.b3.com.br/data/files/33/67/B9/50/D84057102C784E47AC094EA8/SeriesHistoricas_Layout.pdf"
+  status: COMPLETO
+  existe_revisao_posterior: false     # conferido na pagina de Cotacoes Historicas, 19/09
+  indexacao: "1-BASEADA, como no documento"
+
+registro:
+  largura: 245
+  terminador: CRLF
+  tipos:
+    "00": HEADER
+    "01": COTACAO
+    "99": TRAILER
+
+# Campos do registro TIPO 01, transcritos da rev. 02. So os que o projeto le hoje mais os
+# que ele vai ler -- campo que nao esta aqui NAO deve ser lido por posicao adivinhada.
+campos:
+  TIPREG:  {inicio: 1,   fim: 2,   tamanho: 2,  tipo: "N(02)", descricao: "tipo de registro"}
+  DATA:    {inicio: 3,   fim: 10,  tamanho: 8,  tipo: "N(08)", descricao: "data do pregao AAAAMMDD"}
+  CODBDI:  {inicio: 11,  fim: 12,  tamanho: 2,  tipo: "X(02)", descricao: "codigo BDI"}
+  CODNEG:  {inicio: 13,  fim: 24,  tamanho: 12, tipo: "X(12)", descricao: "codigo de negociacao do papel"}
+  TPMERC:  {inicio: 25,  fim: 27,  tamanho: 3,  tipo: "N(03)", descricao: "tipo de mercado"}
+  NOMRES:  {inicio: 28,  fim: 39,  tamanho: 12, tipo: "X(12)", descricao: "nome resumido da empresa"}
+  ESPECI:  {inicio: 40,  fim: 49,  tamanho: 10, tipo: "X(10)", descricao: "especificacao do papel"}
+  PRAZOT:  {inicio: 50,  fim: 52,  tamanho: 3,  tipo: "X(03)", descricao: "prazo em dias do mercado a termo"}
+  MODREF:  {inicio: 53,  fim: 56,  tamanho: 4,  tipo: "X(04)", descricao: "MOEDA DE REFERENCIA"}
+  PREABE:  {inicio: 57,  fim: 69,  tamanho: 13, tipo: "(11)V99", descricao: "preco de abertura"}
+  PREMAX:  {inicio: 70,  fim: 82,  tamanho: 13, tipo: "(11)V99", descricao: "preco maximo"}
+  PREMIN:  {inicio: 83,  fim: 95,  tamanho: 13, tipo: "(11)V99", descricao: "preco minimo"}
+  PREMED:  {inicio: 96,  fim: 108, tamanho: 13, tipo: "(11)V99", descricao: "preco medio"}
+  PREULT:  {inicio: 109, fim: 121, tamanho: 13, tipo: "(11)V99", descricao: "preco de fechamento"}
+
+# `(11)V99` = 11 inteiros + 2 decimais IMPLICITOS. O valor lido divide por 100.
+escala_de_preco: 100
+
+# ── ENUMERACOES ──────────────────────────────────────────────────────────────
+enumeracoes:
+  TPMERC:
+    "010": VISTA
+    status: PARCIAL
+    nota: >
+      So o valor que o projeto usa foi transcrito. A tabela da rev. 02 tem mais, e a P-95
+      registra que ela esta INCOMPLETA contra o dado de 2023 -- `TPMERC=021` aparece e nao
+      consta. Ler valor fora daqui exige voltar a fonte, nunca supor.
+
+  MODREF:
+    status: OBSERVADO
+    fonte_da_lista: "o DADO, nao o documento"
+    por_que_observado: >
+      **O leiaute rev. 02 NAO traz tabela de valores para o MODREF.** Nao e tabela
+      incompleta como a do ESPECI (P-95): e tabela INEXISTENTE. Conferido na fonte em
+      19/09. Logo a lista sai do dado observado e valor fora dela falha ruidosamente --
+      A-05, e desta vez por ausencia de documento, nao por ele estar velho.
+    medido_em: 2026-09-19
+    arquivos_lidos: 8      # 1986 1989 1990 1993 1994 1995 2001 2023
+    arquivos_no_acervo: 41
+    incompleta_por_construcao: true
+    valores:
+      "CR$":  {nome: "cruzeiro / cruzeiro real", vista_em: [1986, 1990, 1993, 1994]}
+      "CZ$":  {nome: "cruzado",                  vista_em: [1986, 1989]}
+      "NCZ$": {nome: "cruzado novo",             vista_em: [1989, 1990]}
+      "R$":   {nome: "real",                     vista_em: [1994, 1995, 2001, 2023]}
+    o_que_o_campo_NAO_e: >
+      **MODREF e ROTULO HISTORICO, nao a unidade em que o numero esta gravado** -- achado
+      C-03, medido em 19/09. Tres das quatro trocas de moeda do acervo NAO deixam quebra de
+      preco (1986, 1989, 1993); so a do Real (04/07/1994) deixa, e ela mede 2,744. A B3
+      reexpressou a serie pre-Real ao regera-la -- os arquivos de 1986 a 1995 tem
+      `19991210` no header, todos o mesmo dia.
+      **Quem converter por MODREF aplica tres conversoes falsas e erra a unica verdadeira.**
+      `NAO_CONFIRMADO`: a reexpressao e a leitura que reconcilia cinco medicoes com a data
+      de geracao, nao uma afirmacao da B3.
+
+# ── NOMES DE ARQUIVO, que tambem nao seguem uma regra so (P-99) ──────────────
+membro_do_zip:
+  status: OBSERVADO
+  medido_em: 2026-09-19
+  padroes:
+    - {faixa: "1986-2000", exemplo: "COTAHIST.A1986",     nota: "PONTO, sem extensao"}
+    - {faixa: "2001",      exemplo: "COTAHIST_A2001",     nota: "SUBLINHADO, sem extensao"}
+    - {faixa: "2002-2025", exemplo: "COTAHIST_A2023.TXT", nota: "sublinhado e .TXT"}
+  como_identificar: >
+    **Pelo CONTEUDO, nunca pela extensao.** Um membro so, e ele comeca com um header
+    `00COTAHIST.<ANO>`. A versao anterior filtrava `.TXT` e devolvia ZERO registro, em
+    silencio, para 16 dos 41 anos. Lista de nomes nao e regra, e lembrete (P-82/P-98).

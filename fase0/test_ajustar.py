@@ -32,6 +32,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ajustar as A                                                     # noqa: E402
 import refinar                                                          # noqa: E402
+import calendario                                                       # noqa: E402
 
 RAIZ_ACERVO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                            "data", "bronze", "b3")
@@ -72,10 +73,22 @@ def _registro(data, codneg, preco_centavos, especi="ON      NM", codbdi="02",
     return "".join(buf)
 
 
+def _header(nome):
+    """O header REAL de um COTAHIST: `00COTAHIST.AAAABOVESPA AAAAMMDD`.
+
+    21/09/2026 (P-109). Ate aqui o sintetico nao tinha header, e passava porque o
+    `calendario` de 16/09 nao conferia nada. O de 19/09 confere -- e e o que achou os 16
+    anos que o filtro `.TXT` zerava em silencio (P-99) -- e reprovou 14 testes daqui.
+    O defeito era do sintetico: um arquivo sem header nao existe no acervo real, e um
+    teste que so passa com dado que nao existe esta medindo o dado errado."""
+    ano = calendario.ano_de(nome) or "2023"
+    return ("00COTAHIST." + ano + "BOVESPA " + ano + "1228").ljust(245)
+
+
 def _cotahist(pasta, nome, linhas):
     caminho = os.path.join(str(pasta), nome)
     with open(caminho, "w", encoding="latin-1") as f:
-        f.write("\n".join(linhas) + "\n")
+        f.write("\n".join([_header(nome)] + list(linhas)) + "\n")
     return str(pasta)
 
 

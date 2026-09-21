@@ -239,10 +239,16 @@ Isso se declara ao lado dele, em `docs/acervo/b3/origem.csv`, colunas
 
 ```csv
 caminho;origem;acesso
-COTAHIST_A2021.ZIP;https://bvmf.bmfbovespa.com.br/pt-br/cotacoes-historicas/FormSeriesHistoricasArq.asp -- Series Anuais, download manual apos CAPTCHA;2026-09-18
+cotahist/COTAHIST_A2021.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A2021.ZIP -- GET direto (Invoke-WebRequest, script PowerShell dele);2026-09-18
 ```
 
 uma linha por arquivo, trocando o ano e a data.
+
+> **21/09 — o modelo acima dizia *"download manual após CAPTCHA"*.** Era a origem da
+> retratação do topo deste arquivo, e quem copiasse o modelo gravaria procedência falsa no
+> arquivo cuja função é não inventar procedência. Corrigido; o `origem.csv` real foi escrito
+> com as 41 linhas pela P-108. **E o arquivo tem de ser gravado sem BOM** — ou lido com
+> `utf-8-sig`, que é o que o `manifesto_cvm.py` faz desde 21/09.
 
 > **A linha do `COTAHIST_A2023.ZIP` fica em aberto de propósito.** Ele está no acervo
 > desde 04/09 e **eu não sei de onde ele veio** — supor que veio desta página seria
