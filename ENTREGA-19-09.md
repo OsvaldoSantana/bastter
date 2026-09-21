@@ -1,5 +1,8 @@
 # Entrega de 19/09/2026 — os arquivos finais, com hash
 
+> **Encerrada em 21/09/2026: conferida e commitada em `c6ccf2a`.** Os hashes abaixo são os
+> desse commit; arquivo que mudou depois dele não é mais conferido por esta lista.
+
 *Escrito porque o risco é real: os arquivos saíram em **oito mensagens** ao longo do sábado,
 e há **várias versões** de `CLAUDE.md`, `PENDENCIAS.md` e `SEGUNDA-21.md` no chat. Copiar a
 versão errada é a regra 12 da régua §5-B acontecendo — *arquivo que duas mãos editam não se

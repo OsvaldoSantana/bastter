@@ -44,7 +44,15 @@ temporários não existem mais.
 
 ---
 
-## Passo 2 · Ficar verde  ▸ 5 min · **é o caminho crítico**
+## Passo 2 · ~~Ficar verde~~ **FEITO em 21/09 — commit `c6ccf2a`, empurrado**
+
+> **Medido no transcript dele:** `fase0` 212 passed · `alocacao` 516 passed · `auditoria`
+> 41 passed + 1 skipped (`tiktoken` ausente, esperado) · `ruff` limpo · manifesto
+> `P-06: 1 de 42` · o `origin/main` voltou a ficar verde. Os três avisos de marca `slow`
+> viraram a P-111, fechada no mesmo dia. **Próximo: Passo 3.**
+
+<details><summary>O roteiro original deste passo</summary>
+
 
 ```powershell
 cd C:\Users\osvaldo.junior\Desktop\Bastter
@@ -87,6 +95,10 @@ git push
 **Leia o `git status` antes do commit.** Tem de aparecer código, testes, docs e
 `docs\acervo\b3\` — **nenhum arquivo de `data\`** e **nenhum `estado.yaml`**. A guarda
 P-98 reprova se um ZIP escapar, mas olhar custa dez segundos.
+
+---
+
+</details>
 
 ---
 

@@ -2250,6 +2250,24 @@ como calibração.
 
 ---
 
+## P-111 · ~~`pytest.mark.slow` sem registro~~ **FECHADA em 21/09**
+
+**Dono:** — · **Classe:** `DECISAO_DE_DESENHO`
+
+Os testes da P-88 usam `@pytest.mark.slow` e eu não registrei a marca: três
+`PytestUnknownMarkWarning` em toda execução de `auditoria`, visíveis no transcript do commit
+`c6ccf2a`. Aviso que aparece sempre é aviso que se aprende a não ler — e o dia em que vier
+um aviso de verdade ele entra no meio dos três de sempre. **Fechada:** `markers` no
+`[tool.pytest.ini_options]` do `pyproject.toml`. **A impressão do ambiente não mudou**
+(`7565df1381e2c1ed` antes e depois, medida): ela é calculada só sobre Python e versões.
+
+**O `1 skipped` da `auditoria` na máquina dele não é defeito**, e fica escrito para não
+virar dúvida: é `test_mutacao_a_razao_grosseira_e_a_do_tiktoken_concordam_em_ORDEM_DE_GRANDEZA`,
+que pula quando o `tiktoken` não está instalado e diz isso na razão do skip
+(`pytest auditoria -rs` mostra). O `tiktoken` é proxy opcional (§11.4), fora das dependências.
+
+---
+
 ## Fechadas
 
 | # | o que era | fechada em |
