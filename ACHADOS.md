@@ -2247,8 +2247,9 @@ Três correções que vêm junto:
 
 **21/09/2026.** Documento completo em `auditoria/C02-JANELA-2021-2025.md`.
 
-O critério do C-02 para 2023 foi pré-registrado para cada ano de 2021–2025 **antes** da
-primeira corrida, e reprovou em quatro dos cinco. Fica em `xfail(strict=True)`, por decisão
+O critério do C-02 para 2023 foi aplicado a cada ano de 2021–2025 como critério **declarado
+pré-registrado, sem impressão digital** — escrito antes da primeira corrida, mas commitado junto
+com os resultados (`b54787b`), então a P4 não o verifica (P-116). Reprovou em quatro dos cinco. Fica em `xfail(strict=True)`, por decisão
 dele, com a causa medida no motivo. As causas são pós-hoc, e nenhuma é o ajuste errando:
 evento de quantidade dentro da média (grupamento de 15:1 = +1378% no bruto — **erro meu no
 desenho do critério**), bonificação ausente do silver (A-11), evento sem fator no mesmo dia.

@@ -401,6 +401,7 @@ _REPROVOU = {
 @pytest.mark.parametrize("ano", [
     pytest.param(a, marks=pytest.mark.xfail(strict=True, reason=_REPROVOU[a]))
     if a in _REPROVOU else a for a in JANELA])
+@pytest.mark.slow
 def test_REAL_O_DEGRAU_ENCOLHE_em_CADA_ano(jan, ano):
     """O criterio do C-02 para 2023, pre-registrado aqui para os outros quatro ANTES de
     medi-los. O controle esta no teste seguinte, e um nao vale sem o outro.
@@ -419,6 +420,7 @@ def test_REAL_O_DEGRAU_ENCOLHE_em_CADA_ano(jan, ano):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_CONTROLE_em_cada_ano_o_dia_sem_evento_nao_mudou(jan):
     pa = A.controle_por_ano(jan.acervo, jan.ajustadas, jan.fat)
     assert set(pa) == set(JANELA)
@@ -428,6 +430,7 @@ def test_REAL_CONTROLE_em_cada_ano_o_dia_sem_evento_nao_mudou(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_2023_dentro_da_janela_e_o_2023_de_18_09(jan):
     """O instantaneo dourado da MEDICAO: os 293 degraus de 2023 medidos sozinhos em 18/09
     tem de reaparecer na janela, os mesmos, com o mesmo retorno. O retorno ajustado de um
@@ -454,6 +457,7 @@ def test_REAL_2023_dentro_da_janela_e_o_2023_de_18_09(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_A08_a_borda_de_2023_FECHOU_na_emenda(jan):
     """Os 8 eventos de 28/12/2023 que o 2023 isolado deixava `NIVEL_INCERTO` (B3SA3,
     CMIN3, ENGI3, ENGI4, ENGI11, ITUB3, ITUB4) agora tem data ex -- 02/01/2024 -- e
@@ -463,6 +467,7 @@ def test_REAL_A08_a_borda_de_2023_FECHOU_na_emenda(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_a_rederivacao_nao_contradisse_o_silver_em_2023(jan):
     """Onde o silver ja tinha derivado (2023), a janela derivou o mesmo -- senao `medir`
     teria levantado `DataExDivergente`. Este teste diz que ele de fato RODOU sobre elas."""
@@ -480,6 +485,7 @@ def _grandes(gs):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_C01_os_eventos_de_QUANTIDADE_encolhem(jan):
     """A ponta que o C-02 deixou aberta: a leitura PERCENTUAL do `factor`, com mais de um
     caso de preco. Pre-registrado: >= 40 casos, >= 80% deles encolhendo, e a media do
@@ -494,6 +500,7 @@ def test_REAL_C01_os_eventos_de_QUANTIDADE_encolhem(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_C01_todo_evento_GRANDE_fica_dentro_de_15pc(jan):
     grandes = _grandes(jan.degraus)
     assert len(grandes) >= 10
@@ -503,6 +510,7 @@ def test_REAL_C01_todo_evento_GRANDE_fica_dentro_de_15pc(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_C01_o_GRUPAMENTO_tem_confirmacao_de_preco(jan):
     """Item 4 do "o que continua aberto" do C-02: os 41 grupamentos eram todos fora de
     2023. O preco do grupamento SOBE no dia ex; ajustado, tem de ficar no ruido."""
@@ -514,6 +522,7 @@ def test_REAL_C01_o_GRUPAMENTO_tem_confirmacao_de_preco(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_C01_MUTACAO_a_leitura_TROCADA_reprova_os_grandes(jan):
     """A alternativa que o C-01 descartou pela distribuicao, agora contra o preco: `factor`
     como MULTIPLICADOR no desdobramento/bonificacao (100 -> 100x), e a regra do
@@ -540,6 +549,7 @@ def test_REAL_C01_MUTACAO_a_leitura_TROCADA_reprova_os_grandes(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_MUTACAO_fator_invertido_nos_PROVENTOS_piora(jan):
     """A mutacao do C-02, restrita a provento em dinheiro: com evento de quantidade a
     media ficaria dominada pelos grupamentos invertidos, que explodem para cima."""
@@ -551,6 +561,7 @@ def test_REAL_MUTACAO_fator_invertido_nos_PROVENTOS_piora(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST_na_janela(jan):
     """Em 2023, 352 de 352. Pre-registrado para a janela: nenhum diferente."""
     bate = difere = 0
@@ -612,6 +623,7 @@ def test_POSHOC_o_COTAHIST_declara_bonificacao_que_o_silver_nao_tem(res):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_o_ESPECI_e_testemunha_da_data_ex_em_cada_ano(jan):
     for ano in JANELA:
         gs = [g for g in jan.degraus if g.data_ex.year == ano]

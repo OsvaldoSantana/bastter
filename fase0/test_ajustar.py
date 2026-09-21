@@ -514,6 +514,7 @@ def real():
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_O_DEGRAU_ENCOLHE_e_e_isto_que_confirma_o_C01(real):
     """A MEDICAO QUE DECIDE, contra o mercado, em 293 datas ex de 2023.
 
@@ -534,6 +535,7 @@ def test_REAL_O_DEGRAU_ENCOLHE_e_e_isto_que_confirma_o_C01(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_CONTROLE_o_dia_sem_evento_nao_mudou(real):
     """Sem este, o teste acima nao prova nada. 86 mil pares de pregoes, e a unica
     diferenca permitida e o arredondamento do Decimal na ultima casa."""
@@ -544,6 +546,7 @@ def test_REAL_CONTROLE_o_dia_sem_evento_nao_mudou(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_o_caso_FLRY_o_unico_evento_de_QUANTIDADE_de_2023(real):
     """O caso que deu origem ao C-01, agora medido pelas duas pontas.
 
@@ -561,6 +564,7 @@ def test_REAL_o_caso_FLRY_o_unico_evento_de_QUANTIDADE_de_2023(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST(real):
     """DUAS FONTES INDEPENDENTES, e este e o teste que prova que o casamento de ticker
     esta certo. `closingPricePriorExDate` vem do endpoint de proventos; o fechamento vem
@@ -587,6 +591,7 @@ def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_o_ESPECI_do_COTAHIST_e_testemunha_da_data_ex(real):
     """O achado lateral, e ele nao custou nada: o COTAHIST escreve a marca de ex na
     ESPECIFICACAO do papel -- `ON  ED  NM`, `PN  EJ  N1`. Isso e uma TERCEIRA fonte para
@@ -620,6 +625,7 @@ def test_REAL_o_ESPECI_do_COTAHIST_e_testemunha_da_data_ex(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_a_data_ex_DESLOCADA_reprova_em_293_casos(real):
     """A PROVA POR MUTACAO da medicao que decide, e ela fecha uma pergunta que em 16/09
     tinha UM caso (o FLRY).
@@ -665,6 +671,7 @@ def test_REAL_a_data_ex_DESLOCADA_reprova_em_293_casos(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_o_fator_INVERTIDO_dobra_o_degrau(real):
     """A segunda mutacao: trocar o fator por 1/fator -- o erro de SENTIDO, que e o mais
     facil de cometer, porque o numero continua plausivel e perto de 1.
@@ -682,6 +689,7 @@ def test_REAL_o_fator_INVERTIDO_dobra_o_degrau(real):
 
 
 @acervo
+@pytest.mark.slow
 def test_REAL_a_populacao_medida_e_a_que_o_relatorio_diz(real):
     """Guarda de numero publicado: os numeros deste dia estao escritos em
     `auditoria/C02-O-DEGRAU-MEDIDO.md` e no CLAUDE.md. Se o acervo mudar, isto reprova --

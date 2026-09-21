@@ -1,5 +1,9 @@
 # Segunda, 21/09/2026 — o roteiro
 
+> **ROTEIRO VENCIDO.** Os Passos 1 a 3 foram feitos em 21/09; o Passo 3 é o commit `b54787b`.
+> O que sobrou não mora mais aqui: a fila é o `PLANO.md`, as pendências são o `PENDENCIAS.md`.
+> Este arquivo fica como registro do dia, não como instrução.
+
 *Escrito em 19/09 com o seu PC desligado e **reescrito em 21/09 depois da auditoria do que
 você rodou ao ligar o PC.** Este arquivo é a lista completa: seguindo de cima para baixo,
 nada fica para trás.*
@@ -102,7 +106,7 @@ P-98 reprova se um ZIP escapar, mas olhar custa dez segundos.
 
 ---
 
-## Passo 3 · O PRÓXIMO PASSO do projeto  ▸ trabalho de verdade
+## Passo 3 · ~~O PRÓXIMO PASSO do projeto~~ **FEITO em 21/09 — commit `b54787b`** (ver `auditoria/C02-JANELA-2021-2025.md`)
 
 ### `ajustar.py` sobre 2021–2025 contíguos
 

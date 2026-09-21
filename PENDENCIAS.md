@@ -2315,6 +2315,23 @@ o que paga. O critério corrigido — dias **limpos**, **descontado o mercado** 
 queda/provento **por tipo** — foi desenhado **depois** de ver 2021–2025, então só vale como
 pré-registro para dado que ainda não foi medido.
 
+**E só vale se for commitado e empurrado ANTES de rodar sobre 2016–2020.** Commit local não
+basta: o que torna o "antes" verificável (P4) é o histórico **público** datado — o verificador
+externo do laudo `auditoria/PREREGISTRO-EVIDENCIA.md`. Sem o push anterior à corrida, o
+critério corrigido repete o defeito da P-116.
+
+## P-116 · O critério da janela entrou no mesmo commit que os resultados
+
+**Dono:** Claude Code · **Gatilho:** toda medição nova contra o acervo · **Classe:**
+`DECISAO_DE_DESENHO`
+
+Os critérios do `fase0/test_ajustar_janela.py` foram escritos antes da primeira corrida, mas
+entraram no **mesmo commit** que os números (`b54787b`). Um leitor externo não tem como
+distinguir critério de resultado: **"pré-registrado" não é verificável pela P4.** No laudo e no
+`ACHADOS.md` o rótulo passou a ser *"declarado pré-registrado, sem impressão digital"*. O
+processo que evita a repetição: critério em um commit, **empurrado**, e só então a corrida
+— o hash do commit do critério é a impressão digital.
+
 ---
 
 ## Fechadas
