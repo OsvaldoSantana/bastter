@@ -2338,3 +2338,59 @@ status não mudam (23 `AJUSTADO`, 78 `INCOMPLETO`, 1 `NIVEL_INCERTO`), o degrau 
 de 1.584 para 1.586 casos, e o ajustado de −0,1885% (t = −2,49) para −0,1864% (t = −2,46).
 **O veredito do C-02 não muda; o número muda na terceira casa.** O CSV de 21/09 foi
 preservado ao lado do novo, porque ele é o artefato por trás de um laudo publicado.
+
+## A-13 · O mesmo provento chega pelas duas esteiras, e dar preço a ele o aplicaria duas vezes
+
+**23/09/2026.** Achado ao executar a decisão da P-113 — usar o fechamento do COTAHIST onde a
+B3 não traz `closingPricePriorExDate`. A previsão pré-registrada (`auditoria/P113-CRITERIOS.md`,
+commit `9a08a55`) era de **172** eventos ganhando fator. Ganharam **11**.
+
+**Os outros 161 não eram fatores faltando: eram o mesmo pagamento chegando pela segunda
+porta.** As duas esteiras da B3 se sobrepõem na janela recente — `GetListedSupplementCompany`
+devolve os últimos meses, o paginado devolve o histórico longo —, então o dividendo de
+setembro de 2025 está nas duas, com mesmo ticker, mesmo dia, mesmo rótulo e mesmo valor até a
+última casa.
+
+`_chave_de_evento` não as colapsa, e **isso é deliberado**: `origem` e `arquivo_origem` entram
+nela pelo A-09, porque *"dois registros iguais em páginas diferentes são sobreposição de
+paginação, e aí o julgamento seria outro"*.
+
+> **Até 23/09 isso era inofensivo por acidente.** A cópia do suplemento vinha sem preço, logo
+> sem fator, logo não era aplicada. **É o P-83 na letra:** *insumo ausente adormecido num campo
+> morto continua sendo insumo ausente — o campo morto não é o defeito, é o anestésico.* Lá eram
+> zeros dormindo num campo que ninguém lia; aqui é uma duplicata dormindo atrás de um
+> `SEM_PRECO`, e a própria correção é que a acordaria.
+
+**A prova é o resíduo, pelo mesmo instrumento que provou o A-09** — 2025 é o ano onde a
+sobreposição mora:
+
+| | n | ajustado | **t** |
+|---|---|---|---|
+| colapsando (o que entrou) | 388 | **+0,0330%** | **+0,39** |
+| sem colapsar | 388 | +0,7377% | **+6,31** |
+
+**A armadilha vale mais que o achado: o agregado melhorava enquanto o ano quebrava.** A média
+dos cinco anos sem colapsar é −0,0192% (t −0,24); colapsando, −0,1909% (t −2,53). O número que
+parece melhor é o da versão errada — o +0,74% de 2025 cancelava o resíduo negativo dos outros
+quatro. O laudo do C-02 já dizia por que a tabela é por ano; aqui o agregado esconderia um ano
+**quebrado** atrás de quatro certos.
+
+**E o critério que eu havia pré-registrado não teria pego.** R3 exigia `|ajustado| < |bruto|`
+no agregado e nos cinco anos, e a versão errada passa nos seis: **encolhimento não detecta
+super-ajuste** — um fator aplicado duas vezes ainda encolhe um degrau de −5%, só que passa do
+outro lado do zero.
+
+> **Quem pegou foi a coluna de procedência que a decisão dele mandou criar.** `B3+COTAHIST=131`
+> num relatório é uma pergunta — *por que um degrau precisaria de preço das duas fontes?* — e
+> sem ela os 161 teriam entrado calados. **Procedência não é documentação do número: é
+> instrumento de medida.**
+
+**A regra:** identidade de *pagamento* (`_provento`) não é identidade de *registro*
+(`_chave_de_evento`). A segunda inclui a porta de entrada, de propósito; a primeira não pode,
+porque a pergunta que ela responde é *este pagamento já está contado?* — e a resposta não pode
+depender de por qual porta ele entrou. Valor comparado como número, nunca como texto:
+`0.10216531400` e `0.102165314` vieram assim das duas esteiras.
+
+**Guarda:** `fase0/test_p113_preco_de_vespera.py`, 17 testes. O que nomeia o achado reintroduz
+a duplicata por mutação e exige **as duas** consequências: 2025 quebra (t +0,39 → +6,31) **e** o
+agregado melhora. Um teste que só verificasse o número certo não documentaria a armadilha.

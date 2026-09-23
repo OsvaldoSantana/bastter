@@ -2303,17 +2303,64 @@ e contar papéis-dia com marca B/G e sem evento — mede o tamanho da lacuna **a
 procurar fonte para ela. Sem isso, qualquer série antes de 2024 carrega degrau não removido
 e o `ajuste_status` diz `AJUSTADO`.
 
-## P-113 · 160 proventos sem preço de véspera deixam 78 séries `INCOMPLETO`
+## ~~P-113~~ · O preço de véspera do COTAHIST — **FECHADA em 23/09/2026**
 
-**Dono:** Osvaldo decide, Claude Code executa · **Gatilho:** antes do passo 5 do PLANO (bloco
-C sobre dado real) · **Classe:** `DECISAO_DE_DESENHO`
+**Decisão dele:** o fechamento do COTAHIST substitui `closingPricePriorExDate` quando a B3
+não o traz, com uma **coluna nova de origem** (`B3` / `COTAHIST` / `B3+COTAHIST`) e **a B3
+ganhando quando existe**. Sem segundo leitor de COTAHIST (N-01).
 
-Na janela, 185 eventos derivados ficam sem fator, **160 `SEM_PRECO`** — provento do suplemento
-sem `closingPricePriorExDate`. O COTAHIST tem o fechamento da véspera, e as duas fontes
-concordaram em **todos** os casos da janela em que ambas existem (≥ 1.000, zero diferentes).
-A decisão é se o COTAHIST pode **substituir** o campo da B3 quando ele falta — trocar a fonte
-de um insumo é P1, não conveniência. Conferir junto: `diagnostico()` conta `SEM_FATOR`
-(subscrição, que por desenho não ajusta preço) como insumo ausente.
+**Feita pela P-116, e é a primeira do projeto:** os critérios foram escritos, commitados e
+**empurrados** antes da corrida — `auditoria/P113-CRITERIOS.md`, commit **`9a08a55`**. O hash
+é a impressão digital; sem ele, *"pré-registrado"* não é verificável pela P4.
+
+**E o pré-registro pagou na primeira vez que foi usado: quatro dos sete critérios
+reprovaram.**
+
+| | previsto | medido |
+|---|---|---|
+| eventos que ganham fator | 172 | **11** |
+| séries `INCOMPLETO` | 18 | **74** |
+| degraus contaminados | 8 | **138** |
+
+**Os 161 que faltam são o achado A-13:** não eram fatores faltando, eram **o mesmo pagamento
+chegando pela segunda porta**. As duas esteiras da B3 se sobrepõem na janela recente, e
+`_chave_de_evento` não as colapsa porque `origem` entra nela de propósito (A-09). A cópia do
+suplemento era inofensiva **por acidente** — vinha sem preço, logo sem fator. Dar preço a ela
+subtrairia o provento **duas vezes**.
+
+Provado pelo resíduo de 2025, onde a sobreposição mora: **t +0,39 colapsando, +6,31 sem
+colapsar**. E a armadilha: **o agregado dos cinco anos melhorava enquanto o ano quebrava** —
+o critério R3 que eu havia pré-registrado teria aprovado a versão errada. Quem pegou foi a
+coluna de procedência que a decisão dele mandou criar.
+
+**Resultado final:** 11 fatores novos, 162 proventos repetidos não aplicados, `AJUSTADO`
+23 → **27**, `INCOMPLETO` 78 → **74**, degraus 1.586 → **1.593**. **2023 não se moveu — nem
+um degrau**, e o instantâneo dourado do C-02 continua de pé (a minha previsão R6 dizia que
+mudaria; errei na direção conservadora).
+
+Laudo em `auditoria/P113-MEDIDO.md`. Guarda: `fase0/test_p113_preco_de_vespera.py`, 17 testes.
+
+**O que NÃO foi mudado, e continua dele:** `diagnostico()` conta `SEM_FATOR` (subscrição, que
+por desenho não ajusta preço) como insumo ausente. Conferido e é verdade; hoje vale 1 série.
+Reclassificar status publicado é decisão dele.
+
+## P-119 · A página de investimento estrangeiro da B3 não está no acervo
+
+**Dono:** Claude Code (captura) · **Gatilho:** antes de a regra do não residente entrar em
+qualquer conta · **Classe:** `DECISAO_DE_DESENHO`
+
+O laudo do C-02 afirma que o investidor não residente tem regime próprio, com exceção do país
+de tributação abaixo de 20%, que paga 15%. **A afirmação veio do enunciado dele, não de fonte
+primária lida** — a página não está em `docs/fontes/` e eu não a capturei nesta sessão.
+
+Está marcada `NAO_CONFIRMADO` no laudo e no `P113-MEDIDO.md`, em vez de ficar implícita, que
+é o que a **§5-B.13** manda: *"não dá para fazer X" só se escreve depois de tentar X e falhar,
+com o erro transcrito*. **Eu não tentei** — o que falta é uma captura, não um caminho.
+
+Quando for capturada, o limiar dos 20% se confere **contra a norma que o define**, não contra
+a página que a resume — é a §5-B.5: *fonte primária ganha depois de se verificar qual
+dispositivo a cláusula alcança*. A isenção dos R$ 20 mil já está fechada
+(`docs/fontes/lei-11033-2004-planalto.md`, art. 3º, I).
 
 ## ~~P-114~~ · A raiz padrão apontava para uma pasta sem o acervo — **FECHADA em 23/09/2026**
 
@@ -2454,6 +2501,8 @@ rodada.
 |---|---|---|
 | **P-114** | a raiz padrão do `refinar.py` e do `ajustar.py` era `data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos moram em `cotahist/` e o padrão enxergava **um** — o avulso de 04/09. O relatório dizia `acervo COTAHIST_A2023` e ninguém perguntava | 23/09 — **decisão dele**: a raiz vira `data/bronze/b3/cotahist`. No `refinar.py` isso exigiu **separar dois parâmetros** (`--raiz` de eventos, `--cotahist` do calendário), porque um servia aos dois acervos. Calendário de 248 → **10.059 pregões**; `data_ex` derivada de 383 → **9.271**. Instantâneo dourado fecha nos três níveis: 2023 em 248 pregões `e4a9d81d…`, silver com **0 colunas alteradas** e **0 data ex perdidas**, e os dois CSVs de 2023 byte a byte idênticos. 8 testes, 4 reprovam contra a versão anterior |
 | **P-97** | o `COTAHIST_A2023.ZIP` de 04/09 estava no acervo **sem origem**, e o manifesto contava `1 de 42` | 23/09 — **decisão dele**: é duplicata, sai do acervo. Medido **antes** de mover: ZIP e TXT extraído são byte a byte idênticos aos de `cotahist/`, que **têm** origem declarada. Movido para `data/quarentena/` com `LEIA.md`, não apagado. Manifesto: **`P-06: os 41 arquivos tem origem declarada`**. Guarda na suíte, porque manifesto é comando que alguém roda (P7) |
+| **P-113** | 173 proventos sem `closingPricePriorExDate` deixavam 78 séries `INCOMPLETO`; a decisão era se o COTAHIST pode substituir a fonte | 23/09 — **decisão dele**: pode, com coluna de origem e a B3 ganhando. **Primeiro pré-registro do projeto com impressão digital** (critérios empurrados em `9a08a55` antes da corrida, P-116) — e **quatro dos sete critérios reprovaram**. 11 fatores novos em vez de 172; `INCOMPLETO` 78 → 74; degraus 1.586 → 1.593; 2023 inalterado. `auditoria/P113-MEDIDO.md`, 17 testes |
+| **A-13** | os 161 restantes não eram fator faltando: eram **o mesmo pagamento chegando pelas duas esteiras** da B3, que `_chave_de_evento` não colapsa porque `origem` entra nela de propósito (A-09). A cópia do suplemento era inerte só por não ter preço — dar preço a ela subtrairia o provento **duas vezes** | 23/09 — `_provento()` identifica o **pagamento**, sem a porta de entrada. Provado pelo resíduo de 2025: **t +0,39 colapsando, +6,31 sem**. E a armadilha registrada: **o agregado melhorava enquanto o ano quebrava**, então o critério R3 pré-registrado teria aprovado a versão errada. Quem pegou foi a coluna de procedência |
 | **A-12** | `_chave_de_evento` montava a identidade do evento com `data_ex`, que é **derivado** e estava vazio em 8.889 das 9.272 linhas — e **128 eventos reais** colapsavam como "duplicata exata" | 23/09 — chave passa a usar `ultimo_dia_com_direito`, o campo **observado**, preenchido em 9.272 de 9.272. Contagem: 334 → **206**, e 206 **nos dois silvers** — deixa de depender do calendário. Achado só apareceu porque a P-114 moveu o número; com o calendário largo a chave antiga também daria 206 e o defeito **se auto-encobriria**. 8 testes |
 | PLANO passo 3 | a série ajustada cobria só 2023, com duas bordas, e o C-01 tinha **um** caso de preço | 21/09 — `ajustar.py --anos 2021-2025` + `fase0/test_ajustar_janela.py`. Controle fecha nos cinco anos (632.384 pares, pior 1e-27); **C-01 com 54 eventos de quantidade**, 49 encolhem, os dois primeiros grupamentos com preço (MGLU3 +896% → −0,38%; HAPV3 +1378% → −1,46%); as duas bordas de 2023 fecharam. O critério por ano **reprovou em 4 de 5** e fica em `xfail` estrito (P-115). Achados A-10 e A-11. Ver `auditoria/C02-JANELA-2021-2025.md` |
 | C-01, a corroboração de preço | a regra do `factor` tinha sido fechada pela **distribuição**, com UM caso de preço, e a data ex derivada também tinha UM. A série de preços ajustada não existia | 18/09 — `fase0/ajustar.py` + `fase0/test_ajustar.py` (32 testes, 8 contra o acervo). **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360% (t = −0,29) em 293 datas-ex**, com controle em 86.736 pares de pregões sem evento (pior divergência 1e-27, arredondamento de `Decimal`). Duas mutações presas na suíte: data ex deslocada deixa o degrau **inteiro** e cria um **falso** na véspera (+1,91%, t = +11,20); fator invertido **dobra** o degrau (−3,16%). Ver `auditoria/C02-O-DEGRAU-MEDIDO.md` |

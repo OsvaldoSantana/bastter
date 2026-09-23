@@ -271,11 +271,11 @@ def test_controle_por_ano_soma_o_controle(tmp_path):
 def test_por_ano_separa_os_degraus_pela_data_ex():
     d = lambda a, m, dd: dt.date(a, m, dd)                                  # noqa: E731
     gs = [A.Degrau("X3", d(2021, 5, 3), d(2021, 4, 30), "DIVIDENDO", 1, Decimal("0.99"),
-                   Decimal(10), Decimal("9.9"), -0.01, 0.0, "", ""),
+                   Decimal(10), Decimal("9.9"), -0.01, 0.0, "", "", "B3"),
           A.Degrau("X3", d(2022, 5, 3), d(2022, 5, 2), "DIVIDENDO", 1, Decimal("0.98"),
-                   Decimal(10), Decimal("9.8"), -0.02, 0.0, "", ""),
+                   Decimal(10), Decimal("9.8"), -0.02, 0.0, "", "", "B3"),
           A.Degrau("Y3", d(2022, 6, 1), d(2022, 5, 31), "DESDOBRAMENTO", 1, Decimal("0.5"),
-                   Decimal(10), Decimal(5), -0.5, 0.0, "", "")]
+                   Decimal(10), Decimal(5), -0.5, 0.0, "", "", "")]
     pa = A.degraus_por_ano(gs)
     assert pa[2021]["n"] == 1 and pa[2022]["n"] == 2
     assert pa[2022]["quantidade"] == 1 and pa[2021]["quantidade"] == 0
@@ -331,7 +331,7 @@ def test_mercado_do_dia_e_MEDIANA_e_ignora_o_papel_com_evento(tmp_path):
 def test_classe_do_degrau_separa_o_que_mede_o_AJUSTE_do_que_mede_o_ACERVO():
     d = dt.date(2022, 5, 2)
     g = lambda tipos, esp: A.Degrau("CMIG3", d, d, tipos, 1, Decimal("0.98"),      # noqa: E731
-                                    Decimal(1), Decimal(1), 0.0, 0.0, "", esp)
+                                    Decimal(1), Decimal(1), 0.0, 0.0, "", esp, "B3")
     assert A.classe_do_degrau(g("BONIFICACAO", "ON  EB  N1"), set()) == "QUANTIDADE"
     assert A.classe_do_degrau(g("DIVIDENDO", "ON  EDB N1"), set()) == "MARCA_SEM_EVENTO"
     assert A.classe_do_degrau(g("DIVIDENDO", "ON  ED  N1"), {("CMIG3", d)}) == "CONTAMINADO"
@@ -571,6 +571,14 @@ def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST_na_janela(jan):
             continue
         if not r["preco_vespera"]:
             continue
+        # P-113: desde 23/09 o preco de vespera PODE ter vindo do proprio COTAHIST, e
+        # comparar o COTAHIST com ele mesmo daria igualdade sempre. Este teste existe
+        # para medir DUAS fontes; incluir as linhas substituidas o tornaria parcialmente
+        # tautologico -- 161 dos 1.870 pares viraria auto-comparacao, e o numero
+        # continuaria subindo, que e o pior dos casos: uma guarda que afrouxa sozinha
+        # e cuja saida melhora. E o E-01: medir a bandeira nao e medir quem a honra.
+        if r.get("_origem_preco") != A.ORIGEM_B3:
+            continue
         tk, dex = r["_ticker"], dt.date.fromisoformat(r["data_ex"])
         antes = [d for d in jan.acervo.precos[tk] if d < dex]
         if not antes:
@@ -592,6 +600,7 @@ def res(jan):
 
 
 @acervo
+@pytest.mark.slow
 def test_POSHOC_o_JCP_fecha_descontado_o_mercado(res):
     """Medido: +0,07%, t +1,29, n=819. O JCP e o provento em que o ajuste acerta."""
     ex = [e for g, c, e, _y in res if c == "LIMPO" and A._so(g.tipos, "JRS CAP PROPRIO")]
@@ -600,6 +609,7 @@ def test_POSHOC_o_JCP_fecha_descontado_o_mercado(res):
 
 
 @acervo
+@pytest.mark.slow
 def test_POSHOC_o_DIVIDENDO_tira_do_preco_mais_do_que_paga(res):
     """Medido: queda/provento = 1,164 (IC 95% por bootstrap [1,09; 1,24], n=400); no JCP,
     0,951 ([0,86; 1,04]). O NUMERO e medido; o MECANISMO -- dividendo isento contra ganho
@@ -613,6 +623,7 @@ def test_POSHOC_o_DIVIDENDO_tira_do_preco_mais_do_que_paga(res):
 
 
 @acervo
+@pytest.mark.slow
 def test_POSHOC_o_COTAHIST_declara_bonificacao_que_o_silver_nao_tem(res):
     """A lacuna de eventos de quantidade antigos, vista de dentro do arquivo de preco: o
     ESPECI marca `EDB`/`EJB` e o silver so traz o provento. Medido: 11 dias na janela,

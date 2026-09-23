@@ -90,7 +90,8 @@ from decimal import Decimal, InvalidOperation
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import calendario                                                       # noqa: E402
-from refinar import DERIVADA, FORA_DA_COBERTURA, SEM_CALENDARIO         # noqa: E402
+from refinar import (CALCULADO, DERIVADA, FORA_DA_COBERTURA,           # noqa: E402
+                     SEM_CALENDARIO, SEM_PRECO, fator_de_provento)
 
 # P-114: a pasta que TEM os 41 anos, e nao a pasta que os contem uma abaixo.
 # `calendario.arquivos()` nao e recursivo de proposito -- descer sozinho na arvore
@@ -128,10 +129,10 @@ Papel = collections.namedtuple("Papel", "ticker especi isin arquivo")
 Acervo = collections.namedtuple("Acervo", "precos especi papeis fatcot_fora arquivos")
 Medicao = collections.namedtuple(
     "Medicao", "acervo evs dup casados sem_ticker fat ajustadas diag posteriores degraus "
-               "cobertura rederivadas concordantes")
+               "cobertura rederivadas concordantes do_cotahist repetidos")
 Degrau = collections.namedtuple(
     "Degrau", "ticker data_ex data_vespera tipos n_eventos fator preco_vespera preco_ex "
-              "retorno_bruto retorno_ajustado especi_vespera especi_ex")
+              "retorno_bruto retorno_ajustado especi_vespera especi_ex origem_preco")
 
 
 # ─────────────────────────────────────────────────────────── leitura do COTAHIST
@@ -367,6 +368,136 @@ def _data(texto):
     return dt.date.fromisoformat(texto) if texto else None
 
 
+# ── P-113: o preco de vespera, e DE ONDE ele veio ─────────────────────────────
+# Decisao dele, 23/09/2026. Criterios em auditoria/P113-CRITERIOS.md, commitados e
+# EMPURRADOS antes desta corrida (P-116) -- o hash do commit e a impressao digital.
+
+ORIGEM_B3 = "B3"                # closingPricePriorExDate, do endpoint paginado
+ORIGEM_COTAHIST = "COTAHIST"    # fechamento da vespera, do acervo de precos
+ORIGEM_NENHUMA = ""             # evento de quantidade, ou vespera fora da janela
+
+
+def preco_de_vespera(r, serie):
+    """(preco, origem) da vespera de um evento ja casado com ticker.
+
+    A B3 GANHA QUANDO EXISTE, e a regra e *substituir ausencia*, nunca *preferir a nossa
+    fonte*. Trocar a fonte de um insumo e P1 -- o que torna esta substituicao defensavel
+    nao e conveniencia, e uma concordancia MEDIDA: `closingPricePriorExDate` bate com o
+    fechamento do COTAHIST em **352 de 352** ao centavo em 2023, e em mais de mil casos
+    da janela 2021-2025 sem uma divergencia. O teste R1 refaz essa medicao a cada
+    corrida, porque concordancia medida uma vez e concordancia daquela vez.
+
+    A vespera e o pregao anterior DESTA serie -- a mesma definicao que `degraus()` usa
+    para medir o degrau. Usar o `ultimo_dia_com_direito` daria quase sempre o mesmo dia
+    e erraria quando o papel nao negociou nele, que e exatamente o caso em que o degrau
+    se desloca (C-01/calendario).
+
+    NAO ha leitor de COTAHIST novo aqui: `serie` ja e `acervo.precos[ticker]`, lida uma
+    vez por `cotacoes()`. Um segundo leitor seria o N-01, e este modulo ja nasceu como o
+    segundo do projeto -- e foi por isso que `arquivos()` e `registros()` foram extraidos
+    para o `calendario.py` em 18/09."""
+    b3 = r.get("preco_vespera")
+    if b3:
+        try:
+            return Decimal(b3), ORIGEM_B3
+        except InvalidOperation:
+            pass
+    d = _data(r["data_ex"])
+    if d is None or not serie:
+        return None, ORIGEM_NENHUMA
+    antes = [x for x in serie if x < d]
+    if not antes:
+        return None, ORIGEM_NENHUMA
+    p = serie[max(antes)]
+    return (p, ORIGEM_COTAHIST) if p > 0 else (None, ORIGEM_NENHUMA)
+
+
+def _provento(r):
+    """A identidade de um provento ATRAVES das esteiras: ticker, dia, rotulo e valor.
+
+    NAO tem `origem` nem `arquivo_origem`, e e exatamente nisso que ela difere da
+    `_chave_de_evento`. La o arquivo entra de proposito (A-09: duas paginas com o mesmo
+    registro seriam sobreposicao de paginacao, e o julgamento seria outro); aqui a
+    pergunta e outra -- *este pagamento ja esta contado?* -- e a resposta nao pode
+    depender de por qual porta ele entrou."""
+    try:
+        v = format(Decimal(r["valor"]), "f").rstrip("0").rstrip(".")
+    except (InvalidOperation, TypeError, KeyError):
+        v = r.get("valor") or ""
+    return (r["_ticker"], r["data_ex"], r["tipo"], v)
+
+
+def completar_preco_de_vespera(casados, precos):
+    """Preenche o fator dos eventos que so faltava preco. Devolve (linhas, quantos).
+
+    A-13 -- O MESMO PROVENTO CHEGA PELAS DUAS ESTEIRAS, E DAR PRECO A ELE O APLICA DUAS
+    VEZES. As duas esteiras se sobrepoem na janela recente: `GetListedSupplementCompany`
+    devolve os ultimos meses, e o paginado devolve o historico longo, entao o dividendo de
+    setembro de 2025 esta nas duas. `_chave_de_evento` NAO os colapsa, porque `origem`
+    entra nela de proposito (A-09).
+
+    Ate aqui isso era inofensivo **por acidente**: a copia do suplemento vinha sem preco,
+    logo sem fator, logo nao era aplicada. Dar preco a ela acorda uma duplicata que estava
+    dormindo -- e o preco cairia DUAS vezes o valor do provento.
+
+    **E o P-83 na letra:** *insumo ausente adormecido num campo morto continua sendo
+    insumo ausente; o campo morto nao e o defeito, e o anestesico.* La eram zeros dormindo
+    num campo que ninguem lia, e a decisao 1 e que os acordaria. Aqui e uma duplicata
+    dormindo atras de um `SEM_PRECO`, e esta mudanca e que a acordaria.
+
+    Medido em 23/09/2026 na janela 2021-2025: dos 172 eventos que ganhariam preco, **161
+    sao o mesmo pagamento que o paginado ja traz** -- mesmo ticker, mesmo dia, mesmo
+    rotulo, mesmo valor ate a ultima casa. Sobram 11 novos de verdade.
+
+    O QUE ELE RECUSA FAZER, e as recusas sao o modulo:
+      - nao toca em evento que ja tem fator: a B3 ganha quando existe (R2);
+      - nao toca em `SEM_FATOR` (subscricao) nem em `TIPO_DESCONHECIDO`: ali nao falta
+        preco, falta REGRA. Preencher preco onde falta regra produziria numero para uma
+        pergunta que ninguem respondeu -- o F-02 na forma mais cara;
+      - nao inventa vespera: sem pregao anterior na janela, a linha continua `SEM_PRECO`.
+
+    O `fator_status` continua sendo `CALCULADO`, e NAO ganha um valor novo. A procedencia
+    mora em UM lugar so -- a coluna de origem --, porque um status `CALCULADO_COTAHIST` ao
+    lado de uma coluna que ja diz `COTAHIST` seriam duas leituras do mesmo fato, e duas
+    leituras do mesmo fato concordam por acidente ate o dia em que nao concordam (N-01)."""
+    # Quem JA carrega fator reserva o pagamento: o paginado tem o preco da propria B3, e
+    # a B3 ganha quando existe (R2). A reserva e feita ANTES do laco, senao a ordem das
+    # linhas decidiria qual copia sobrevive -- e ordem de arquivo nao e criterio.
+    contados = {_provento(r) for r in casados
+                if r["fator_status"] == CALCULADO and r["data_ex_status"] == DERIVADA}
+
+    fora, n, repetidos = [], 0, 0
+    for r in casados:
+        if r["fator_status"] != SEM_PRECO or r["data_ex_status"] != DERIVADA:
+            ja = r["fator_status"] == CALCULADO and r.get("preco_vespera")
+            fora.append(dict(r, _origem_preco=ORIGEM_B3 if ja else ORIGEM_NENHUMA))
+            continue
+        chave = _provento(r)
+        if chave in contados:
+            # A-13: ja contado pela outra esteira. A linha FICA na tabela, com o
+            # `SEM_PRECO` intacto -- ela nao e lixo, e a segunda testemunha do mesmo
+            # pagamento. O que ela nao ganha e fator.
+            repetidos += 1
+            fora.append(dict(r, _origem_preco=ORIGEM_NENHUMA, _repetido_na_outra_esteira=True))
+            continue
+        p, origem = preco_de_vespera(r, precos.get(r["_ticker"]))
+        valor = r.get("valor")
+        if p is None or not valor:
+            fora.append(dict(r, _origem_preco=ORIGEM_NENHUMA))
+            continue
+        f, st = fator_de_provento(Decimal(valor), p)
+        if st != CALCULADO:
+            # preco zero ou negativo no acervo: o status do refinar.py diz qual foi, e a
+            # linha NAO vira CALCULADO. Ausencia de insumo nao vira numero (F-02).
+            fora.append(dict(r, fator_status=st, _origem_preco=ORIGEM_NENHUMA))
+            continue
+        contados.add(chave)      # duas copias no PROPRIO suplemento tambem contam uma vez
+        n += 1
+        fora.append(dict(r, fator=format(f, "f"), fator_status=CALCULADO,
+                         preco_vespera=format(p, "f"), _origem_preco=origem))
+    return fora, n, repetidos
+
+
 def fatores(casados):
     """{(ticker, data_ex): (fator, [tipos])}. Eventos no MESMO dia MULTIPLICAM.
 
@@ -375,7 +506,7 @@ def fatores(casados):
     deixaria metade do degrau de pe -- e a metade que sobra parece ruido."""
     fora = {}
     for r in casados:
-        if r["fator_status"] != "CALCULADO" or r["data_ex_status"] != "DERIVADA":
+        if r["fator_status"] != CALCULADO or r["data_ex_status"] != DERIVADA:
             continue
         d = _data(r["data_ex"])
         if d is None:
@@ -449,7 +580,7 @@ def diagnostico(acervo, casados, fat):
         for r in por_ticker.get(tk, []):
             d = _data(r["data_ex"])
             if d is not None and r["data_ex_status"] == "DERIVADA":
-                if d > primeiro and r["fator_status"] != "CALCULADO":
+                if d > primeiro and r["fator_status"] != CALCULADO:
                     sem_fator += 1
                 continue
             ucd = _data(r["ultimo_dia_com_direito"])
@@ -474,7 +605,28 @@ def diagnostico(acervo, casados, fat):
 
 # ──────────────────────────────────────────── a medicao que decide (C-02)
 
-def degraus(acervo, ajustadas, fat):
+def origem_por_data_ex(casados):
+    """{(ticker, data_ex): "B3" | "COTAHIST" | "B3+COTAHIST" | ""} -- P-113.
+
+    O grao e o do degrau, nao o do evento, porque um degrau pode juntar mais de um
+    evento no mesmo dia (dividendo + JCP acontece o tempo todo). Quando as parcelas vem
+    de fontes diferentes, a coluna diz **as duas**: escolher uma esconderia que o numero
+    e misto, e a pergunta que esta coluna existe para responder e *de onde veio o preco
+    que produziu este fator*."""
+    por = collections.defaultdict(set)
+    for r in casados:
+        if r["fator_status"] != CALCULADO or r["data_ex_status"] != DERIVADA:
+            continue
+        d = _data(r["data_ex"])
+        if d is None:
+            continue
+        o = r.get("_origem_preco") or ORIGEM_NENHUMA
+        if o:
+            por[(r["_ticker"], d)].add(o)
+    return {k: "+".join(sorted(v)) for k, v in por.items()}
+
+
+def degraus(acervo, ajustadas, fat, casados=()):
     """Um `Degrau` por data ex com pregao no dia E no dia anterior.
 
     `retorno_bruto` e o retorno do dia ex na serie publicada; `retorno_ajustado` e o
@@ -487,6 +639,7 @@ def degraus(acervo, ajustadas, fat):
     calendario possa ser conferida contra o que a B3 escreveu no mesmo arquivo de preco.
     Medido no acervo: 284 das 293 mudam exatamente no dia ex, contra 1,59% dos pares sem
     evento. As 9 restantes sao datas ex consecutivas, em que a vespera JA estava marcada."""
+    origens = origem_por_data_ex(casados)
     fora = []
     for (tk, dex), (f, tipos) in sorted(fat.items()):
         serie = acervo.precos.get(tk)
@@ -504,7 +657,8 @@ def degraus(acervo, ajustadas, fat):
         fora.append(Degrau(
             tk, dex, vesp, "+".join(sorted(tipos)), len(tipos), f, p0, p1,
             float(p1 / p0 - 1), float(a1 / a0 - 1),
-            acervo.especi[tk].get(vesp, ""), acervo.especi[tk].get(dex, "")))
+            acervo.especi[tk].get(vesp, ""), acervo.especi[tk].get(dex, ""),
+            origens.get((tk, dex), ORIGEM_NENHUMA)))
     return fora
 
 
@@ -599,6 +753,7 @@ COLUNAS_PRECO = ("ticker", "isin", "especi", "data", "fechamento", "fator_do_dia
                  "arquivo_origem", "dt_captura")
 
 COLUNAS_DEGRAU = ("ticker", "data_ex", "data_vespera", "tipos", "n_eventos", "fator",
+                  "origem_preco_vespera",
                   "fechamento_vespera", "fechamento_data_ex", "retorno_bruto",
                   "retorno_ajustado", "especi_vespera", "especi_data_ex",
                   "especi_mudou", "dt_captura")
@@ -647,6 +802,7 @@ def gravar_degraus(lista, caminho, captura):
                 "ticker": g.ticker, "data_ex": _texto(g.data_ex),
                 "data_vespera": _texto(g.data_vespera), "tipos": g.tipos,
                 "n_eventos": g.n_eventos, "fator": _texto(g.fator),
+                "origem_preco_vespera": g.origem_preco,
                 "fechamento_vespera": _texto(g.preco_vespera),
                 "fechamento_data_ex": _texto(g.preco_ex),
                 "retorno_bruto": _texto(g.retorno_bruto),
@@ -680,12 +836,16 @@ def medir(raiz, silver, anos=None):
     concordantes = sum(1 for a, b in zip(evs, redev)
                        if a["data_ex_status"] == DERIVADA and b["data_ex"] == a["data_ex"])
     casados, sem_ticker = casar(redev, acervo.papeis, acervo.precos)
+    # P-113: o preco de vespera do COTAHIST entra ANTES de `fatores()`, porque e ali que
+    # a linha vira fator. Depois seria tarde; antes de `casar()` seria impossivel, porque
+    # sem ticker nao ha serie de precos onde procurar.
+    casados, do_cotahist, repetidos = completar_preco_de_vespera(casados, acervo.precos)
     fat = fatores(casados)
     ajustadas = ajustar_tudo(acervo, fat)
     diag, posteriores = diagnostico(acervo, casados, fat)
     return Medicao(acervo, evs, dup, casados, sem_ticker, fat, ajustadas, diag,
-                   posteriores, degraus(acervo, ajustadas, fat), cobertura, rederivadas,
-                   concordantes)
+                   posteriores, degraus(acervo, ajustadas, fat, casados), cobertura,
+                   rederivadas, concordantes, do_cotahist, repetidos)
 
 
 def _sufixo(anos):
@@ -739,6 +899,19 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO, anos=None):
     print("  data ex pelo calendario da janela (%s a %s): %d ganharam data ex aqui, %d "
           "concordam com o silver" % (m.cobertura[0], m.cobertura[1], m.rederivadas,
                                       m.concordantes))
+    # P-113: a substituicao de fonte e DITA, nunca silenciosa. Trocar a procedencia de um
+    # insumo sem anunciar seria o oposto da P1, mesmo que o numero saia certo.
+    por_origem = collections.Counter(g.origem_preco for g in gs)
+    print("  preco de vespera: %d fator(es) vieram do COTAHIST porque a B3 nao trouxe"
+          "\n  `closingPricePriorExDate`; a B3 ganha quando existe (P-113). Degraus por"
+          "\n  origem do preco: %s"
+          % (m.do_cotahist,
+             ", ".join("%s=%d" % (o or "(sem preco)", n)
+                       for o, n in sorted(por_origem.items()))))
+    print("  %d provento(s) do suplemento NAO ganharam fator porque a OUTRA esteira ja"
+          "\n  traz o mesmo pagamento (A-13). Dar preco aos dois subtrairia o provento"
+          "\n  duas vezes -- a duplicata estava dormindo atras do SEM_PRECO."
+          % m.repetidos)
     print("  %d evento(s) com data ex POSTERIOR a janela nao entraram -- e propriedade,"
           "\n  nao defeito: o ajuste retroativo reescala o passado a partir do FIM da"
           "\n  serie, entao cada ano novo de COTAHIST reescala a serie inteira."
@@ -861,7 +1034,7 @@ def residuo_de_mercado(m):
     """[(degrau, classe, excesso, rendimento)] para todo degrau cujo dia tem mercado.
     `rendimento` e 1 - fator: a fracao do preco que o evento declarou tirar."""
     sem_fator = {(r["_ticker"], _data(r["data_ex"])) for r in m.casados
-                 if r["data_ex_status"] == DERIVADA and r["fator_status"] != "CALCULADO"}
+                 if r["data_ex_status"] == DERIVADA and r["fator_status"] != CALCULADO}
     merc = mercado_do_dia(m.acervo, m.fat, {r["_ticker"] for r in m.casados})
     return [(g, classe_do_degrau(g, sem_fator), g.retorno_ajustado - merc[g.data_ex],
              float(1 - g.fator)) for g in m.degraus if g.data_ex in merc]
