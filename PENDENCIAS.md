@@ -1965,10 +1965,34 @@ na pasta — **contagem que decai**, não suposição.
 
 ---
 
-## P-100 · O `COTAHIST_A2026.ZIP` não é um ZIP completo
+## ~~P-100~~ · O `COTAHIST_A2026.ZIP` não era um ZIP completo — **FECHADA em 23/09/2026**
 
 **Dono:** Osvaldo (rebaixar) · **Gatilho:** quando o ano corrente for necessário ·
 **Classe:** `DECISAO_DE_DESENHO` · ⚙ **exige o desktop**
+
+> **23/09 — FECHADA, medido na sessão local sobre o arquivo rebaixado.** Ele rebaixou em
+> **21/09 às 11:59** e o arquivo veio íntegro. Duas medições independentes, a dele e a desta
+> sessão, **concordam em todos os campos**:
+>
+> | | medido |
+> |---|---|
+> | bytes | **85.779.964** |
+> | sha256 | `fb3546ed27cc8a138e93c141adce3e8dc684df219ebffa4d49bff5d557b3e5e3` |
+> | ZIP | membro `COTAHIST_A2026.TXT`, 709.321.015 bytes, flag `0x808` (ainda streaming), `testzip` limpo |
+> | header | `00COTAHIST.2026BOVESPA 20260918` |
+> | trailer | `99COTAHIST.2026BOVESPA 20260918` + `TOTREG` **2.871.743** |
+> | registros tipo `01` | **2.871.743** — bate com o `TOTREG`; o trailer **não** conta header e trailer (2.871.745 linhas) |
+> | pregões | **179**, de **02/01 a 18/09/2026** |
+>
+> `origem.csv` com `acesso` 2026-09-21 e o rebaixamento escrito; manifesto regravado
+> (`dt_captura=2026-09-23.csv`, o anterior preservado como `.bb47854ef9d2.csv` — só a linha
+> de 2026 difere).
+>
+> **Retratação:** a P-100 **nunca devia ter bloqueado nada.** Um download cortado se conserta
+> baixando de novo; eu o tratei como limitação e cortei o período da família ML em dez/2025.
+> O arquivo bom estava no disco 44 h antes do commit que declarou o contrário. Citação,
+> evidência e causa raiz no `CLAUDE.md` (bloco da P-100 na rodada de 18/09) — e a régua que
+> sai daí é a **§5-B.16**.
 
 > **21/09 — agora bloqueia a família ML.** O teste do `preregistro-ml-v1.md` vai de
 > jan/2020 até o fim do COTAHIST; sem 2026 íntegro, ou o período termina em dez/2025 escrito
@@ -2499,6 +2523,7 @@ rodada.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-100** | o `COTAHIST_A2026.ZIP` de 18/09 chegou truncado (38.328.935 bytes, sem diretório central), e eu **declarei 2026 indisponível** em vez de pedir outro download — o período da família ML foi cortado em dez/2025 por isso | 23/09 — rebaixado por ele em 21/09 11:59, **íntegro**: 85.779.964 bytes, `fb3546ed27cc…`, trailer `TOTREG` 2.871.743 = registros `01` contados, **179 pregões de 02/01 a 18/09/2026**. Duas medições independentes concordam. `origem.csv` e manifesto atualizados. **Retratação** no `CLAUDE.md`: o arquivo foi descartado em vez de consertado — nasce a §5-B.16 |
 | **P-114** | a raiz padrão do `refinar.py` e do `ajustar.py` era `data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos moram em `cotahist/` e o padrão enxergava **um** — o avulso de 04/09. O relatório dizia `acervo COTAHIST_A2023` e ninguém perguntava | 23/09 — **decisão dele**: a raiz vira `data/bronze/b3/cotahist`. No `refinar.py` isso exigiu **separar dois parâmetros** (`--raiz` de eventos, `--cotahist` do calendário), porque um servia aos dois acervos. Calendário de 248 → **10.059 pregões**; `data_ex` derivada de 383 → **9.271**. Instantâneo dourado fecha nos três níveis: 2023 em 248 pregões `e4a9d81d…`, silver com **0 colunas alteradas** e **0 data ex perdidas**, e os dois CSVs de 2023 byte a byte idênticos. 8 testes, 4 reprovam contra a versão anterior |
 | **P-97** | o `COTAHIST_A2023.ZIP` de 04/09 estava no acervo **sem origem**, e o manifesto contava `1 de 42` | 23/09 — **decisão dele**: é duplicata, sai do acervo. Medido **antes** de mover: ZIP e TXT extraído são byte a byte idênticos aos de `cotahist/`, que **têm** origem declarada. Movido para `data/quarentena/` com `LEIA.md`, não apagado. Manifesto: **`P-06: os 41 arquivos tem origem declarada`**. Guarda na suíte, porque manifesto é comando que alguém roda (P7) |
 | **P-113** | 173 proventos sem `closingPricePriorExDate` deixavam 78 séries `INCOMPLETO`; a decisão era se o COTAHIST pode substituir a fonte | 23/09 — **decisão dele**: pode, com coluna de origem e a B3 ganhando. **Primeiro pré-registro do projeto com impressão digital** (critérios empurrados em `9a08a55` antes da corrida, P-116) — e **quatro dos sete critérios reprovaram**. 11 fatores novos em vez de 172; `INCOMPLETO` 78 → 74; degraus 1.586 → 1.593; 2023 inalterado. `auditoria/P113-MEDIDO.md`, 17 testes |

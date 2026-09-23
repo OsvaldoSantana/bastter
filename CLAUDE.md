@@ -1802,12 +1802,37 @@ tem data-ex, não existe no silver.
   correção certa **não é uma lista de nomes** (seria a P-82 pela terceira vez): é ler o
   membro único do ZIP e validar pelo **conteúdo** — cabeçalho `00COTAHIST.<ANO>` e registro
   de 245 posições. *Nome é a propriedade que varia; layout é a que identifica.*
-- **P-100: o `COTAHIST_A2026.ZIP` é ZIP em streaming, cortado.** Cabeçalho `PK\x03\x04`,
+- **P-100: o `COTAHIST_A2026.ZIP` ~~é~~ *era*, na cópia de 18/09, ZIP em streaming cortado.**
+  Cabeçalho `PK\x03\x04`,
   membro declarado, **flag 0x0808** — bit 3 ligado, tamanhos num descritor no fim. É a forma
   de quem gera o arquivo na hora. Consequência para a rotina automática: **não dá para
   validar pelo tamanho esperado, porque não existe tamanho esperado.** O coletor tem de
   abrir o ZIP e ler o membro até o fim **antes** de aceitar — conferir depois de gravar é
   conferir tarde.
+
+  > **RETRATAÇÃO — 23/09/2026. A P-100 fechou, e o que se retrata não é a medição de 18/09:
+  > é o que eu fiz com ela.** O que foi escrito, citado: *"2026 truncado (P-100); NEFIN até
+  > 07/2026"* como motivo de cortar o período do `preregistro-ml-v1.md` em **dez/2025**, e
+  > *"P-100 passa a bloquear a família ML"* (`AUDITORIA-PREREGISTRO-ML-V1.md`).
+  >
+  > **A evidência, medida em 23/09 sobre o arquivo rebaixado:** 85.779.964 bytes, sha256
+  > `fb3546ed27cc8a13…`, `testzip` limpo; header e trailer `00/99COTAHIST.2026BOVESPA
+  > 20260918`; o `TOTREG` do trailer (**2.871.743**) bate com os registros tipo `01` contados
+  > — o trailer conta **só os `01`**, sem header e trailer (2.871.745 linhas); **179 pregões,
+  > de 02/01 a 18/09/2026.** O arquivo íntegro está no disco desde **21/09 às 11:59** — 44 h
+  > **antes** do commit que declarou 2026 indisponível (`45405a6`, 23/09 08:29), e o manifesto
+  > das 09:40 do mesmo dia já gravava o hash novo sem ninguém ligar uma coisa à outra.
+  >
+  > **A causa raiz: o arquivo foi descartado em vez de consertado.** Um download cortado é
+  > defeito de transporte, e o conserto era baixar de novo — um comando. Eu o tratei como fato
+  > do mundo e cortei o período da pesquisa em volta do buraco. Declarar uma falha técnica como
+  > limitação **encerra a investigação e fica com cara de rigor**: é a §5-B.13 do avesso — lá
+  > eu declarei impossível o que não tentei; aqui declarei ausente o que ninguém tentou de novo.
+  >
+  > **O que foi corrigido no processo:** a régua ganhou a **§5-B.16**, e `limitacoes_declaradas`
+  > ganhou o portão `tipo: FISICA | NAO_CONSERTADA` — a segunda obriga `o_que_resolveria` e
+  > `pendencia`, e um teste reprova entrada sem os campos. Limitação técnica passou a ter de
+  > dizer, por escrito, o comando que a desfaz.
 
 ### P-102 — e este é o pior da rodada, porque é uma guarda matando o trabalho que ela protege
 

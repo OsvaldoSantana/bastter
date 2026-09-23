@@ -39,4 +39,4 @@ cotahist/COTAHIST_A2022.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COT
 cotahist/COTAHIST_A2023.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A2023.ZIP -- GET direto (Invoke-WebRequest, script PowerShell dele);2026-09-18
 cotahist/COTAHIST_A2024.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A2024.ZIP -- GET direto (Invoke-WebRequest, script PowerShell dele);2026-09-18
 cotahist/COTAHIST_A2025.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A2025.ZIP -- GET direto (Invoke-WebRequest, script PowerShell dele);2026-09-18
-cotahist/COTAHIST_A2026.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A2026.ZIP -- GET direto (Invoke-WebRequest, script PowerShell dele);2026-09-18
+cotahist/COTAHIST_A2026.ZIP;https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A2026.ZIP -- GET direto (Invoke-WebRequest, script PowerShell dele) -- REBAIXADO em 21/09 11:59 porque o de 18/09 veio truncado (P-100);2026-09-21
