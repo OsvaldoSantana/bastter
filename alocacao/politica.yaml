@@ -13,10 +13,24 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.22.0
+  versao: 1.23.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.23.0: >-
+      23/09/2026. Regua 5-B.16 -- ausencia de dado por problema tecnico e pendencia de
+      conserto, nunca limitacao declarada. Nasceu de uma retratacao: o
+      COTAHIST_A2026.ZIP chegou cortado em 18/09 e eu cortei o periodo da familia ML em
+      dez/2025 em vez de pedir outro download; o arquivo integro estava no disco desde
+      21/09 (P-100, fechada hoje). `limitacoes_declaradas` ganha o portao `tipo: FISICA
+      | NAO_CONSERTADA`, e a NAO_CONSERTADA exige `o_que_resolveria` e `pendencia`
+      aberta. Classificacao: FISICA -- NEFIN ate 03/07/2026 e composicao historica do
+      indice (V-01); NAO_CONSERTADA -- as duas capturas (P-57), MODREF em 8 de 41
+      (P-101), dependencias do ML (P-122), nao residente (P-119), e as seis de
+      modelagem que ja existiam (P-12, P-25, P-27, P-35, P-123, P-124). Cinco entradas
+      NOVAS, que viviam em outros arquivos -- a P-48 pedia a do indice desde 06/09. E o
+      portao achou duas que descreviam defeito ja consertado (P-07 e P-13, ambos de
+      05/09): marcadas RESOLVIDA, nao apagadas. P-118 fechada na mesma passada.
     1.22.0: >-
       18/09/2026, algumas horas depois da 1.21.0, e e uma RETRATACAO. Eu declarei em
       `captura_do_cotahist_passa_por_captcha` que *"nao existe automacao deste
@@ -1883,9 +1897,25 @@ sleeves:
 
 # ══ LIMITACOES DECLARADAS ════════════════════════════════════════════════════
 # O que o motor SABE que nao modela. Um limite escrito nao vira surpresa depois.
-# Esta secao e DOCUMENTAL: nao e lida por codigo, e lida por voce.
+# Esta secao e DOCUMENTAL: nao e lida pelo motor, e lida por voce.
+#
+# REGUA 5-B.16 (23/09/2026): ausencia de dado por problema tecnico e pendencia de
+# conserto, NUNCA limitacao declarada. Toda entrada operante carrega `tipo`:
+#   FISICA          o mundo nao fornece (publicacao que nao existe, passado que nao
+#                   se observa mais). Declarar e o fim da linha.
+#   NAO_CONSERTADA  daria para consertar e ninguem consertou. Exige `o_que_resolveria`
+#                   (o comando ou a decisao que a desfaz) e `pendencia` (P-NN ABERTA
+#                   em PENDENCIAS.md). E uma divida com endereco, nao um fato.
+# Entrada com RETIRADA ou RESOLVIDA fica como historico e nao passa pelo portao.
+# Guarda: alocacao/test_limitacoes_tipo.py.
 limitacoes_declaradas:
   ir_na_venda_de_renda_variavel:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: >
+      Aplicar 15% sobre o ganho na venda e a isencao de R$20 mil/mes que so a acao tem,
+      no dia em que o motor ganhar rebalanceamento ou fase de retirada -- e a venda que
+      cria o imposto, e hoje o motor nao vende.
+    pendencia: P-123
     o_que_falta: >
       O motor nao aplica IR de 15% sobre o ganho na venda de nenhuma rota de renda
       variavel, nem a isencao de R$20 mil/mes do art. 59, I da IN RFB 1.585/2015.
@@ -1901,6 +1931,11 @@ limitacoes_declaradas:
     fonte: "IN RFB 1.585/2015, arts. 57 e 59 — docs/fontes/in-rfb-1585-2015-normaslegais.md"
 
   periodicidade_da_custodia_do_tesouro:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: >
+      Descontar a custodia por netting pro rata, semestral e no resgate, como a OC
+      014/2024-VPC descreve. Ou decidir, por escrito, que a aproximacao mensal fica.
+    pendencia: P-124
     o_que_falta: >
       Desde 31/12/2024 a B3 cobra a custodia do Tesouro Direto por netting pro rata
       (OC 014/2024-VPC), com cobranca semestral e no resgate. O motor desconta
@@ -1913,6 +1948,9 @@ limitacoes_declaradas:
     fonte: "OC 014/2024-VPC — docs/fontes/b3-tarifas-tesouro-direto-oc014-2024.md"
 
   datado_cobra_liquidez_onde_deveria_cobrar_vencimento:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: "a regra 'vence ate a data do objetivo OU liquida em 30 dias', com o casamento de vencimento junto"
+    pendencia: P-12
     o_que_falta: >
       A funcao DATADO exige `exige_liquidez_dias: 30`. Isso trata um problema de
       DURACAO com um criterio de LIQUIDEZ, e as duas coisas nao sao a mesma.
@@ -1939,14 +1977,24 @@ limitacoes_declaradas:
       confirmada — e nesse dia ele apareceria como "a rota nao recebeu peso", sem dizer
       que a causa foi um criterio mal escolhido.
 
-  isento_ir_e_booleano_e_o_fii_nao_e: >
-    RotaAloc.isento_ir e um booleano. O FII nao cabe nele: o RENDIMENTO distribuido e
-    isento (com >=100 cotistas, Lei 11.033 art. 3o) e o GANHO de capital e tributado a
-    20% sem a isencao mensal de R$20 mil. True subestima o imposto, False superestima.
-    Hoje a rota esta bloqueada e o campo nao e lido; quando desbloquear, o campo precisa
-    virar dois — `isento_ir_rendimento` e `aliquota_ganho`. Pendencia P-13.
+  isento_ir_e_booleano_e_o_fii_nao_e:
+    RESOLVIDA: >-
+      23/09/2026, ao classificar as entradas pela regua 5-B.16: esta limitacao ja nao
+      existia. A P-13 partiu o campo em dois em 05/09 (`isento_ir_rendimento` e
+      `aliquota_ganho`, alocacao.py:RotaAloc) e a P-77 fez o motor ler `aliquota_ganho`
+      em 16/09. A entrada ficou dezoito dias descrevendo um defeito consertado -- e
+      a mesma forma da P-118, declaracao que o proprio repositorio ja contradiz.
+    o_que_dizia: >
+      RotaAloc.isento_ir e um booleano. O FII nao cabe nele: o RENDIMENTO distribuido e
+      isento (com >=100 cotistas, Lei 11.033 art. 3o) e o GANHO de capital e tributado a
+      20% sem a isencao mensal de R$20 mil. True subestima o imposto, False superestima.
+      Hoje a rota esta bloqueada e o campo nao e lido; quando desbloquear, o campo precisa
+      virar dois — `isento_ir_rendimento` e `aliquota_ganho`. Pendencia P-13.
 
   reserva_e_divida_tratadas_como_independentes:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: "o G2 recusar como reserva qualquer valor que sirva de garantia a divida do usuario"
+    pendencia: P-25
     o_que_falta: 'G1 (divida) e G2 (reserva) rodam em sequencia como se os dois lados fossem
       independentes. Quando a reserva e COLATERAL da divida, nao sao: o mesmo dinheiro aparece
       como seguranca no G2 e como limite de gasto no cartao.
@@ -1973,6 +2021,9 @@ limitacoes_declaradas:
       a situacao atual. Mantida no arquivo porque o defeito do motor existe (G1 e G2 tratam
       os dois lados como independentes), nao porque ele o sofra hoje.'
   escalabilidade_multiusuario_parcial:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: "decidir a granularidade e separar as quatro secoes mistas entre motor e perfil"
+    pendencia: P-27
     o_que_falta: >
       A fronteira motor/usuario existe para `compromissos` e `decisoes` (achado L-01,
       perfil.yaml), mas QUATRO secoes continuam misturadas: `corretora` (metodologia do
@@ -1998,6 +2049,9 @@ limitacoes_declaradas:
       ele apagaria as decisoes do primeiro ao editar o politica.yaml.
 
   reserva_e_um_numero_e_o_mundo_tem_baldes:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: "`reserva_por_rota` deixar de ser opcional quando houver reserva"
+    pendencia: P-35
     o_que_falta: >
       `Estado.reserva_atual` e um escalar. Com teto de saldo por produto, saber QUANTO
       ha de reserva deixou de bastar: para responder "a proxima parcela cabe?" e
@@ -2021,6 +2075,11 @@ limitacoes_declaradas:
       o motor pode indicar um destino que na verdade ja esta cheio. O vies aponta para
       RECOMENDAR DEMAIS a rota melhor, que e a direcao perigosa.
   ordem_dos_portoes_nao_e_dado:
+    RESOLVIDA: >-
+      23/09/2026, ao classificar as entradas pela regua 5-B.16: consertada em 05/09 pela
+      P-07 (achado I-01). `portoes.*.ordem` e dado e o motor itera por ela
+      (alocacao.py, `portao sem ordem` e erro duro). O CLAUDE.md, P2, registra o
+      fechamento desde 05/09; esta entrada nao foi atualizada junto.
     o_que_falta: >
       A ordem de execucao dos portoes G0..G8 esta no codigo (funcao alocar), nao no
       YAML. Cada portao tem `ativo` como dado, mas a SEQUENCIA nao.
@@ -2032,6 +2091,11 @@ limitacoes_declaradas:
     divida_tecnica: "declarar `ordem` em cada portao e o motor iterar por ela"
 
   captura_da_cvm_e_manual_e_o_dado_e_perecivel:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: >
+      O executor: GitHub Actions com cron e registro da ultima corrida (CLAUDE.md 11.6).
+      O caminho existe; falta quem o percorra sem ele lembrar.
+    pendencia: P-57
     acervos: ["cvm"]
     o_que_falta: >
       Nao existe rotina automatica capturando DFP/ITR. O portal responde
@@ -2075,7 +2139,8 @@ limitacoes_declaradas:
       `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A<ANO>.ZIP`. GET
       simples: sem CAPTCHA, sem autenticacao, sem cookie de sessao, sem token. 40 dos
       41 chegaram integros -- o COTAHIST_A2023.ZIP veio com 70.216.090 bytes, o MESMO
-      tamanho do que ja estava no acervo desde 04/09.
+      tamanho do que ja estava no acervo desde 04/09. (O 41o, 2026, veio cortado e foi
+      REBAIXADO integro em 21/09 -- P-100, fechada em 23/09. Os 41 estao no acervo.)
     a_causa_raiz_do_erro_de_metodo: >-
       E a regua §5-B pela setima vez, e desta vez com um agravante novo. O que eu medi
       foi "existe um CAPTCHA no FORMULARIO de series anuais". O que eu conclui foi "nao
@@ -2100,6 +2165,12 @@ limitacoes_declaradas:
       com o erro transcrito. Sem isso, escreve-se "nao sei se da" e mede-se.
 
   captura_do_cotahist_ainda_nao_e_rotina:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: >
+      O mesmo executor da CVM: GitHub Actions com cron, o ZIP conferido ate o fim ANTES
+      de aceito (P-100 mostrou que o ano corrente chega em streaming e pode vir cortado),
+      e registro da ultima corrida.
+    pendencia: P-57
     acervos: ["b3"]
     o_que_falta: >
       O EXECUTOR, nao o caminho. O acervo anual da B3 esta em
@@ -2110,8 +2181,10 @@ limitacoes_declaradas:
     direcao_do_vies: >
       So o ano corrente envelhece, e envelhece calado -- serie de preco velha nao parece
       velha, parece serie (forma do F-02). Ano fechado nao muda: MEDIDO em 18/09, o
-      COTAHIST_A2023.ZIP rebaixado veio com 70.216.090 bytes, identico em tamanho ao
-      capturado em 04/09. Confirmar por sha256 fecha a P-96.
+      COTAHIST_A2023.ZIP rebaixado veio com o MESMO sha256 do capturado em 04/09
+      (ad1603788d78aaa1...), e a medicao foi repetida em 23/09 -- P-96 fechada em 18/09.
+      (P-118: esta linha dizia "confirmar por sha256 fecha a P-96" cinco dias depois de
+      a P-96 fechar.)
     o_que_o_caminho_aberto_NAO_dispensa: >
       O manifesto. O arquivo vir por GET nao prova de onde veio nem quando: sha256 mais
       `dt_captura` mais `origem.csv` continuam sendo a diferenca entre um retrato e um
@@ -2123,3 +2196,83 @@ limitacoes_declaradas:
     fonte: >
       MEDIDO em 18/09/2026 pelo proprio download. Transcricao, a retratacao e os dois
       defeitos abertos do acervo em docs/fontes/b3-series-historicas-cotahist.md
+
+  # ── 23/09/2026 -- as que existiam fora desta secao (regua 5-B.16) ─────────────
+  # Cinco limitacoes estavam declaradas em outros arquivos -- CLAUDE.md, o
+  # cotahist-v02.yaml, o preregistro-ml-v2.md, a P-48 -- e nenhuma aqui. A P-48 pedia
+  # esta entrada desde 06/09. Uma limitacao que so existe no documento em que nasceu
+  # nao passa pelo portao do `tipo`, e o portao e o motivo de elas virem para ca.
+
+  enumeracao_do_modref_em_8_de_41_arquivos:
+    tipo: NAO_CONSERTADA
+    o_que_falta: >
+      A enumeracao OBSERVADO do MODREF (CR$, CZ$, NCZ$, R$) saiu de 8 dos 41 arquivos
+      do COTAHIST (1986 1989 1990 1993 1994 1995 2001 2023). Os outros 33 nao foram
+      abertos para isso.
+    direcao_do_vies: >
+      Para o lado barulhento, nao o calado: valor fora da lista falha ruidosamente (A-05),
+      entao o custo de uma lista curta e uma parada, nunca um numero errado.
+    o_que_resolveria: >
+      Contar o MODREF nos 41 arquivos. Estao todos no disco desde 18/09, em
+      data/bronze/b3/cotahist, e o leitor le todos desde a P-99. Nao falta dado, falta rodar.
+    pendencia: P-101
+    fonte: "docs/schemas/cotahist-v02.yaml -> enumeracoes.MODREF (incompleta_por_construcao)"
+
+  dependencias_da_familia_aprendizado_nao_medidas:
+    tipo: NAO_CONSERTADA
+    o_que_falta: >
+      `lightgbm` e `tabpfn` estao NAO_CONFIRMADO: ninguem mediu se cabem na faixa
+      fechada (Python 3.11, numpy==2.4.4, pandas==3.0.2). A consulta ao PyPI da sessao de
+      nuvem foi recusada por robots.txt e nao foi contornada.
+    direcao_do_vies: >
+      Nenhum sobre numero hoje -- nenhuma variavel da ML-3 existe. Se o TabPFN nao couber,
+      H-ML3 fica com peso zero e continua contada no `m`: o orcamento nao encolhe.
+    o_que_resolveria: >
+      `py -3.11 -m pip install --dry-run lightgbm tabpfn` com os pinos do pyproject, na
+      maquina dele. E um comando; a recusa da nuvem nao se aplica a sessao local.
+    pendencia: P-122
+    fonte: "docs/aprendizado/preregistro-ml-v2.md, secao 11"
+
+  nefin_termina_em_2026_07_03:
+    tipo: FISICA
+    o_que_falta: >
+      A serie de fatores do NEFIN em alocacao/dados/nefin_factors.csv termina em
+      03/07/2026. Alfa contra fatores so ate jun/2026.
+    direcao_do_vies: >
+      Nenhum sobre o sinal; encurta a janela do alfa em relacao a do preco.
+    por_que_fisica: >
+      A publicacao e do NEFIN, com defasagem propria. E FISICA enquanto o NEFIN nao
+      publicar alem de 03/07/2026 -- se publicar e ninguem baixar, deixa de ser e vira
+      NAO_CONSERTADA, com a pendencia do download.
+    fonte: "alocacao/dados/nefin_factors.csv (sha256 em fatores.hash_fonte()); preregistro-ml-v2.md, secao 14"
+
+  composicao_historica_do_indice:
+    tipo: FISICA
+    o_que_falta: >
+      A carteira teorica do Ibovespa so e publicada para o DIA CORRENTE. O historico de
+      composicao nao e publicado por ninguem de graca. O primeiro retrato do projeto e de
+      06/09/2026 (V-01).
+    direcao_do_vies: >
+      OTIMISTA. Backtest que use a carteira de hoje compra empresas que so entraram no
+      indice depois de darem certo (sobrevivencia). Backtest anterior ao primeiro retrato
+      e reconstrucao, nao observacao.
+    quando_deixa_de_importar: >
+      Quando houver ao menos um ciclo de rebalanceamento capturado (~2027) -- e so daqui
+      para frente. O passado nao se conserta coletando.
+    fonte: "CLAUDE.md 7, V-01; PENDENCIAS.md P-48; docs/fontes/pesquisa-bases-e-apis-2026-09.md"
+
+  regra_do_nao_residente_sem_fonte_primaria:
+    tipo: NAO_CONSERTADA
+    o_que_falta: >
+      O laudo do C-02 afirma que o investidor nao residente tem regime proprio, com
+      excecao do pais de tributacao abaixo de 20%, que paga 15%. A afirmacao veio do
+      enunciado dele, nao de fonte
+      lida: a pagina de investimento estrangeiro da B3 nao esta em docs/fontes/.
+    direcao_do_vies: >
+      Nenhum hoje -- a regra nao entra em conta nenhuma. Esta NAO_CONFIRMADO no laudo e
+      no P113-MEDIDO.md.
+    o_que_resolveria: >
+      Capturar a pagina e conferir o limiar contra a NORMA que o define, nao contra a
+      pagina que a resume (5-B.5). E uma captura; ninguem tentou.
+    pendencia: P-119
+    fonte: "auditoria/C02-JANELA-2021-2025.md; auditoria/P113-MEDIDO.md"

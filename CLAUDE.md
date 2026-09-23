@@ -111,9 +111,15 @@ série primária do NEFIN.
 ### P5 — Limitações declaradas
 
 `politica.yaml → limitacoes_declaradas` lista o que o motor **sabe que não
-modela**, com a *direção do viés* e a condição em que deixa de importar. Três
+modela**, com a *direção do viés* e a condição em que deixa de importar. ~~Três
 hoje: IR na venda de renda variável, periodicidade da custódia do Tesouro, e a
-ordem dos portões.
+ordem dos portões.~~ *(Corrigido em 23/09: eram onze, e a ordem dos portões estava
+consertada desde 05/09.)*
+
+**Desde 23/09 toda entrada diz de quem é o limite** (§5-B.16): `tipo: FISICA` — o mundo
+não fornece — ou `tipo: NAO_CONSERTADA` — daria para consertar —, e a segunda só entra com
+`o_que_resolveria` e `pendencia` aberta. Uma falha técnica escrita como limitação encerra a
+investigação; foi assim que 2026 ficou fora de um pré-registro com o arquivo bom no disco.
 
 Um limite escrito não vira surpresa depois. Se você descobrir algo que o motor
 não modela e não puder modelar agora, o lugar dele é aqui — não num comentário.
@@ -474,7 +480,7 @@ resultado possível, pior que não fazer.
 
 ---
 
-## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm (15 linhas desde 21/09)
+## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm (16 linhas desde 23/09)
 
 *Escrita em 13/09/2026, a pedido dele: **régua de método, não lista de incidentes.***
 
@@ -655,6 +661,36 @@ era "não tentei"**.
 > `origin/main` e rode as **três** suítes inteiras. Número de testes medido em árvore
 > parcial se escreve com o nome da árvore ao lado — *"95 passed na árvore de entrega"* —,
 > nunca como estado do projeto.
+
+### 16. Ausência de dado por problema técnico é pendência de conserto, nunca limitação declarada
+
+Acrescentada em **23/09/2026**, e é retratação. O `COTAHIST_A2026.ZIP` chegou cortado em 18/09
+— defeito de transporte, consertável com um download. Eu escrevi *"2026 truncado"* como motivo
+de cortar o período da família ML em dez/2025, e a P-100 passou a **bloquear** a família. O
+arquivo íntegro estava no disco desde 21/09 às 11:59, 44 h antes do commit que declarou o
+contrário, e o manifesto da manhã de 23/09 já gravava o hash novo. Citação, evidência e causa
+raiz no bloco da P-100 (rodada de 18/09, terceira).
+
+**A forma é a da §5-B.13, virada do avesso.** Lá eu declarei impossível o que não tinha
+tentado; aqui declarei ausente o que ninguém tentou de novo. Nos dois casos a frase foi para
+`limitacoes_declaradas`, **a seção em que o leitor confia por construção** — e nos dois ela
+encerrou a investigação com cara de rigor.
+
+> **A regra:** antes de escrever uma limitação, pergunte **de quem é o limite**. Se é do mundo —
+> a publicação não existe, o passado não se observa mais — é `FISICA`, e declarar é o fim da
+> linha. Se daria para consertar e ninguém consertou, é `NAO_CONSERTADA`, e ela só entra com o
+> **comando ou a decisão que a desfaz** (`o_que_resolveria`) e o **endereço da dívida**
+> (`pendencia`, aberta).
+
+**O portão:** `alocacao/test_limitacoes_tipo.py` reprova entrada sem `tipo`, `NAO_CONSERTADA`
+sem os dois campos, e pendência **fechada** com a limitação de pé (a P-118 virada guarda).
+Contra o `politica.yaml` de antes, **as 10 entradas operantes reprovaram, todas**. E ao
+classificá-las ele achou duas que descreviam defeito consertado desde 05/09 (P-07, P-13) — e
+cinco limitações reais que viviam **fora** da seção, uma delas pedida pela P-48 desde 06/09.
+
+**O que o portão não mede:** se a classificação está certa. Chamar de `FISICA` o que é conserto
+passa. O `nefin_termina_em_2026_07_03` é `FISICA` **enquanto** o NEFIN não publicar adiante — a
+condição está escrita na entrada, e é ela que alguém tem de conferir.
 
 ### A regra de uma linha, para quando não der tempo de ler as cinco
 

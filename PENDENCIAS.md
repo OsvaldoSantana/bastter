@@ -2517,6 +2517,39 @@ defeito que o projeto persegue: **declaração que o próprio repositório já c
 `limitacoes_declaradas` pede bump de versão, e não havia outro motivo para bumpar nesta
 rodada.
 
+> **23/09 — FECHADA no bump 1.23.0**, junto com o portão da §5-B.16. A linha agora diz
+> *"confirmado em 18/09 e em 23/09"*. E o portão achou mais duas da mesma forma —
+> `ordem_dos_portoes_nao_e_dado` (P-07) e `isento_ir_e_booleano_e_o_fii_nao_e` (P-13),
+> ambas consertadas em 05/09 —, marcadas `RESOLVIDA`.
+
+## P-122 · `lightgbm` e `tabpfn` nunca foram medidos contra a faixa fechada
+
+**Dono:** Claude Code (sessão local) · **Gatilho:** antes da ML-1 · **Classe:**
+`BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
+
+O `preregistro-ml-v2.md` §11 deixa as versões `NAO_CONFIRMADO` porque a consulta ao PyPI
+**da nuvem** foi recusada por `robots.txt`. A sessão local não tem essa recusa. O conserto é
+`py -3.11 -m pip install --dry-run lightgbm tabpfn "numpy==2.4.4" "pandas==3.0.2"` — e, se o
+TabPFN trouxer `torch`, anotar o tamanho. É a entrada
+`dependencias_da_familia_aprendizado_nao_medidas`.
+
+## P-123 · O motor não aplica IR na venda de renda variável
+
+**Dono:** próxima sessão · **Gatilho:** quando o motor ganhar rebalanceamento ou fase de
+retirada · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+Era limitação declarada desde 04/09 **sem pendência** — o portão da §5-B.16 a cobrou. O vício
+favorece o ETF (a isenção de R$ 20 mil/mês é só da ação), que é exatamente a decisão A05.
+Efeito zero na acumulação sem venda. Entrada `ir_na_venda_de_renda_variavel`.
+
+## P-124 · A custódia do Tesouro é descontada por mês, e a B3 cobra por semestre
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** nenhum · **Classe:** `DECISAO_DE_DESENHO`
+
+Também declarada sem pendência. Ordem de grandeza: centavos por ano a R$ 500/mês, e erra
+**contra** o Tesouro. A decisão é se a aproximação fica (escrita como escolha) ou se o motor
+passa a descontar por netting pro rata. Entrada `periodicidade_da_custodia_do_tesouro`.
+
 ---
 
 ## Fechadas
