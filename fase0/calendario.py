@@ -243,6 +243,12 @@ def arquivos(raiz, anos=None):
         ano = ano_de(nome)
         if ano is None:
             continue
+        # P-121: o nome casa, o conteudo pode ser uma PASTA. `COTAHIST_A2026/` (a
+        # extracao dele) existe no acervo desde 21/09 e so nao entrava porque `sorted()`
+        # a poe antes do `.ZIP` e o ZIP a sobrescreve -- certo por acidente. Um ano com
+        # so a pasta devolveria um diretorio como arquivo de COTAHIST.
+        if not os.path.isfile(os.path.join(raiz, nome)):
+            continue
         if anos is not None and int(ano) not in anos:
             continue
         # P-99: a chave e NORMALIZADA para `COTAHIST_A<ANO>`. Antes ela saia de

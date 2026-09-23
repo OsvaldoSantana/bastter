@@ -2522,6 +2522,39 @@ rodada.
 > `ordem_dos_portoes_nao_e_dado` (P-07) e `isento_ir_e_booleano_e_o_fii_nao_e` (P-13),
 > ambas consertadas em 05/09 —, marcadas `RESOLVIDA`.
 
+## P-120 · O manifesto só vê `*.zip`, e há 6,0 GB de cópias extraídas no acervo sem registro — **decisão sua**
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** antes da rotina automática da P-57 ·
+**Classe:** `DECISAO_DE_DESENHO` · ⚙ **exige o desktop**
+
+Medido em 23/09 em `data/bronze/b3/cotahist/`: **41 ZIPs, 790.736.674 bytes**, e ao lado
+deles **41 arquivos extraídos, 5.993.738.309 bytes** (5,6 GiB) — 40 soltos na pasta (`.TXT`
+de 2002 em diante; sem extensão de 1986 a 2001) e um dentro de `COTAHIST_A2026/`. O
+`manifesto()` filtra por `*.zip`, então **88% dos bytes do acervo não têm sha256 nem
+`dt_captura`**. Nenhum leitor os usa hoje — `calendario.arquivos()` prefere o ZIP —, mas
+ninguém prova que são o que o ZIP contém, e um `.TXT` avulso de um ano sem ZIP seria lido.
+
+Duas saídas, e as duas são legítimas:
+
+| | o que custa | o que ganha |
+|---|---|---|
+| **registrar** — manifesto passa a hashear todo arquivo com cara de COTAHIST | ~6 GB de leitura por rodada (hoje ~0,8 GB) | procedência do que está no disco, seja o que for |
+| **apagar** — o ZIP é a fonte, a extração é derivada e se refaz | nada; libera 6 GB | a regra *"no acervo só entra o que a fonte entregou"* fica verdadeira |
+
+A minha leitura, e a decisão é sua: **apagar**. A extração é derivada (a P-96 mediu que ano
+fechado não muda), e manifestar derivado é pagar 7× para provar o que o ZIP já prova.
+
+## ~~P-121~~ · `calendario.arquivos()` aceitava pasta com nome de ano — **FECHADA em 23/09/2026**
+
+**Dono:** Claude Code · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+O filtro era só o nome (`ano_de`). `COTAHIST_A2026/` — a extração dele — está no acervo
+desde 21/09 e só não entrava porque `sorted()` a põe antes do `.ZIP` e o ZIP de mesmo ano a
+sobrescreve: **certo por acidente**. Um ano com só a pasta devolveria um diretório como
+arquivo de COTAHIST. Consertado com `os.path.isfile`; `fase0/test_p121_pasta_nao_e_cotahist.py`,
+4 testes, **2 reprovam contra a versão anterior** (pasta sozinha; pasta `.ZIP` desbancando
+um `.TXT` verdadeiro).
+
 ## P-122 · `lightgbm` e `tabpfn` nunca foram medidos contra a faixa fechada
 
 **Dono:** Claude Code (sessão local) · **Gatilho:** antes da ML-1 · **Classe:**
