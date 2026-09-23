@@ -211,7 +211,8 @@ def conferir_cabecalho(primeira, origem):
     if primeira[:2] != TIPO_HEADER or "COTAHIST" not in primeira[:12].upper():
         raise LeiauteInesperado(f"{origem}: primeira linha nao e header COTAHIST: "
                                 f"{primeira[:40]!r}")
-    return primeira[10:14], primeira[23:31]
+    # P-125: o ano esta em 11-14; [10:14] pegava o ponto de `COTAHIST.` e devolvia '.202'
+    return primeira[11:15], primeira[23:31]
 
 
 def data_de(raw):

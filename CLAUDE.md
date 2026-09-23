@@ -310,6 +310,8 @@ fase0/
   calendario.py    o calendário de pregões e o ÚNICO leitor de COTAHIST. Acha o membro do
                    ZIP pelo CONTEÚDO, não pela extensão (P-99), e lê o leiaute do YAML
   moeda.py         as fronteiras de MODREF, medidas e NÃO aplicadas (C-03)
+  nomear_extracoes.py  cópias extraídas → `COTAHIST_A<ANO>.TXT`, só depois de conferir
+                   cabeçalho, tamanho e CRC-32 contra o ZIP. Não apaga nada (P-120 é dele)
   manifesto_cvm.py sha256 + dt_captura do acervo; `comparar()` separa REORDENADO de
                    REAPRESENTADO — comparar por hash dá 100% de falso positivo na CVM
   ajustar.py       a série de preços ajustada por proventos
@@ -896,6 +898,7 @@ só será usada em 2031.
 | **A-12** | **Identidade se monta com o campo OBSERVADO, nunca com o DERIVADO.** `data_ex` (derivado, vazio em 8.889 de 9.272 linhas) numa chave fez **128 eventos reais** colapsarem como "duplicata exata" — 334 contra 206. *Campo vazio dentro de uma chave não distingue: ele UNE, e em silêncio* — o F-02 na camada da identidade. E ia se auto-encobrir: com o calendário largo a chave errada dá o número certo |
 | **A-13** | O mesmo provento chega pelas **duas esteiras** da B3 e `_chave_de_evento` não o colapsa (`origem` entra nela pelo A-09). A cópia era inerte só por não ter preço — dar preço a ela subtrai o provento **duas vezes**. *Identidade de **pagamento** não é identidade de **registro**.* E a armadilha: **o agregado melhorava enquanto o ano quebrava** — critério de encolhimento **não detecta super-ajuste**, e quem pegou foi a **coluna de procedência** |
 | **P-114** | Raiz padrão apontando para a pasta errada não produz ausência, produz **recorte com cara de todo** — 1 ano de 41, e o relatório imprimindo `acervo COTAHIST_A2023`. E **um parâmetro que serve a dois acervos garante que mover um quebra o outro em silêncio**: a correção foi separar `--raiz` de `--cotahist`, não trocar a constante |
+| **P-125** | `conferir_cabecalho` devolvia `'.202'` como ano de 2026 — `[10:14]` pegava o ponto de `COTAHIST.`. **Retorno sem consumidor não é verificado por ninguém**: a docstring prometia o ano e o erro de um ficou mudo até o primeiro leitor (`nomear_extracoes.py`), que teria recusado as 41 cópias. E a fatia estava em Python, não no leiaute (P-130) |
 
 > **Narrativa de execução que saiu inteira** (registro, não instrução): as cinco rodadas de
 > 11/09 no Claude Code, os três marcos de 12/09, a suíte que deixou de fechar verde, a
@@ -1038,6 +1041,10 @@ Isto substitui "eu me viro": é o método que a semana produziu, e ele existe po
 | 7 | comparar o instantâneo — **campo a campo, não só os números** | |
 | 8 | registrar em `PENDENCIAS.md` e, se for achado, em `ACHADOS.md` | |
 | 9 | subir a versão do `politica.yaml` + changelog | |
+
+**A árvore medida é a árvore parada — enquanto a suíte roda, não se edita.** Os passos 5 e
+6 atestam a árvore que existia quando começaram; um arquivo mexido no meio deixa o "verde"
+valendo para uma árvore que já não existe, e o commit leva a outra.
 
 **O passo 3 não é opcional em refatoração.** Refatorar sem rede é reescrever e torcer,
 e as duas maiores mudanças da semana só foram defensáveis porque a rede existia.

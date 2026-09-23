@@ -2544,6 +2544,11 @@ Duas saídas, e as duas são legítimas:
 A minha leitura, e a decisão é sua: **apagar**. A extração é derivada (a P-96 mediu que ano
 fechado não muda), e manifestar derivado é pagar 7× para provar o que o ZIP já prova.
 
+> **23/09, tarde — as cópias foram RENOMEADAS (P-126), e isso não decide esta pendência.**
+> Agora são 41 `COTAHIST_A<ANO>.TXT`, cada uma conferida por CRC-32 contra o membro do ZIP, e
+> a pasta `COTAHIST_A2026/` não existe mais. Continuam sem sha256 nem `dt_captura` no
+> manifesto: **apagar ou manifestar segue sendo decisão sua.**
+
 ## ~~P-121~~ · `calendario.arquivos()` aceitava pasta com nome de ano — **FECHADA em 23/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
@@ -2583,12 +2588,88 @@ Também declarada sem pendência. Ordem de grandeza: centavos por ano a R$ 500/m
 **contra** o Tesouro. A decisão é se a aproximação fica (escrita como escolha) ou se o motor
 passa a descontar por netting pro rata. Entrada `periodicidade_da_custodia_do_tesouro`.
 
+## ~~P-125~~ · `calendario.conferir_cabecalho` devolvia `'.202'` como ano de 2026 — **FECHADA em 23/09/2026**
+
+**Dono:** Claude Code · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+O header é `00COTAHIST.AAAABOVESPA AAAAMMDD`: o ponto está na posição 10 (0-based) e o ano em
+11–14. A fatia era `[10:14]` — pegava o ponto e perdia o último dígito. A docstring prometia o
+ano e **ninguém lia o retorno** (`registros()` só usa a função para levantar), então nada
+quebrava: a P-77/P-106 outra vez, declaração sem consumidor. O primeiro consumidor é o
+`nomear_extracoes.py` (P-126), e com o defeito ele recusaria **todas** as 41 cópias. Conserto
+`[11:15]`; `fase0/test_p125_ano_do_cabecalho.py`, 6 testes, **reprovam contra a versão
+anterior** e passam na nova.
+
+## ~~P-126~~ · As cópias extraídas do COTAHIST tinham três convenções de nome e uma pasta — **FECHADA em 23/09/2026**
+
+**Dono:** Claude Code · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+`fase0/nomear_extracoes.py` (+ `test_nomear_extracoes.py`, 12 testes) veio da entrega de 23/09
+e foi movido de `data/entrega-23-09/`. Ele só renomeia depois de conferir cabeçalho, tamanho e
+CRC-32 contra o membro do ZIP do mesmo ano. Plano sem `--aplicar`, no acervo real:
+**RENOMEAR 17** (15 `COTAHIST.A1986…A2000`, o `COTAHIST_A2001` e o
+`COTAHIST_A2026/COTAHIST_A2026.TXT` saindo da pasta), **JA_CORRETO 24, RECUSADO 0**. Aplicado;
+a segunda execução dá 41 `JA_CORRETO`, e a pasta tem 41 `.ZIP` + 41 `.TXT`, nada mais.
+**Instantâneo dourado antes e depois, idêntico:** 2023 em **248** pregões `e4a9d81d…`; o
+calendário inteiro em 10.059 pregões `2700aca0…`; `arquivos()` com 41 entradas `0af9b2f5…`.
+
+> **Renomear NÃO decide a P-120.** As 41 cópias continuam no acervo sem sha256 nem
+> `dt_captura`; a escolha entre **apagá-las** ou **manifestá-las** continua sendo dele. O que
+> mudou é só que agora elas têm um nome só, e a pasta com nome de ano (a armadilha da P-121)
+> deixou de existir.
+
+## P-127 · Oráculo externo do preço ajustado — **decisão sua**
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** antes de usar a série ajustada na ML-3 ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+Ideia 4a de `docs/pesquisa/analise-pesquisa-apis-2026-09-23.md`. O C-02 valida o
+`ajustar.py` contra ele mesmo; o instrumento que pegou o A-13 foi **duas fontes independentes
+comparadas**. Um agregador de preço ajustado (plano gratuito) serviria de **controle** numa
+amostra — mesmo papel, mesmo período, medir a divergência — e **nunca de feed** (rebaixaria a
+P1). Exige pré-registro (P-116): o critério de "concordam" empurrado antes de olhar. A decisão
+é se vale o custo, e qual fornecedor (os nomes são dos relatórios, `NAO_CONFIRMADO`).
+
+## P-128 · Open Finance para posições e aporte — **decisão sua**
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** nenhum · **Classe:** `DECISAO_DE_DESENHO`
+
+Ideia 4b. O aporte realizado e as posições (P-02) são o único insumo em que ele está no
+caminho crítico todo mês (U-01, P7). É **candidata a pesquisa, não a integração**: cobertura,
+custo e o que fica guardado com o terceiro estão `NAO_CONFIRMADO`, e é o dado mais sensível do
+projeto — o mesmo que o `estado.yaml` protege ficando fora do git. A pergunta de privacidade
+vem antes da técnica.
+
+## P-129 · Macro sem vintage — **decisão sua**
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** quando uma variável macro entrar num pré-registro ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+Ideia 4c. O BCB SGS não guarda versões: série revisada substitui a antiga, então macro no
+backtest seria o valor de hoje, não o publicado em `t`. Hoje não morde (o pré-registro ML não
+usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declaradas`, `tipo:
+FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
+EUA, não BCB). A decisão é qual das duas.
+
+## P-130 · As posições do header do COTAHIST moram em Python
+
+**Dono:** Claude Code · **Gatilho:** no próximo toque em `conferir_cabecalho` ou no leiaute ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+Achado lateral da P-125. O `cotahist-v02.yaml` tem as posições do registro `01` desde a P-105,
+mas o header (`00`) não: `conferir_cabecalho` fatia `[11:15]` e `[23:31]` no código. É a P-105
+num registro vizinho — e foi exatamente numa fatia escrita à mão que o erro de um entrou. O
+leiaute rev. 02 descreve o header; transcrevê-lo para o YAML e ler de lá é o conserto. Não foi
+feito agora para não misturar mudança de esquema com o conserto de um valor.
+
 ---
 
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-125** | `conferir_cabecalho` devolvia `'.202'` como ano — fatia `[10:14]` pegando o ponto de `COTAHIST.`; ninguém lia o retorno | 23/09 — `[11:15]`; `fase0/test_p125_ano_do_cabecalho.py`, **6 de 6 reprovam por mutação** (fatia antiga reintroduzida). Achado lateral: as posições do header moram em Python (P-130) |
+| **P-126** | cópias extraídas com três convenções de nome e uma pasta com nome de ano | 23/09 — `fase0/nomear_extracoes.py`: 17 renomeadas, 24 já corretas, 0 recusadas; instantâneo de `pregoes()` idêntico (2023 em 248 `e4a9d81d…`). **Não decide a P-120** |
 | **P-100** | o `COTAHIST_A2026.ZIP` de 18/09 chegou truncado (38.328.935 bytes, sem diretório central), e eu **declarei 2026 indisponível** em vez de pedir outro download — o período da família ML foi cortado em dez/2025 por isso | 23/09 — rebaixado por ele em 21/09 11:59, **íntegro**: 85.779.964 bytes, `fb3546ed27cc…`, trailer `TOTREG` 2.871.743 = registros `01` contados, **179 pregões de 02/01 a 18/09/2026**. Duas medições independentes concordam. `origem.csv` e manifesto atualizados. **Retratação** no `CLAUDE.md`: o arquivo foi descartado em vez de consertado — nasce a §5-B.16 |
 | **P-114** | a raiz padrão do `refinar.py` e do `ajustar.py` era `data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos moram em `cotahist/` e o padrão enxergava **um** — o avulso de 04/09. O relatório dizia `acervo COTAHIST_A2023` e ninguém perguntava | 23/09 — **decisão dele**: a raiz vira `data/bronze/b3/cotahist`. No `refinar.py` isso exigiu **separar dois parâmetros** (`--raiz` de eventos, `--cotahist` do calendário), porque um servia aos dois acervos. Calendário de 248 → **10.059 pregões**; `data_ex` derivada de 383 → **9.271**. Instantâneo dourado fecha nos três níveis: 2023 em 248 pregões `e4a9d81d…`, silver com **0 colunas alteradas** e **0 data ex perdidas**, e os dois CSVs de 2023 byte a byte idênticos. 8 testes, 4 reprovam contra a versão anterior |
 | **P-97** | o `COTAHIST_A2023.ZIP` de 04/09 estava no acervo **sem origem**, e o manifesto contava `1 de 42` | 23/09 — **decisão dele**: é duplicata, sai do acervo. Medido **antes** de mover: ZIP e TXT extraído são byte a byte idênticos aos de `cotahist/`, que **têm** origem declarada. Movido para `data/quarentena/` com `LEIA.md`, não apagado. Manifesto: **`P-06: os 41 arquivos tem origem declarada`**. Guarda na suíte, porque manifesto é comando que alguém roda (P7) |
