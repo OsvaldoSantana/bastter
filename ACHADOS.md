@@ -2285,3 +2285,56 @@ de 2022 a 2024, PSSA3 em 2021. **Nenhum em 2025**: é a janela recente do
 medido. **Regra:** a marca de ex do COTAHIST é **testemunha**, não insumo — separa os dias que
 medem o acervo dos que medem o ajuste, e não vira fator (a tabela ESPECI está incompleta,
 P-95). Fechar a lacuna é a P-112.
+
+## A-12 · A identidade de um evento era montada com um campo derivado, e 128 eventos viraram um
+
+**23/09/2026.** Ele chegou disfarçado de número que mudou. Ao fechar a P-114 o silver foi
+regerado com o calendário dos 41 anos, e o `ajustar.py` passou a colapsar **206** duplicatas
+onde a corrida de 21/09 colapsava **334**.
+
+> **Calendário não cria nem destrói evento.** Um número que cai 128 unidades ao trocar o
+> calendário diz que um dos dois estava errado — e diz isso sem que ninguém tivesse
+> perguntado nada sobre duplicatas.
+
+Estava o de cima. `_chave_de_evento` incluía `data_ex`, que o projeto **deriva** — e que no
+silver de 11/09 estava **vazio em 8.889 das 9.272 linhas**, porque o calendário só cobria
+2023. Duas linhas que diferiam apenas pela data colidiam na chave, e a colisão não aparecia
+como colisão: aparecia como *duplicata exata*, rótulo que o relatório imprime sem levantar
+suspeita, e que o A-09 tinha acabado de tornar respeitável.
+
+**O que foi colapsado, medido linha a linha:** das 334, **128 não eram duplicata**, e **as
+128 se distinguem pelo `ultimo_dia_com_direito`**. O Bradesco pagou R$ 0,01 em 30/04/1996,
+30/08/1996, 30/12/1996, 28/02/1997 e 31/03/1997 — cinco parcelas, cinco dias, e para a chave
+antiga um pagamento só.
+
+| chave | silver com calendário de 2023 | silver com calendário de 41 anos |
+|---|---|---|
+| `data_ex` (a de 21/09) | **334** | 206 |
+| `ultimo_dia_com_direito` | **206** | **206** |
+
+**A correção é da chave, não do calendário**, e a tabela é a prova: com o campo observado a
+contagem é 206 dos dois lados — deixa de depender de quanto calendário existe no disco.
+
+**A regra, e ela é maior que este módulo:**
+
+> **Identidade se monta com o campo OBSERVADO, nunca com o DERIVADO.** `ultimo_dia_com_direito`
+> vem da B3 e está preenchido em 9.272 de 9.272; `data_ex` nós calculamos, e o que nós
+> calculamos pode faltar. **Campo vazio dentro de uma chave não distingue: ele UNE, e em
+> silêncio.** É o F-02 na camada da identidade — ausência de insumo virando *igualdade*, em
+> vez de virando zero.
+
+**E o pior era como ele ia sumir.** Com o calendário largo a chave antiga também dá 206. O
+defeito se auto-encobriria na corrida seguinte, e o único vestígio seria a linha "334
+duplicata(s) exata(s)" no laudo de 21/09 — que ninguém teria motivo para reabrir. **Defeito
+que se apaga sozinho ao se corrigir outra coisa é o que não deixa achado.**
+
+**Guarda:** `fase0/test_a12_chave_de_evento.py`, 8 testes. O que nomeia o achado exige a
+contagem **igual nos dois silvers**; outro reintroduz a chave de 21/09 e mede os 334 contra
+206, com as 128 verificadas como distinguíveis pelo campo observado. Um teste que só
+afirmasse o número certo não documentaria nada.
+
+**Efeito na série:** os 128 eventos passam a ser aplicados. Na janela 2021–2025, as séries por
+status não mudam (23 `AJUSTADO`, 78 `INCOMPLETO`, 1 `NIVEL_INCERTO`), o degrau do dia ex vai
+de 1.584 para 1.586 casos, e o ajustado de −0,1885% (t = −2,49) para −0,1864% (t = −2,46).
+**O veredito do C-02 não muda; o número muda na terceira casa.** O CSV de 21/09 foi
+preservado ao lado do novo, porque ele é o artefato por trás de um laudo publicado.

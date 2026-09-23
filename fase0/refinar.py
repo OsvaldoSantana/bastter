@@ -34,10 +34,27 @@ AS DUAS ESTEIRAS DO BRONZE SAO COMPLEMENTARES, NAO REDUNDANTES:
 Na janela em que as duas se sobrepoem elas PODEM DISCORDAR. O campo `origem` existe para
 que a discordancia seja consultavel. Quando aparecer, e achado, nao empate.
 
+DUAS RAIZES, PORQUE SAO DOIS ACERVOS (23/09/2026, P-114)
+Este modulo le de dois lugares que nao sao o mesmo lugar:
+
+    --raiz      `data/bronze/b3`           eventos/ e proventos/ -- o que a B3 devolveu
+    --cotahist  `data/bronze/b3/cotahist`  os 41 anos de preco, de onde sai o CALENDARIO
+
+Ate 21/09 havia UM parametro fazendo as duas coisas, e por isso o calendario so
+alcancava 2023: `calendario.arquivos()` nao e recursivo, e a unica coisa com cara de
+COTAHIST em `data/bronze/b3` era o `COTAHIST_A2023.ZIP` avulso de 04/09 (P-97, movido
+para fora do acervo na mesma decisao). O relatorio dizia *"cada ano de COTAHIST que
+entrar em `data/bronze/b3/` amplia a cobertura sozinho"* -- e isso era **falso para o
+disco como ele estava**: os anos entravam em `cotahist/` e o modulo nao os via.
+
+Um parametro que serve a dois acervos nao e economia: e a garantia de que mover um
+deles quebra o outro em silencio. Agora sao dois, e cada um aponta para a pasta que
+tem o seu dado.
+
 USO
     python refinar.py                      # a captura mais recente
     python refinar.py --dia 2026-09-11
-    python refinar.py --raiz data/bronze/b3 --saida data/silver
+    python refinar.py --raiz data/bronze/b3 --cotahist data/bronze/b3/cotahist
 
 So biblioteca padrao. Fora da impressao do ambiente, de proposito.
 """
@@ -60,6 +77,9 @@ except ImportError as e:                                  # pragma: no cover
         "nao concordam (achado N-01)." % e)
 
 RAIZ_PADRAO = os.path.join("data", "bronze", "b3")
+# P-114: o calendario NAO mora na mesma pasta que os eventos, e apontar os dois para o
+# mesmo lugar e o que deixou a cobertura em um ano so. Ver o cabecalho.
+COTAHIST_PADRAO = os.path.join("data", "bronze", "b3", "cotahist")
 SAIDA_PADRAO = os.path.join("data", "silver")
 
 COLUNAS = (
@@ -393,7 +413,8 @@ def ultima_captura(raiz):
     return dias[-1][len("dt_captura="):] if dias else None
 
 
-def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
+def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO, cotahist=None):
+    cotahist = COTAHIST_PADRAO if cotahist is None else cotahist
     dia = dia or ultima_captura(raiz)
     if not dia:
         print("nao ha captura de eventos em %s -- rode o coletar_b3.py antes."
@@ -435,7 +456,7 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
     # que mente e o defeito recorrente deste projeto, e aqui ele deslocaria TODO ajuste
     # de preco em um pregao. O calendario vem do COTAHIST do proprio acervo; onde ele
     # nao alcanca, a linha diz que nao sabe em vez de chutar o proximo dia util.
-    datas, cobertura = calendario.pregoes(raiz)
+    datas, cobertura = calendario.pregoes(cotahist)
     for ln in linhas:
         d = calendario.proximo_pregao(ln["ultimo_dia_com_direito"], datas, cobertura)
         ln["data_ex"] = d
@@ -452,9 +473,10 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
     print("captura %s -- %d emissoras, %d linhas" % (dia, emissoras, len(linhas)))
     print("  fator:")
     for st in sorted(porc): print("    %-22s %6d" % (st, porc[st]))
-    print("  data ex (calendario de pregoes: %s):"
-          % ("%s a %s, %d pregoes" % (cobertura[0], cobertura[1], len(datas))
-             if datas else "AUSENTE -- nenhum COTAHIST no acervo"))
+    print("  data ex (calendario de pregoes, de %s: %s):"
+          % (os.path.abspath(cotahist),
+             "%s a %s, %d pregoes" % (cobertura[0], cobertura[1], len(datas))
+             if datas else "AUSENTE -- nenhum COTAHIST nessa pasta"))
     for st in sorted(pdat): print("    %-22s %6d" % (st, pdat[st]))
     print("  -> %s" % os.path.abspath(destino))
     if sem_paginado:
@@ -488,10 +510,14 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
               "\nmais casos, nunca estender a regra por analogia."
               % porc[FACTOR_FORA_DA_REGRA])
     if pdat.get(FORA_DA_COBERTURA) or pdat.get(SEM_CALENDARIO):
+        # P-114: esta frase dizia `data/bronze/b3/` e era FALSA para o disco como ele
+        # estava -- os anos entravam em `cotahist/` e o modulo nao os via. Agora ela
+        # nomeia a pasta que o modulo LEU DE FATO, e nao uma que ele supoe ler.
         print("\n%d linha(s) SEM data ex derivada: o calendario de pregoes vem do COTAHIST"
-              "\ndo acervo e nao alcanca essas datas. Cada ano de COTAHIST que entrar em"
-              "\n`data/bronze/b3/` amplia a cobertura sozinho -- nao ha o que mudar no codigo."
-              % (pdat.get(FORA_DA_COBERTURA, 0) + pdat.get(SEM_CALENDARIO, 0)))
+              "\ne nao alcanca essas datas. Cada ano que entrar em %s amplia a"
+              "\ncobertura sozinho -- nao ha o que mudar no codigo."
+              % (pdat.get(FORA_DA_COBERTURA, 0) + pdat.get(SEM_CALENDARIO, 0),
+                 os.path.abspath(cotahist)))
     # O codigo de saida e o resumo honesto da corrida: zero so quando nada ficou
     # pendurado. `multiplos` NAO entra -- ele e informacao para conferir, nao defeito.
     return 1 if (desconhecidos or nao_objeto) else 0
@@ -499,12 +525,16 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO):
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="Bronze -> silver dos eventos da B3.")
-    p.add_argument("--raiz", default=RAIZ_PADRAO)
+    p.add_argument("--raiz", default=RAIZ_PADRAO,
+                   help="acervo de eventos/proventos (padrao: %s)" % RAIZ_PADRAO)
+    p.add_argument("--cotahist", default=COTAHIST_PADRAO,
+                   help="acervo de COTAHIST, de onde sai o CALENDARIO (padrao: %s)"
+                        % COTAHIST_PADRAO)
     p.add_argument("--saida", default=SAIDA_PADRAO)
     p.add_argument("--dia", metavar="AAAA-MM-DD",
                    help="captura a refinar (padrao: a mais recente)")
     a = p.parse_args(argv)
-    return refinar(a.raiz, a.dia, a.saida)
+    return refinar(a.raiz, a.dia, a.saida, a.cotahist)
 
 
 if __name__ == "__main__":

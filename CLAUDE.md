@@ -857,6 +857,8 @@ só será usada em 2031.
 | **C-02 janela** | Critério de "o ajuste está certo" **não pode ter nulo zero**: o dia ex ajustado tem o retorno do mercado, e o dividendo tira do preço **1,16×** o que paga (JCP 0,95×). Pré-registro que reprova fica em `xfail` estrito, nunca afrouxado |
 | **A-10** | Janela larga **não pode casar pior** que a estreita. Ambiguidade de par se desfaz por **vigência observada** da série, nunca por nome |
 | **A-11** | A marca de ex do ESPECI é **testemunha, não insumo**: 11 papéis-dia com bonificação que o silver não tem, nenhum em 2025 |
+| **A-12** | **Identidade se monta com o campo OBSERVADO, nunca com o DERIVADO.** `data_ex` (derivado, vazio em 8.889 de 9.272 linhas) numa chave fez **128 eventos reais** colapsarem como "duplicata exata" — 334 contra 206. *Campo vazio dentro de uma chave não distingue: ele UNE, e em silêncio* — o F-02 na camada da identidade. E ia se auto-encobrir: com o calendário largo a chave errada dá o número certo |
+| **P-114** | Raiz padrão apontando para a pasta errada não produz ausência, produz **recorte com cara de todo** — 1 ano de 41, e o relatório imprimindo `acervo COTAHIST_A2023`. E **um parâmetro que serve a dois acervos garante que mover um quebra o outro em silêncio**: a correção foi separar `--raiz` de `--cotahist`, não trocar a constante |
 
 > **Narrativa de execução que saiu inteira** (registro, não instrução): as cinco rodadas de
 > 11/09 no Claude Code, os três marcos de 12/09, a suíte que deixou de fechar verde, a

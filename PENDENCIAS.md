@@ -1849,19 +1849,42 @@ por hash deu **100% de falso positivo** em 18/09.
 
 ---
 
-## P-97 · A procedência do `COTAHIST_A2023.ZIP` que já está no acervo
+## ~~P-97~~ · A procedência do `COTAHIST_A2023.ZIP` — **FECHADA em 23/09/2026**
 
-**Dono:** Osvaldo · **Gatilho:** antes de escrever o `origem.csv` do b3 ·
-**Classe:** `DADO_DE_UM_USUARIO`
+**Decisão dele:** é duplicata e não importa de onde veio — **sai do acervo.** Das duas
+saídas que a pendência oferecia (lembrar a origem, ou registrar origem desconhecida),
+ele escolheu a terceira, que estava escrita no `SEGUNDA-21.md` e é melhor que as duas:
+**arquivo sem procedência não ganha uma linha dizendo que não tem procedência — ele sai
+de onde a procedência é obrigatória.**
 
-O arquivo está em `data\bronze\b3\` desde 04/09/2026 e **não se sabe de onde veio**.
-O manifesto conta isso: `P-06: 1 de 1 arquivo(s) tem sha256 e NAO tem de onde vieram`.
+**Nada único saiu do acervo, e isso foi medido antes de mover** (não depois):
 
-Não dá para supor que veio da página de séries anuais — inventar procedência no arquivo
-cuja única função é não inventar procedência seria o pior lugar possível para um chute.
-Duas saídas legítimas: ele confirma a origem, ou a linha do `origem.csv` registra origem
-**desconhecida** e a contagem continua em 1 até alguém rebaixar o arquivo por um caminho
-conhecido. A segunda é honesta; a primeira é melhor.
+| arquivo | sha256 | o gêmeo em `cotahist/` |
+|---|---|---|
+| `COTAHIST_A2023.ZIP` | `ad1603788d78aaa1…` | **idêntico** |
+| `COTAHIST_A2023/COTAHIST_A2023.TXT` | `344a50f86548a4aa…` | **idêntico** |
+
+O gêmeo tem origem declarada desde 18/09 (GET direto, `origem.csv`). O que saiu foi a
+cópia sem procedência — e **movida, não apagada**: `data/quarentena/`, com um `LEIA.md`
+que registra a decisão e as duas medições. Apagar é a operação sem volta, e a P-97
+nunca pediu isso.
+
+**A saída do manifesto, que era o critério:**
+
+```
+P-06: os 41 arquivos tem origem declarada.
+```
+
+**Guarda:** `fase0/test_p114_raiz_do_cotahist.py::test_P97_nao_sobrou_ZIP_sem_origem_no_acervo`
+— o manifesto é um comando que alguém roda, e a P7 é explícita sobre isso. O teste prende
+na suíte o que a linha acima afirma uma vez.
+
+> **Ela não fechava sozinha, e é esse o achado.** Enquanto o avulso estava em
+> `data/bronze/b3/`, a raiz padrão do `refinar.py` e do `ajustar.py` enxergava **ele** e
+> devolvia 248 pregões — um acervo de um ano com cara de acervo inteiro (P-114). Tirar só
+> o avulso deixaria a raiz antiga com zero COTAHIST; mudar só a raiz deixaria a duplicata
+> sem procedência dentro do acervo. **As duas metades se escondiam uma à outra**, e por
+> isso as duas decisões são do mesmo dia.
 
 ---
 
@@ -2292,17 +2315,65 @@ A decisão é se o COTAHIST pode **substituir** o campo da B3 quando ele falta �
 de um insumo é P1, não conveniência. Conferir junto: `diagnostico()` conta `SEM_FATOR`
 (subscrição, que por desenho não ajusta preço) como insumo ausente.
 
-## P-114 · `refinar.py` e `ajustar.py` apontam para uma raiz que não tem o acervo
+## ~~P-114~~ · A raiz padrão apontava para uma pasta sem o acervo — **FECHADA em 23/09/2026**
 
-**Dono:** Osvaldo decide · **Gatilho:** a próxima vez que o `refinar.py` rodar · **Classe:**
-`DECISAO_DE_DESENHO`
+**Decisão dele:** a raiz padrão do `refinar.py` e do `ajustar.py` passa a ser
+`data/bronze/b3/cotahist` — a pasta que **tem** o dado.
 
-`RAIZ_PADRAO = data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos estão em
-`data/bronze/b3/cotahist/`, e a raiz padrão só enxerga o `COTAHIST_A2023.ZIP` avulso. O
-`refinar.py` imprime que *"cada ano de COTAHIST que entrar em `data/bronze/b3/` amplia a
-cobertura sozinho"* — falso para o disco como ele está. O `ajustar.py` contorna rederivando a
-data ex com o calendário da janela (21/09); o silver continua com data ex só de 2023. A
-escolha é onde o acervo mora, e muda o silver inteiro quando for feita.
+**E a correção não foi trocar uma constante**, porque no `refinar.py` o parâmetro servia a
+**dois acervos**: `eventos/` e `proventos/` de um lado, o COTAHIST de onde sai o calendário
+do outro. Apontar os dois para `cotahist/` consertaria o calendário e apagaria o acervo de
+eventos. Agora são dois parâmetros:
+
+| | padrão | o que mora lá |
+|---|---|---|
+| `--raiz` | `data/bronze/b3` | `eventos/`, `proventos/` |
+| `--cotahist` | `data/bronze/b3/cotahist` | os 41 anos, de onde sai o **calendário** |
+
+> **Um parâmetro que serve a dois acervos não é economia: é a garantia de que mover um
+> quebra o outro em silêncio.** Foi exatamente o que aconteceu — os 41 anos entraram em
+> `cotahist/` em 18/09 e o calendário continuou em 2023, sem erro e sem aviso.
+
+**O que o defeito produzia não era ausência, era um recorte com cara de todo.** A raiz antiga
+devolvia 248 pregões de 2023 e o relatório imprimia `acervo COTAHIST_A2023`. Passa em
+qualquer teste de *"veio número?"*. E o `refinar.py` fechava a armadilha imprimindo que
+*"cada ano de COTAHIST que entrar em `data/bronze/b3/` amplia a cobertura sozinho"* —
+**falso para o disco como ele estava**: quem copiasse um ano para ali, seguindo a instrução
+da própria ferramenta, não veria diferença nenhuma. A frase agora nomeia a pasta que o
+módulo **leu de fato**.
+
+**Medido — o silver regerado com o calendário dos 41 anos:**
+
+| | com calendário de 2023 | com os 41 anos |
+|---|---|---|
+| cobertura | 2023-01-02 a 2023-12-28, 248 pregões | **1986-01-02 a 2026-09-18, 10.059 pregões** |
+| `data_ex` `DERIVADA` | 383 | **9.271** |
+| `FORA_DA_COBERTURA` | 8.889 | **1** |
+
+A única linha que sobra é uma subscrição da PETR com último dia com direito em
+**14/11/1974** — doze anos antes do início do acervo. Recusa correta, não buraco.
+
+**Instantâneo dourado, e ele fechou nos três níveis exigidos:**
+
+- `pregoes()` de 2023: **248 pregões**, `sha256 e4a9d81d…d551c` — inalterado;
+- **silver:** as 383 datas ex já derivadas saíram **idênticas**, 8.888 ganharam, **0
+  perderam**, e **nenhuma outra coluna mudou em nenhuma das 9.272 linhas**;
+- **os dois CSVs, subconjunto de 2023:** byte a byte idênticos —
+  `degrau_datas_ex` `875dd1ca…`, `precos_ajustados` `a2e437b5…`.
+
+E a mudança de raiz **isolada** é inerte: com o silver antigo, a janela 2021–2025 saiu com os
+mesmos `c248053b…` e `a08e4657…` de 21/09. As duas metades foram medidas separadas de
+propósito — juntas, uma explicaria a outra.
+
+**O arquivo de 11/09 não foi sobrescrito.** O silver regerado é
+`eventos_silver_2026-09-11_cal-1986-2026.csv`, e os CSVs da janela ganharam o mesmo sufixo.
+O que mudou na janela 2021–2025 está no A-12, e **não é efeito do calendário**: é o calendário
+tendo revelado um defeito de chave que existia desde 18/09.
+
+**Guarda:** `fase0/test_p114_raiz_do_cotahist.py`, 8 testes, 4 dos quais reprovam contra a
+versão de 21/09 (prova por mutação). Os dois que valem medem **comportamento**: o COTAHIST
+numa pasta sem evento nenhum tem de produzir data ex, e um COTAHIST na raiz de **eventos**
+**não** pode virar calendário.
 
 ## P-115 · O critério do degrau precisa ser re-pré-registrado antes da próxima janela
 
@@ -2332,12 +2403,58 @@ distinguir critério de resultado: **"pré-registrado" não é verificável pela
 processo que evita a repetição: critério em um commit, **empurrado**, e só então a corrida
 — o hash do commit do critério é a impressão digital.
 
+## P-117 · O silver passou a ter dois arquivos para a mesma captura, e quem escolhe é o `sorted()`
+
+**Dono:** Osvaldo decide · **Gatilho:** antes da próxima corrida do `refinar.py` ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+A P-114 criou `eventos_silver_2026-09-11_cal-1986-2026.csv` ao lado de
+`eventos_silver_2026-09-11.csv` — por instrução dele, para não sobrescrever o de 11/09. São
+**duas tabelas da mesma captura**, diferindo só no calendário que derivou a `data_ex`.
+
+`ajustar.ultimo_silver()` escolhe **o último em ordem alfabética**, e por sorte isso é o
+arquivo com o calendário largo. **Sorte não é regra.** Um `eventos_silver_2026-09-11_antigo.csv`
+inverteria a escolha sem que nada reclamasse, e a corrida seguinte mediria a série com 383
+datas ex em vez de 9.271 — sem erro, sem aviso, e com número plausível na saída.
+
+**A raiz do problema é o nome:** o silver é função de **dois** insumos (a captura e o
+calendário) e o nome só carregava um. A decisão é qual das três:
+
+1. o `refinar.py` passa a nomear a saída com os dois insumos (`_cal-<ini>-<fim>`), sempre —
+   é o mais honesto e mexe em testes que hoje esperam o nome curto;
+2. `ultimo_silver()` ganha regra explícita (maior cobertura para a captura mais recente) e
+   um teste — mais barato, mantém a convenção;
+3. o silver de 11/09 é aposentado e fica um arquivo só — mais simples, e perde o lado a
+   lado que a P-114 usou como instantâneo dourado.
+
+**Hoje a corrida imprime qual silver leu**, então nada está oculto — mas *"está escrito na
+saída"* é a defesa que a P7 recusa: depende de alguém ler.
+
+## P-118 · `politica.yaml` cita a P-96 como aberta, e ela fechou em 18/09
+
+**Dono:** Claude Code · **Gatilho:** no próximo bump de `politica.yaml` · **Classe:**
+`DECISAO_DE_DESENHO`
+
+`limitacoes_declaradas.captura_do_cotahist_ainda_nao_e_rotina.direcao_do_vies` diz
+*"identico em tamanho ao capturado em 04/09. **Confirmar por sha256 fecha a P-96**"*. O
+sha256 **foi** confirmado — a P-96 está na tabela de fechadas desde 18/09 (`ad1603788d78aaa1…`
+dos dois lados, 14 dias de intervalo), e em 23/09 a medição foi repetida ao mover a duplicata.
+
+É uma linha que manda fazer o que já foi feito. Inofensiva hoje e exatamente a forma de
+defeito que o projeto persegue: **declaração que o próprio repositório já contradiz.** Trocar
+"confirmar fecha" por "confirmado em 18/09 e em 23/09" é uma linha — mas mexer em
+`limitacoes_declaradas` pede bump de versão, e não havia outro motivo para bumpar nesta
+rodada.
+
 ---
 
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-114** | a raiz padrão do `refinar.py` e do `ajustar.py` era `data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos moram em `cotahist/` e o padrão enxergava **um** — o avulso de 04/09. O relatório dizia `acervo COTAHIST_A2023` e ninguém perguntava | 23/09 — **decisão dele**: a raiz vira `data/bronze/b3/cotahist`. No `refinar.py` isso exigiu **separar dois parâmetros** (`--raiz` de eventos, `--cotahist` do calendário), porque um servia aos dois acervos. Calendário de 248 → **10.059 pregões**; `data_ex` derivada de 383 → **9.271**. Instantâneo dourado fecha nos três níveis: 2023 em 248 pregões `e4a9d81d…`, silver com **0 colunas alteradas** e **0 data ex perdidas**, e os dois CSVs de 2023 byte a byte idênticos. 8 testes, 4 reprovam contra a versão anterior |
+| **P-97** | o `COTAHIST_A2023.ZIP` de 04/09 estava no acervo **sem origem**, e o manifesto contava `1 de 42` | 23/09 — **decisão dele**: é duplicata, sai do acervo. Medido **antes** de mover: ZIP e TXT extraído são byte a byte idênticos aos de `cotahist/`, que **têm** origem declarada. Movido para `data/quarentena/` com `LEIA.md`, não apagado. Manifesto: **`P-06: os 41 arquivos tem origem declarada`**. Guarda na suíte, porque manifesto é comando que alguém roda (P7) |
+| **A-12** | `_chave_de_evento` montava a identidade do evento com `data_ex`, que é **derivado** e estava vazio em 8.889 das 9.272 linhas — e **128 eventos reais** colapsavam como "duplicata exata" | 23/09 — chave passa a usar `ultimo_dia_com_direito`, o campo **observado**, preenchido em 9.272 de 9.272. Contagem: 334 → **206**, e 206 **nos dois silvers** — deixa de depender do calendário. Achado só apareceu porque a P-114 moveu o número; com o calendário largo a chave antiga também daria 206 e o defeito **se auto-encobriria**. 8 testes |
 | PLANO passo 3 | a série ajustada cobria só 2023, com duas bordas, e o C-01 tinha **um** caso de preço | 21/09 — `ajustar.py --anos 2021-2025` + `fase0/test_ajustar_janela.py`. Controle fecha nos cinco anos (632.384 pares, pior 1e-27); **C-01 com 54 eventos de quantidade**, 49 encolhem, os dois primeiros grupamentos com preço (MGLU3 +896% → −0,38%; HAPV3 +1378% → −1,46%); as duas bordas de 2023 fecharam. O critério por ano **reprovou em 4 de 5** e fica em `xfail` estrito (P-115). Achados A-10 e A-11. Ver `auditoria/C02-JANELA-2021-2025.md` |
 | C-01, a corroboração de preço | a regra do `factor` tinha sido fechada pela **distribuição**, com UM caso de preço, e a data ex derivada também tinha UM. A série de preços ajustada não existia | 18/09 — `fase0/ajustar.py` + `fase0/test_ajustar.py` (32 testes, 8 contra o acervo). **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360% (t = −0,29) em 293 datas-ex**, com controle em 86.736 pares de pregões sem evento (pior divergência 1e-27, arredondamento de `Decimal`). Duas mutações presas na suíte: data ex deslocada deixa o degrau **inteiro** e cria um **falso** na véspera (+1,91%, t = +11,20); fator invertido **dobra** o degrau (−3,16%). Ver `auditoria/C02-O-DEGRAU-MEDIDO.md` |
 | — | `calendario.py` era o único leitor de COTAHIST; o segundo (`ajustar.py`) ia redigitar a descoberta de arquivo e a posição da data | 18/09 — extraídos `arquivos()`, `registros()` e `data_de()`. Um fato, um dono. Instantâneo dourado de `pregoes()` antes e depois: **248 pregões, `sha256 e4a9d81d…` idêntico** |

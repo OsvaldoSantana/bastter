@@ -64,11 +64,22 @@ modulo PARA em vez de escolher (`DataExDivergente`).
 Janela com buraco e recusada: o ajuste retroativo so atravessa um bloco contiguo, e um
 ano faltando no meio viraria "um pregao" entre dezembro e o janeiro de dois anos depois.
 
+A RAIZ PADRAO E `data/bronze/b3/cotahist` (23/09/2026, P-114)
+Ela era `data/bronze/b3`, e `calendario.arquivos()` NAO e recursivo: os 41 anos moram
+em `cotahist/`, e a raiz antiga enxergava UM arquivo -- o `COTAHIST_A2023.ZIP` avulso
+que estava solto ali desde 04/09. Rodar sem `--raiz` media 2023 e dizia, no relatorio,
+"acervo COTAHIST_A2023". Nao era numero errado: era um recorte de um ano com cara de
+acervo inteiro, e o unico jeito de descobrir era conferir o nome do arquivo na saida.
+
+A raiz aponta para a pasta que TEM o dado. O avulso saiu do acervo na mesma decisao
+(P-97) -- eram duas metades do mesmo defeito: um arquivo no lugar errado e um padrao
+apontando para o lugar errado, que se escondiam um ao outro.
+
 USO
     python ajustar.py                        # o silver mais recente, acervo padrao
-    python ajustar.py --raiz data/bronze/b3/cotahist --anos 2021-2025
+    python ajustar.py --anos 2021-2025
     python ajustar.py --silver data/silver/eventos_silver_2026-09-11.csv
-    python ajustar.py --raiz data/bronze/b3 --saida data/silver
+    python ajustar.py --raiz data/bronze/b3/cotahist --saida data/silver
 
 So biblioteca padrao, como o resto da Fase 0.
 """
@@ -81,7 +92,10 @@ sys.path.insert(0, AQUI)
 import calendario                                                       # noqa: E402
 from refinar import DERIVADA, FORA_DA_COBERTURA, SEM_CALENDARIO         # noqa: E402
 
-RAIZ_PADRAO = os.path.join("data", "bronze", "b3")
+# P-114: a pasta que TEM os 41 anos, e nao a pasta que os contem uma abaixo.
+# `calendario.arquivos()` nao e recursivo de proposito -- descer sozinho na arvore
+# faria o acervo depender de onde alguem deixou um arquivo, e nao de onde ele mora.
+RAIZ_PADRAO = os.path.join("data", "bronze", "b3", "cotahist")
 SAIDA_PADRAO = os.path.join("data", "silver")
 
 # ── o layout posicional do COTAHIST, campos de PRECO ──────────────────────────
@@ -214,8 +228,26 @@ def _chave_de_evento(r):
 
     O arquivo entra na chave DE PROPOSITO: dois registros iguais em PAGINAS diferentes
     sao sobreposicao de paginacao, e ai o julgamento seria outro. Hoje nao existe nenhum
-    -- e no dia em que existir, a contagem aparece em vez de ser absorvida."""
-    return (r["origem"], r["cod"], r["type_stock"], r["isin"], r["data_ex"], r["tipo"],
+    -- e no dia em que existir, a contagem aparece em vez de ser absorvida.
+
+    A-12 (23/09/2026) -- A CHAVE USAVA `data_ex`, QUE E DERIVADO E PODE SER VAZIO.
+    No silver de 11/09, 8.889 das 9.272 linhas tinham `data_ex` em branco, porque o
+    calendario so cobria 2023 (P-114). Duas linhas que diferiam SO pela data colidiam
+    na chave -- e a colisao nao aparecia como colisao, aparecia como *duplicata exata*,
+    que e um numero que o relatorio imprime com naturalidade.
+
+    Medido: a corrida de 21/09 colapsou **334** linhas, e **128 delas nao eram
+    duplicata** -- as quatro parcelas de R$0,01 do BBDC em 1996-97, cada uma no seu
+    dia, viraram uma. Com a chave abaixo dao 206, e dao 206 nos DOIS silvers: o numero
+    deixa de depender de quanto calendario existe no disco.
+
+    A REGRA: identidade de evento se monta com o campo OBSERVADO -- o que a B3
+    declarou --, nunca com o campo DERIVADO. `ultimo_dia_com_direito` vem da fonte e
+    esta preenchido em 9.272 de 9.272; `data_ex` nos calculamos, e o que nos calculamos
+    pode faltar. Campo vazio dentro de uma chave nao distingue: ele UNE, e em silencio.
+    E o F-02 na camada da identidade -- ausencia de insumo virando igualdade."""
+    return (r["origem"], r["cod"], r["type_stock"], r["isin"],
+            r["ultimo_dia_com_direito"], r["tipo"],
             r["valor"], r["ratio"], r["preco_vespera"], r["arquivo_origem"])
 
 
