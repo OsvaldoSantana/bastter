@@ -123,3 +123,10 @@ dot-claude/
 # alocacao/test_p98_acervo_fora_do_indice.py, que mede TAMANHO no indice do git:
 # bytes nao dependem de alguem ter acertado o nome do arquivo.
 docs/fontes/series-historicas-cotahist/
+
+# ── 23/09/2026 -- o COTAHIST solto em docs/fontes/, fora da pasta acima ─────────
+# A linha anterior cobre a PASTA series-historicas-cotahist/. Um COTAHIST copiado
+# direto para docs/fontes/ escapa dela, e de 1986 a 2001 escapa tambem das regras por
+# extensao (o membro nao tem extensao -- P-98). Casar pelo NOME da B3 fecha esse caso;
+# o portao continua sendo o test_p98, que mede bytes no indice e nao depende de nome.
+docs/fontes/COTAHIST*
