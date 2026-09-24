@@ -2548,6 +2548,16 @@ fechado não muda), e manifestar derivado é pagar 7× para provar o que o ZIP j
 > Agora são 41 `COTAHIST_A<ANO>.TXT`, cada uma conferida por CRC-32 contra o membro do ZIP, e
 > a pasta `COTAHIST_A2026/` não existe mais. Continuam sem sha256 nem `dt_captura` no
 > manifesto: **apagar ou manifestar segue sendo decisão sua.**
+>
+> ⚠ **RETRATAÇÃO — 24/09/2026, sem apagar a nota acima.** O que ela diz, citado: *"cada uma
+> conferida por CRC-32 contra o membro do ZIP"*. **Falso para 24 das 41.** Em 23/09 só as
+> **17 renomeadas** passaram por `conferir()`; as 24 que já tinham o nome certo saíram
+> `JA_CORRETO` pelo `continue` de `plano()`, **antes** da conferência (P-131). As **41** só
+> foram conferidas em **24/09**, uma a uma, antes de apagar (fechamento abaixo, item 1).
+> **Causa raiz:** eu li o nome do status como o que ele mediu — o contador dizia *"RECUSADO
+> 0"* e eu escrevi *"todas conferidas"*, sem abrir o ramo que produzia o `JA_CORRETO`. É a
+> §5-B.1: a frase do que a medição mediu era mais estreita que a conclusão. **Corrigido na
+> ferramenta:** P-131 — `JA_CORRETO` agora também passa por `conferir()`.
 
 ### Fechamento, 24/09/2026 — **decisão dele: apagar**
 
@@ -2648,6 +2658,13 @@ a segunda execução dá 41 `JA_CORRETO`, e a pasta tem 41 `.ZIP` + 41 `.TXT`, n
 **Instantâneo dourado antes e depois, idêntico:** 2023 em **248** pregões `e4a9d81d…`; o
 calendário inteiro em 10.059 pregões `2700aca0…`; `arquivos()` com 41 entradas `0af9b2f5…`.
 
+> ⚠ **RETRATAÇÃO — 24/09/2026, sem apagar o parágrafo acima.** O que ele diz, citado:
+> *"Ele só renomeia depois de conferir cabeçalho, tamanho e CRC-32"* e *"JA_CORRETO 24,
+> RECUSADO 0"*. A primeira frase é verdade **para o que ele renomeia**; o *"24"* foi lido
+> como *"24 conferidas e certas"*, e **não eram conferidas**: `plano()` fazia `continue` no
+> `JA_CORRETO` antes de `conferir()`. `RECUSADO 0` media só as 17 renomeadas. As 41 foram
+> conferidas em **24/09**, antes de apagar (P-120). Causa raiz e conserto: **P-131**.
+
 > **Renomear NÃO decide a P-120.** As 41 cópias continuam no acervo sem sha256 nem
 > `dt_captura`; a escolha entre **apagá-las** ou **manifestá-las** continua sendo dele. O que
 > mudou é só que agora elas têm um nome só, e a pasta com nome de ano (a armadilha da P-121)
@@ -2686,10 +2703,9 @@ usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declara
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
 
-## P-131 · `nomear_extracoes.plano()` não confere o que já tem o nome certo
+## ~~P-131~~ · `nomear_extracoes.plano()` não confere o que já tem o nome certo — **FECHADA em 24/09/2026**
 
-**Dono:** Claude Code · **Gatilho:** antes de qualquer decisão que se apoie em `JA_CORRETO` ·
-**Classe:** `BLOQUEIA_O_SISTEMA`
+**Dono:** Claude Code · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
 
 Achado ao fechar a P-120. `JA_CORRETO` sai pelo `continue` antes de `conferir()`: o status
 diz *"o nome é o certo"* e é lido como *"a cópia é o conteúdo do ZIP"* — foi assim que o
@@ -2697,6 +2713,14 @@ pedido de 24/09 o leu, e foi assim que a P-126 contou *"24 já corretas"*. Uma c
 ou de outro ano com o nome certo sai `JA_CORRETO`. Inofensivo hoje (não há cópias), e
 exatamente a forma do F-02: status que parece medição sem ter medido. Conserto: conferir
 também o `JA_CORRETO` (e `RECUSADO` quando falhar), com teste que reprove contra a versão atual.
+
+**Fechamento, 24/09:** o ramo `JA_CORRETO` de `plano()` chama `conferir()` e sai `RECUSADO`
+com o motivo quando ela falha. Dois testes em `fase0/test_nomear_extracoes.py`: cópia de
+nome certo e conteúdo **truncado** → `RECUSADO` por tamanho e `main()` sai 1 — **reprovou
+contra a versão anterior** (saía `JA_CORRETO`) antes do conserto; e cópia de nome certo e
+conteúdo do ZIP continua `JA_CORRETO`, para a conferência não virar recusa geral. `fase0`
+verde, `ruff` e `mypy` em zero. Custo: a segunda execução passa a ler as cópias inteiras
+para o CRC — é o preço de o status dizer o que mediu.
 
 ## P-130 · As posições do header do COTAHIST moram em Python
 
@@ -2715,9 +2739,10 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-131** | `JA_CORRETO` saía de `plano()` antes de `conferir()` — nome certo lido como conteúdo certo, e foi assim que a P-126 contou *"24 já corretas"* e a P-120 escreveu *"cada uma conferida por CRC-32"* | 24/09 — `JA_CORRETO` passa por `conferir()` e sai `RECUSADO` se falhar; teste com cópia de nome certo e conteúdo truncado **reprova contra a versão anterior**. Retratações na P-120 e na P-126, sem apagar |
 | **P-120** | o manifesto só via `*.zip` e 41 cópias extraídas (5,99 GB, 88% dos bytes) estavam no acervo sem sha256 | 24/09 — **decisão dele: apagar.** 41 conferidas uma a uma por `conferir()` (cabeçalho, tamanho, CRC-32) e apagadas; `pregoes()` idêntico (2023 248 `e4a9d81d…`, total 10.059 `2700aca0…`, `arquivos()` 41 `7469fb94…`). O manifesto conta o que sobrar sem hash (`extracoes_soltas`, 7 testes, 4 mutações): **41 arquivos, todos com origem, contagem 0**. Abriu a **P-131** |
 | **P-125** | `conferir_cabecalho` devolvia `'.202'` como ano — fatia `[10:14]` pegando o ponto de `COTAHIST.`; ninguém lia o retorno | 23/09 — `[11:15]`; `fase0/test_p125_ano_do_cabecalho.py`, **6 de 6 reprovam por mutação** (fatia antiga reintroduzida). Achado lateral: as posições do header moram em Python (P-130) |
-| **P-126** | cópias extraídas com três convenções de nome e uma pasta com nome de ano | 23/09 — `fase0/nomear_extracoes.py`: 17 renomeadas, 24 já corretas, 0 recusadas; instantâneo de `pregoes()` idêntico (2023 em 248 `e4a9d81d…`). **Não decide a P-120** |
+| **P-126** | cópias extraídas com três convenções de nome e uma pasta com nome de ano | 23/09 — `fase0/nomear_extracoes.py`: 17 renomeadas, 24 já corretas, 0 recusadas; instantâneo de `pregoes()` idêntico (2023 em 248 `e4a9d81d…`). **Não decide a P-120**. ⚠ **Retratado em 24/09:** as *"24 já corretas"* tinham o **nome** certo e **não foram conferidas** — só as 17 renomeadas passaram por `conferir()`; as 41 foram conferidas em 24/09, antes de apagar (P-131) |
 | **P-100** | o `COTAHIST_A2026.ZIP` de 18/09 chegou truncado (38.328.935 bytes, sem diretório central), e eu **declarei 2026 indisponível** em vez de pedir outro download — o período da família ML foi cortado em dez/2025 por isso | 23/09 — rebaixado por ele em 21/09 11:59, **íntegro**: 85.779.964 bytes, `fb3546ed27cc…`, trailer `TOTREG` 2.871.743 = registros `01` contados, **179 pregões de 02/01 a 18/09/2026**. Duas medições independentes concordam. `origem.csv` e manifesto atualizados. **Retratação** no `CLAUDE.md`: o arquivo foi descartado em vez de consertado — nasce a §5-B.16 |
 | **P-114** | a raiz padrão do `refinar.py` e do `ajustar.py` era `data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos moram em `cotahist/` e o padrão enxergava **um** — o avulso de 04/09. O relatório dizia `acervo COTAHIST_A2023` e ninguém perguntava | 23/09 — **decisão dele**: a raiz vira `data/bronze/b3/cotahist`. No `refinar.py` isso exigiu **separar dois parâmetros** (`--raiz` de eventos, `--cotahist` do calendário), porque um servia aos dois acervos. Calendário de 248 → **10.059 pregões**; `data_ex` derivada de 383 → **9.271**. Instantâneo dourado fecha nos três níveis: 2023 em 248 pregões `e4a9d81d…`, silver com **0 colunas alteradas** e **0 data ex perdidas**, e os dois CSVs de 2023 byte a byte idênticos. 8 testes, 4 reprovam contra a versão anterior |
 | **P-97** | o `COTAHIST_A2023.ZIP` de 04/09 estava no acervo **sem origem**, e o manifesto contava `1 de 42` | 23/09 — **decisão dele**: é duplicata, sai do acervo. Medido **antes** de mover: ZIP e TXT extraído são byte a byte idênticos aos de `cotahist/`, que **têm** origem declarada. Movido para `data/quarentena/` com `LEIA.md`, não apagado. Manifesto: **`P-06: os 41 arquivos tem origem declarada`**. Guarda na suíte, porque manifesto é comando que alguém roda (P7) |

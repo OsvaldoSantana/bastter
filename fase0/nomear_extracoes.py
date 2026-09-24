@@ -22,6 +22,8 @@ do ZIP do mesmo ano:
 O QUE ELE RECUSA FAZER, e as recusas sao o modulo:
   - nao renomeia sem o ZIP ao lado: sem a fonte, a copia nao tem como ser conferida;
   - nao sobrescreve: se o nome certo ja existe, a linha diz isso e para ali;
+  - nao diz JA_CORRETO sem conferir: a copia que ja tem o nome certo passa pela
+    mesma conferencia, e sai RECUSADO se falhar (P-131);
   - nao apaga arquivo nenhum; remove so a subpasta de ano que ficou vazia depois da
     renomeacao (P-121). Apagar as copias foi decisao dele na P-120 (24/09), e foi
     feito fora daqui;
@@ -131,7 +133,9 @@ def plano(pasta):
         base = dict(origem=caminho, destino=destino, ano=ano, motivo="")
         if os.path.normcase(os.path.abspath(caminho)) == os.path.normcase(
                 os.path.abspath(destino)):
-            linhas.append(dict(base, status=JA_CORRETO))
+            # P-131: nome certo nao e conteudo certo -- JA_CORRETO tambem passa por conferir()
+            ok, motivo = conferir(caminho, ano, _zip_do_ano(pasta, ano))
+            linhas.append(dict(base, status=JA_CORRETO if ok else RECUSADO, motivo=motivo))
             continue
         if os.path.exists(destino):
             linhas.append(dict(base, status=DESTINO_EXISTE,

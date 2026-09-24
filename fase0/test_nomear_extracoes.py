@@ -171,3 +171,27 @@ def test_pasta_que_nao_e_de_ano_fica_intacta(tmp_path):
     N.main(["--pasta", p, "--aplicar"])
     assert os.path.isdir(os.path.join(p, "COTAHIST_A2026")), "pasta com outro arquivo nao some"
     assert os.path.exists(os.path.join(p, "COTAHIST_A2026.TXT"))
+
+
+# ── P-131: nome certo nao e conteudo certo ────────────────────────────────────
+
+def test_P131_nome_certo_com_conteudo_cortado_e_RECUSADO(tmp_path):
+    """P-131. `JA_CORRETO` saia pelo `continue` antes de `conferir()`: dizia "o nome e o
+    certo" e era lido como "a copia e o conteudo do ZIP". Uma copia truncada com o nome
+    certo saia JA_CORRETO -- status com cara de medicao sem ter medido (F-02). Reprova
+    contra a versao de 23/09."""
+    p = str(tmp_path)
+    texto = _par(p, "2003", "COTAHIST_A2003.TXT")
+    with open(os.path.join(p, "COTAHIST_A2003.TXT"), "w", encoding="latin-1", newline="") as f:
+        f.write(texto[:-10])
+    [ln] = N.plano(p)
+    assert ln["status"] == N.RECUSADO and "tamanho" in ln["motivo"]
+    assert N.main(["--pasta", p]) == 1
+
+
+def test_P131_nome_certo_com_conteudo_do_ZIP_continua_JA_CORRETO(tmp_path):
+    """O outro lado: a conferencia nao pode transformar toda copia de nome certo em recusa."""
+    p = str(tmp_path)
+    _par(p, "2004", "COTAHIST_A2004.TXT", "COTAHIST_A2004.TXT")
+    [ln] = N.plano(p)
+    assert ln["status"] == N.JA_CORRETO and ln["motivo"] == ""
