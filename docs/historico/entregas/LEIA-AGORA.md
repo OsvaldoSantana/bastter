@@ -1,3 +1,5 @@
+> VENCIDO — executado em 10/09/2026 (8b98028). Não é instrução vigente.
+
 # LEIA AGORA — 10/09/2026
 
 **O push funcionou. E ele levou junto uma coisa que não podia ir.**

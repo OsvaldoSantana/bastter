@@ -1,3 +1,5 @@
+> VENCIDO — executado em 10–11/09/2026 (8b98028; a coleta da B3 em b1d06f4). Não é instrução vigente.
+
 # ADENDO de 06/09/2026, 20h — leia estas 20 linhas antes do resto
 
 Depois que este arquivo foi escrito, uma pesquisa de bases e APIs mudou **a ordem da

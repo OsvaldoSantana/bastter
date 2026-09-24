@@ -1,3 +1,5 @@
+> VENCIDO — executado em 13–24/09/2026, item a item no LEIA-ME desta pasta; o item 6, sem resposta registrada, migrou para a P-138 do PENDENCIAS.md. Não é instrução vigente.
+
 # O que depende de você — e como resolver cada coisa
 
 **Nove itens.** Seis são decisão (você responde, eu implemento). Três são execução

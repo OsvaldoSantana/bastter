@@ -3,8 +3,9 @@
 """P-108: `origem.csv` escrito pelo Windows PowerShell 5.1 tem BOM, e isso nao pode
 zerar a procedencia em silencio.
 
-Achado em 21/09/2026 lendo o transcript dele: o roteiro `SEGUNDA-21.md` mandava criar o
-arquivo com `Out-File -Encoding utf8`, que no PowerShell 5.1 grava `EF BB BF` na frente.
+Achado em 21/09/2026 lendo o transcript dele: o roteiro
+`docs/historico/entregas/SEGUNDA-21.md` mandava criar o arquivo com
+`Out-File -Encoding utf8`, que no PowerShell 5.1 grava `EF BB BF` na frente.
 O leitor abria com `utf-8`, a coluna virava '\\ufeffcaminho', e o filtro `r.get("caminho")`
 descartava TODAS as linhas -- sem erro, sem aviso. O instrumento que conta origem ausente
 teria contado 42 depois de ele declarar as 41.

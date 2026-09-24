@@ -1,3 +1,5 @@
+> VENCIDO — executado em 21/09/2026 (b54787b). Não é instrução vigente.
+
 # Segunda, 21/09/2026 — o roteiro
 
 > **ROTEIRO VENCIDO.** Os Passos 1 a 3 foram feitos em 21/09; o Passo 3 é o commit `b54787b`.

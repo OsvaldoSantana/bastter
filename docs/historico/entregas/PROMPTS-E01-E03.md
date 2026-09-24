@@ -1,3 +1,5 @@
+> VENCIDO — executado em 14/09/2026 (3cd6517, 38fcfc4, 3c1f40e). Não é instrução vigente.
+
 # Prompts de Claude Code — E-01, E-02 e E-03
 
 Três remendos pequenos, independentes entre si, **nesta ordem** — E-01 tem número

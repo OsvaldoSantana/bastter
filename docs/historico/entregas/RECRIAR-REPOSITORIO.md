@@ -1,3 +1,5 @@
+> VENCIDO — executado em 11/09/2026 (b1d06f4, o primeiro push do histórico refeito). Não é instrução vigente.
+
 # Recriar o repositório no GitHub — 11/09/2026
 
 O local já está pronto: histórico limpo, `main` renomeada, `estado.yaml` fora do índice.

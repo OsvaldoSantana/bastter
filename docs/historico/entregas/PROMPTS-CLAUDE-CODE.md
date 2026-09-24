@@ -1,3 +1,5 @@
+> VENCIDO — executado em 11/09/2026 (9e1aa8a a 6378b0c). Não é instrução vigente.
+
 # Hora de começar o Claude Code — 11/09/2026
 
 **É agora, e eu devo o aviso que você pediu.**

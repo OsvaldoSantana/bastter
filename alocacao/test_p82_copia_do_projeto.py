@@ -29,10 +29,10 @@ pasta do projeto e inofensivo ate ser COMMITADO. O defeito nasce no `git add`. M
 instrumento do `test_p67_segredo.py`, que mede o indice para o `estado.yaml`.
 
 O QUE ELE NAO ENXERGA, declarado:
-  - prosa duplicada. `escopo-campos-de-analise.md` existe na raiz e em `auditoria/`
-    desde antes disto, e nao entra aqui: dois textos iguais confundem, dois MODULOS
-    iguais fazem o motor responder duas coisas. O risco nao e o mesmo e o remedio
-    tambem nao;
+  - prosa duplicada. `escopo-campos-de-analise.md` existiu na raiz e em `auditoria/`,
+    byte a byte igual, ate 24/09/2026 (a da raiz saiu na limpeza da raiz), e nao entrava
+    aqui: dois textos iguais confundem, dois MODULOS iguais fazem o motor responder duas
+    coisas. O risco nao e o mesmo e o remedio tambem nao;
   - copia com os arquivos RENOMEADOS. Se alguem copiar `motor.py` como `motor2.py`,
     a regra do nome nao pega -- pega a regra da pasta, se a pasta se chamar como um
     pacote; fora disso, passa;

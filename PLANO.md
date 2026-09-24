@@ -84,7 +84,7 @@ pela porta da frente. E M4 sem M2 é automatizar uma esteira que ainda não exis
 | **COTAHIST** | **41 anos no disco**; série **ajustada** de 2021–2025 contíguos desde 21/09 (C-02 na janela), com o controle fechando nos cinco anos. Antes de 2024 ela carrega bonificações que o silver não tem (A-11, P-112) |
 | **CVM — DFP/ITR** | **baixada em 18/09.** 33 ZIPs: DFP 2010–2026, ITR 2011–2026. Falta o manifesto com sha256 |
 | **CVM — cadastro** | **obtido em 03/09**, status COMPLETO. É por ele que a ponte ticker↔CD_CVM se faz |
-| **bitemporalidade** | desenhada (`DESENHO-PIPELINE.md`), **não implementada** |
+| **bitemporalidade** | desenhada (`docs/referencia/DESENHO-PIPELINE.md`), **não implementada** |
 
 ### O aparato de pré-registro (fechado em 18/09)
 

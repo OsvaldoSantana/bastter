@@ -387,6 +387,10 @@ fase0/
   subir_acervo_local.py  carga inicial do disco dele para o R2; plano por padrão
 .github/workflows/captura_cvm.yml   o executor diário da P-57
 docs/decisoes/     decisões com desenho, alternativas e riscos (`P-57.md`)
+docs/historico/entregas/  bilhetes de entrega VENCIDOS (LEIA-*, SEGUNDA-21, PROMPTS-*…),
+                   com índice em LEIA-ME.md. Registro, nunca instrução (§5-A)
+docs/referencia/   laudos e desenhos que saíram da raiz em 24/09 (DESENHO-PIPELINE,
+                   AUDITORIA-DEEPSEEK-CONFERIDA, laudo-*, Quanto-e-Onde.html…)
   ajustar.py       a série de preços ajustada por proventos
   refinar.py       o silver de eventos societários
 auditoria/         laudos de escopo, definições e os INSTRUMENTOS
@@ -532,6 +536,20 @@ Duas obrigações que a experiência deste projeto impôs:
 - **Revise a fila da seção 7 quando ela mudar.** Em 05/09 ela listava três itens
   já concluídos naquele mesmo dia. Fila desatualizada é pior que fila nenhuma:
   ela parece confiável.
+
+### Bilhete de entrega não vai para a raiz
+
+Decisão dele, **24/09/2026**. A raiz tinha 25 arquivos rastreados e 18 eram bilhete já
+executado (`LEIA-*`, `SEGUNDA-21`, `PROMPTS-*`…) ou laudo — e bilhete vencido na raiz tem a
+mesma cara de bilhete vigente: o `SEGUNDA-21.md` precisou de um "ROTEIRO VENCIDO" na primeira
+linha para não ser seguido de novo.
+
+**A regra:** o prompt vive no **chat**; o registro vive nos três arquivos — `CLAUDE.md`,
+`PENDENCIAS.md`, `PLANO.md`. Não se cria `LEIA-*.md`, roteiro de dia ou lista de entrega na
+raiz. Quem pode morar lá é dado: `auditoria/raiz_viva.yaml`, e `auditoria/test_raiz_viva.py`
+reprova arquivo rastreado fora da lista e `.md` novo no disco da raiz. Os bilhetes antigos
+estão em `docs/historico/entregas/` (índice no `LEIA-ME.md` de lá); laudos e desenhos, em
+`docs/referencia/`.
 
 ### Sempre registrar o que fazer quando a sessão voltar ao desktop
 
@@ -2202,7 +2220,7 @@ deixasse de ser o `pyproject.toml`. **Importei**, como o `refinar.py` faz desde 
   resposta.
 - **`ajustar.py` e `refinar.py` não passaram pelo container nesta rodada.** O
   `calendario.py` mudou de contrato (`registros()` agora confere cabeçalho; o leiaute vem do
-  YAML) e eu **não pude rodar os testes deles** — está escrito no `SEGUNDA-21.md` como o
+  YAML) e eu **não pude rodar os testes deles** — está escrito no `docs/historico/entregas/SEGUNDA-21.md` como o
   primeiro lugar onde olhar se a suíte quebrar. É a regra 12 da §5-B: eu entreguei um arquivo
   que outra ponta também toca.
   **21/09 — medido, e quebrava: 19 testes** (P-109). E "não pude rodar" era "não tentei": o

@@ -61,31 +61,11 @@ SEMPRE = {
 }
 SOB_DEMANDA = {
     "ACHADOS.md": "historia dos achados -- so quando a tarefa toca a area",
-    "SEGUNDA-21.md": "roteiro de um dia -- so na sessao de desktop",
-    "DEPENDE-DE-VOCE.md": "decisoes dele -- sob demanda",
-    "ENTREGA-19-09.md": "lista de conferencia de UMA entrega -- temporario. Terceira vez "
-                        "que este instrumento acusa um arquivo que eu mesmo criei e nao "
-                        "classifiquei, e as tres foram na mesma tarde: a contagem que decai "
-                        "so serve se quem cria o arquivo pagar o preco de classifica-lo.",
-    "README.md": "nao faz parte da leitura de sessao",
-    "DESENHO-PIPELINE.md": "desenho da Fase 0 -- so quando a tarefa toca o pipeline",
-    # 21/09/2026 (P-110). Os treze abaixo existem no repositorio desde agosto/setembro e o
-    # teste passou verde em 19/09 porque eu o rodei numa arvore de ENTREGA que nao os
-    # tinha. No repositorio real ele reprovou na primeira execucao. Classificados pelo que
-    # sao, lidos o titulo de cada um: nenhum entra na leitura de sessao.
-    "LEIA-AGORA.md": "roteiro de 10/09, VENCIDO -- historico, nenhuma sessao precisa ler",
-    "LEIA-NA-SEGUNDA.md": "roteiro de 14/09, VENCIDO -- idem",
-    "LEIA-NA-TERCA.md": "adendo de 06/09, VENCIDO -- idem",
-    "PROMPTS-CLAUDE-CODE.md": "prompts de 11/09 -- so ao abrir o Claude Code",
-    "PROMPTS-E01-E03.md": "prompts das etapas E-01 a E-03 -- idem",
-    "RECRIAR-REPOSITORIO.md": "procedimento de 11/09 -- so se o repositorio for recriado",
-    "AUDITORIA-DEEPSEEK-CONFERIDA.md": "laudo de 10/09 -- so quando a tarefa toca a area",
-    "auditoria-camada-alocacao.md": "laudo de agosto -- idem",
-    "escopo-campos-de-analise.md": "laudo de escopo de agosto -- idem",
-    "laudo-auditoria-consolidado.md": "laudo de agosto -- idem",
-    "laudo-pesquisa-custos.md": "laudo de agosto -- idem",
-    "relatorio-por-pesquisa.md": "relatorio de agosto -- idem",
-    "manual-desenvolvimento-assistido.md": "manual de metodo -- so quando se discute o metodo",
+    # 24/09/2026: a raiz foi limpa. Os bilhetes de entrega (LEIA-*, SEGUNDA-21, ENTREGA-19-09,
+    # PROMPTS-*, RECRIAR-REPOSITORIO, DEPENDE-DE-VOCE) foram para docs/historico/entregas/, e
+    # os laudos e desenhos para docs/referencia/. Quem pode morar na raiz e dado:
+    # auditoria/raiz_viva.yaml, guardado por test_raiz_viva.py. As treze linhas da P-110
+    # que estavam aqui descreviam arquivos que nao estao mais na raiz.
 }
 
 

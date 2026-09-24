@@ -81,7 +81,7 @@ março). Todo JCP pago nela sofreu 18%.
 
 ## 3. A correção que este arquivo faz — e ela é contra mim
 
-Em 12/09 eu escrevi aqui, e repeti no `CLAUDE.md` e no `LEIA-NA-SEGUNDA.md`:
+Em 12/09 eu escrevi aqui, e repeti no `CLAUDE.md` e no `docs/historico/entregas/LEIA-NA-SEGUNDA.md`:
 
 > *"Art. 14, I, 'b' da LC 224/2025: 'a partir do primeiro dia do quarto mês subsequente
 > ao de sua publicação'. Publicada em 26/12/2025 — o que dá **01/04/2026**. (Uma fonte

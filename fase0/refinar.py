@@ -13,7 +13,7 @@ ser calculado o campo vem VAZIO com o motivo escrito ao lado -- nunca zero, nunc
 palpite. E o F-02 aplicado a uma tabela: ausencia de insumo produz ausencia declarada.
 
 POR QUE CSV E NAO PARQUET, e a decisao e reversivel.
-O desenho (`DESENHO-PIPELINE.md`) previa Parquet. Para OITO MIL LINHAS, CSV ganha:
+O desenho (`docs/referencia/DESENHO-PIPELINE.md`) previa Parquet. Para OITO MIL LINHAS, CSV ganha:
   - nao acrescenta dependencia -- pyarrow mudaria a impressao do ambiente (P-15), e
     este modulo, como o coletar_b3, NAO produz numero de backtest: so transforma bytes;
   - e DIFFAVEL no git, o que faz o instantaneo dourado do protocolo de mudanca (passo 3)

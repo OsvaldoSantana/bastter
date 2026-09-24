@@ -1,3 +1,5 @@
+> VENCIDO — executado em 21/09/2026 (c6ccf2a). Não é instrução vigente.
+
 # Entrega de 19/09/2026 — os arquivos finais, com hash
 
 > **Encerrada em 21/09/2026: conferida e commitada em `c6ccf2a`.** Os hashes abaixo são os

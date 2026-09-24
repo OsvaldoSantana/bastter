@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Guarda de codigo morto do lado Python. Ponto "Campos mortos, 4a ocorrencia" de
-`AUDITORIA-DEEPSEEK-CONFERIDA.md`: o projeto tinha
+`docs/referencia/AUDITORIA-DEEPSEEK-CONFERIDA.md`: o projeto tinha
 `test_P28_secao_operacional_nao_tem_chave_morta` protegendo o YAML (chave declarada
 e nunca lida) e nada equivalente para o Python -- campo de dataclass ou constante de
 modulo declarado e nunca referenciado de novo. E o N-01 esperando acontecer do lado

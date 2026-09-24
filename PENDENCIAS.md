@@ -1248,7 +1248,7 @@ presumi: o K-01 fica como está até a captura do app confirmar.
 
 ## P-69 a P-72 · Auditoria externa (DeepSeek), conferida contra o código em 10/09
 
-**Documento:** `AUDITORIA-DEEPSEEK-CONFERIDA.md`. Auditoria de terceiro é **hipótese**, não
+**Documento:** `docs/referencia/AUDITORIA-DEEPSEEK-CONFERIDA.md`. Auditoria de terceiro é **hipótese**, não
 achado — cada item foi rodado antes de virar pendência. Os quatro críticos são verdadeiros.
 
 | # | item | classe | veredito |
@@ -1942,7 +1942,7 @@ por hash deu **100% de falso positivo** em 18/09.
 
 **Decisão dele:** é duplicata e não importa de onde veio — **sai do acervo.** Das duas
 saídas que a pendência oferecia (lembrar a origem, ou registrar origem desconhecida),
-ele escolheu a terceira, que estava escrita no `SEGUNDA-21.md` e é melhor que as duas:
+ele escolheu a terceira, que estava escrita no `docs/historico/entregas/SEGUNDA-21.md` e é melhor que as duas:
 **arquivo sem procedência não ganha uma linha dizendo que não tem procedência — ele sai
 de onde a procedência é obrigatória.**
 
@@ -2007,7 +2007,7 @@ confirmar que nada já entrou.
 ## P-99 · ~~O COTAHIST muda de convenção de nome~~ **CONSERTADA em 19/09, falta aplicar**
 
 **Dono:** Osvaldo (copiar os arquivos) · **Gatilho:** segunda 21/09, passo 1 de
-`SEGUNDA-21.md` · **Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
+`docs/historico/entregas/SEGUNDA-21.md` · **Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
 
 > **Consertada em 19/09, e eram TRÊS defeitos, não um.** Medido nos 9 ZIPs que estavam no
 > container: **7 de 9 devolviam ZERO registros em silêncio**; `arquivos()` faria quinze anos
@@ -2329,7 +2329,7 @@ Mais quatro menores na tabela §5 da auditoria. **P-100 passa a bloquear a famí
 
 **Dono:** — · **Classe:** `BLOQUEIA_O_SISTEMA`
 
-O `SEGUNDA-21.md` mandava criar o `origem.csv` com `Out-File -Encoding utf8`. No Windows
+O `docs/historico/entregas/SEGUNDA-21.md` mandava criar o `origem.csv` com `Out-File -Encoding utf8`. No Windows
 PowerShell 5.1 isso grava `EF BB BF` na frente — **medido no arquivo dele: 26 bytes, os três
 primeiros o BOM**. O leitor abria com `utf-8`, a primeira coluna virava `'\ufeffcaminho'`,
 e o filtro `r.get("caminho")` descartava **todas** as linhas sem erro nem aviso. Ele
@@ -2353,7 +2353,7 @@ que pegou a P-99. Os sintéticos do `test_ajustar.py` (sem header) e do `test_ca
 tinha declarado em 19/09 que não rodara esses testes; não tinha tentado — o repositório é
 público (§5-B.15).
 
-**E o roteiro mentia sobre o código.** O `SEGUNDA-21.md` de 19/09 dizia que *"arquivo que
+**E o roteiro mentia sobre o código.** O `docs/historico/entregas/SEGUNDA-21.md` de 19/09 dizia que *"arquivo que
 começa direto num registro de cotação é aceito, e a primeira linha não se perde"*. O
 `registros()` entregue não faz isso: ele exige o header e levanta. É o defeito recorrente da
 casa — *um arquivo declara um comportamento que o código não tem* —, escrito por mim no
@@ -2858,6 +2858,26 @@ naquela data. Sem isso, um diário perdido vira buraco calado na série diária 
 reconstruir do anual à mão: a forma do F-02, em que ausência de arquivo parece ausência de
 pregão.
 
+## P-138 · Confirmar a régua de "variante" do pré-registro — contador como alarme
+
+**Dono:** Osvaldo · **Gatilho:** antes da próxima emenda ou extensão de um pré-registro
+(a P-132 é a candidata) · **Classe:** `DECISAO_DE_DESENHO` ·
+**Origem:** item 6 do `DEPENDE-DE-VOCE.md` de 13/09 (hoje em
+`docs/historico/entregas/`), conferido em 24/09 na limpeza da raiz.
+
+A pergunta era: *"confirma o desenho?"* — especificação congelada, graus de liberdade
+declarados, diário de execuções, e o **contador de variantes como alarme** (exige
+justificativa escrita, **não** bloqueia), em `auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`.
+O desenho foi **implementado** em 18/09 (`alocacao/preregistro.py`) junto com as decisões
+2, 3 e 4, que ele respondeu. **A resposta ao item 6 não está registrada em lugar nenhum** —
+nem no `PENDENCIAS.md`, nem no `CLAUDE.md`, nem no laudo. Código construído sobre um desenho
+que ninguém confirmou é a U-01 do avesso: aqui não é o dado dele no caminho crítico, é a
+decisão dele fora do caminho.
+
+A resposta é `confirmo` ou o que ele mudaria; a escolha que mais pesa é **alarme × bloqueio**
+— a decisão 4 já fez divergência de veredito **bloquear**, e o contador ficou mais brando
+que ela.
+
 ## P-136 · Ler a licença de redistribuição comercial dos dados da B3 — portão antes de servir outro usuário
 
 **Dono:** Claude (leitura) · Osvaldo (decisão) · **Gatilho:** **antes de servir qualquer
@@ -3098,7 +3118,7 @@ máquina é o que fecha.**
 > (`subir_acervo_local.py --aplicar`, com as `R2_*` no ambiente) e a **primeira execução**
 > do workflow *Captura CVM*. O roteiro abaixo é de 19/09 e está cumprido nos passos 1–4.
 
-> # ▶ O roteiro completo está em **`SEGUNDA-21.md`**, na raiz.
+> # ▶ O roteiro completo está em **`docs/historico/entregas/SEGUNDA-21.md`**.
 >
 > *Reescrito em 19/09. Ele é autossuficiente: abrir e seguir de cima para baixo. Esta seção
 > só resume, para não haver duas listas discordando — foi assim que a versão de 06/09 ficou
@@ -3109,7 +3129,7 @@ máquina é o que fecha.**
 
 | passo | o que | tempo |
 |---|---|---|
-| 1 | copiar os 7 arquivos do chat (lista em `SEGUNDA-21.md`) | 5 min |
+| 1 | copiar os 7 arquivos do chat (lista em `docs/historico/entregas/SEGUNDA-21.md`) | 5 min |
 | 2 | **as três suítes verdes** — `origin/main` está VERMELHO (P-102) | 5 min |
 | 3 | commit + push | 2 min |
 | 4 | ~~**`ajustar.py` sobre 2021–2025 contíguos**~~ **FEITO em 21/09** — `auditoria/C02-JANELA-2021-2025.md` | — |

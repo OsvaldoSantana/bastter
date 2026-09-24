@@ -1,0 +1,22 @@
+# Quem pode morar na raiz do repositorio -- decisao dele, 24/09/2026.
+#
+# A raiz tinha 25 arquivos rastreados, e 18 eram bilhete de entrega ja executado ou laudo
+# de referencia. Um bilhete vencido na raiz tem a mesma cara de um vigente: o SEGUNDA-21.md
+# precisou de um aviso "ROTEIRO VENCIDO" na primeira linha para nao ser seguido de novo.
+#
+# A regra: o prompt vive no chat; o registro vive em CLAUDE.md, PENDENCIAS.md e PLANO.md.
+# Bilhete de entrega nao vai para a raiz. O que ja existe vai para `destinos`.
+#
+# Guarda: auditoria/test_raiz_viva.py -- arquivo rastreado na raiz fora desta lista
+# reprova, e `.md` novo no disco da raiz tambem (antes do `git add`).
+vivos:
+  CLAUDE.md: "instrucao, doutrina e historia -- lido em toda sessao"
+  PLANO.md: "onde queremos chegar e a ordem do que falta"
+  PENDENCIAS.md: "registro vivo do que esta aberto"
+  ACHADOS.md: "historia dos achados, sob demanda"
+  pyproject.toml: "versoes pinadas (P-15) e configuracao de lint e teste"
+  .gitignore: "o que nunca entra no indice"
+  .gitattributes: "fim de linha: o hash do dado nao muda com o CRLF"
+destinos:
+  bilhete: docs/historico/entregas/
+  referencia: docs/referencia/

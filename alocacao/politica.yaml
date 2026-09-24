@@ -2159,7 +2159,7 @@ limitacoes_declaradas:
       registro de toda observacao em docs/acervo/cvm/capturas.csv. O que continua
       NAO_CONSERTADO e o executor semanal sem mao humana (P-57). E a janela reescrita
       toda semana e 2022-2026, nao 2021-2026 (CV-02). O nome da chave fica: e citado
-      no changelog 1.21.0 e no SEGUNDA-21.md.
+      no changelog 1.21.0 e no docs/historico/entregas/SEGUNDA-21.md.
     decisao_2026_09_24: >
       O executor existe: .github/workflows/captura_cvm.yml, cron diario 09:15 UTC, com
       `capturar_cvm.py --armazem s3` subindo o byte para o Cloudflare R2 e o registro

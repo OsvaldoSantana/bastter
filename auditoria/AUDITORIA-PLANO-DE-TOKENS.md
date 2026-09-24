@@ -69,7 +69,7 @@ O Plano 1 §5 abre com *"criar `SESSION.md` e apagar a seção Ao voltar ao desk
 alegando **−2k/sessão**, e diz que os passos 1+2 entregam ~40% do ganho total.
 
 **Medido: a seção `## Ao voltar ao desktop` tem 25 linhas e 411 tokens.** Ela foi
-reescrita em 18/09 justamente para apontar para o `SEGUNDA-21.md` em vez de duplicá-lo.
+reescrita em 18/09 justamente para apontar para o `docs/historico/entregas/SEGUNDA-21.md` em vez de duplicá-lo.
 **O Plano 1 auditou a versão de antes** — a de ~120 linhas.
 
 Apagá-la rende **0,42%** da leitura inicial. A duplicação que ele aponta é real e vale

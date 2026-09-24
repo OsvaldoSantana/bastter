@@ -1297,7 +1297,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > (`CURY S/A` → `CURY` → **`CURY S.A.` → 20 registros**), exatamente como o B-03 previa.
 >
 > **A Fase 0 mudou de estado: deixou de ser coleta e virou refino.** O desenho está em
-> `DESENHO-PIPELINE.md`, e o achado que o organiza é este: **cada registro de provento
+> `docs/referencia/DESENHO-PIPELINE.md`, e o achado que o organiza é este: **cada registro de provento
 > traz `closingPricePriorExDate`**, o fechamento na véspera do ex. **A série de fatores
 > de ajuste pode ser construída inteira sem tocar no COTAHIST** — o preço só entra depois,
 > para aplicar. As duas metades do problema se separam, e a metade difícil já está no disco.
@@ -2524,7 +2524,7 @@ Sem nenhum dos dois, `vDESCONHECIDA`, nunca a data de hoje.
 
 *Worktree `sessao-b`, só em `alocacao/`. Juntada a `main` no mesmo dia. Os códigos nasceram
 provisórios (`B-n` sem zero, de 1 a 7) e foram renumerados no merge: o projeto já tinha B-01 a B-04 (aqui)
-e B-05 a B-10 (`auditoria-camada-alocacao.md`), e o `achados_ancorados.py` trata o `B-n` sem zero e o `B-0n`
+e B-05 a B-10 (`docs/referencia/auditoria-camada-alocacao.md`), e o `achados_ancorados.py` trata o `B-n` sem zero e o `B-0n`
 como códigos distintos — a máquina não confunde, um leitor confunde. Cada item tem o teste que
 **falha antes e passa depois**, e o "falha antes" foi **medido** — por mutação ou rodando o teste
 novo contra o arquivo de `HEAD`.*

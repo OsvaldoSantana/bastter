@@ -1,3 +1,5 @@
+> VENCIDO — executado em 14/09/2026 (c0cbda2). Não é instrução vigente.
+
 # Segunda, 14/09/2026 — o pacote completo
 
 > **Tudo isto veio num único `.zip`**, já com a árvore de pastas montada. Descompacte
