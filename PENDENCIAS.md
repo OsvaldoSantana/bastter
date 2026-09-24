@@ -2714,6 +2714,19 @@ usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declara
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
 
+## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
+
+**Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
+chamador fora do pipeline usar `custo_pct_aportado`/`arrasto_anualizado` · **Classe:**
+`BLOQUEIA_O_SISTEMA`
+
+Divergência 4 do B-16 (sessão B, 24/09). `alocacao.simular_custo` faz
+`c = min(e*aporte, aporte)`: quando o custo de entrada iguala ou passa o aporte, a rota
+come o aporte inteiro **sem dizer nada**. O `motor.simular` alertava (K-08.3) — e saiu com a
+P-43. No pipeline o G3 barra a rota antes, então hoje é inerte; quem chama as duas funções
+direto recebe um número sem o aviso. O conserto é o mesmo desenho do G3: devolver a condição
+em vez de engoli-la, com teste que reprove contra a versão atual.
+
 ## P-133 · O acervo da CVM tem 49 arquivos com sha256 e nenhum com origem declarada
 
 **Dono:** Claude Code · **Gatilho:** antes de a captura virar rotina (P-57) ·

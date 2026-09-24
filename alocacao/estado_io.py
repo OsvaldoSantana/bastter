@@ -14,7 +14,7 @@ Mesmo desenho do validador de tese: devolve TODOS os problemas de uma vez, separ
 o que bloqueia do que e aviso, e nao inventa valor nenhum.
 """
 from __future__ import annotations
-import dataclasses, os, re, sys, datetime as dt
+import dataclasses, os, re, sys, typing, datetime as dt
 import yaml
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -55,6 +55,12 @@ def _registro(x, classe, rot, problemas):
     campo em branco virava TypeError, chave errada sumia. Devolve None quando o
     registro nao se sustenta; o motivo ja esta em `problemas`."""
     campos = dataclasses.fields(classe)
+    # B-11: `f.type` e a ANOTACAO CRUA. Com `from __future__ import annotations` no
+    # modulo da classe ela e a string "str"; sem ele e a classe `str`. Comparar com
+    # "str" so funcionava porque o alocacao.py tem o __future__ -- um dataclass de
+    # outro modulo tinha o campo de texto mandado para `_num()` em silencio.
+    # `get_type_hints` resolve os dois casos para o tipo de verdade.
+    tipos = typing.get_type_hints(classe)
     nomes = [f.name for f in campos]
     if not isinstance(x, dict):
         problemas.append(f"{rot}: tem de ser um mapa com {nomes}"); return None
@@ -65,7 +71,7 @@ def _registro(x, classe, rot, problemas):
     vals = {}
     for f in campos:
         v = x.get(f.name)
-        if f.type == "str":
+        if tipos[f.name] is str:
             ok = isinstance(v, str) and v.strip()
             if not ok: problemas.append(f"{rot}.{f.name}: nao preenchido")
             vals[f.name] = v if ok else None

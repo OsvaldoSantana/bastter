@@ -67,6 +67,8 @@ from motor import carregar as carregar_custos
 # Nomes de modulo que a guarda vigia. Sao os objetos que os testes recebem prontos e
 # que NENHUM deles deveria alterar.
 COMPARTILHADOS = ("C", "P", "PESOS", "AP", "INST", "BASE", "TETO_COMP")
+# E as fixtures de sessao, que a guarda vigia pelo mesmo desenho (B-12).
+_SESSAO_VIGIADAS = ("custos_originais", "politica_original")
 
 
 def _impressao(o):
@@ -74,16 +76,33 @@ def _impressao(o):
 
 
 # ── Fixtures: o jeito SANCIONADO de alterar politica ─────────────────────────
+# B-12: as duas fixtures de SESSAO eram protegidas so pela docstring "NAO altere" --
+# disciplina, que e o que a P-38 recusa. E sao o pior lugar para uma mutacao vazar:
+# vivem a suite inteira e alimentam `custos`/`politica` de todo teste seguinte. A
+# guarda abaixo as vigia pelo mesmo desenho dos nomes de modulo: impressao ao nascer,
+# conferencia depois de cada teste que as recebeu, acusa e restaura no lugar.
+#
+# O que NAO se faz aqui, de proposito: limpar caches ou recarregar entre testes. Isso e
+# a opcao COPIAR SEMPRE do topo deste arquivo, com outro nome -- esconderia a classe do
+# S-02 em vez de acusa-la.
+_SESSAO: dict[str, tuple] = {}   # nome da fixture -> (impressao, copia pristina)
+
+
+def _vigiar(nome, obj):
+    _SESSAO[nome] = (_impressao(obj), copy.deepcopy(obj))
+    return obj
+
+
 @pytest.fixture(scope="session")
 def custos_originais():
-    """Carregado uma vez. NAO altere — use `custos` se precisar alterar."""
-    return carregar_custos()
+    """Carregado uma vez. NAO altere — use `custos` se precisar alterar. Vigiado (B-12)."""
+    return _vigiar("custos_originais", carregar_custos())
 
 
 @pytest.fixture(scope="session")
 def politica_original():
-    """Carregada uma vez. NAO altere — use `politica` se precisar alterar."""
-    return carregar_politica()
+    """Carregada uma vez. NAO altere — use `politica` se precisar alterar. Vigiada (B-12)."""
+    return _vigiar("politica_original", carregar_politica())
 
 
 @pytest.fixture
@@ -110,6 +129,10 @@ def guarda_de_estado_compartilhado(request):
     A guarda transforma a disciplina em garantia SEM tirar a disciplina do caminho:
     quem esquecer o deepcopy descobre no mesmo teste, com o nome do objeto."""
     mod = request.module
+    # B-12: so as fixtures de sessao que ESTE teste recebeu -- quem nao as pediu nao
+    # tem como altera-las, e conferir todas em todo teste pagaria a impressao a toa.
+    de_sessao = {n: request.getfixturevalue(n)
+                 for n in _SESSAO_VIGIADAS if n in request.fixturenames}
     antes = {}
     for nome in COMPARTILHADOS:
         if hasattr(mod, nome):
@@ -132,8 +155,15 @@ def guarda_de_estado_compartilhado(request):
         else:
             setattr(mod, nome, copy.deepcopy(pristino))
 
+    for nome, atual in de_sessao.items():
+        impressao, pristino = _SESSAO[nome]
+        if _impressao(atual) == impressao:
+            continue
+        sujos.append(f"fixture de sessao `{nome}`")
+        atual.clear(); atual.update(copy.deepcopy(pristino))   # no lugar: e um dict
+
     assert not sujos, (
-        f"este teste alterou objeto(s) compartilhado(s) do modulo: {', '.join(sujos)}. "
+        f"este teste alterou objeto(s) compartilhado(s): {', '.join(sujos)}. "
         f"O estado ja foi restaurado, entao os proximos testes nao herdam a sujeira — "
         f"mas o defeito e aqui. Use as fixtures `custos` / `politica`, que entregam "
         f"copia fresca, ou faca `copy.deepcopy` antes de alterar. (P-38)")

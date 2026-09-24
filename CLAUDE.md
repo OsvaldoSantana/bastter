@@ -936,6 +936,14 @@ só será usada em 2031.
 | **A-13** | O mesmo provento chega pelas **duas esteiras** da B3 e `_chave_de_evento` não o colapsa (`origem` entra nela pelo A-09). A cópia era inerte só por não ter preço — dar preço a ela subtrai o provento **duas vezes**. *Identidade de **pagamento** não é identidade de **registro**.* E a armadilha: **o agregado melhorava enquanto o ano quebrava** — critério de encolhimento **não detecta super-ajuste**, e quem pegou foi a **coluna de procedência** |
 | **P-114** | Raiz padrão apontando para a pasta errada não produz ausência, produz **recorte com cara de todo** — 1 ano de 41, e o relatório imprimindo `acervo COTAHIST_A2023`. E **um parâmetro que serve a dois acervos garante que mover um quebra o outro em silêncio**: a correção foi separar `--raiz` de `--cotahist`, não trocar a constante |
 | **P-125** | `conferir_cabecalho` devolvia `'.202'` como ano de 2026 — `[10:14]` pegava o ponto de `COTAHIST.`. **Retorno sem consumidor não é verificado por ninguém**: a docstring prometia o ano e o erro de um ficou mudo até o primeiro leitor (`nomear_extracoes.py`), que teria recusado as 41 cópias. E a fatia estava em Python, não no leiaute (P-130) |
+| **B-11** | `f.type == "str"` só funcionava por um `from __future__` alheio: **anotação crua não é tipo**. `typing.get_type_hints()` |
+| **B-12** | Fixture de sessão protegida por docstring é disciplina, não guarda: a vítima falhava longe do culpado. Guarda autouse detecta, acusa e restaura |
+| **B-13** | Guarda por nome escapa por alias e por `import *`. Toda guarda tem **controle** ao lado — uma que recusasse tudo também passaria |
+| **B-14** | Teste chamado *"continua bloqueando"* que não testa o bloqueio. O nome do teste é afirmação, e afirmação se mede |
+| **B-15** | O E-03 procurava a palavra `ativo` no fonte — o A-06 dentro da própria guarda. Virou comportamento: ligado reprova, desligado não |
+| **B-16** | `motor.simular` divergia até **17,4%** de `simular_custo` porque o F-01 só foi corrigido de um lado (A-07) — em código que só testes chamavam. Resolvido apagando o lado morto (P-43) |
+| **B-17** | `custodia_rv_interpretacao` só era lida no código morto; a produção concordava com o YAML **pelo default** da função. Chave lida por quem não roda é a P-77 |
+| **B-18** | Teste de subprocesso reprovava por um `PytestCacheWarning` do Windows: `-p no:cacheprovider`. Asserção por substring de contagem mede também os avisos |
 
 > **Narrativa de execução que saiu inteira** (registro, não instrução): as cinco rodadas de
 > 11/09 no Claude Code, os três marcos de 12/09, a suíte que deixou de fechar verde, a

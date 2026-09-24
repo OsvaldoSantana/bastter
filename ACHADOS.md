@@ -2517,3 +2517,90 @@ mesma versão passam a ter o **mesmo** nome, e o `sha12` no nome desempata vers�
 dia. O arquivo sem membro, o `cad_cia_aberta.csv`, usa o `Last-Modified`, **em GMT**: as
 duas convenções diferem por 3 h e estão declaradas no `capturar_cvm.data_da_versao`.
 Sem nenhum dos dois, `vDESCONHECIDA`, nunca a data de hoje.
+
+---
+
+## Sessão B, 24/09/2026 — itens de uma auditoria externa, B-11 a B-18
+
+*Worktree `sessao-b`, só em `alocacao/`. Juntada a `main` no mesmo dia. Os códigos nasceram
+provisórios (`B-n` sem zero, de 1 a 7) e foram renumerados no merge: o projeto já tinha B-01 a B-04 (aqui)
+e B-05 a B-10 (`auditoria-camada-alocacao.md`), e o `achados_ancorados.py` trata o `B-n` sem zero e o `B-0n`
+como códigos distintos — a máquina não confunde, um leitor confunde. Cada item tem o teste que
+**falha antes e passa depois**, e o "falha antes" foi **medido** — por mutação ou rodando o teste
+novo contra o arquivo de `HEAD`.*
+
+**O que NÃO foi aplicado:** C2, C3 e C5 da auditoria externa, por instrução — C2 + C3 juntos
+reabririam o **J-01** (reserva empenhada não é reserva).
+
+### B-11 · `estado_io._registro` só reconhecia campo de texto por causa de um `__future__` alheio
+
+`f.type == "str"`: `dataclasses.fields()` devolve a anotação **crua**, que só é a string `"str"`
+porque `alocacao.py` tem `from __future__ import annotations`. Num dataclass de módulo sem o
+`__future__`, `f.type is str`, a comparação dá `False`, e o campo de texto vai para `_num()`, que o
+reprova com *"'corrente' nao e numero"* — erro que não aponta para a causa. Conserto:
+`typing.get_type_hints(classe)`. Teste: `alocacao/test_b11_registro_sem_future.py` (3), com o
+dataclass escrito em disco e importado de verdade; o primeiro prende a pré-condição (sem
+`__future__`). **Falha antes:** 2 de 3 reprovam com o `estado_io.py` de `HEAD`.
+
+### B-12 · As fixtures de sessão eram protegidas por docstring
+
+`custos_originais` e `politica_original` (escopo `session`) tinham como única proteção *"NAO
+altere"* — disciplina, que a P-38 recusa, no pior lugar: vivem a suíte inteira e alimentam a porta
+sancionada de todo teste seguinte. Conserto no desenho da guarda existente: a fixture registra
+impressão e cópia pristina ao nascer; a guarda autouse confere depois de cada teste que **recebeu**
+a fixture (via `request.fixturenames`) e restaura com `clear()/update()`. **Não** se limpa cache nem
+se recarrega — seria o COPIAR SEMPRE que o `conftest.py` rejeita (S-02). Teste:
+`test_B12_a_guarda_vigia_as_fixtures_de_sessao`, por subprocesso. **Falha antes:** `2 failed, 2
+passed` — os dois culpados verdes, as duas vítimas vermelhas, longe da causa. Depois: só os
+culpados acusados, com o nome da fixture. Limite herdado: impressão por `repr()`.
+
+### B-13 · A guarda do `carregar` escapava por alias e por `import *`
+
+`test_usuario_novo` registrava `a.asname or a.name`: com `from estado_io import carregar as c`, a
+chamada `c()` escapava pelas duas pontas; `import *` trazia o `carregar` sem nomeá-lo. A lógica
+saiu para `_nomes_do_carregar(fonte)`, que registra o nome original e trata `*` como alcance.
+Teste: `test_B13_a_guarda_do_carregar_ve_alias_e_import_estrela`, 5 fontes — três que têm de ser
+pegas e **dois controles** (uma guarda que recusasse tudo passaria nas três). **Falha antes:** por
+mutação, alias e estrela reprovam. Fora do alcance (P5): `f = estado_io.carregar` e `getattr`.
+
+### B-14 · `test_P72_aporte_mensal_negativo_continua_bloqueando` não testava o bloqueio
+
+Chamava `carregar(..., exigir_real=False)` e conferia a lista. *Bloquear* é o que a porta faz no
+modo padrão: levantar `EstadoInvalido`. Agora `pytest.raises(EstadoInvalido, match="aporte_mensal =
+-100")`. **Falha antes:** com `carregar()` mutado para não honrar `exigir_real`, o antigo passa e o
+novo reprova com `DID NOT RAISE`.
+
+### B-15 · O teste do E-03 media a bandeira, não quem a honra
+
+`test_E03_todo_portao_que_declara_ativo_le_o_proprio_interruptor` procurava a palavra `ativo` em
+`inspect.getsource(fn)` — a forma do **A-06**. Virou comportamento: `_cenarios_E03()` dá a cada um
+dos nove portões um cenário em que ele, ligado, reprova algo; desligado, não reprova nada. Portão
+com `ativo` e sem cenário reprova. **Falha antes:** trocando no G7 `return pares, []` por `pass`,
+o teste de `HEAD` passa (a palavra está lá) e o novo reprova.
+
+### B-16 · `motor.simular` × `alocacao.simular_custo` — o F-01 não atravessou
+
+19 rotas confiáveis do `catalogo.yaml`, espelhadas num `motor.Rota` e simuladas pelas duas funções
+em três configurações (R$500 × 10a, R$500 × 25a, R$5.000 × 25a): **57 pares**. A aritmética do laço
+é a mesma (0 de 57 divergem com `adm_aa` ← `interno_aa`). Com o espelho honesto, **9 de 57
+divergem** — as três rotas com `custodia_interna_aa = 0,00025`: `bova11` até **+17,4%**,
+`bova11_xp` até +8,0%, `smal11` +4,3% (custo total, `alocacao` maior). O `motor.Rota` **não tem** o
+campo: o F-01 foi corrigido só do lado da alocação — o **A-07**. Inerte, porque `motor.simular` não
+tinha chamador de produção. Outras divergências: `anos` fracionário (`range` × `int`), custo de
+entrada ≥ aporte (o `motor` alerta, a `alocacao` faz `min()` calado → **P-134**), e as
+intencionais (bruto/custódia absorvida como parâmetros, contratos de retorno, `entrada_pct` ×
+`entrada_extra`). **Desfecho:** a P-43 apagou o lado morto — ver a P-43 em `PENDENCIAS.md`.
+
+### B-17 · `custodia_rv_interpretacao` concordava com o YAML por acidente
+
+A única leitura de `b3.custodia_rv_interpretacao` estava dentro de `motor.simular`, que só testes
+chamavam. O caminho de produção, `simular_custo`, usava o **default** `"deducao"` da função — igual
+ao YAML, por acidente. É a forma da **P-77**. Promovido na Tarefa 1 de 24/09 (ver o fechamento da
+P-43): `simular_custo` passa a ler a chave, e um teste exige que mudar o YAML mude o resultado.
+
+### B-18 · O P-38 falhava de vez em quando, e não era a guarda
+
+O subprocesso não desligava o cache do pytest. No Windows o rename da pasta de cache às vezes falha
+(`WinError 5`), sai um `PytestCacheWarning`, e a linha de contagem vira `2 passed, 1 warning, 1
+error` — a substring `"2 passed, 1 error"` reprova por um aviso alheio. Conserto: `-p
+no:cacheprovider` nos subprocessos. Reproduzido fora da suíte, com o aviso transcrito.

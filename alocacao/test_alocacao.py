@@ -17,7 +17,8 @@ from alocacao import (simular_custo as al_simular, Estado, Divida, Objetivo,
                       compor_reserva, segmentos_de_capacidade, InsumoBloqueado,
                       carregar_catalogo, _resolve, _conferir_invariantes,
                       fase_aporte, fase_universo, distribuir_por_funcao,
-                      custo_entrada_fixo_pct)
+                      custo_entrada_fixo_pct, g0_match_empregador, g1_divida,
+                      g7_tese_registrada, g8_compromisso_de_carrego)
 from tese import validar_tese, validar_carrego, impressao, impressao_carrego
 import ambiente
 
@@ -622,25 +623,80 @@ def _universo_real(politica):
     return r5
 
 
+def _cenarios_E03():
+    """Um cenario por portao em que ele, LIGADO, reprova alguma coisa. Cada entrada
+    devolve `f(P) -> (passaram, reprovados, total)`; para os portoes da fase `aporte`
+    "reprovar" e emitir diretiva ou pendencia -- desviar o dinheiro -- e "passar" e
+    devolver None, deixando o aporte seguir."""
+    cat = catalogo(C)
+    rotas = _universo_real(P)
+    pares, _ = g3_atrito(rotas, C, P, 500.0)
+    vivos, _, _ = g4_dominancia(pares, C, 500.0, P, 25)
+    com_match = Estado(**BASE, match_empregador=MatchEmpregador(0.5, 0.06, 10000.0))
+    divida_cara = Estado(**{**BASE, "dividas": [Divida("cartao", 5000, 0.10)]})
+    sem_reserva = Estado(**{**BASE, "reserva_atual": 0.0})
+
+    def aporte(chamada):
+        def f(Px):
+            saida = chamada(Px)
+            saida = saida if isinstance(saida, tuple) else (saida,)
+            desvios = [x for x in saida if x is not None]
+            return ([] if desvios else ["aporte"]), desvios, 1
+        return f
+
+    def universo(chamada, n):
+        def f(Px):
+            saida = chamada(Px)
+            return saida[0], [x for resto in saida[1:] for x in resto], n
+        return f
+
+    return {
+        "G0_match_empregador": aporte(lambda Px: g0_match_empregador(com_match, cat, C, Px)),
+        "G1_divida": aporte(lambda Px: g1_divida(divida_cara, cat, C, Px)),
+        "G2_reserva": aporte(lambda Px: g2_reserva(sem_reserva, cat, C, Px)),
+        "G3_atrito": universo(lambda Px: g3_atrito(rotas, C, Px, 500.0), len(rotas)),
+        "G4_dominancia": universo(lambda Px: g4_dominancia(pares, C, 500.0, Px, 25),
+                                  len(pares)),
+        "G5_status": universo(lambda Px: g5_status(cat, Px), len(cat)),
+        "G6_coerencia_funcao": universo(lambda Px: g6_coerencia_funcao(cat, Px), len(cat)),
+        "G7_tese_registrada": universo(lambda Px: g7_tese_registrada(vivos, Px, {}),
+                                       len(vivos)),
+        "G8_compromisso_de_carrego": universo(
+            lambda Px: g8_compromisso_de_carrego(vivos, Px, {}), len(vivos)),
+    }
+
+
 def test_E03_todo_portao_que_declara_ativo_le_o_proprio_interruptor():
     """Fecha a CLASSE, nao os dois casos. Qualquer portao que declare `ativo` no
-    politica.yaml e tenha funcao de mesmo nome em minusculas precisa LER o campo --
-    senao o decimo portao repete o E-03. Interruptor morto nao da erro: da conclusao
-    errada em analise de sensibilidade, que e para isso que este projeto existe."""
-    import inspect
+    politica.yaml precisa HONRAR o campo -- senao o decimo portao repete o E-03.
+    Interruptor morto nao da erro: da conclusao errada em analise de sensibilidade,
+    que e para isso que este projeto existe.
 
-    import alocacao as _mod
-    mudos = []
-    for nome, cfg in P["portoes"].items():
-        if not isinstance(cfg, dict) or "ativo" not in cfg:
-            continue
-        fn = getattr(_mod, nome.lower(), None)
-        if not callable(fn):
-            continue
-        if "ativo" not in inspect.getsource(fn):
+    B-15 (24/09/2026): ate aqui o teste procurava a palavra `ativo` no codigo-fonte da
+    funcao -- a forma do A-06, *medir a bandeira nao e medir quem a honra*. Um
+    `if g["ativo"]: pass`, ou um comentario com a palavra, passava. Agora mede o
+    COMPORTAMENTO: com `ativo: true` o portao reprova algo no cenario; com
+    `ativo: false`, no mesmo cenario, nao reprova nada e deixa passar tudo. Portao com
+    `ativo` e sem cenario aqui reprova -- o decimo portao tem de trazer o seu."""
+    cenarios = _cenarios_E03()
+    sem_cenario = [n for n, cfg in P["portoes"].items()
+                   if isinstance(cfg, dict) and "ativo" in cfg and n not in cenarios]
+    assert not sem_cenario, f"portao com `ativo` e sem cenario no E-03: {sem_cenario}"
+    mudos, cenario_fraco = [], []
+    for nome, f in cenarios.items():
+        ligado, desligado = copy.deepcopy(P), copy.deepcopy(P)
+        ligado["portoes"][nome]["ativo"] = True
+        desligado["portoes"][nome]["ativo"] = False
+        _, reprovados_on, _ = f(ligado)
+        passaram_off, reprovados_off, total = f(desligado)
+        if not reprovados_on:
+            cenario_fraco.append(nome)
+        if reprovados_off or len(passaram_off) != total:
             mudos.append(nome)
-    assert not mudos, ("portao declara `ativo` no YAML e a funcao NAO le o campo: "
-                       + ", ".join(mudos) + ". Desligar no arquivo nao desligaria nada.")
+    assert not cenario_fraco, ("o cenario nao faz o portao reprovar nada nem LIGADO, "
+                               "entao desligar nao provaria nada: " + ", ".join(cenario_fraco))
+    assert not mudos, ("portao declara `ativo` no YAML e desliga-lo NAO desliga a "
+                       "eliminacao: " + ", ".join(mudos))
 
 
 def test_E03_g3_desligado_nao_elimina_ninguem():
@@ -2380,7 +2436,8 @@ def test_P38_a_guarda_acusa_o_teste_que_suja_o_estado_compartilhado(tmp_path):
         "def test_que_suja():\n"
         "    P['tetos']['aposta_pct'] = 0.99\n"
         "    assert True\n", encoding="utf-8")
-    r = subprocess.run([sys.executable, "-m", "pytest", "-q", str(tmp_path / "test_sujo.py")],
+    r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                        str(tmp_path / "test_sujo.py")],
                        capture_output=True, text=True, cwd=str(tmp_path))
     assert r.returncode != 0, "o teste que sujou o compartilhado tinha de dar vermelho"
     assert "alterou objeto(s) compartilhado(s)" in r.stdout
@@ -2409,7 +2466,11 @@ def test_P38_a_guarda_restaura_para_que_so_o_culpado_falhe(tmp_path):
         "    P['tetos']['aposta_pct'] = 0.99\n"
         "def test_b_que_herdaria_a_sujeira():\n"
         "    assert P['tetos']['aposta_pct'] == ORIGINAL\n", encoding="utf-8")
-    r = subprocess.run([sys.executable, "-m", "pytest", "-q", str(tmp_path / "test_dois.py")],
+    # B-18: sem `-p no:cacheprovider`, o Windows as vezes nega o rename da pasta de
+    # cache (WinError 5), sai um PytestCacheWarning e a linha vira "2 passed, 1
+    # warning, 1 error" -- a substring abaixo reprovava por um aviso alheio a guarda.
+    r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                        str(tmp_path / "test_dois.py")],
                        capture_output=True, text=True, cwd=str(tmp_path))
     assert "2 passed, 1 error" in r.stdout, \
         f"esperado: os dois testes passam a execucao e SO o culpado erra na limpeza. "\
@@ -2427,3 +2488,33 @@ def test_P38_as_fixtures_entregam_copia_e_nao_a_original(custos, politica,
     politica["tetos"]["aposta_pct"] = 0.99
     assert custos_originais["macro"]["cdi_aa"]["valor"] != 0.99
     assert politica_original["tetos"]["aposta_pct"] != 0.99
+
+
+def test_B12_a_guarda_vigia_as_fixtures_de_sessao(tmp_path):
+    """B-12: `custos_originais` e `politica_original` eram protegidas so pela docstring
+    "NAO altere". Mesmo desenho do teste da P-38: um pytest SEPARADO sobre um arquivo
+    que as suja de proposito. Os testes `b` e `d` sao a prova da RESTAURACAO -- `d`
+    recebe `custos`, a copia fresca, que e feita a partir da original: sem restaurar,
+    a sujeira de `c` chegaria nele pela porta sancionada."""
+    import subprocess, shutil
+    for f in ("conftest.py", "alocacao.py", "motor.py", "tese.py", "custos.yaml",
+              "politica.yaml", "perfil.yaml", "catalogo.yaml", "teses.yaml"):
+        shutil.copy(os.path.join(AQUI, f), tmp_path / f)
+    (tmp_path / "test_sessao.py").write_text(
+        "def test_a_suja_a_politica(politica_original):\n"
+        "    politica_original['tetos']['aposta_pct'] = 0.99\n"
+        "def test_b_herdaria_a_politica(politica_original):\n"
+        "    assert politica_original['tetos']['aposta_pct'] != 0.99\n"
+        "def test_c_suja_os_custos(custos_originais):\n"
+        "    custos_originais['macro']['cdi_aa']['valor'] = 0.99\n"
+        "def test_d_herdaria_pela_copia(custos):\n"
+        "    assert custos['macro']['cdi_aa']['valor'] != 0.99\n", encoding="utf-8")
+    r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider",
+                        str(tmp_path / "test_sessao.py")],
+                       capture_output=True, text=True, cwd=str(tmp_path))
+    assert "4 passed, 2 errors" in r.stdout, (
+        f"esperado: os quatro passam a execucao e SO os dois culpados erram na limpeza. "
+        f"Saida:\n{r.stdout[-1500:]}")
+    assert "fixture de sessao `politica_original`" in r.stdout
+    assert "fixture de sessao `custos_originais`" in r.stdout
+    assert "test_b_herdaria" not in r.stdout and "test_d_herdaria" not in r.stdout

@@ -145,33 +145,57 @@ def test_a_reserva_alvo_reage_ao_perfil_e_nao_e_um_numero_fixo():
     assert reserva_alvo(com_filhos, P) > a_base
 
 
+def _nomes_do_carregar(fonte):
+    """Os nomes pelos quais `fonte` alcanca `estado_io.carregar`. Vazio = nao alcanca.
+
+    A guarda pegou o proprio autor em 06/09/2026, e por isso ela foi AFIADA em vez
+    de afrouxada. O proibido nao e o modulo `estado_io` — e a funcao `carregar()`,
+    que le o `estado.yaml` do Osvaldo do caminho padrao. `validar(d)` sobre um dict
+    e legitimo: valida o MODELO, nao a pessoa.
+
+    B-13 (24/09/2026): o import registrava `a.asname or a.name`, entao
+    `from estado_io import carregar as c` entrava como "c" e a chamada `c()` e
+    `ast.Name`, nao `ast.Attribute` -- escapava pelas duas pontas. Agora conta o nome
+    ORIGINAL. E `from estado_io import *` traz o `carregar` sem nomea-lo: sem saber o
+    que entrou, a guarda recusa."""
+    import ast
+    nomes = set()
+    for n in ast.walk(ast.parse(fonte)):
+        if isinstance(n, ast.ImportFrom) and n.module == "estado_io":
+            nomes |= {a.name for a in n.names}
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute):
+            nomes.add(n.func.attr)
+    return nomes & {"carregar", "*"}
+
+
 def test_nenhum_teste_deste_arquivo_toca_o_estado_do_osvaldo():
     """A garantia estrutural: a primeira experiencia nao pode depender do estado.yaml,
     que e de UMA pessoa. Se algum teste daqui passar a le-lo, ele deixa de medir o
     sistema e passa a medir o Osvaldo."""
-    import ast
-    arvore = ast.parse(open(__file__, encoding="utf-8").read())
-    importados = set()
-    for n in ast.walk(arvore):
-        if isinstance(n, ast.ImportFrom) and n.module: importados.add(n.module)
-        elif isinstance(n, ast.Import): importados |= {a.name for a in n.names}
-    # A guarda pegou o proprio autor em 06/09/2026, e por isso ela foi AFIADA em vez
-    # de afrouxada. O proibido nao e o modulo `estado_io` — e a funcao `carregar()`,
-    # que le o `estado.yaml` do Osvaldo do caminho padrao. `validar(d)` sobre um dict
-    # e legitimo: valida o MODELO, nao a pessoa.
-    nomes = set()
-    for n in ast.walk(arvore):
-        if isinstance(n, ast.ImportFrom) and n.module == "estado_io":
-            nomes |= {a.asname or a.name for a in n.names}
-        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute):
-            nomes.add(n.func.attr)
-    assert "carregar" not in nomes, (
-        "este arquivo chama `estado_io.carregar()`, que le o estado.yaml do Osvaldo. A "
-        "primeira experiencia tem de ser construida do zero, como um cadastro faria — "
-        "senao ela deixa de medir o SISTEMA e passa a medir uma pessoa.")
+    alcance = _nomes_do_carregar(open(__file__, encoding="utf-8").read())
+    assert not alcance, (
+        f"este arquivo alcanca `estado_io.carregar()` por {sorted(alcance)}, e ela le o "
+        "estado.yaml do Osvaldo. A primeira experiencia tem de ser construida do zero, "
+        "como um cadastro faria — senao ela deixa de medir o SISTEMA e passa a medir "
+        "uma pessoa.")
     # e a prova positiva: os cenarios sao montados a mao, com o cadastro minimo
     assert set(CADASTRO_MINIMO) == {"despesa_mensal", "estabilidade_renda",
                                     "horizonte_anos", "aporte_mensal"}
+
+
+@pytest.mark.parametrize("fonte, pega", [
+    ("import estado_io\nestado_io.carregar()\n", True),
+    ("from estado_io import carregar as c\nc()\n", True),          # B-13: escapava
+    ("from estado_io import *\ncarregar()\n", True),               # B-13: escapava
+    ("from estado_io import validar\nvalidar({})\n", False),       # legitimo
+    ("from motor import carregar as carregar_custos\ncarregar_custos()\n", False),
+])
+def test_B13_a_guarda_do_carregar_ve_alias_e_import_estrela(fonte, pega):
+    """A guarda provada numa fonte SINTETICA, e nao so neste arquivo: aplicada a si
+    mesma ela so prova que ninguem chama `carregar` hoje, nao que chamar seria pego.
+    As duas ultimas linhas sao o controle -- uma guarda que recusasse tudo tambem
+    passaria nas tres primeiras."""
+    assert bool(_nomes_do_carregar(fonte)) is pega
 
 
 # ══ P-48 · o modelo de estado, e a fronteira que ele torna visivel ═══════════

@@ -39,6 +39,8 @@ import os
 import sys
 import textwrap
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import estado_io
@@ -115,6 +117,11 @@ def test_P72_aporte_mensal_negativo_continua_bloqueando(tmp_path):
     d, problemas, avisos = estado_io.carregar(path=str(p), exigir_real=False)
     assert any("aporte_mensal" in x and "-100" in x for x in problemas), (
         f"aporte_mensal negativo tem de continuar bloqueando: {problemas}")
+    # B-14: a linha de cima prova que o problema e REGISTRADO, com `exigir_real=False`.
+    # "Bloqueando" e o que a porta faz no modo padrao -- levantar. Um `carregar()` que
+    # deixasse de honrar `exigir_real` passaria pela linha de cima.
+    with pytest.raises(estado_io.EstadoInvalido, match="aporte_mensal = -100"):
+        estado_io.carregar(path=str(p), exigir_real=True)
 
 
 # ── segunda metade (11/09/2026): a porta aceitava o que o validador existe para
