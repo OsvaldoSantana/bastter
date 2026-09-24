@@ -264,8 +264,45 @@ py -3.11 fase0/capturar_cvm.py --dry-run    # o que baixaria; não grava byte ne
 Os arquivos ficam em `data/bronze/cvm/{dfp,itr,cad}/`. A versão deslocada vai para
 `<recurso>/_snapshots/<stem>__v<AAAAMMDD>__<sha12>.zip`, com a data **da versão** (CV-03).
 O **registro** de toda observação HTTP, inclusive `inalterado`, fica em
-`docs/acervo/cvm/capturas.csv`, versionado; o manifesto do disco fica ao lado. Onde ela roda
-toda semana é a P-57 e **ainda não está decidido**. Até lá é um comando, não uma rotina.
+`docs/acervo/cvm/capturas.csv`, versionado; o manifesto do disco fica ao lado.
+
+**Onde ela roda — P-57, decidida em 24/09 (`docs/decisoes/P-57.md`).** Todo dia às 09:15 UTC,
+no GitHub Actions (`.github/workflows/captura_cvm.yml`), sem a máquina dele:
+
+```bash
+python fase0/capturar_cvm.py --armazem s3               # o que o workflow roda
+python fase0/capturar_cvm.py --armazem s3 --cache data/armazem   # e guarda cópia local
+```
+
+| o quê | onde |
+|---|---|
+| o byte de cada versão | Cloudflare R2, `cvm/<recurso>/<arquivo>/<sha256>.<ext>` — nunca sobrescrito |
+| o que mudou (novo, atualizado, rejeitado, erro, hash coincide) | `docs/acervo/cvm/capturas.csv`, commitado pelo `github-actions[bot]` |
+| a prova de cada rodada, inalterados inclusive | R2, `logs/capturas/<AAAA-MM-DD>.csv` |
+| o que a carga inicial subiu do disco dele | `docs/acervo/<fonte>/inventario-armazem.csv` |
+| cópia local de quem abriu | `data/armazem/<chave>` (ignorado pelo git) |
+
+Credenciais **só** por variável de ambiente (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+`R2_SECRET_ACCESS_KEY`, `R2_BUCKET`), segredos do repositório no workflow. Nunca num arquivo,
+nunca num log. Criar conta ou mexer em credencial é dele.
+
+**Como abrir uma versão** — nunca pelo caminho do disco, que só tem o que esta máquina viu:
+
+```python
+import acervo                                            # fase0/acervo.py
+acervo.abrir("dfp", "dfp_cia_aberta_2024.zip")           # a vigente
+acervo.abrir("dfp", "dfp_cia_aberta_2024.zip", "0dd854dc")   # uma anterior, por prefixo de sha256
+```
+
+Procura no cache, depois no `data/bronze/`, depois no R2 — e confere o sha256. E mede o
+frescor: mais de 8 dias sem observação levanta o aviso `CapturaParada`, porque o GitHub
+desliga cron de repositório parado há 60 dias **sem erro nenhum**. `python fase0/acervo.py
+--frescor [--armazem s3]` mede à mão e sai 1 se algo parou.
+
+**Até a primeira execução verde**, a limitação `captura_da_cvm_e_manual_e_o_dado_e_perecivel`
+continua declarada (P7: página de limite lida não é rotina rodando). O COTAHIST ainda **não**
+roda na nuvem (P-135) — e o motivo **não** é validação por imagem: o arquivo é GET aberto,
+medido de novo em 24/09.
 
 **Dependências: só no `pyproject.toml`, com pino exato (`==`), e em lugar nenhum
 mais.** Não existe `requirements.txt` de propósito — duas listas de versões que
@@ -331,7 +368,13 @@ fase0/
   capturar_cvm.py  a captura da CVM: índice → HEAD → download conferido (Content-Length +
                    `testzip`) → snapshot com a data da versão. Registro em
                    `docs/acervo/cvm/capturas.csv`. Escrito por outra IA em 24/09 e auditado
-                   no mesmo dia (CV-01 a CV-03)
+                   no mesmo dia (CV-01 a CV-03). Com `--armazem s3`, sobe para o R2 (P-57)
+  armazem.py       o armazém de objetos: chave = conteúdo, nunca sobrescreve, confere sha256
+                   nas duas pontas. `ArmazemS3` (R2) e `ArmazemMemoria` (testes)
+  acervo.py        a porta de LEITURA: `abrir(recurso, arquivo, versao)` e `frescor(recurso)`
+  subir_acervo_local.py  carga inicial do disco dele para o R2; plano por padrão
+.github/workflows/captura_cvm.yml   o executor diário da P-57
+docs/decisoes/     decisões com desenho, alternativas e riscos (`P-57.md`)
   ajustar.py       a série de preços ajustada por proventos
   refinar.py       o silver de eventos societários
 auditoria/         laudos de escopo, definições e os INSTRUMENTOS

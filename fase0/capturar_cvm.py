@@ -24,6 +24,20 @@ auditado e corrigido em 24/09/2026 (Claude Code). As correcoes, cada uma com tes
        repositorio;
   2.8  ao fim de uma captura sem erro, roda o `manifesto_cvm.py` sobre a raiz.
 
+MODO ARMAZEM (P-57, 24/09/2026 -- docs/decisoes/P-57.md). Com `--armazem s3` o byte nao
+fica no disco: baixa para um temporario, passa pela mesma conferencia (2.5), sobe para o
+armazem com a chave de conteudo `cvm/<recurso>/<arquivo>/<sha256>.<ext>` e registra. Toda
+versao tem endereco proprio, entao nao ha `_snapshots/` nem linha `deslocado`. O disco
+local vira opcional (`--cache`). E o registro se parte em dois:
+  - `docs/acervo/cvm/capturas.csv` (git) recebe o que MUDA o estado: novo, atualizado,
+    rejeitado, erro -- e o `inalterado` por "hash coincide", que traz um Last-Modified
+    novo. Sem ele o portao HEAD compararia sempre com o Last-Modified velho e baixaria o
+    mesmo arquivo todo dia, para sempre;
+  - `logs/capturas/<AAAA-MM-DD>.csv` (armazem) recebe a rodada INTEIRA, inalterados
+    inclusive. E a prova de que a rotina rodou -- com captura diaria, no git seriam 365
+    commits de ruido por ano. Uma segunda rodada no mesmo dia nao sobrescreve a primeira:
+    vira `<AAAA-MM-DD>__<HHMMSS>Z.csv`.
+
 DOIS PAPEIS, E NAO SE MISTURAM (N-01). O REGISTRO (`docs/acervo/<acervo>/capturas.csv`,
 versionado) e o diario do HTTP: URL, Last-Modified, ETag, bytes, e o sha256 dos bytes
 RECEBIDOS. So metadado -- nenhum byte da CVM entra no git. O MANIFESTO (`manifesto_cvm.py`)
@@ -47,6 +61,8 @@ USO
   python fase0/capturar_cvm.py --escopo recentes    # so filtro
   python fase0/capturar_cvm.py --arrumar            # plano de arrumacao do acervo
   python fase0/capturar_cvm.py --arrumar --aplicar
+  python fase0/capturar_cvm.py --armazem s3         # nuvem: credenciais R2_* no ambiente
+  python fase0/capturar_cvm.py --armazem s3 --cache data/armazem
 """
 from __future__ import annotations
 
@@ -61,6 +77,7 @@ import re
 import shutil
 import stat
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -76,6 +93,7 @@ try:
 except ImportError as e:                                     # pragma: no cover
     raise ImportError("capturar_cvm precisa de fase0/manifesto_cvm.py: a raiz do "
                       "repositorio e o retrato do disco moram la (N-01)") from e
+import armazem as armazem_mod  # noqa: E402
 
 INDICES = {
     "dfp": "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/",
@@ -89,6 +107,8 @@ ANOS_NA_JANELA = 5
 RAIZ_RELATIVA = os.path.join("data", "bronze", "cvm")
 SNAPSHOTS = "_snapshots"
 DESCONHECIDA = "DESCONHECIDA"
+FONTE = "cvm"
+LOGS = "logs/capturas"
 RETENTAVEIS = (429, 500, 502, 503, 504)
 
 COLUNAS = ("dt_captura", "recurso", "arquivo", "url", "http_last_modified", "etag",
@@ -341,6 +361,15 @@ def baixar(url, destino_part, abrir, dormir):
     return h.hexdigest(), n, lm, etag
 
 
+def portao_fechado(anterior, meta, forcar=False):
+    """O portao HEAD: mesmo Last-Modified e mesmo tamanho que a ultima versao aceita. Uma
+    funcao, dois modos (disco e armazem) -- duas copias desta condicao concordariam por
+    acidente ate o dia em que uma mudasse (A-07)."""
+    return bool(not forcar and anterior and meta["last_modified"]
+                and anterior.get("last_modified") == meta["last_modified"]
+                and anterior.get("bytes") == meta["tamanho"])
+
+
 def capturar(url, recurso, raiz, registro, estado, *, abrir=urllib.request.urlopen,
              dormir=time.sleep, dry_run=False, forcar=False, saida=print):
     """Uma URL, um desfecho. Devolve a situacao."""
@@ -357,9 +386,7 @@ def capturar(url, recurso, raiz, registro, estado, *, abrir=urllib.request.urlop
     base = dict(recurso=recurso, arquivo=nome, url=url,
                 http_last_modified=meta["last_modified"], etag=meta["etag"], caminho=rel)
 
-    if (not forcar and anterior and meta["last_modified"]
-            and anterior.get("last_modified") == meta["last_modified"]
-            and anterior.get("bytes") == meta["tamanho"]):
+    if portao_fechado(anterior, meta, forcar):
         if dry_run:
             saida(f"[=] {rel}  inalterado")
             return INALTERADO
@@ -427,6 +454,86 @@ def deslocar(caminho, last_modified=""):
         os.replace(caminho, alvo)
         motivo = ""
     return dict(caminho=alvo, sha256=digest, bytes=n, motivo=motivo)
+
+
+# ── modo armazem (P-57) ───────────────────────────────────────────────────────
+
+def capturar_para_armazem(url, recurso, raiz, registro, estado, armazem, *,
+                          abrir=urllib.request.urlopen, dormir=time.sleep, forcar=False,
+                          cache=None, diario=None, saida=print):
+    """Uma URL, um desfecho, sem disco permanente. Devolve a situacao.
+
+    `diario` recebe TODA linha da rodada (vai para o log do armazem); o registro recebe
+    so as que mudam o estado. `caminho` continua sendo o caminho logico do arquivo
+    canonico, o mesmo do modo disco: e por ele que `estado_do_registro` acha a versao
+    anterior, e os dois modos compartilham o portao."""
+    diario = [] if diario is None else diario
+    nome = url.rsplit("/", 1)[-1]
+    rel = relativo(os.path.join(raiz, recurso, nome), raiz)
+    anterior = estado.get(rel)
+    meta = metadados(url, abrir, dormir)
+    base = dict(recurso=recurso, arquivo=nome, url=url,
+                http_last_modified=meta["last_modified"], etag=meta["etag"], caminho=rel)
+
+    def nota(linha, no_registro=True):
+        diario.append({c: linha.get(c, "") for c in COLUNAS})
+        if no_registro:
+            anotar(registro, linha)
+
+    if portao_fechado(anterior, meta, forcar):
+        nota(dict(base, dt_captura=agora(), bytes=meta["tamanho"], situacao=INALTERADO,
+                  motivo="portao HEAD"), no_registro=False)
+        saida(f"[=] {rel}  inalterado (LM={meta['last_modified']})")
+        return INALTERADO
+
+    with tempfile.TemporaryDirectory(prefix="captura_cvm_") as tmp:
+        part = os.path.join(tmp, nome + ".part")
+        try:
+            digest, n, lm, etag = baixar(url, part, abrir, dormir)
+        except Rejeitado as e:
+            nota(dict(base, dt_captura=agora(), situacao=REJEITADO, motivo=str(e)))
+            saida(f"[!] {rel}  REJEITADO: {e} -- a versao anterior ficou intacta")
+            return REJEITADO
+        base.update(http_last_modified=lm or meta["last_modified"], etag=etag or meta["etag"])
+        k = armazem_mod.chave(FONTE, recurso, nome, digest)
+        # a versao vigente tem de estar no armazem mesmo quando o byte nao mudou: antes da
+        # carga inicial (subir_acervo_local.py) ela so existia no disco dele
+        enviado = armazem.enviar_se_ausente(k, part)
+        if cache:
+            armazem_mod.copiar_para_cache(part, cache, k)
+    estado[rel] = dict(sha256=digest, bytes=n, last_modified=base["http_last_modified"],
+                       etag=base["etag"])
+    if anterior and anterior.get("sha256") == digest:
+        nota(dict(base, dt_captura=agora(), sha256=digest, bytes=n, situacao=INALTERADO,
+                  motivo="hash coincide"))
+        saida(f"[=] {rel}  inalterado (hash coincide, Last-Modified novo)")
+        return INALTERADO
+    situacao = NOVO if anterior is None else ATUALIZADO
+    nota(dict(base, dt_captura=agora(), sha256=digest, bytes=n, situacao=situacao,
+              motivo="" if enviado else "versao ja estava no armazem"))
+    saida(f"[+] {rel}  {n:,} bytes  sha256={digest[:12]}  -> {k}")
+    return situacao
+
+
+def enviar_diario(armazem, diario, momento=None):
+    """O log da rodada vai para `logs/capturas/<AAAA-MM-DD>.csv`. Se ja houver um do dia,
+    `<AAAA-MM-DD>__<HHMMSS>Z.csv`, e depois `..._2`, `_3` -- o armazem nunca sobrescreve,
+    e o log da primeira rodada e prova tanto quanto o da segunda. Devolve a chave usada."""
+    momento = momento or dt.datetime.now(dt.timezone.utc)
+    with tempfile.TemporaryDirectory(prefix="diario_cvm_") as tmp:
+        p = os.path.join(tmp, "diario.csv")
+        with open(p, "w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=COLUNAS, delimiter=";")
+            w.writeheader()
+            for ln in diario:
+                w.writerow({c: ln.get(c, "") for c in COLUNAS})
+        k = f"{LOGS}/{momento:%Y-%m-%d}.csv"
+        n = 1
+        while not armazem.enviar_se_ausente(k, p):
+            n += 1
+            sufixo = "" if n == 2 else f"_{n - 1}"
+            k = f"{LOGS}/{momento:%Y-%m-%d}__{momento:%H%M%S}Z{sufixo}.csv"
+        return k
 
 
 # ── arrumacao do acervo (plano, depois --aplicar, como no nomear_extracoes) ──
@@ -578,7 +685,8 @@ def _tirar_somente_leitura(funcao, caminho, _exc):
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
-def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=None):
+def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=None,
+         armazem=None):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--raiz", default=None,
                    help=f"acervo (padrao: {RAIZ_RELATIVA} sob a raiz do repositorio)")
@@ -592,6 +700,11 @@ def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=
     p.add_argument("--arrumar", choices=["snapshots", "limpeza"],
                    help="mostra o plano de arrumacao do acervo; com --aplicar, executa")
     p.add_argument("--aplicar", action="store_true")
+    p.add_argument("--armazem", choices=["s3"],
+                   help="sobe para o armazem em vez de guardar no disco (P-57); "
+                        "credenciais so por variavel de ambiente R2_*")
+    p.add_argument("--cache", default=None,
+                   help="com --armazem: guarda tambem uma copia em <cache>/<chave>")
     a = p.parse_args(argv)
     raiz = os.path.abspath(a.raiz or raiz_padrao())
     registro = a.registro or registro_padrao(raiz)
@@ -609,6 +722,15 @@ def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=
             aplicar(plano)
             print("aplicado.")
         return 1 if cont[PARAR] else 0
+
+    if a.armazem:
+        if a.dry_run:
+            raise SystemExit("--dry-run e do modo disco: no armazem, saber o que mudou "
+                             "exige baixar, e baixar e o que o dry-run promete nao fazer")
+        return _main_armazem(a, raiz, registro, abrir, dormir,
+                             armazem or armazem_mod.do_ambiente(a.armazem))
+    if a.cache:
+        raise SystemExit("--cache so vale com --armazem")
 
     estado = carregar_estado(raiz, registro)
     resumo = {}
@@ -643,6 +765,45 @@ def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=
               f"captura incompleta nao e retrato", file=sys.stderr)
         return 1
     (manifestar or (lambda r: manifesto_cvm.main(["--manifesto", r])))(raiz)
+    return 0
+
+
+def _main_armazem(a, raiz, registro, abrir, dormir, armazem):
+    """O estado vem SO do registro versionado: o `estado.json` local e cache de uma
+    maquina, e o runner nao tem maquina. O log vai para o armazem sempre -- com falha
+    inclusive, porque rodar e falhar tambem e prova de que rodou."""
+    estado = estado_do_registro(ler_registro(registro))
+    diario, resumo = [], {}
+    try:
+        lista = alvos(a.escopo, abrir, dormir)
+    except (urllib.error.URLError, RuntimeError) as e:
+        print(f"[!] falha lendo o indice: {e}", file=sys.stderr)
+        linha = dict(dt_captura=agora(), situacao=ERRO, motivo=f"indice: {e}")
+        anotar(registro, linha)
+        diario.append(linha)
+        print(f"log: {enviar_diario(armazem, diario)}")
+        return 1
+    for url, recurso in lista:
+        try:
+            s = capturar_para_armazem(url, recurso, raiz, registro, estado, armazem,
+                                      abrir=abrir, dormir=dormir, forcar=a.forcar,
+                                      cache=a.cache, diario=diario)
+        except (urllib.error.URLError, OSError) as e:
+            s = ERRO
+            print(f"[!] {url}  ERRO: {e}", file=sys.stderr)
+            linha = dict(dt_captura=agora(), recurso=recurso, url=url,
+                         arquivo=url.rsplit("/", 1)[-1], situacao=ERRO, motivo=str(e))
+            anotar(registro, linha)
+            diario.append(linha)
+        resumo[s] = resumo.get(s, 0) + 1
+        if a.pausa:
+            dormir(a.pausa)
+    print("  ".join(f"{k} {v}" for k, v in sorted(resumo.items())))
+    print(f"log: {enviar_diario(armazem, diario)}")
+    falhou = resumo.get(ERRO, 0) + resumo.get(REJEITADO, 0)
+    if falhou:
+        print(f"{falhou} falha(s)", file=sys.stderr)
+        return 1
     return 0
 
 

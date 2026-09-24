@@ -893,6 +893,34 @@ ausência de linha. **Onde ele roda toda semana continua aberto e é decisão de
 limitação `captura_da_cvm` segue declarada até a primeira execução sem mão humana. Cada
 semana sem rodar é uma versão perdida (CV-01).
 
+**24/09/2026 — DECIDIDA e construída: GitHub Actions + Cloudflare R2.** Decisão técnica
+delegada ao Claude; desenho, alternativas descartadas, riscos e defesas em
+**`docs/decisoes/P-57.md`**. Construído e testado sem rede (63 testes novos em `fase0/`: 340 → 403):
+
+| peça | arquivo |
+|---|---|
+| armazém (nunca sobrescreve; confere sha256 na subida e na descida) | `fase0/armazem.py` |
+| captura na nuvem (`--armazem s3`, `--cache`) | `fase0/capturar_cvm.py` |
+| leitura e frescor (`abrir`, `frescor` > 8 dias → `CapturaParada`) | `fase0/acervo.py` |
+| carga inicial (plano; `--aplicar`) | `fase0/subir_acervo_local.py` |
+| executor diário | `.github/workflows/captura_cvm.yml` |
+
+**Desvio do pedido, com o motivo:** o `inalterado` por *hash coincide* vai para o
+`capturas.csv`, não para o log — é a única linha que leva o `Last-Modified` novo ao estado;
+sem ela o portão baixaria o mesmo arquivo todo dia. Os `inalterado` do portão HEAD vão para
+`logs/capturas/<AAAA-MM-DD>.csv` no armazém, como pedido.
+
+**O que falta para fechar, em ordem** — ⚙ **os dois primeiros exigem o desktop**:
+1. `py -3.11 -m pip install "boto3==1.43.101"` e, com as `R2_*` no ambiente,
+   `py -3.11 fase0/subir_acervo_local.py --aplicar` (87 arquivos, 1.565 MiB no plano de 24/09).
+   Commitar os dois `inventario-armazem.csv` que ele grava.
+2. Disparar o workflow **Captura CVM** pela aba Actions (ou esperar o cron das 09:15 UTC) e
+   conferir que ficou verde e que `logs/capturas/<dia>.csv` apareceu no bucket.
+3. Com a primeira execução verde: tirar `captura_da_cvm_e_manual_e_o_dado_e_perecivel` de
+   `limitacoes_declaradas` — e declarar o regime automático onde o
+   `test_P7_todo_acervo_tem_regime_de_captura_declarado` o leia, senão ele reprova no mesmo
+   minuto (é o desenho dele). Aí esta pendência fecha.
+
 ---
 
 ## P-58 a P-61 · Regimes de leitura de balanço — a pergunta que expôs o defeito
@@ -2753,6 +2781,37 @@ usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declara
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
 
+## P-135 · O COTAHIST ainda não é capturado na nuvem
+
+**Dono:** Claude · **Gatilho:** depois da primeira execução verde da captura da CVM (P-57) ·
+**Classe:** `BLOQUEIA_O_SISTEMA`
+
+O executor da P-57 cobre só a CVM. O `COTAHIST_A<ANO>.ZIP` do ano corrente muda todo dia
+útil e hoje só é baixado quando ele roda o laço na máquina. **Não é validação por imagem** —
+o pedido de 24/09 mandava declarar isso, e o HEAD do mesmo dia respondeu `200`, com
+`Content-Length`, `Last-Modified` e `ETag` (transcrito em `docs/decisoes/P-57.md` e em
+`limitacoes_declaradas.captura_do_cotahist_ainda_nao_e_rotina.medido_2026_09_24`). É a
+§5-B.13 de novo, e desta vez pega antes de entrar no arquivo.
+
+**Pesquisa, e depois conserto:** (1) medir se a B3, atrás da Cloudflare, responde igual a um
+IP de datacenter do GitHub — um `workflow_dispatch` com um HEAD resolve, e o erro, se houver,
+se transcreve; (2) se responder, estender a captura (mesmo portão HEAD, mesma chave de
+conteúdo `b3/cotahist/...`, mesma regra 2.5 — a P-100 mostrou que o ano corrente chega em
+streaming); (3) se não responder, a limitação muda de texto para o erro medido, e o
+`o_que_resolveria` passa a ser o que ele disser.
+
+## P-136 · Ler a licença de redistribuição comercial dos dados da B3 — portão antes de servir outro usuário
+
+**Dono:** Claude (leitura) · Osvaldo (decisão) · **Gatilho:** **antes de servir qualquer
+usuário além dele** · **Classe:** `DECISAO_DE_DESENHO`
+
+Hoje o dado da B3 (COTAHIST, eventos societários) é guardado para um usuário, num armazém
+privado. A U-01 pergunta *"se esta ferramenta fosse vendida"*: nesse dia o sistema passaria a
+redistribuir dado da B3 sem ninguém ter lido se pode. A leitura é com fonte primária e data de
+acesso, para `docs/fontes/`; a mesma pergunta vale para a CVM (dados abertos) e é
+provavelmente mais simples. Declarada em
+`limitacoes_declaradas.licenca_de_redistribuicao_da_b3_nao_lida`.
+
 ## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
@@ -2975,6 +3034,11 @@ máquina é o que fecha.**
 ---
 
 ## Ao voltar ao desktop
+
+> **24/09/2026 — o que vem primeiro agora é a P-57, e são dois passos dele** (a ordem e os
+> comandos estão na própria P-57): a **carga inicial** para o R2
+> (`subir_acervo_local.py --aplicar`, com as `R2_*` no ambiente) e a **primeira execução**
+> do workflow *Captura CVM*. O roteiro abaixo é de 19/09 e está cumprido nos passos 1–4.
 
 > # ▶ O roteiro completo está em **`SEGUNDA-21.md`**, na raiz.
 >

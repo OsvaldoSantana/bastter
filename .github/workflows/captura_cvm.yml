@@ -1,0 +1,74 @@
+# Captura diaria da CVM (DFP, ITR, CAD) -- P-57, docs/decisoes/P-57.md.
+#
+# Roda sem a maquina dele ligada (P7). O byte vai para o armazem (Cloudflare R2); o git
+# recebe so o registro, e so quando ele muda. A prova de que a rotina rodou num dia sem
+# mudanca e o log `logs/capturas/<AAAA-MM-DD>.csv` no armazem.
+#
+# Falha = job vermelho, e o GitHub avisa por e-mail. O registro e commitado MESMO com
+# falha (uma linha `rejeitado` e historia), e so depois o job fica vermelho.
+#
+# Credenciais: segredos do repositorio R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
+# R2_SECRET_ACCESS_KEY, R2_BUCKET. Nenhum passo os imprime.
+
+name: Captura CVM
+
+on:
+  schedule:
+    - cron: '15 9 * * *'          # 06:15 em Brasilia, todo dia
+  workflow_dispatch:
+
+# duas capturas ao mesmo tempo disputariam o registro e o armazem: a segunda espera
+concurrency:
+  group: captura-cvm
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  captura:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar
+        run: python -m pip install ".[captura]"
+
+      - name: Capturar
+        id: captura
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          set +e
+          python fase0/capturar_cvm.py --armazem s3
+          echo "codigo=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Commitar o registro, se mudou
+        if: always()
+        run: |
+          set -euo pipefail
+          REG=docs/acervo/cvm/capturas.csv
+          if git diff --quiet -- "$REG"; then
+            echo "registro inalterado: nada a commitar (a prova da rodada esta no log do armazem)"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$REG"
+          git commit -m "Captura CVM $(date -u +%Y-%m-%d): registro"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+
+      - name: Falhar se a captura falhou
+        if: always() && steps.captura.outputs.codigo != '0'
+        run: |
+          echo "a captura saiu com codigo '${{ steps.captura.outputs.codigo }}'"
+          exit 1

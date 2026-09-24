@@ -42,6 +42,15 @@
 #
 # MEDIDO ANTES DE APAGAR: a impressao digital do ambiente e 7565df1381e2c1ed com e
 # sem esta secao. A remocao nao pode invalidar resultado pre-registrado nenhum.
+#
+# ── 24/09/2026 (P-57): agora ALGUEM instala -- o workflow da captura ───────────
+# `pip install ".[captura]"` no runner do GitHub. A premissa acima ("ninguem instala")
+# deixou de ser verdade, e com ela a razao de nao declarar pacotes. A saida e a que o
+# B-04 ja apontava: `[tool.setuptools] packages = []`, no fim deste arquivo. O build
+# passa a existir e instala so as dependencias -- nenhum modulo vira pacote, e os
+# imports continuam por caminho. MEDIDO: sem a linha, `pip wheel .` morre em "Multiple
+# top-level packages discovered in a flat-layout"; com ela, constroi. Nao ha
+# [build-system]: o padrao do pip (setuptools) serve, e declara-lo seria outra promessa.
 # ─────────────────────────────────────────────────────────────────────────────
 
 [project]
@@ -77,6 +86,12 @@ lint = [
   "ruff==0.15.11",
   "mypy==1.20.2",
   "types-PyYAML",
+]
+# P-57 (24/09/2026). So a captura na nuvem usa: `fase0/armazem.py` importa o boto3
+# dentro do ArmazemS3, e a suite roda sem ele. Fora da impressao do ambiente pelo mesmo
+# motivo do `lint`: transporte de byte nao muda numero nenhum -- o sha256 confere.
+captura = [
+  "boto3==1.43.101",
 ]
 
 [tool.pytest.ini_options]
@@ -189,3 +204,7 @@ ignore_missing_imports = true
 check_untyped_defs = false
 warn_unused_ignores = true
 warn_redundant_casts = true
+
+# P-57: o build existe para o `pip install ".[captura]"` do workflow, e nao empacota nada.
+[tool.setuptools]
+packages = []
