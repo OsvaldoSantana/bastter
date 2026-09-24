@@ -2844,6 +2844,14 @@ na primeira rodada de cada mês; 404 do diário → `ausente` no log, sem vermel
 fica como instrumento manual. **Falta para fechar:** a primeira execução verde **com** o
 passo `captura_b3` — até lá `captura_do_cotahist_ainda_nao_e_rotina` fica de pé.
 
+**24/09, 19:01Z — verde, com o COTAHIST.** Execução `36045126980`: os 5 diários (17 a 23/09)
+e o `COTAHIST_A2026.ZIP` (84.469.516 B, sha256 `4f2cf2aac107…`) subiram como `novo`; log em
+`logs/capturas_b3/2026-09-24.csv`; o bot commitou o registro novo (`c2c0040`) — o `git
+status` no lugar do `git diff` funcionou na primeira. **O que resta para fechar é o mesmo
+passo 3 da P-57:** tirar `b3` de `captura_do_cotahist_ainda_nao_e_rotina` exige declarar o
+regime automático onde o `test_P7_todo_acervo_tem_regime_de_captura_declarado` o leia —
+e o desenho dessa declaração serve às duas fontes de uma vez.
+
 ## P-137 · Conciliar os diários do COTAHIST contra o anual do mês
 
 **Dono:** Claude Code · **Gatilho:** no primeiro dia 1º com diários e anual no armazém

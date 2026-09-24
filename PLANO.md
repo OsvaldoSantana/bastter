@@ -271,11 +271,14 @@ não sustenta ordenar as boas (`criterio_nao_e_previsao`).
 
 **O que impede hoje:** o passo 1.
 
-### 6 · A rotina semanal sem humano · ⚙ decisão + Claude Code
+### ~~6 · A rotina semanal sem humano~~ — **RODANDO desde 24/09/2026**, diária
 
-**O que destrava:** o M4, e a honestidade do acervo. Enquanto o download for manual, a P7
-manda **declarar a limitação** — e ela está declarada. GitHub Actions em repositório público
-é a escolha registrada (§11.6).
+`.github/workflows/captura_cvm.yml`, 09:15 UTC, sem a máquina dele: CVM (DFP, ITR, CAD) e,
+no mesmo job, COTAHIST (diário a cada pregão, anual uma vez por mês), para o Cloudflare R2
+com teto de 9 GB no código. Primeiras execuções verdes: `36043565046` (CVM) e `36045126980`
+(com o COTAHIST). **O que sobra é pequeno e está nas pendências:** declarar o regime
+automático para as duas limitações de captura saírem (P-57 passo 3, P-135), e a conciliação
+dos diários contra o anual (P-137, gatilho 01/10).
 
 ### Fora da fila, mas com custo em toda sessão
 
