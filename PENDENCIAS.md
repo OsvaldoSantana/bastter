@@ -2703,6 +2703,19 @@ usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declara
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
 
+## P-132 · Emenda ao pré-registro v2 (período de desenvolvimento) — fundamento só existe a partir de 27/01/2011
+
+**Dono:** Osvaldo (decisão) · **Gatilho:** antes da montagem da ML-1 e antes de qualquer
+resultado; a emenda vai empurrada antes (P-116) · **Classe:** `DECISAO_DE_DESENHO`
+
+Achado CV-04. O `preregistro-ml-v2.md` §2 declara período desde jan/2010 *"com fundamentos DFP
+desde 2010"*, e a regra `DT_RECEB` ≤ data de decisão deixa **0 empresas** com fundamento de
+jan a dez/2010: o menor `DT_RECEB` do `dfp_2010` é **27/01/2011**, e não existe ITR de 2010.
+Jan/2011 tem 3 empresas, fev/2011 82, **mar/2011 510**. As opções, sem recomendar: começar o
+desenvolvimento quando o fundamento chega (e em que limiar de cobertura), ou manter jan/2010
+declarando que os primeiros ~14 meses rodam só com variável de preço. **O `preregistro-ml-v2.md`
+não foi tocado.**
+
 ## ~~P-131~~ · `nomear_extracoes.plano()` não confere o que já tem o nome certo — **FECHADA em 24/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** — · **Classe:** `BLOQUEIA_O_SISTEMA`

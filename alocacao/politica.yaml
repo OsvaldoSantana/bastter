@@ -13,10 +13,16 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.23.0
+  versao: 1.24.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.24.0: >-
+      24/09/2026. `limitacoes_declaradas` ganha `itr_da_cvm_comeca_em_2011` (FISICA). A
+      medicao CV-04 mostrou que, com DT_RECEB <= data de decisao, nenhuma empresa tem
+      fundamento em 2010: o primeiro DT_RECEB do dfp_2010 e 27/01/2011. O periodo de
+      desenvolvimento do pre-registro ML v2 comeca em jan/2010; a emenda e decisao dele
+      (P-132) e nao foi feita aqui.
     1.23.0: >-
       23/09/2026. Regua 5-B.16 -- ausencia de dado por problema tecnico e pendencia de
       conserto, nunca limitacao declarada. Nasceu de uma retratacao: o
@@ -2276,3 +2282,26 @@ limitacoes_declaradas:
       pagina que a resume (5-B.5). E uma captura; ninguem tentou.
     pendencia: P-119
     fonte: "auditoria/C02-JANELA-2021-2025.md; auditoria/P113-MEDIDO.md"
+
+  itr_da_cvm_comeca_em_2011:
+    tipo: FISICA
+    o_que_falta: >
+      O indice de dados abertos da CVM (CIA_ABERTA/DOC/ITR/DADOS/) nao tem itr_cia_aberta_2010:
+      a captura de 24/09/2026 listou 2010-2020 e o primeiro ITR e o de 2011. O DFP comeca
+      em dfp_cia_aberta_2010 (exercicio de 2010), cujo menor DT_RECEB e 27/01/2011.
+      Medido em 24/09/2026 (CV-04): com a regra DT_RECEB <= ultimo pregao do mes, nenhuma
+      empresa tem documento disponivel de jan/2010 a dez/2010. O primeiro mes com algum e
+      jan/2011 (3 empresas); a massa chega em mar/2011 (510).
+    direcao_do_vies: >
+      Nenhum sobre o sinal: a regra de disponibilidade recusa o dado ausente em vez de
+      inventa-lo. O efeito e de COBERTURA -- todo mes anterior a 2011 fica sem variavel
+      contabil, e um periodo declarado a partir de jan/2010 com fundamento e promessa que
+      o dado nao cumpre (pendencia P-132).
+    por_que_fisica: >
+      A CVM publica o historico de DFP desde 2010 e de ITR desde 2011, nas palavras dela:
+      "Historico desde 2010" (docs/fontes/cvm-dfp-politica-atualizacao.md) e "Historico
+      desde 2011" (docs/fontes/cvm-itr-politica-atualizacao.md). Estava escrito no
+      repositorio desde 06/09; o pre-registro v2 nao cruzou com a regra de DT_RECEB.
+      Documento anterior nao esta em dados abertos. E FISICA enquanto a CVM nao publicar anos anteriores; buscar o
+      ITR de 2010 no ENET documento a documento seria outra fonte, com outra procedencia.
+    fonte: "ACHADOS.md CV-04; indice da CVM lido pela captura de 24/09/2026 (tools/baixar_cvm.py)"

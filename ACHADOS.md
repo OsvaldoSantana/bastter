@@ -2394,3 +2394,55 @@ depender de por qual porta ele entrou. Valor comparado como número, nunca como 
 **Guarda:** `fase0/test_p113_preco_de_vespera.py`, 17 testes. O que nomeia o achado reintroduz
 a duplicata por mutação e exige **as duas** consequências: 2025 quebra (t +0,39 → +6,31) **e** o
 agregado melhora. Um teste que só verificasse o número certo não documentaria a armadilha.
+
+---
+
+## CV-04 · O pré-registro v2 promete fundamento desde jan/2010, e o primeiro chega em 27/01/2011
+
+*24/09/2026, medido sem alterar nada, antes de construir a montagem (§11.1).*
+
+O `preregistro-ml-v2.md` §2 diz: *"Período: jan/2010 a ago/2026 (fundamentos DFP desde
+2010 …)"*, e na mesma seção: *"variável contábil só entra se `DT_RECEB` ≤ data de decisão"*.
+As duas frases estão certas cada uma por si. Juntas, não fecham: o `dfp_cia_aberta_2010`
+é o **exercício** de 2010, e ele foi **entregue** em 2011.
+
+**A medição**, sobre o acervo capturado em 24/09 (os CSVs de índice dentro dos ZIPs, uma linha
+por documento e versão; data de decisão = último pregão do mês pelo `calendario.pregoes()`,
+496 pregões em 2010–2011):
+
+| arquivo | linhas | empresas | menor `DT_RECEB` |
+|---|---|---|---|
+| `dfp_cia_aberta_2010.csv` | 1.113 | 663 | **2011-01-27** |
+| `itr_cia_aberta_2011.csv` | 2.510 | 678 | **2011-04-04** |
+
+Não existe `itr_cia_aberta_2010` no índice da CVM. A fonte já dizia isso desde 06/09
+(*"Histórico desde 2011"*, `docs/fontes/cvm-itr-politica-atualizacao.md`).
+
+Empresas (`CD_CVM`) com pelo menos um documento de `DT_RECEB` ≤ último pregão do mês, somando
+dfp 2010–2011 e itr 2011–2012:
+
+| mês | empresas | só DFP | só ITR |
+|---|---|---|---|
+| jan/2010 … dez/2010 | **0** | 0 | 0 |
+| jan/2011 | 3 | 3 | 0 |
+| fev/2011 | 82 | 82 | 0 |
+| mar/2011 | 510 | 510 | 0 |
+| abr/2011 | 593 | 593 | 22 |
+| mai/2011 | 618 | 618 | 573 |
+| jun/2011 | 635 | 635 | 602 |
+| dez/2011 | 675 | 670 | 662 |
+
+**Doze meses sem fundamento nenhum**, justamente no começo do desenvolvimento (jan/2010 a
+dez/2019). A regra de disponibilidade faz o que deve: recusa o dado que não existia. O que
+estava errado era a frase do período.
+
+**Duas curiosidades observadas e não investigadas, com n:** o `dfp_cia_aberta_2011.csv` tem
+linhas com `DT_REFER` 2011-03-31 (o mínimo do arquivo), e o `itr_cia_aberta_2012.csv` tem um
+documento com `DT_RECEB` 2011-11-11 para um `DT_REFER` de 2012. Nenhuma das duas muda a tabela
+acima: ambas estão depois de dez/2010.
+
+**A regra:** um período declarado **com** uma variável começa no primeiro `DT_RECEB` dela,
+não no primeiro `DT_REFER`. Ano do exercício não é ano da disponibilidade. **O que fica
+aberto:** a emenda ao pré-registro é decisão dele e vai empurrada antes de qualquer resultado
+(P-116): P-132. O limite da fonte está em `limitacoes_declaradas → itr_da_cvm_comeca_em_2011`
+(FISICA).
