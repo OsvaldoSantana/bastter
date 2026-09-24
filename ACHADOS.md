@@ -2518,6 +2518,60 @@ dia. O arquivo sem membro, o `cad_cia_aberta.csv`, usa o `Last-Modified`, **em G
 duas convenções diferem por 3 h e estão declaradas no `capturar_cvm.data_da_versao`.
 Sem nenhum dos dois, `vDESCONHECIDA`, nunca a data de hoje.
 
+## CH-01 · O anual do COTAHIST muda de sha256 sem mudar de conteúdo: a B3 reordena ao regerar
+
+*24/09/2026. Medido, sem mudar código. Script e saída em nenhum lugar versionado: os números
+estão aqui, e o método em três frases no fim.*
+
+A captura de 24/09 trouxe um `COTAHIST_A2026.ZIP` **menor** que o de 21/09, com três pregões
+a mais. Dois bytes-de-verdade, os dois conferidos pelo sha256 do registro (o novo
+rebaixado da própria B3 em 24/09 19:22 UTC, com o mesmo `ETag` `d0e7bd48b54bdd1:0` e o mesmo
+`Last-Modified`; os cinco diários também, os cinco batendo com `docs/acervo/b3/capturas.csv`):
+
+| | `fb3546ed…` (baixado 21/09) | `4f2cf2aa…` (Last-Modified 23/09 23:43) |
+|---|---|---|
+| ZIP | 85.779.964 B | 84.469.516 B |
+| membro `file_size` | 709.321.015 | 721.181.214 (+11.860.199 = 48.017 × 247) |
+| header / trailer | `…20260918` | `…20260923` |
+| `TOTREG` = registros `01` contados | 2.871.743 = 2.871.743 | 2.919.760 = 2.919.760 |
+| pregões | 179, 02/01 → 18/09 | 182, 02/01 → 23/09 |
+| **trechos contíguos de uma mesma data** | **94.173** | **364** (= 2 × 182) |
+
+**Os 179 pregões em comum diferem todos** no sha256 das linhas do dia, na ordem do arquivo —
+e **todos os 179 são o mesmo multiconjunto de linhas**: mesmo número de registros, e o
+sha256 das linhas **ordenadas** coincide dia a dia. Não há papel a mais, a menos, nem campo
+nenhum diferente em dia nenhum. A janela do pré-registro v2 (02/01 a 31/08: 166 pregões,
+2.632.789 registros) tem a mesma impressão de conteúdo nas duas versões:
+`sha256(registros 01 ordenados) = ab74104d4aec2da2f0bab5ae0bd7b2d725096e9dbc3d876fb67246330dbfe972`.
+
+**O que mudou foi a ordem.** O arquivo de 18/09 intercala datas (94 mil trechos: blocos de
+dezenas de linhas de janeiro, de setembro, de janeiro de novo); o de 23/09 passa duas vezes
+pelo calendário, cada dia em dois trechos contíguos. Linhas vizinhas mais parecidas
+comprimem melhor — é por isso que o ZIP **encolheu** enquanto o conteúdo **cresceu** 1,7%.
+
+**E os diários:** dos cinco (17, 18, 21, 22 e 23/09), os cinco têm exatamente o multiconjunto
+do mesmo dia no anual novo; **só o de 23/09 tem também a mesma ordem.** 17 e 18/09 também
+batem, como conjunto, com o anual velho.
+
+**O que isto diz, e o que não diz (régua §5-B.1).** Mede **um** par de versões, a cinco
+dias de distância, sobre 179 pregões: nesse par, a B3 regerou o anual e **não revisou dia
+nenhum**. Não mede que a B3 nunca revise — `n = 1` par. E derruba duas suposições que o
+projeto ia herdar da CVM sem medir:
+
+1. **sha256 do ZIP não é identidade de conteúdo no COTAHIST** — o `REORDENADO` × `REAPRESENTADO`
+   do `manifesto_cvm.comparar()`, agora na B3. Um detector de revisão por hash acusaria
+   revisão em 179 de 179 dias;
+2. **conciliação diário × anual não pode ser por linha na ordem** (P-137): quatro de cinco
+   diários reprovariam sem diferença nenhuma de dado.
+
+E um terceiro efeito, sobre o pré-registro: ele fixa o sha256 do **ZIP** (`fb3546ed…`), e o
+`acervo.versoes()` passou a marcar `4f2cf2aa…` como vigente. Os dois dão o mesmo dado na
+janela — **para quem lê sem depender da ordem**. Ver P-139.
+
+**Método:** membro único lido inteiro; `TOTREG` nas posições 32–42 do trailer; linhas `01`
+agrupadas por `DATA` (3–10); sha256 das linhas do dia em ordem de arquivo e ordenadas.
+Diários conferidos pelo multiconjunto e pela lista ordenada.
+
 ---
 
 ## Sessão B, 24/09/2026 — itens de uma auditoria externa, B-11 a B-18

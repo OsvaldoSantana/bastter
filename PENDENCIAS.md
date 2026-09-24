@@ -2866,6 +2866,39 @@ naquela data. Sem isso, um diário perdido vira buraco calado na série diária 
 reconstruir do anual à mão: a forma do F-02, em que ausência de arquivo parece ausência de
 pregão.
 
+**Acrescentado em 24/09 (CH-01), duas exigências medidas:**
+- a comparação diário × anual é por **multiconjunto** de linhas do dia (ordenar antes do
+  sha256), nunca na ordem do arquivo: 4 dos 5 diários de 17–23/09 têm outra ordem que o
+  anual e o mesmo conteúdo;
+- a mesma rodada compara o anual **novo com o anual anterior** nos pregões em comum, pelo
+  mesmo multiconjunto. É o que transforma o CH-01 (`n = 1` par, nenhum dia revisado) numa
+  série: um par por mês, de graça, porque os dois anuais já estão no armazém. Um dia que
+  mude ali é revisão da B3 — e é a única medição que diria se o anual mensal perde versões.
+
+## P-139 · O pré-registro v2 fixa o sha256 do ZIP, e o leitor não confere pin nenhum
+
+**Dono:** Claude Code · **Gatilho:** antes de a primeira linha do código da família ML ler
+COTAHIST · **Classe:** `BLOQUEIA_O_SISTEMA` · **Origem:** CH-01, 24/09/2026.
+
+O `preregistro-ml-v2.md` §2 fixa `COTAHIST_A2026.ZIP` em `fb3546ed…`. Desde a captura de
+24/09, `acervo.versoes("cotahist", "COTAHIST_A2026.ZIP")` marca **`4f2cf2aa…` como vigente**,
+e o `calendario.arquivos()` lê o que houver em `data/bronze/b3/cotahist/` **sem conferir
+hash nenhum** — nesta máquina é o `fb3546ed`; numa que abra a vigente pelo armazém, é o
+`4f2cf2aa`. **Hoje o ML leria versões diferentes conforme a máquina.**
+
+O que a medição garante: na janela do teste (02/01 a 31/08/2026) as duas versões têm **o
+mesmo multiconjunto de registros** — impressão
+`sha256(01 ordenados) = ab74104d4aec2da2…` nas duas. Então o número do ML só depende da
+versão se o código depender da **ordem** das linhas (primeira ocorrência vence, `groupby`
+sem ordenar, desempate por posição).
+
+**O conserto, sem editar o pré-registro:** o leitor do ML abre por `acervo.abrir(...,
+"fb3546ed")` — a versão fixada, não a vigente — e confere a impressão de conteúdo da janela;
+uma impressão diferente levanta `InsumoBloqueado`. Se um dia o pré-registro for emendado, a
+emenda deveria fixar a **impressão de conteúdo** (que sobrevive a uma regeração da B3) e não
+o sha256 do ZIP (que não sobrevive) — mas isso é emenda, com a régua da P-138, e não se faz
+por aqui.
+
 ## P-138 · Confirmar a régua de "variante" do pré-registro — contador como alarme
 
 **Dono:** Osvaldo · **Gatilho:** antes da próxima emenda ou extensão de um pré-registro
