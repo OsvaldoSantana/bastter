@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   captura:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # fixo: o label ubuntu-latest muda de imagem em 19/10/2026
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4

@@ -119,3 +119,9 @@ def test_aviso_do_armazem_abre_uma_issue_so_e_antes_do_vermelho():
     assert av["env"]["GH_TOKEN"] == "${{ github.token }}"
     assert nomes.index("Avisar se o armazem passou do aviso") < \
         nomes.index("Falhar se a captura falhou")
+
+
+def test_imagem_do_runner_e_fixa():
+    """`ubuntu-latest` troca de imagem sem commit nenhum (19/10/2026): o ambiente do
+    job mudaria sem que o repositorio registrasse -- a P-15 do lado do executor."""
+    assert _wf()["jobs"]["captura"]["runs-on"] == "ubuntu-24.04"
