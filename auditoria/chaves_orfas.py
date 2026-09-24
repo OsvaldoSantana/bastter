@@ -172,12 +172,20 @@ def main(argv=None):
                    help="tambem lista chaves de valor textual (prosa/doutrina)")
     p.add_argument("--incluir-meta", action="store_true",
                    help="tambem conta chaves de procedencia/prosa")
+    # 24/09/2026: a secao `armazem` do politica.yaml e lida pelo fase0 (a captura), nao
+    # pelo alocacao. Uma pasta so fazia a chave lida antes de cada envio aparecer orfa.
+    p.add_argument("--tambem", action="append", default=[], metavar="PASTA",
+                   help="outra pasta de modulos que le os mesmos YAML (ex.: fase0)")
     a = p.parse_args(argv)
 
-    lidas, cegas = chaves_lidas(a.pasta)
-    so_motor, _ = chaves_lidas(a.pasta, so_motor=True)
+    lidas, cegas, so_motor, pais = set(), [], set(), set()
+    for pasta in [a.pasta, *a.tambem]:
+        daqui, cegas_daqui = chaves_lidas(pasta)
+        lidas |= daqui
+        cegas += cegas_daqui
+        so_motor |= chaves_lidas(pasta, so_motor=True)[0]
+        pais |= pais_varridos(pasta)
     so_teste = lidas - so_motor
-    pais = pais_varridos(a.pasta)
     de_yaml = lidas_por_yaml(a.yamls)
     lidas |= de_yaml
     print("%d nome(s) consumidos por YAML (arestas {de:}/{de_campo:}/{soma:})\n"

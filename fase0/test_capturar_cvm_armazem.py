@@ -191,3 +191,58 @@ def test_sem_credencial_a_mensagem_nomeia_a_variavel(tmp_path, monkeypatch):
     with pytest.raises(A.ArmazemIndisponivel, match="R2_BUCKET"):
         C.main(["--raiz", str(tmp_path), "--armazem", "s3"], abrir=_servidor_basico(),
                dormir=lambda s: None)
+
+
+# ── o teto (politica.yaml -> armazem) ─────────────────────────────────────────
+# A politica dos testes declara aviso 1 KB e teto 1 MB, em GB: os tres niveis cabem
+# em bytes de teste. `_ocupar` poe o que ja esta no bucket antes da rodada.
+
+def _politica_de_teste(tmp_path):
+    raiz = tmp_path / "repo"
+    (raiz / "alocacao").mkdir(parents=True)
+    (raiz / "alocacao" / "politica.yaml").write_text(
+        "armazem:\n  aviso_gb: 0.000001\n  teto_gb: 0.001\n", encoding="utf-8")
+    return str(raiz)
+
+
+def _ocupar(arm, n):
+    arm.objetos["b3/x/ja.zip/" + "0" * 64 + ".zip"] = b"z" * n
+
+
+def _rodar_com_teto(tmp_path, arm, monkeypatch):
+    saida = tmp_path / "github_output"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(saida))
+    rc, raiz, reg = _rodar(tmp_path, _servidor_basico(), arm,
+                           "--raiz-repo", _politica_de_teste(tmp_path))
+    return rc, reg, dict(ln.split("=", 1) for ln in saida.read_text().splitlines())
+
+
+def test_teto_abaixo_do_aviso_captura_e_o_nivel_e_abaixo(tmp_path, monkeypatch):
+    arm = A.ArmazemMemoria().limitar(10 ** 6)
+    rc, reg, out = _rodar_com_teto(tmp_path, arm, monkeypatch)
+    assert rc == 0 and out["armazem_nivel"] == "abaixo"
+    assert [x["situacao"] for x in C.ler_registro(reg)] == ["novo"] * 3
+
+
+def test_teto_entre_aviso_e_teto_captura_e_o_nivel_e_aviso(tmp_path, monkeypatch):
+    arm = A.ArmazemMemoria().limitar(10 ** 6)
+    _ocupar(arm, 5_000)
+    rc, reg, out = _rodar_com_teto(tmp_path, arm, monkeypatch)
+    assert rc == 0 and out["armazem_nivel"] == "aviso" and out["armazem_gb"] == "0.00"
+    assert [x["situacao"] for x in C.ler_registro(reg)] == ["novo"] * 3
+
+
+def test_teto_acima_recusa_registra_e_fica_vermelho(tmp_path, monkeypatch):
+    """Nada de conteudo sobe; o registro ganha `recusado_por_teto` com o sha256 do que
+    teria subido; o log sobe (e a prova); o estado nao avanca, entao a proxima rodada
+    tenta de novo em vez de achar que ja tem."""
+    arm = A.ArmazemMemoria().limitar(10 ** 6)
+    _ocupar(arm, 10 ** 6)
+    rc, reg, out = _rodar_com_teto(tmp_path, arm, monkeypatch)
+    assert rc == 1 and out["armazem_nivel"] == "teto"
+    assert _conteudo(arm) == ["b3/x/ja.zip/" + "0" * 64 + ".zip"]
+    linhas = C.ler_registro(reg)
+    assert [x["situacao"] for x in linhas] == ["recusado_por_teto"] * 3
+    assert all(x["sha256"] and "teto" in x["motivo"] for x in linhas)
+    assert C.estado_do_registro(linhas) == {}
+    assert {x["situacao"] for x in _log(arm, _logs(arm)[-1])} == {"recusado_por_teto"}

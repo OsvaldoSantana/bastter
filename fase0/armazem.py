@@ -30,6 +30,14 @@ O QUE ELE NAO FAZ (P5):
     inofensivo, mas nao impossivel;
   - nao versiona nem apaga: nao ha metodo de remocao, de proposito.
 
+O TETO (24/09/2026, pedido dele: cobranca zero). O R2 nao tem limite de gasto -- os
+alertas da Cloudflare avisam, nao param --, entao o limite e deste codigo:
+`politica.yaml -> armazem.aviso_gb / teto_gb`. Antes de cada envio o armazem SOMA o
+bucket; se o envio o levaria acima do teto, levanta `TetoExcedido` e nada sobe. Um
+armazem criado por `do_ambiente()` ja nasce limitado, e nao ha como pedir um sem teto
+pela linha de comando. O que o teto NAO cobre esta em
+`limitacoes_declaradas.o_teto_do_armazem_e_do_codigo`.
+
 O boto3 e importado so dentro do `ArmazemS3`: a suite nao depende dele, e o modulo carrega
 sem ele (pyproject -> optional-dependencies.captura).
 """
@@ -58,6 +66,44 @@ class ConteudoDivergente(RuntimeError):
 
 class ArmazemIndisponivel(RuntimeError):
     """Faltam credenciais ou o boto3. A mensagem diz O QUE falta, nunca um valor."""
+
+
+class TetoExcedido(RuntimeError):
+    """O envio levaria o bucket acima do teto. Nada foi enviado."""
+
+
+class LimitesAusentes(RuntimeError):
+    """`politica.yaml -> armazem` falta ou esta incoerente. Sem teto nao se envia (P1):
+    limite ausente nao vira "sem limite", que e o F-02 com cara de liberdade."""
+
+
+GB = 10 ** 9     # decimal: a leitura conservadora do "10 GB" gratis (10 GiB seria maior)
+ABAIXO, AVISO, TETO = "abaixo", "aviso", "teto"
+POLITICA = os.path.join("alocacao", "politica.yaml")
+
+
+def limites_da_politica(raiz_repo):
+    """(aviso, teto) em BYTES, de `politica.yaml -> armazem`. Levanta se faltar."""
+    import yaml
+    caminho = os.path.join(raiz_repo, POLITICA)
+    if not os.path.exists(caminho):
+        raise LimitesAusentes(f"{caminho} nao existe")
+    with open(caminho, encoding="utf-8") as f:
+        sec = (yaml.safe_load(f) or {}).get("armazem") or {}
+    aviso, teto = sec.get("aviso_gb"), sec.get("teto_gb")
+    if not all(isinstance(x, (int, float)) and not isinstance(x, bool) and x > 0
+               for x in (aviso, teto)):
+        raise LimitesAusentes(f"armazem.aviso_gb={aviso!r} teto_gb={teto!r}: "
+                              "os dois tem de ser numeros positivos")
+    if aviso >= teto:
+        raise LimitesAusentes(f"armazem.aviso_gb ({aviso}) tem de ser menor que "
+                              f"teto_gb ({teto})")
+    return int(aviso * GB), int(teto * GB)
+
+
+def nivel(ocupado, aviso, teto):
+    """ABAIXO, AVISO (ocupado >= aviso) ou TETO (ocupado >= teto)."""
+    return TETO if ocupado >= teto else AVISO if ocupado >= aviso else ABAIXO
 
 
 def sha256(caminho):
@@ -108,17 +154,39 @@ class Armazem(abc.ABC):
     `_baixar`, `_listar`); a regra -- nunca sobrescrever, conferir o conteudo -- mora
     aqui, uma vez so (N-01)."""
 
+    teto = None      # bytes; None so em armazem de teste. `do_ambiente` sempre limita.
+
+    def limitar(self, teto):
+        self.teto = teto
+        return self
+
     def existe(self, k):
         return self._existe(_validar(k))
 
-    def enviar_se_ausente(self, k, caminho):
-        """True se enviou; False se a chave ja existia. Nunca sobrescreve."""
+    def ocupado(self):
+        """Bytes no bucket inteiro, somados agora -- nao um contador desta rodada, que
+        nao veria o que outra maquina enviou (a carga inicial roda da dele)."""
+        return sum(t for _, t in self._tamanhos(""))
+
+    def enviar_se_ausente(self, k, caminho, isento_do_teto=False):
+        """True se enviou; False se a chave ja existia. Nunca sobrescreve.
+
+        Com teto, soma o bucket antes de enviar e levanta `TetoExcedido` se este arquivo
+        o levaria acima. `isento_do_teto` e so para o log da rodada: ele mede KB e e a
+        prova de que a recusa aconteceu -- um teto que apaga a prova da propria recusa
+        seria a guarda derrubando o que ela protege (P-102)."""
         _validar(k)
         prometido = sha_da_chave(k)
         if prometido is not None and sha256(caminho) != prometido:
             raise ConteudoDivergente(f"{caminho} nao tem o sha256 da chave {k}")
         if self._existe(k):
             return False
+        if self.teto is not None and not isento_do_teto:
+            ocupado, tam = self.ocupado(), os.path.getsize(caminho)
+            if ocupado + tam > self.teto:
+                raise TetoExcedido(
+                    f"{k}: {ocupado / GB:.2f} GB no bucket + {tam / GB:.3f} GB deste "
+                    f"arquivo passaria do teto de {self.teto / GB:.2f} GB")
         self._enviar(k, caminho)
         return True
 
@@ -154,6 +222,10 @@ class Armazem(abc.ABC):
     @abc.abstractmethod
     def _listar(self, prefixo): ...
 
+    @abc.abstractmethod
+    def _tamanhos(self, prefixo):
+        """[(chave, bytes)] de tudo sob o prefixo."""
+
 
 class ArmazemMemoria(Armazem):
     """Para os testes: o mesmo contrato, num dict. `envios` conta escritas de verdade."""
@@ -178,6 +250,9 @@ class ArmazemMemoria(Armazem):
 
     def _listar(self, prefixo):
         return [k for k in self.objetos if k.startswith(prefixo)]
+
+    def _tamanhos(self, prefixo):
+        return [(k, len(v)) for k, v in self.objetos.items() if k.startswith(prefixo)]
 
 
 class ArmazemS3(Armazem):
@@ -232,19 +307,28 @@ class ArmazemS3(Armazem):
         self._cliente.download_file(self.bucket, k, destino)
 
     def _listar(self, prefixo):
+        return [k for k, _ in self._tamanhos(prefixo)]
+
+    def _tamanhos(self, prefixo):
         out = []
         for pagina in self._cliente.get_paginator("list_objects_v2").paginate(
                 Bucket=self.bucket, Prefix=prefixo):
-            out.extend(o["Key"] for o in pagina.get("Contents", []))
+            out.extend((o["Key"], int(o["Size"])) for o in pagina.get("Contents", []))
         return out
 
 
-def do_ambiente(tipo="s3", env=None):
-    """O armazem que a linha de comando pede. Um tipo so hoje; o parametro existe para a
-    linha de comando nao prometer o que o codigo nao tem."""
+def raiz_do_repositorio():
+    import manifesto_cvm
+    return manifesto_cvm.raiz_do_repositorio(os.path.dirname(os.path.abspath(__file__)))
+
+
+def do_ambiente(tipo="s3", env=None, raiz_repo=None):
+    """O armazem que a linha de comando pede, JA COM O TETO da politica. Um tipo so hoje;
+    o parametro existe para a linha de comando nao prometer o que o codigo nao tem."""
     if tipo != "s3":
         raise ValueError(f"armazem {tipo!r} desconhecido")
-    return ArmazemS3.de_ambiente(env)
+    _, teto = limites_da_politica(raiz_repo or raiz_do_repositorio())
+    return ArmazemS3.de_ambiente(env).limitar(teto)
 
 
 def copiar_para_cache(caminho, cache, k):

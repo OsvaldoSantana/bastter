@@ -148,8 +148,10 @@ class _ClienteFalso:
         class P:
             def paginate(self, Bucket, Prefix):
                 ks = [k for k in sorted(cli.objetos) if k.startswith(Prefix)]
-                yield {"Contents": [{"Key": k} for k in ks[:1]]}
-                yield {"Contents": [{"Key": k} for k in ks[1:]]}
+                yield {"Contents": [{"Key": k, "Size": len(cli.objetos[k])}
+                                    for k in ks[:1]]}
+                yield {"Contents": [{"Key": k, "Size": len(cli.objetos[k])}
+                                    for k in ks[1:]]}
                 yield {}
         return P()
 
@@ -211,3 +213,102 @@ def test_o_modulo_carrega_sem_boto3(monkeypatch):
     with pytest.raises(A.ArmazemIndisponivel, match="captura"):
         A.ArmazemS3("acervo")
     assert A.ArmazemMemoria() is not None
+
+
+# ── o teto (politica.yaml -> armazem; cobranca zero) ─────────────────────────
+
+def _politica(tmp_path, texto):
+    (tmp_path / "alocacao").mkdir(exist_ok=True)
+    (tmp_path / "alocacao" / "politica.yaml").write_text(texto, encoding="utf-8")
+    return str(tmp_path)
+
+
+def _cheio(arm, n_bytes, nome="ocupa"):
+    """Poe `n_bytes` no armazem sem passar pelo teto -- o que ja esta la."""
+    arm.objetos[f"cvm/x/{nome}.zip/" + "0" * 64 + ".zip"] = b"z" * n_bytes
+
+
+def test_teto_abaixo_do_aviso_envia(tmp_path):
+    arm = A.ArmazemMemoria().limitar(1000)
+    _cheio(arm, 500)
+    p, d = _arquivo(tmp_path, "a.zip", b"x" * 100)
+    assert arm.enviar_se_ausente(A.chave("cvm", "dfp", "a.zip", d), p)
+    assert A.nivel(arm.ocupado(), 700, 1000) == A.ABAIXO
+
+
+def test_teto_entre_aviso_e_teto_envia_e_o_nivel_e_aviso(tmp_path):
+    arm = A.ArmazemMemoria().limitar(1000)
+    _cheio(arm, 750)
+    p, d = _arquivo(tmp_path, "a.zip", b"x" * 100)
+    assert arm.enviar_se_ausente(A.chave("cvm", "dfp", "a.zip", d), p)
+    assert A.nivel(arm.ocupado(), 700, 1000) == A.AVISO
+
+
+def test_teto_acima_nao_envia_nada(tmp_path):
+    """O envio que LEVARIA acima do teto ja e recusado: 950 + 100 > 1000."""
+    arm = A.ArmazemMemoria().limitar(1000)
+    _cheio(arm, 950)
+    p, d = _arquivo(tmp_path, "a.zip", b"x" * 100)
+    k = A.chave("cvm", "dfp", "a.zip", d)
+    with pytest.raises(A.TetoExcedido):
+        arm.enviar_se_ausente(k, p)
+    assert not arm.existe(k) and arm.envios == 0
+    assert A.nivel(950, 700, 1000) == A.AVISO and A.nivel(1000, 700, 1000) == A.TETO
+
+
+def test_teto_nao_impede_o_idempotente_nem_o_log(tmp_path):
+    """Chave que ja existe nao custa nada, e o log e a prova da recusa."""
+    arm = A.ArmazemMemoria()
+    p, d = _arquivo(tmp_path, "a.zip", b"x" * 100)
+    k = A.chave("cvm", "dfp", "a.zip", d)
+    arm.enviar_se_ausente(k, p)
+    arm.limitar(50)
+    assert arm.enviar_se_ausente(k, p) is False
+    assert arm.enviar_se_ausente("logs/capturas/2026-09-24.csv", p, isento_do_teto=True)
+
+
+def test_teto_soma_o_bucket_inteiro_e_nao_um_contador(tmp_path):
+    """Outra maquina (a carga inicial) enviou no meio: a soma ve, um contador nao veria."""
+    arm = A.ArmazemMemoria().limitar(1000)
+    p, d = _arquivo(tmp_path, "a.zip", b"x" * 100)
+    _cheio(arm, 950, "de-outra-maquina")
+    with pytest.raises(A.TetoExcedido):
+        arm.enviar_se_ausente(A.chave("cvm", "dfp", "a.zip", d), p)
+
+
+def test_teto_no_s3_soma_pelo_size_da_listagem(tmp_path):
+    cli = _ClienteFalso()
+    arm = A.ArmazemS3.de_ambiente(ENV, cliente=cli).limitar(150)
+    cli.objetos["cvm/x/y.zip/" + "0" * 64 + ".zip"] = b"z" * 100
+    assert arm.ocupado() == 100
+    p, d = _arquivo(tmp_path, "a.zip", b"x" * 60)
+    with pytest.raises(A.TetoExcedido):
+        arm.enviar_se_ausente(A.chave("cvm", "dfp", "a.zip", d), p)
+    assert not any(c[0] == "upload" for c in cli.chamadas)
+
+
+def test_limites_vem_da_politica_em_gb_decimal(tmp_path):
+    raiz = _politica(tmp_path, "armazem:\n  aviso_gb: 7\n  teto_gb: 9\n")
+    assert A.limites_da_politica(raiz) == (7 * 10 ** 9, 9 * 10 ** 9)
+
+
+@pytest.mark.parametrize("texto", [
+    "outra: 1\n",                                   # secao ausente
+    "armazem:\n  aviso_gb: 7\n",                   # teto ausente
+    "armazem:\n  aviso_gb: 9\n  teto_gb: 7\n",    # aviso >= teto
+    "armazem:\n  aviso_gb: '7'\n  teto_gb: 9\n",  # texto nao e numero
+])
+def test_limite_ausente_ou_incoerente_recusa_em_vez_de_liberar(tmp_path, texto):
+    with pytest.raises(A.LimitesAusentes):
+        A.limites_da_politica(_politica(tmp_path, texto))
+
+
+def test_do_ambiente_ja_nasce_com_o_teto(tmp_path, monkeypatch):
+    raiz = _politica(tmp_path, "armazem:\n  aviso_gb: 7\n  teto_gb: 9\n")
+    monkeypatch.setattr(A.ArmazemS3, "de_ambiente",
+                        classmethod(lambda cls, env=None: cls("b", cliente=_ClienteFalso())))
+    assert A.do_ambiente("s3", raiz_repo=raiz).teto == 9 * 10 ** 9
+
+
+def test_a_politica_real_declara_7_e_9():
+    assert A.limites_da_politica(A.raiz_do_repositorio()) == (7 * 10 ** 9, 9 * 10 ** 9)

@@ -115,6 +115,9 @@ COLUNAS = ("dt_captura", "recurso", "arquivo", "url", "http_last_modified", "eta
            "sha256", "bytes", "caminho", "situacao", "motivo")
 NOVO, ATUALIZADO, INALTERADO = "novo", "atualizado", "inalterado"
 DESLOCADO, REJEITADO, ERRO = "deslocado", "rejeitado", "erro"
+# o envio levaria o bucket acima de politica.yaml -> armazem.teto_gb: nada subiu, e o
+# estado nao avanca -- a proxima rodada tenta de novo (P-57, cobranca zero)
+RECUSADO_POR_TETO = "recusado_por_teto"
 
 
 class Rejeitado(Exception):
@@ -498,7 +501,13 @@ def capturar_para_armazem(url, recurso, raiz, registro, estado, armazem, *,
         k = armazem_mod.chave(FONTE, recurso, nome, digest)
         # a versao vigente tem de estar no armazem mesmo quando o byte nao mudou: antes da
         # carga inicial (subir_acervo_local.py) ela so existia no disco dele
-        enviado = armazem.enviar_se_ausente(k, part)
+        try:
+            enviado = armazem.enviar_se_ausente(k, part)
+        except armazem_mod.TetoExcedido as e:
+            nota(dict(base, dt_captura=agora(), sha256=digest, bytes=n,
+                      situacao=RECUSADO_POR_TETO, motivo=str(e)))
+            saida(f"[!] {rel}  RECUSADO POR TETO: {e}")
+            return RECUSADO_POR_TETO
         if cache:
             armazem_mod.copiar_para_cache(part, cache, k)
     estado[rel] = dict(sha256=digest, bytes=n, last_modified=base["http_last_modified"],
@@ -529,7 +538,7 @@ def enviar_diario(armazem, diario, momento=None):
                 w.writerow({c: ln.get(c, "") for c in COLUNAS})
         k = f"{LOGS}/{momento:%Y-%m-%d}.csv"
         n = 1
-        while not armazem.enviar_se_ausente(k, p):
+        while not armazem.enviar_se_ausente(k, p, isento_do_teto=True):
             n += 1
             sufixo = "" if n == 2 else f"_{n - 1}"
             k = f"{LOGS}/{momento:%Y-%m-%d}__{momento:%H%M%S}Z{sufixo}.csv"
@@ -705,6 +714,7 @@ def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=
                         "credenciais so por variavel de ambiente R2_*")
     p.add_argument("--cache", default=None,
                    help="com --armazem: guarda tambem uma copia em <cache>/<chave>")
+    p.add_argument("--raiz-repo", default=None, help=argparse.SUPPRESS)  # testes
     a = p.parse_args(argv)
     raiz = os.path.abspath(a.raiz or raiz_padrao())
     registro = a.registro or registro_padrao(raiz)
@@ -774,6 +784,7 @@ def _main_armazem(a, raiz, registro, abrir, dormir, armazem):
     inclusive, porque rodar e falhar tambem e prova de que rodou."""
     estado = estado_do_registro(ler_registro(registro))
     diario, resumo = [], {}
+    relatar_ocupacao(armazem, raiz=a.raiz_repo)
     try:
         lista = alvos(a.escopo, abrir, dormir)
     except (urllib.error.URLError, RuntimeError) as e:
@@ -800,11 +811,28 @@ def _main_armazem(a, raiz, registro, abrir, dormir, armazem):
             dormir(a.pausa)
     print("  ".join(f"{k} {v}" for k, v in sorted(resumo.items())))
     print(f"log: {enviar_diario(armazem, diario)}")
-    falhou = resumo.get(ERRO, 0) + resumo.get(REJEITADO, 0)
+    falhou = resumo.get(ERRO, 0) + resumo.get(REJEITADO, 0) + resumo.get(RECUSADO_POR_TETO, 0)
     if falhou:
         print(f"{falhou} falha(s)", file=sys.stderr)
         return 1
     return 0
+
+
+def relatar_ocupacao(armazem, raiz=None, env=None):
+    """Soma o bucket, imprime e, no Actions, entrega `armazem_gb` e `armazem_nivel` ao
+    passo seguinte -- e ele quem abre a issue de aviso. Devolve o nivel."""
+    env = os.environ if env is None else env
+    aviso, teto = armazem_mod.limites_da_politica(raiz or raiz_repo())
+    ocupado = armazem.ocupado()
+    nivel = armazem_mod.nivel(ocupado, aviso, teto)
+    gb = f"{ocupado / armazem_mod.GB:.2f}"
+    print(f"armazem: {gb} GB (aviso {aviso / armazem_mod.GB:g}, "
+          f"teto {teto / armazem_mod.GB:g}) -> {nivel}")
+    saida = env.get("GITHUB_OUTPUT")
+    if saida:
+        with open(saida, "a", encoding="utf-8") as f:
+            f.write(f"armazem_gb={gb}\narmazem_nivel={nivel}\n")
+    return nivel
 
 
 if __name__ == "__main__":

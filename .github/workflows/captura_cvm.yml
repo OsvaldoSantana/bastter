@@ -24,6 +24,7 @@ concurrency:
 
 permissions:
   contents: write
+  issues: write         # a issue de aviso do armazem
 
 jobs:
   captura:
@@ -72,6 +73,25 @@ jobs:
           git commit -m "Captura CVM $(date -u +%Y-%m-%d): registro"
           git pull --rebase origin "$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
+
+      # politica.yaml -> armazem: acima do aviso, UMA issue (a aberta e atualizada, nunca
+      # uma por dia). Acima do teto a captura ja recusou e o passo seguinte fica vermelho.
+      - name: Avisar se o armazem passou do aviso
+        if: always() && (steps.captura.outputs.armazem_nivel == 'aviso' || steps.captura.outputs.armazem_nivel == 'teto')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GB: ${{ steps.captura.outputs.armazem_gb }}
+          NIVEL: ${{ steps.captura.outputs.armazem_nivel }}
+        run: |
+          set -euo pipefail
+          titulo="Armazem em ${GB} GB"
+          corpo="Medido em $(date -u +%Y-%m-%dT%H:%M:%SZ) pela captura: ${GB} GB no bucket, nivel '${NIVEL}'. Limites em alocacao/politica.yaml -> armazem (aviso_gb, teto_gb). Acima do teto nada sobe e o registro ganha recusado_por_teto."
+          n=$(gh issue list --state open --search 'in:title "Armazem em"' --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then
+            gh issue edit "$n" --title "$titulo" --body "$corpo"
+          else
+            gh issue create --title "$titulo" --body "$corpo"
+          fi
 
       - name: Falhar se a captura falhou
         if: always() && steps.captura.outputs.codigo != '0'

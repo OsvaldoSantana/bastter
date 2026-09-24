@@ -13,10 +13,17 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.26.0
+  versao: 1.27.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.27.0: >-
+      24/09/2026. Secao nova `armazem` (aviso_gb 7, teto_gb 9): o pedido dele e
+      cobranca zero, e o R2 nao tem limite de gasto -- o teto e do codigo
+      (fase0/armazem.py soma o bucket antes de cada envio; acima do teto recusa com
+      `recusado_por_teto` e o job fica vermelho). `limitacoes_declaradas` ganha
+      `o_teto_do_armazem_e_do_codigo` (FISICA), com o que o teto nao cobre: um token
+      vazado.
     1.26.0: >-
       24/09/2026. P-57 decidida (docs/decisoes/P-57.md): GitHub Actions diario +
       Cloudflare R2. `captura_da_cvm_e_manual_e_o_dado_e_perecivel` ganha
@@ -1896,6 +1903,21 @@ pesquisa:
 
 # ── DECISOES EM ABERTO ────────────────────────────────────────────────────────
 # Uma decisao PENDENTE bloqueia o que ela sustenta. Nao ha default silencioso.
+# ── ARMAZEM (P-57) ────────────────────────────────────────────────────────────
+# Quanto o bucket do R2 pode ocupar. Lido por fase0/armazem.py antes de CADA envio:
+# acima de `aviso_gb` a captura segue e o workflow abre (ou atualiza) UMA issue
+# "Armazem em X GB"; um envio que levaria acima de `teto_gb` e recusado, o registro
+# ganha `recusado_por_teto` e o job fica vermelho. GB decimal (10^9 bytes).
+armazem:
+  aviso_gb: 7
+  teto_gb: 9
+  justificativa: >
+    Pedido dele de 24/09/2026: cobranca zero. O gratis do R2 e 10 GB; o teto fica 1 GB
+    abaixo para que um envio grande perto da borda nao atravesse, e o aviso 2 GB abaixo
+    do teto para haver semanas de folga entre saber e precisar decidir. Os numeros sao
+    decisao do Claude, nao medicao -- o ritmo de crescimento do bucket ainda nao foi
+    medido (P-57.md), e quando for, estes valores se revisam com ele.
+
 # ── SLEEVES ───────────────────────────────────────────────────────────────────
 # Uma rota de renda variavel nao e um ativo: e um RECIPIENTE. O que muda entre
 # elas nao e so custo — e quantos ativos distintos elas entregam por dentro.
@@ -2261,6 +2283,27 @@ limitacoes_declaradas:
     quando_deixa_de_importar: >
       Enquanto o sistema servir so o Osvaldo. Vira bloqueio no dia em que houver um
       segundo usuario.
+
+  o_teto_do_armazem_e_do_codigo:
+    tipo: FISICA
+    o_que_falta: >
+      O Cloudflare R2 nao tem limite de gasto. Os alertas de cobranca da Cloudflare
+      AVISAM, nao param: um bucket que passa dos 10 GB gratis simplesmente comeca a ser
+      cobrado. O unico teto que existe e o deste codigo -- `armazem.teto_gb`, conferido
+      por `fase0/armazem.py` antes de cada envio, somando o bucket.
+    direcao_do_vies: >
+      Nenhum sobre numero: e risco de custo. O teto so vale para quem envia pelo codigo.
+      Um token vazado passaria por fora dele -- escreveria direto no bucket, sem somar
+      nada. O que limita esse caso nao e o teto: o token esta restrito a UM bucket, e o
+      bucket e privado (sem acesso publico, entao nao ha egress de terceiros a cobrar).
+    por_que_fisica: >
+      O limite de gasto e da Cloudflare fornecer, e ela nao fornece para o R2. Deixa de
+      ser FISICA no dia em que o R2 oferecer teto de gasto que PARA a escrita -- ai
+      ligar esse teto vira pendencia, e o do codigo passa a ser a segunda linha.
+    fonte: >-
+      Pedido dele de 24/09/2026 (cobranca zero); valores decididos pelo Claude em
+      `armazem.*`. A ausencia de teto de gasto no R2 e a leitura do pedido, NAO uma
+      pagina da Cloudflare lida aqui -- NAO_CONFIRMADO ate essa leitura com data de acesso.
 
   # ── 23/09/2026 -- as que existiam fora desta secao (regua 5-B.16) ─────────────
   # Cinco limitacoes estavam declaradas em outros arquivos -- CLAUDE.md, o

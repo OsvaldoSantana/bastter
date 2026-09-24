@@ -921,6 +921,17 @@ sem ela o portão baixaria o mesmo arquivo todo dia. Os `inalterado` do portão 
    `test_P7_todo_acervo_tem_regime_de_captura_declarado` o leia, senão ele reprova no mesmo
    minuto (é o desenho dele). Aí esta pendência fecha.
 
+**24/09/2026 — o teto do armazém (pedido dele: cobrança zero).** O R2 não tem limite de
+gasto, então o limite é do código: `politica.yaml → armazem.aviso_gb = 7`, `teto_gb = 9`
+(1.27.0). `armazem.py` soma o bucket **antes de cada envio** — a soma, não um contador,
+porque a carga inicial roda de outra máquina — e um `ArmazemS3` de `do_ambiente()` já nasce
+limitado. Acima do aviso o workflow abre **uma** issue *"Armazem em X GB"* (atualiza a
+aberta); um envio que levaria acima do teto é recusado, o registro ganha
+`recusado_por_teto` e o job fica vermelho. O log da rodada é isento (KB, e é a prova da
+recusa). 15 testes; a guarda reprova 4 deles quando removida (mutação). O que o teto não
+cobre — token vazado — está em `limitacoes_declaradas.o_teto_do_armazem_e_do_codigo`.
+Ocupação na carga inicial: **1,64 GB** (soma dos dois `inventario-armazem.csv`).
+
 ---
 
 ## P-58 a P-61 · Regimes de leitura de balanço — a pergunta que expôs o defeito

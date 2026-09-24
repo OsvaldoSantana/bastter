@@ -375,6 +375,9 @@ REGIME_DAS_SECOES = {
                                      "OPERACIONAL em vez de crescer dentro do "
                                      "`estrategias_pre_registradas`, que e "
                                      "ESPECIFICACAO e nao cobra leitura de ninguem"),
+    "armazem":       (OPERACIONAL,   "aviso e teto do bucket do R2 (P-57, cobranca "
+                                     "zero); quem le e fase0/armazem.py -- por isso "
+                                     "_fontes_do_motor inclui o fase0"),
     "bloco_C_solvencia":            (ESPECIFICACAO, "P-30: especificado em 05/09, "
                                      "nenhum modulo aplica"),
     "regime_instituicao_financeira":(ESPECIFICACAO, "P-31: especificado em 05/09, "
@@ -467,8 +470,16 @@ def _modulos_do_motor():
 
 
 def _fontes_do_motor():
+    """Os modulos do motor e, desde 24/09, os do fase0: a secao `armazem` e politica
+    lida pela captura, nao pelo alocador. Deixar o fase0 fora faria a guarda acusar como
+    morta uma chave que a captura le antes de cada envio -- o E-05 (varrer metade do
+    sistema e chamar de conclusao)."""
+    fase0 = os.path.join(os.path.dirname(AQUI), "fase0")
+    extras = sorted(os.path.join(fase0, f) for f in os.listdir(fase0)
+                    if f.endswith(".py") and not f.startswith("test_"))
     return "".join(open(os.path.join(AQUI, m), encoding="utf-8").read()
-                   for m in _modulos_do_motor())
+                   for m in _modulos_do_motor()) + \
+        "".join(open(p, encoding="utf-8").read() for p in extras)
 
 
 def _chaves_mortas(secao, fontes):

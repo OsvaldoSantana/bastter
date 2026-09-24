@@ -155,7 +155,9 @@ def _declarada(chave):
 def _orfas():
     yamls = [os.path.join(PACOTE, y) for y in
              ("politica.yaml", "custos.yaml", "catalogo.yaml", "instituicoes.yaml")]
-    r = subprocess.run([sys.executable, SCRIPT, PACOTE] + yamls,
+    # o fase0 le `politica.yaml -> armazem` (a captura, P-57)
+    r = subprocess.run([sys.executable, SCRIPT, PACOTE] + yamls
+                       + ["--tambem", os.path.join(RAIZ, "fase0")],
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     return {l.strip().split(" =")[0].strip()

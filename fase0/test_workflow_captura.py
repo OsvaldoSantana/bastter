@@ -48,7 +48,7 @@ def test_sem_sobreposicao_e_com_permissao_de_escrever_o_registro():
     d = _wf()
     assert d["concurrency"]["cancel-in-progress"] is False
     assert d["concurrency"]["group"]
-    assert d["permissions"] == {"contents": "write"}
+    assert d["permissions"] == {"contents": "write", "issues": "write"}
 
 
 def test_python_do_projeto_e_instalacao_pelo_extra_captura():
@@ -104,3 +104,18 @@ def test_sonda_da_p135_roda_e_nao_derruba_a_captura():
     assert sonda["continue-on-error"] is True
     assert "fase0/sondar_cotahist.py" in sonda["run"]
     assert nomes.index("Sondar o COTAHIST (P-135)") < nomes.index("Capturar")
+
+
+def test_aviso_do_armazem_abre_uma_issue_so_e_antes_do_vermelho():
+    """Acima do aviso: uma issue, a mesma atualizada (edit), nunca uma por rodada. E o
+    passo vem antes do `Falhar`, senao o teto -- que deixa a captura vermelha -- nunca
+    chegaria a avisar."""
+    nomes = [p.get("name") for p in _passos()]
+    av = _passo("Avisar se o armazem passou do aviso")
+    assert "always()" in av["if"] and "armazem_nivel == 'aviso'" in av["if"]
+    assert "armazem_nivel == 'teto'" in av["if"]
+    assert "gh issue list" in av["run"] and "gh issue edit" in av["run"]
+    assert 'titulo="Armazem em ${GB} GB"' in av["run"]
+    assert av["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert nomes.index("Avisar se o armazem passou do aviso") < \
+        nomes.index("Falhar se a captura falhou")
