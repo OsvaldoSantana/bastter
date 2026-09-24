@@ -1,0 +1,40 @@
+name: Teste Cloudflare R2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  teste-r2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Testar conexão com R2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          python -m pip install boto3
+
+          python - <<'PY'
+          import os
+          import boto3
+
+          endpoint = f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"
+
+          s3 = boto3.client(
+              "s3",
+              endpoint_url=endpoint,
+              aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"],
+              aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+              region_name="auto",
+          )
+
+          bucket = os.environ["R2_BUCKET"]
+
+          response = s3.list_objects_v2(Bucket=bucket, MaxKeys=10)
+
+          print(f"Conexão OK com o bucket: {bucket}")
+          print(f"Objetos encontrados: {response.get('KeyCount', 0)}")
+          PY
