@@ -384,6 +384,9 @@ fase0/
   armazem.py       o armazém de objetos: chave = conteúdo, nunca sobrescreve, confere sha256
                    nas duas pontas. `ArmazemS3` (R2) e `ArmazemMemoria` (testes)
   acervo.py        a porta de LEITURA: `abrir(recurso, arquivo, versao)` e `frescor(recurso)`
+  insumo_ml.py     o COTAHIST da familia ML: a versao FIXADA pelo pre-registro (pins em
+                   `docs/aprendizado/preregistro-ml-v2.pins.yaml`), conferida pela impressao
+                   de conteudo -- nunca a vigente (P-139, CH-01)
   subir_acervo_local.py  carga inicial do disco dele para o R2; plano por padrão
 .github/workflows/captura_cvm.yml   o executor diário da P-57
 docs/decisoes/     decisões com desenho, alternativas e riscos (`P-57.md`)

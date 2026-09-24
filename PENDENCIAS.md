@@ -2875,7 +2875,7 @@ pregão.
   série: um par por mês, de graça, porque os dois anuais já estão no armazém. Um dia que
   mude ali é revisão da B3 — e é a única medição que diria se o anual mensal perde versões.
 
-## P-139 · O pré-registro v2 fixa o sha256 do ZIP, e o leitor não confere pin nenhum
+## ~~P-139~~ · O pré-registro v2 fixa o sha256 do ZIP, e o leitor não confere pin nenhum — **FECHADA em 24/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** antes de a primeira linha do código da família ML ler
 COTAHIST · **Classe:** `BLOQUEIA_O_SISTEMA` · **Origem:** CH-01, 24/09/2026.
@@ -2898,6 +2898,48 @@ uma impressão diferente levanta `InsumoBloqueado`. Se um dia o pré-registro fo
 emenda deveria fixar a **impressão de conteúdo** (que sobrevive a uma regeração da B3) e não
 o sha256 do ZIP (que não sobrevive) — mas isso é emenda, com a régua da P-138, e não se faz
 por aqui.
+
+### Fechamento, 24/09/2026
+
+`fase0/insumo_ml.py` é o leitor da família ML. Para um ano fixado, `abrir_cotahist(ano)`:
+- abre por `acervo.abrir(..., versao=<sha256 fixado>, conferir=True)`, e **nunca** cai para
+  a vigente. Se a versão fixada não abre, levanta `InsumoBloqueado`;
+- confere o tamanho e a **impressão de conteúdo** da janela: sha256 das linhas `01` até
+  31/08/2026, ordenadas, com `registros` e `pregoes` ao lado. Se diferir, levanta
+  `InsumoBloqueado`.
+
+O pin é dado: `docs/aprendizado/preregistro-ml-v2.pins.yaml` **transcreve** o §2 do
+pré-registro sem editá-lo, e um teste reprova se o sha256 ou os bytes deixarem de aparecer
+no `.md` (N-01). A impressão é **medida** sobre o mesmo byte fixado, não é escolha nova.
+
+**Medido sobre o arquivo real:** `py -3.11 fase0/insumo_ml.py` → `2026 FIXADO fb3546ed27cc`,
+saída 0. A impressão reproduz a do CH-01 (`ab74104d…`, 2.632.789 registros, 166 pregões).
+
+**Testes:** 11 em `fase0/test_insumo_ml.py`. Duas mutações foram reprovadas:
+- o leitor abrindo a vigente → 5 testes falham;
+- a impressão sem ordenar → 2 testes falham, um deles o do arquivo real.
+
+**Ano sem pin (2010–2025):** o leitor devolve a vigente com `fixado=False` e o sha256 ao
+lado, porque o pré-registro não fixou esses anos. Fixá-los é a **P-140**.
+
+**Limite declarado (P5):** a impressão prova o mesmo **multiconjunto** de linhas. Um código
+do ML que dependa da ordem das linhas pode dar número diferente com a mesma impressão, e
+quem lê tem de ordenar.
+
+## P-140 · Fixar os bytes de 2010–2025 que a família ML vai ler
+
+**Dono:** Osvaldo (decisão) · Claude Code (execução) · **Gatilho:** antes de a primeira
+variável da ML-3 ser montada · **Classe:** `DECISAO_DE_DESENHO` · **Origem:** P-139.
+
+O pré-registro v2 só fixou o 2026. Para os outros anos, `insumo_ml.abrir_cotahist` lê a
+versão vigente e devolve o sha256 dela, com `fixado=False`: a procedência acompanha o
+resultado, mas nada impede que a versão mude entre duas execuções. A P-96 mediu o 2023
+congelado por 14 dias, e a CV-02 mostrou que *"congelado não é imutável"* na CVM.
+
+**A pergunta:** fixar 2010–2025 no `pins.yaml`, com o sha256 do inventário e a impressão
+medida, antes de o ML tocar o dado? O custo é uma leitura de ~15 × 700 MB. Não é emenda ao
+pré-registro, porque registra quais bytes existem e não muda o desenho. Mas é acréscimo a
+ele, e por isso a decisão é dele.
 
 ## ~~P-138~~ · Confirmar a régua de "variante" do pré-registro — contador como alarme — **FECHADA em 24/09/2026**
 
@@ -3043,6 +3085,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 |---|---|---|
 | **P-43** | um terceiro catálogo (`motor.montar_rotas`) e uma segunda simulação (`motor.simular`) só chamados por testes, divergindo até 17,4% da de produção (B-16) | 24/09 — **apagados** (decisão técnica delegada). Antes: `simular_custo` passou a ler `custodia_rv_interpretacao` (B-17), K-06 e K-07 da Vest trazidos para o `test_alocacao`. Instantâneo dourado idêntico. Retratação da recomendação *"migrar e confrontar"* na própria P-43 |
 | **Limpeza CVM** | acervo com 4 `(1).zip` duplicados, 2 `(1).zip` que eram a **única** cópia da versão de 13/09 de 2024, 6 pastas extraídas e uma página da B3 salva por engano em `itr/` | 24/09 — **aprovado por ele.** `capturar_cvm.py --arrumar limpeza`: 4 duplicatas apagadas (sha256 idêntico), os 2 de 2024 viraram `_snapshots/*__v20260913__*`, as 6 pastas saíram depois de todo CSV bater em CRC-32 e tamanho com um membro (cada uma é inteira igual a um ZIP que fica; as de 2024 à versão `v20260830`), e a página foi apagada à mão. Manifesto: 49 → **45 arquivos**, 918 → 849 MB. **Tropeço no caminho, meu:** na primeira aplicação o Windows negou o `rmdir` de pasta `ReadOnly` depois de o `rmtree` apagar os 18 CSVs de `dfp_2012`. O `\| tail` escondeu o código de saída, e a cadeia `&&` seguiu até o manifesto. Conserto: `_tirar_somente_leitura` no `rmtree`, com teste que reprova sem ele |
+| **P-139** | o pré-registro v2 fixava `fb3546ed…` e nenhum leitor conferia: o acervo marcava `4f2cf2aa…` como vigente, e o ML leria uma versão diferente conforme a máquina (CH-01) | 24/09 — `fase0/insumo_ml.py` abre a versão fixada e confere a impressão de conteúdo da janela; pin em `docs/aprendizado/preregistro-ml-v2.pins.yaml`, amarrado ao `.md` por teste. Arquivo real: `2026 FIXADO`. 11 testes, 2 mutações reprovadas. Abriu a **P-140** |
 | **P-138** | o contador de variantes do pré-registro era desenhado como **alarme** (exige justificativa, não trava), mais brando que a decisão 4, e a resposta dele ao item 6 de 13/09 não estava registrada | 24/09 — **decisão dele: bloqueio; a única saída é emenda empurrada ao repositório.** `preregistro.conferir_orcamento` antes da decisão 4; emenda conferida por conteúdo contra `origin/main`; emenda entra no `m_orcado`. 20 testes, os de bloqueio reprovam por mutação. Inerte hoje (13/2) |
 | **P-131** | `JA_CORRETO` saía de `plano()` antes de `conferir()` — nome certo lido como conteúdo certo, e foi assim que a P-126 contou *"24 já corretas"* e a P-120 escreveu *"cada uma conferida por CRC-32"* | 24/09 — `JA_CORRETO` passa por `conferir()` e sai `RECUSADO` se falhar; teste com cópia de nome certo e conteúdo truncado **reprova contra a versão anterior**. Retratações na P-120 e na P-126, sem apagar |
 | **P-120** | o manifesto só via `*.zip` e 41 cópias extraídas (5,99 GB, 88% dos bytes) estavam no acervo sem sha256 | 24/09 — **decisão dele: apagar.** 41 conferidas uma a uma por `conferir()` (cabeçalho, tamanho, CRC-32) e apagadas; `pregoes()` idêntico (2023 248 `e4a9d81d…`, total 10.059 `2700aca0…`, `arquivos()` 41 `7469fb94…`). O manifesto conta o que sobrar sem hash (`extracoes_soltas`, 7 testes, 4 mutações): **41 arquivos, todos com origem, contagem 0**. Abriu a **P-131** |

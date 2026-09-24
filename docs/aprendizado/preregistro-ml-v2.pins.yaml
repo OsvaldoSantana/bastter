@@ -1,0 +1,27 @@
+# Os bytes que o pre-registro ML v2 fixou, como DADO (P2) -- P-139, 24/09/2026.
+#
+# O pre-registro (preregistro-ml-v2.md, secao 2) fixa o COTAHIST_A2026.ZIP pelo sha256
+# do ZIP. Este arquivo TRANSCREVE esse pin para que o leitor da familia ML
+# (fase0/insumo_ml.py) o aplique; nao o altera. `test_insumo_ml.py` reprova se o sha256,
+# os bytes ou os pregoes daqui deixarem de aparecer no .md -- duas declaracoes da mesma
+# coisa concordam por acidente ate o dia em que nao concordam (N-01).
+#
+# `impressao` NAO e escolha nova: e uma MEDIDA do mesmo byte fixado, restrita a janela
+# de teste do pre-registro (ate ago/2026). Existe por causa do CH-01: a B3 regera o anual
+# e troca a ordem das linhas sem mudar o conteudo, entao o sha256 do ZIP muda sem o dado
+# mudar. Medida em 24/09/2026 no fb3546ed e no 4f2cf2aa, com o mesmo resultado.
+#
+# Ano que nao esta aqui NAO foi fixado pelo pre-registro. O leitor devolve a versao
+# vigente com o sha256 ao lado e `fixado: False` -- fixar 2010-2025 e decisao (P-140).
+
+preregistro: docs/aprendizado/preregistro-ml-v2.md
+cotahist:
+  2026:
+    arquivo: COTAHIST_A2026.ZIP
+    sha256: fb3546ed27cc8a138e93c141adce3e8dc684df219ebffa4d49bff5d557b3e5e3
+    bytes: 85779964
+    impressao:
+      ate: 2026-08-31            # ultimo mes fechado do acervo, onde o teste termina (secao 2)
+      registros: 2632789         # linhas TIPREG=01 com DATA <= ate
+      pregoes: 166
+      sha256: ab74104d4aec2da2f0bab5ae0bd7b2d725096e9dbc3d876fb67246330dbfe972
