@@ -2827,6 +2827,37 @@ Achado lateral: **o arquivo diário existe e mede ~0,5 MB** — ~170× menor que
 sonda virou passo do `captura_cvm.yml` (`continue-on-error`: uma recusa é dado, não
 defeito), e a resposta ao runner sai no resumo da próxima execução.
 
+**24/09, 18:46Z — o runner respondeu, e respondeu igual.** Execução `36043565046`
+(`workflow_dispatch`, `ubuntu-24.04`, verde): os seis HEAD deram `200`, com os **mesmos**
+`Content-Length`, `Last-Modified` e `ETag` da tabela acima, `Server: cloudflare`. Passo (1)
+fechado: a B3 não trata IP de datacenter do GitHub diferente da máquina dele.
+
+E medido na máquina, antes de escrever o `404`: `D07092026` (feriado), `D20092026`
+(domingo) e `D24092026` (ainda não publicado) respondem **o mesmo** `404`, `text/html`. O
+404 não distingue os três — quem distingue é o anual (P-137).
+
+**Passo (2) construído:** `fase0/capturar_cotahist.py` + 10 testes, no mesmo workflow
+(passo `captura_b3`), pelo mesmo `Armazem`, portão HEAD, regra 2.5 e teto. Diário dos dias
+úteis dos últimos 7 dias (o portão fecha os já capturados); anual `A<ano do mês que acabou>`
+na primeira rodada de cada mês; 404 do diário → `ausente` no log, sem vermelho; 404 do anual
+→ `erro`. O passo da sonda saiu do workflow (a captura registra o mesmo, e mais); o módulo
+fica como instrumento manual. **Falta para fechar:** a primeira execução verde **com** o
+passo `captura_b3` — até lá `captura_do_cotahist_ainda_nao_e_rotina` fica de pé.
+
+## P-137 · Conciliar os diários do COTAHIST contra o anual do mês
+
+**Dono:** Claude Code · **Gatilho:** no primeiro dia 1º com diários e anual no armazém
+(01/10/2026) · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+A B3 responde o mesmo `404` para feriado, fim de semana e dia útil cujo diário não foi
+publicado (medido em 24/09). A captura registra `ausente` e segue — ela **não** sabe qual dos
+três foi. O anual do mês tem todo pregão: o conserto é, depois de capturá-lo, comparar as
+datas de pregão dele (`calendario.py`, que já lê COTAHIST pelo conteúdo) com os diários do
+mês no armazém, e acusar por nome o pregão sem diário — e o diário que diverge do anual
+naquela data. Sem isso, um diário perdido vira buraco calado na série diária até alguém
+reconstruir do anual à mão: a forma do F-02, em que ausência de arquivo parece ausência de
+pregão.
+
 ## P-136 · Ler a licença de redistribuição comercial dos dados da B3 — portão antes de servir outro usuário
 
 **Dono:** Claude (leitura) · Osvaldo (decisão) · **Gatilho:** **antes de servir qualquer

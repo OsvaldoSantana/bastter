@@ -1,4 +1,5 @@
-# Captura diaria da CVM (DFP, ITR, CAD) -- P-57, docs/decisoes/P-57.md.
+# Captura diaria da CVM (DFP, ITR, CAD) -- P-57, docs/decisoes/P-57.md -- e, desde
+# 24/09/2026, do COTAHIST da B3 (P-135).
 #
 # Roda sem a maquina dele ligada (P7). O byte vai para o armazem (Cloudflare R2); o git
 # recebe so o registro, e so quando ele muda. A prova de que a rotina rodou num dia sem
@@ -40,12 +41,6 @@ jobs:
       - name: Instalar
         run: python -m pip install ".[captura]"
 
-      # P-135: a B3 responde ao IP do runner? Mede e transcreve; nunca deixa o job
-      # vermelho -- uma recusa e o dado que a sonda existe para trazer (regua 5-B.13).
-      - name: Sondar o COTAHIST (P-135)
-        continue-on-error: true
-        run: python fase0/sondar_cotahist.py
-
       - name: Capturar
         id: captura
         env:
@@ -58,30 +53,48 @@ jobs:
           python fase0/capturar_cvm.py --armazem s3
           echo "codigo=$?" >> "$GITHUB_OUTPUT"
 
+      # P-135: o COTAHIST pelo mesmo armazem, portao e teto. Diario a cada pregao, anual
+      # uma vez por mes (conciliacao). A B3 respondeu 200 ao runner em 24/09 (execucao
+      # 36043565046, fase0/sondar_cotahist.py).
+      - name: Capturar COTAHIST
+        id: captura_b3
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          set +e
+          python fase0/capturar_cotahist.py --armazem s3
+          echo "codigo=$?" >> "$GITHUB_OUTPUT"
+
+      # `git status`, nao `git diff`: o registro da B3 nasce nesta rotina, e arquivo novo
+      # nao aparece no diff -- o primeiro registro nunca seria commitado.
       - name: Commitar o registro, se mudou
         if: always()
         run: |
           set -euo pipefail
-          REG=docs/acervo/cvm/capturas.csv
-          if git diff --quiet -- "$REG"; then
-            echo "registro inalterado: nada a commitar (a prova da rodada esta no log do armazem)"
+          REGS="docs/acervo/cvm/capturas.csv docs/acervo/b3/capturas.csv"
+          if [ -z "$(git status --porcelain -- $REGS)" ]; then
+            echo "registros inalterados: nada a commitar (a prova da rodada esta no log do armazem)"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$REG"
-          git commit -m "Captura CVM $(date -u +%Y-%m-%d): registro"
+          git add -- $REGS
+          git commit -m "Captura $(date -u +%Y-%m-%d): registro"
           git pull --rebase origin "$GITHUB_REF_NAME"
           git push origin "HEAD:$GITHUB_REF_NAME"
 
       # politica.yaml -> armazem: acima do aviso, UMA issue (a aberta e atualizada, nunca
-      # uma por dia). Acima do teto a captura ja recusou e o passo seguinte fica vermelho.
+      # uma por dia). Vale a medida da B3, que roda depois e ja ve o que a CVM enviou.
+      # Acima do teto a captura ja recusou e o passo seguinte fica vermelho.
       - name: Avisar se o armazem passou do aviso
-        if: always() && (steps.captura.outputs.armazem_nivel == 'aviso' || steps.captura.outputs.armazem_nivel == 'teto')
+        if: always() && ((steps.captura_b3.outputs.armazem_nivel || steps.captura.outputs.armazem_nivel) == 'aviso' || (steps.captura_b3.outputs.armazem_nivel || steps.captura.outputs.armazem_nivel) == 'teto')
         env:
           GH_TOKEN: ${{ github.token }}
-          GB: ${{ steps.captura.outputs.armazem_gb }}
-          NIVEL: ${{ steps.captura.outputs.armazem_nivel }}
+          GB: ${{ steps.captura_b3.outputs.armazem_gb || steps.captura.outputs.armazem_gb }}
+          NIVEL: ${{ steps.captura_b3.outputs.armazem_nivel || steps.captura.outputs.armazem_nivel }}
         run: |
           set -euo pipefail
           titulo="Armazem em ${GB} GB"
@@ -94,7 +107,7 @@ jobs:
           fi
 
       - name: Falhar se a captura falhou
-        if: always() && steps.captura.outputs.codigo != '0'
+        if: always() && (steps.captura.outputs.codigo != '0' || steps.captura_b3.outputs.codigo != '0')
         run: |
-          echo "a captura saiu com codigo '${{ steps.captura.outputs.codigo }}'"
+          echo "CVM saiu com '${{ steps.captura.outputs.codigo }}'; COTAHIST com '${{ steps.captura_b3.outputs.codigo }}'"
           exit 1

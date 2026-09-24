@@ -463,7 +463,7 @@ def deslocar(caminho, last_modified=""):
 
 def capturar_para_armazem(url, recurso, raiz, registro, estado, armazem, *,
                           abrir=urllib.request.urlopen, dormir=time.sleep, forcar=False,
-                          cache=None, diario=None, saida=print):
+                          cache=None, diario=None, saida=print, fonte=FONTE):
     """Uma URL, um desfecho, sem disco permanente. Devolve a situacao.
 
     `diario` recebe TODA linha da rodada (vai para o log do armazem); o registro recebe
@@ -498,7 +498,7 @@ def capturar_para_armazem(url, recurso, raiz, registro, estado, armazem, *,
             saida(f"[!] {rel}  REJEITADO: {e} -- a versao anterior ficou intacta")
             return REJEITADO
         base.update(http_last_modified=lm or meta["last_modified"], etag=etag or meta["etag"])
-        k = armazem_mod.chave(FONTE, recurso, nome, digest)
+        k = armazem_mod.chave(fonte, recurso, nome, digest)
         # a versao vigente tem de estar no armazem mesmo quando o byte nao mudou: antes da
         # carga inicial (subir_acervo_local.py) ela so existia no disco dele
         try:
@@ -524,7 +524,7 @@ def capturar_para_armazem(url, recurso, raiz, registro, estado, armazem, *,
     return situacao
 
 
-def enviar_diario(armazem, diario, momento=None):
+def enviar_diario(armazem, diario, momento=None, prefixo=LOGS):
     """O log da rodada vai para `logs/capturas/<AAAA-MM-DD>.csv`. Se ja houver um do dia,
     `<AAAA-MM-DD>__<HHMMSS>Z.csv`, e depois `..._2`, `_3` -- o armazem nunca sobrescreve,
     e o log da primeira rodada e prova tanto quanto o da segunda. Devolve a chave usada."""
@@ -536,12 +536,12 @@ def enviar_diario(armazem, diario, momento=None):
             w.writeheader()
             for ln in diario:
                 w.writerow({c: ln.get(c, "") for c in COLUNAS})
-        k = f"{LOGS}/{momento:%Y-%m-%d}.csv"
+        k = f"{prefixo}/{momento:%Y-%m-%d}.csv"
         n = 1
         while not armazem.enviar_se_ausente(k, p, isento_do_teto=True):
             n += 1
             sufixo = "" if n == 2 else f"_{n - 1}"
-            k = f"{LOGS}/{momento:%Y-%m-%d}__{momento:%H%M%S}Z{sufixo}.csv"
+            k = f"{prefixo}/{momento:%Y-%m-%d}__{momento:%H%M%S}Z{sufixo}.csv"
         return k
 
 

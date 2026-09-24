@@ -299,10 +299,22 @@ frescor: mais de 8 dias sem observação levanta o aviso `CapturaParada`, porque
 desliga cron de repositório parado há 60 dias **sem erro nenhum**. `python fase0/acervo.py
 --frescor [--armazem s3]` mede à mão e sai 1 se algo parou.
 
-**Até a primeira execução verde**, a limitação `captura_da_cvm_e_manual_e_o_dado_e_perecivel`
-continua declarada (P7: página de limite lida não é rotina rodando). O COTAHIST ainda **não**
-roda na nuvem (P-135) — e o motivo **não** é validação por imagem: o arquivo é GET aberto,
-medido de novo em 24/09.
+**A primeira execução verde existe desde 24/09** (execução `36043565046`, 34 `inalterado`); a
+limitação `captura_da_cvm_e_manual_e_o_dado_e_perecivel` sai quando o regime automático for
+declarado onde o `test_P7` o leia (P-57, passo 3).
+
+**O COTAHIST roda no mesmo workflow desde 24/09** (P-135): `fase0/capturar_cotahist.py`, pelo
+mesmo armazém, portão e teto. A B3 respondeu `200` ao runner. **Diário a cada pregão**
+(~0,5 MB, `b3/cotahist_diario/...`); **anual uma vez por mês**, na primeira rodada, para
+conciliação (~85 MB, `b3/cotahist/...`); **nunca o anual todo dia** — 85 MB × 250 pregões
+estouraria o grátis em meses. O `404` do diário é `ausente` no log, não erro: a B3 devolve o
+mesmo `404` para feriado, fim de semana e dia não publicado (medido), e quem distingue é a
+conciliação com o anual (P-137). Registro em `docs/acervo/b3/capturas.csv`; log em
+`logs/capturas_b3/`.
+
+**O armazém tem teto** (`politica.yaml → armazem`: aviso 7 GB, teto 9 GB). O R2 não tem
+limite de gasto; o teto é do código, que soma o bucket antes de cada envio. Acima do aviso,
+uma issue *"Armazem em X GB"*; acima do teto, `recusado_por_teto` e job vermelho.
 
 **Dependências: só no `pyproject.toml`, com pino exato (`==`), e em lugar nenhum
 mais.** Não existe `requirements.txt` de propósito — duas listas de versões que

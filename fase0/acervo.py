@@ -54,8 +54,9 @@ import manifesto_cvm  # noqa: E402
 # semanal) mais um dia de folga para um feriado do runner.
 FRESCOR_MAXIMO_DIAS = 8
 # Os recursos com rotina automatica e o registro que ela escreve. Recurso fora daqui nao
-# tem frescor a medir: o COTAHIST ainda nao e capturado na nuvem (P-135).
-REGISTROS = {"cvm": os.path.join("docs", "acervo", "cvm", "capturas.csv")}
+# tem frescor a medir. O da B3 entra em 24/09/2026 com a captura do COTAHIST (P-135).
+REGISTROS = {"cvm": os.path.join("docs", "acervo", "cvm", "capturas.csv"),
+             "b3": os.path.join("docs", "acervo", "b3", "capturas.csv")}
 INVENTARIO = "inventario-armazem.csv"
 COLUNAS_INVENTARIO = ("fonte", "recurso", "arquivo", "sha256", "bytes", "chave", "papel",
                       "versao", "origem", "dt_envio")

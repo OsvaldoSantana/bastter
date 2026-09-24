@@ -70,8 +70,10 @@ def test_captura_vai_para_o_armazem_e_credencial_so_por_segredo():
 def test_registro_commitado_mesmo_com_falha_e_so_se_mudou():
     p = _passo("Commitar o registro, se mudou")
     assert p["if"] == "always()"
-    assert "git diff --quiet" in p["run"] and "github-actions[bot]" in p["run"]
+    assert "git status --porcelain" in p["run"] and "github-actions[bot]" in p["run"]
     assert "docs/acervo/cvm/capturas.csv" in p["run"]
+    # o registro da B3 nasce na rotina: `git diff` nao ve arquivo novo, e ele nunca subiria
+    assert "docs/acervo/b3/capturas.csv" in p["run"] and "git diff --quiet" not in p["run"]
 
 
 def test_falha_da_captura_deixa_o_job_vermelho_depois_do_commit():
@@ -96,14 +98,18 @@ def test_o_extra_captura_existe_e_o_projeto_constroi():
     assert pp["tool"]["setuptools"]["packages"] == []
 
 
-def test_sonda_da_p135_roda_e_nao_derruba_a_captura():
-    """A sonda mede a resposta da B3 ao runner. Se ela deixasse o job vermelho, uma recusa
-    da B3 -- que e dado, nao defeito -- impediria a captura da CVM de rodar."""
+def test_cotahist_no_mesmo_workflow_pelo_mesmo_armazem_e_com_vermelho_proprio():
+    """P-135: a B3 respondeu 200 ao runner, e o COTAHIST entrou. Uma falha dele deixa o
+    job vermelho igual a da CVM -- e a CVM ter falhado nao impede o COTAHIST de rodar
+    (`set +e`: o passo grava o codigo em vez de morrer)."""
     nomes = [p.get("name") for p in _passos()]
-    sonda = _passo("Sondar o COTAHIST (P-135)")
-    assert sonda["continue-on-error"] is True
-    assert "fase0/sondar_cotahist.py" in sonda["run"]
-    assert nomes.index("Sondar o COTAHIST (P-135)") < nomes.index("Capturar")
+    b3 = _passo("captura_b3")
+    assert "fase0/capturar_cotahist.py --armazem s3" in b3["run"] and "set +e" in b3["run"]
+    for v in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET"):
+        assert b3["env"][v] == "${{ secrets.%s }}" % v
+    assert nomes.index("Capturar COTAHIST") < nomes.index("Commitar o registro, se mudou")
+    falha = _passo("Falhar se a captura falhou")["if"]
+    assert "steps.captura_b3.outputs.codigo != '0'" in falha
 
 
 def test_aviso_do_armazem_abre_uma_issue_so_e_antes_do_vermelho():
@@ -112,8 +118,9 @@ def test_aviso_do_armazem_abre_uma_issue_so_e_antes_do_vermelho():
     chegaria a avisar."""
     nomes = [p.get("name") for p in _passos()]
     av = _passo("Avisar se o armazem passou do aviso")
-    assert "always()" in av["if"] and "armazem_nivel == 'aviso'" in av["if"]
-    assert "armazem_nivel == 'teto'" in av["if"]
+    assert "always()" in av["if"] and "== 'aviso'" in av["if"] and "== 'teto'" in av["if"]
+    # vale a medida da B3, que roda depois da CVM e ja ve o que ela enviou
+    assert av["env"]["NIVEL"].startswith("${{ steps.captura_b3.outputs.armazem_nivel ||")
     assert "gh issue list" in av["run"] and "gh issue edit" in av["run"]
     assert 'titulo="Armazem em ${GB} GB"' in av["run"]
     assert av["env"]["GH_TOKEN"] == "${{ github.token }}"

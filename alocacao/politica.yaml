@@ -13,10 +13,16 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.27.0
+  versao: 1.28.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.28.0: >-
+      24/09/2026. P-135, passos (1) e (2): a B3 respondeu 200 ao runner (execucao
+      36043565046), e o COTAHIST entrou no captura_cvm.yml pelo mesmo armazem --
+      diario a cada pregao, anual uma vez por mes. `captura_do_cotahist_ainda_nao_e_rotina`
+      ganha `medido_no_runner_2026_09_24` e `construido_2026_09_24`, e fica de pe ate a
+      primeira execucao verde com o passo novo.
     1.27.0: >-
       24/09/2026. Secao nova `armazem` (aviso_gb 7, teto_gb 9): o pedido dele e
       cobranca zero, e o R2 nao tem limite de gasto -- o teto e do codigo
@@ -2238,6 +2244,17 @@ limitacoes_declaradas:
       Content-Length 84469516, Last-Modified 23/09/2026 23:43:07 GMT, ETag, Server
       cloudflare; os 4 primeiros bytes do A2025 sao PK. A validacao por imagem esta no
       FORMULARIO, nao no arquivo. O que continua NAO_CONFIRMADO e a resposta ao runner.
+    medido_no_runner_2026_09_24: >
+      Respondida. Execucao 36043565046 do captura_cvm.yml (ubuntu-24.04): HEAD em
+      COTAHIST_A2026.ZIP e em cinco COTAHIST_D<dia>.ZIP -> 200, com os MESMOS
+      Content-Length, Last-Modified e ETag medidos na maquina dele. O diario mede ~0,5 MB
+      (463.627 a 652.381 bytes); o anual, 84.469.516. Feriado, domingo e dia nao
+      publicado respondem o MESMO 404 (medido na maquina).
+    construido_2026_09_24: >
+      fase0/capturar_cotahist.py, passo `captura_b3` do mesmo workflow: diario a cada
+      pregao, anual uma vez por mes (conciliacao, P-137), nunca o anual todo dia. Esta
+      entrada sai na primeira execucao verde com esse passo -- P7: codigo escrito nao e
+      rotina rodando.
     acervos: ["b3"]
     o_que_falta: >
       O EXECUTOR, nao o caminho. O acervo anual da B3 esta em
