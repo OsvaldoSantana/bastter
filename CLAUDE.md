@@ -254,6 +254,19 @@ python demo_aporte.py        # motor de aporte
 python cenarios.py           # varredura de cenários
 ```
 
+**A captura da CVM** (DFP, ITR e CAD), da raiz do repositório, na máquina dele:
+
+```bash
+py -3.11 fase0/capturar_cvm.py              # todos os anos do índice + cad, portão HEAD
+py -3.11 fase0/capturar_cvm.py --dry-run    # o que baixaria; não grava byte nenhum
+```
+
+Os arquivos ficam em `data/bronze/cvm/{dfp,itr,cad}/`. A versão deslocada vai para
+`<recurso>/_snapshots/<stem>__v<AAAAMMDD>__<sha12>.zip`, com a data **da versão** (CV-03).
+O **registro** de toda observação HTTP, inclusive `inalterado`, fica em
+`docs/acervo/cvm/capturas.csv`, versionado; o manifesto do disco fica ao lado. Onde ela roda
+toda semana é a P-57 e **ainda não está decidido**. Até lá é um comando, não uma rotina.
+
 **Dependências: só no `pyproject.toml`, com pino exato (`==`), e em lugar nenhum
 mais.** Não existe `requirements.txt` de propósito — duas listas de versões que
 concordam é o achado N-01: editar uma não muda nada e ninguém descobre. O comando de
@@ -315,6 +328,10 @@ fase0/
                    remove só a subpasta de ano que ficou vazia depois da renomeação (P-121)
   manifesto_cvm.py sha256 + dt_captura do acervo; `comparar()` separa REORDENADO de
                    REAPRESENTADO — comparar por hash dá 100% de falso positivo na CVM
+  capturar_cvm.py  a captura da CVM: índice → HEAD → download conferido (Content-Length +
+                   `testzip`) → snapshot com a data da versão. Registro em
+                   `docs/acervo/cvm/capturas.csv`. Escrito por outra IA em 24/09 e auditado
+                   no mesmo dia (CV-01 a CV-03)
   ajustar.py       a série de preços ajustada por proventos
   refinar.py       o silver de eventos societários
 auditoria/         laudos de escopo, definições e os INSTRUMENTOS
@@ -483,7 +500,7 @@ resultado possível, pior que não fazer.
 
 ---
 
-## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm (16 linhas desde 23/09)
+## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm (17 linhas desde 24/09)
 
 *Escrita em 13/09/2026, a pedido dele: **régua de método, não lista de incidentes.***
 
@@ -694,6 +711,25 @@ cinco limitações reais que viviam **fora** da seção, uma delas pedida pela P
 **O que o portão não mede:** se a classificação está certa. Chamar de `FISICA` o que é conserto
 passa. O `nefin_termina_em_2026_07_03` é `FISICA` **enquanto** o NEFIN não publicar adiante — a
 condição está escrita na entrada, e é ela que alguém tem de conferir.
+
+### 17. Limitação da ferramenta de quem responde não é limitação da tarefa
+
+Acrescentada em **24/09/2026**, e é retratação. Desde 06/09 a captura da CVM era tratada
+como **manual**: *"Você baixa pelo navegador; eu processo o que chegar"*
+(`auditoria/CVM-DOWNLOAD-MANUAL.md`). O motivo era real e continua valendo:
+`dados.cvm.gov.br` responde `ROBOTS_DISALLOWED` às **minhas** ferramentas de busca, e eu não
+contorno. Mas o bloqueio era da ferramenta de quem respondia. A tarefa não tinha bloqueio:
+em 24/09 um script rodando **na máquina dele** baixou os 34 arquivos, e hoje é
+`fase0/capturar_cvm.py`.
+
+**A forma é a da §5-B.13 com outro sujeito.** Lá eu afirmei que *não existia* caminho sem
+CAPTCHA; aqui não afirmei impossibilidade nenhuma. Tratei o que **eu** não alcanço como o
+que **ninguém** alcança sem as mãos dele. E foi a U-01/P7 outra vez: ele no caminho crítico
+de uma rotina do sistema, dezoito dias, enquanto a CVM regerava versões que não voltam (CV-01).
+
+> **A regra:** antes de declarar algo manual, perguntar se um script na máquina dele faz.
+> "Eu não alcanço" se escreve com o sujeito, *"a sessão na nuvem não alcança"*, e o passo
+> seguinte é o roteiro para a sessão local, não o passo a passo para as mãos dele.
 
 ### A regra de uma linha, para quando não der tempo de ler as cinco
 

@@ -13,10 +13,15 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.24.0
+  versao: 1.25.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.25.0: >-
+      24/09/2026. `captura_da_cvm_e_manual_e_o_dado_e_perecivel` ganha
+      `retratacao_2026_09_24`: a captura era tratada como manual, e um script na maquina
+      dele resolve (fase0/capturar_cvm.py, regua 5-B.17). A limitacao continua de pe:
+      falta o executor sem mao humana (P-57), cujo lugar e decisao dele.
     1.24.0: >-
       24/09/2026. `limitacoes_declaradas` ganha `itr_da_cvm_comeca_em_2011` (FISICA). A
       medicao CV-04 mostrou que, com DT_RECEB <= data de decisao, nenhuma empresa tem
@@ -2110,6 +2115,14 @@ limitacoes_declaradas:
       intervencao humana, ou ser DECLARADA aqui. Ate 18/09/2026 nao era nenhuma das
       duas -- a doutrina existia desde 06/09 e a declaracao que ela exige nunca foi
       escrita. Esta entrada e a divida que a propria P7 cobrava.
+    retratacao_2026_09_24: >
+      "a captura e feita pelo navegador do usuario" -- tratada como manual; um script
+      na maquina dele resolve. A limitacao era da ferramenta de quem respondia, nao da
+      tarefa (CLAUDE.md 5-B.17). Desde 24/09 e `py -3.11 fase0/capturar_cvm.py`, com
+      registro de toda observacao em docs/acervo/cvm/capturas.csv. O que continua
+      NAO_CONSERTADO e o executor semanal sem mao humana (P-57). E a janela reescrita
+      toda semana e 2022-2026, nao 2021-2026 (CV-02). O nome da chave fica: e citado
+      no changelog 1.21.0 e no SEGUNDA-21.md.
     direcao_do_vies: >
       Contra a observabilidade, nunca a favor. Os arquivos de 2021 a 2026 sao
       reescritos semanalmente com reapresentacoes, e a reescrita e destrutiva: o numero

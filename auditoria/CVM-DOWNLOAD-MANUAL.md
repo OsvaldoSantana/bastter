@@ -1,5 +1,7 @@
 # CVM — o download manual, passo a passo
 
+> ⚠ **RETRATAÇÃO — 24/09/2026:** tratada como manual; um script na máquina dele resolve. A limitação era da ferramenta de quem respondia, não da tarefa. Hoje é `py -3.11 fase0/capturar_cvm.py` (CLAUDE.md §3, §5-B.17).
+
 **Por que manual:** `dados.cvm.gov.br` responde **ROBOTS_DISALLOWED** às minhas
 ferramentas, e a regra do projeto é honrar isso — nada de curl, wget, requests, cache
 ou espelho. **Você baixa pelo navegador; eu processo o que chegar.** Já aconteceu uma

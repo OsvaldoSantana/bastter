@@ -2446,3 +2446,74 @@ não no primeiro `DT_REFER`. Ano do exercício não é ano da disponibilidade. *
 aberto:** a emenda ao pré-registro é decisão dele e vai empurrada antes de qualquer resultado
 (P-116): P-132. O limite da fonte está em `limitacoes_declaradas → itr_da_cvm_comeca_em_2011`
 (FISICA).
+
+---
+
+## CV-01 · A versão de 06/09 da CVM não foi capturada, e não volta
+
+*24/09/2026. FISICA: a CVM serve só a versão corrente de cada arquivo.*
+
+Data de versão (o maior `date_time` entre os membros, CV-03) de todo ZIP de 2022–2026 no
+acervo, depois da integração da captura:
+
+| ano | versões no acervo |
+|---|---|
+| 2022, 2023, 2026 (dfp e itr) | 13/09 · 20/09 |
+| 2024 (dfp e itr) | **30/08** · 13/09 (só no `(1).zip`) · 20/09 |
+| 2025 (dfp e itr) | **14/09** · 20/09 |
+
+As regerações observadas caem em domingo (30/08, 13/09, 20/09), e o 14/09 do 2025 é uma
+segunda-feira. **Nenhum ano tem versão de 06/09.** Que ela *existiu* é inferência pela
+cadência (domingo entre 30/08 e 13/09), não observação. O que é observação: se existiu, não
+está aqui, e a CVM não a serve mais. As reapresentações que entraram entre 30/08 e 13/09
+deixaram de ser observáveis na forma **entregue**. Isso vale para o 2024 e, para os outros
+anos, desde antes de 13/09.
+
+**E o 2024 de 13/09 escapou por acaso:** a única cópia dele é o `dfp_cia_aberta_2024 (1).zip`,
+um download duplicado do navegador. Entra no acervo como snapshot pela Tarefa 3 (P-133).
+
+**A regra:** cada semana sem captura é uma versão perdida, e perdida de forma FISICA. É o
+argumento da P-57 em número: a rotina não é conveniência, é o único jeito de a versão existir.
+
+## CV-02 · "Congelado" não é imutável: 2010–2019 foram regerados em agosto de 2024
+
+*24/09/2026, medido nos `Last-Modified` do HEAD e nos membros dos ZIPs.*
+
+A página da CVM chama 2010–2020 de *"arquivos não sujeitos à política de atualização"*, e o
+`tools/baixar_cvm.py` os tratava como escopo `congelados`, capturado uma vez. Os cabeçalhos
+dizem outra coisa:
+
+| anos | `Last-Modified` |
+|---|---|
+| dfp 2010–2019 | 05/08/2024, 20:27 a 20:54 GMT, um a cada ~3 min |
+| itr 2011–2019 | 06/08/2024, 00:06 a 01:24 GMT |
+| 2020 (dfp e itr) | 29/12/2024 |
+| 2021 (dfp e itr) | 28/12/2025 |
+| 2022–2026 | 20/09/2026, regerados toda semana |
+
+"Não sujeito à política" quer dizer que **não há reapresentação periódica**. Não quer dizer
+que o byte não muda: em 08/2024 a CVM regerou a série inteira em lote. E a fronteira da
+janela se mede. O **2021** saiu dela na virada de 2025 e o 2020 na de 2024: a janela semanal
+são **cinco** anos (2022–2026), não os seis (2021–2026) que o script original supunha. Um
+ano deixa a janela com uma última regeração no fim de dezembro.
+
+**A regra:** o padrão da rotina é capturar **todos** os anos com o portão HEAD, que custa um
+cabeçalho por arquivo. O escopo ficou só como filtro. Congelado é hipótese que o HEAD confere
+toda semana, de graça.
+
+## CV-03 · A data da versão está dentro do ZIP, no relógio de Brasília
+
+*24/09/2026.*
+
+Cada membro de ZIP carrega `date_time`, e é a CVM quem o escreve, na hora de gerar. Nos 34
+arquivos canônicos, o maior `date_time` fica **3 h exatas** antes do `Last-Modified` em GMT
+(`dfp_cia_aberta_2012`: membro 05/08/2024 17:48, cabeçalho 20:48:19 GMT). O membro está em
+horário de Brasília (UTC−3), sem fuso declarado. Por isso **a data muda perto da meia-noite**:
+o `itr_cia_aberta_2011` é versão 05/08 pelo membro (22:24) e 06/08 pelo cabeçalho (01:24 GMT).
+
+É por isso que o snapshot se nomeia pelo membro (`__v<AAAAMMDD>__`) e não pela hora da
+captura, que era o que o script original fazia (`__20260924T121630Z__`). Duas capturas da
+mesma versão passam a ter o **mesmo** nome, e o `sha12` no nome desempata versões do mesmo
+dia. O arquivo sem membro, o `cad_cia_aberta.csv`, usa o `Last-Modified`, **em GMT**: as
+duas convenções diferem por 3 h e estão declaradas no `capturar_cvm.data_da_versao`.
+Sem nenhum dos dois, `vDESCONHECIDA`, nunca a data de hoje.

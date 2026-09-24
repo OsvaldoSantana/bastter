@@ -1,5 +1,7 @@
 # O que voce pode fazer do celular — e vale mais do que parece
 
+> ⚠ **RETRATAÇÃO — 24/09/2026:** tratada como manual; um script na máquina dele resolve. A limitação era da ferramenta de quem respondia, não da tarefa. Hoje é `py -3.11 fase0/capturar_cvm.py` (CLAUDE.md §3, §5-B.17).
+
 > **ATUALIZADO 06/09/2026, 17h40 — a Tarefa 1 foi feita e a minha suposicao estava
 > errada.** A listagem da CVM **nao tem colunas de data e tamanho**; nao e um indice
 > Apache, e uma pagina montada por eles. Confirmou-se o intervalo (2010 a 2026, 17

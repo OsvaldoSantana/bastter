@@ -327,6 +327,8 @@ nao um empate.
   indexados em busca, mas **nenhuma pagina foi lida**. Tudo PARCIAL ou NAO_CONFIRMADO.
   Isto so se resolve da maquina dele, ou do celular dele — ver o roteiro em
   `fase0/CELULAR-CVM.md`.
+
+> ⚠ **RETRATAÇÃO — 24/09/2026:** tratada como manual; um script na máquina dele resolve. A limitação era da ferramenta de quem respondia, não da tarefa. Hoje é `py -3.11 fase0/capturar_cvm.py` (CLAUDE.md §3, §5-B.17).
 - Cobertura do endpoint de proventos da B3 para empresas **deslistadas** e para o periodo
   anterior a 2010. Ponto cego, e e viés de sobrevivencia direto no backtest.
 - Sintaxe de parametro do OData do BCB (olinda bloqueado).

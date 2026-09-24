@@ -807,6 +807,8 @@ o problema parecer impossível:
 | **metadado da CVM** (`last_modified` dos 2 conjuntos) | bytes | **sim** — e é o que decide se vale baixar |
 | **os 6 ZIPs da CVM** | centenas de MB por captura | **não trivialmente** — é aqui que mora o custo |
 
+> ⚠ **RETRATAÇÃO — 24/09/2026:** tratada como manual; um script na máquina dele resolve. A limitação era da ferramenta de quem respondia, não da tarefa. Hoje é `py -3.11 fase0/capturar_cvm.py` (CLAUDE.md §3, §5-B.17).
+
 **Ou seja: a parte irreplicável e perecível é a barata.** O que é caro de guardar (os
 ZIPs) é justamente o que dá para reconstruir parcialmente, porque a CVM mantém a versão
 corrente; o que não dá para reconstruir de jeito nenhum (eventos societários, composição
@@ -842,6 +844,15 @@ limite lida não é rotina rodando — até lá, a limitação vai declarada.
 **A armadilha a embutir no desenho:** 404 + unzip vazio = "nenhuma mudança", que é
 indistinguível de "a CVM não mudou nada". `set -euo pipefail`, conferência de sha256, e
 notificação em `if: failure()`. Ausência de mudança se **afirma**, não se infere.
+
+**24/09/2026 — o comando existe; o executor não.** `fase0/capturar_cvm.py` (auditado do
+`tools/baixar_cvm.py` que outra IA escreveu) captura todos os anos do índice com portão HEAD,
+confere cada download (Content-Length + `testzip`), guarda a versão deslocada com a data da
+versão e anota **toda** observação, `inalterado` inclusive, em `docs/acervo/cvm/capturas.csv`.
+A armadilha acima está coberta: índice vazio sai com erro, e `inalterado` é linha escrita, não
+ausência de linha. **Onde ele roda toda semana continua aberto e é decisão dele.** A
+limitação `captura_da_cvm` segue declarada até a primeira execução sem mão humana. Cada
+semana sem rodar é uma versão perdida (CV-01).
 
 ---
 
@@ -2702,6 +2713,20 @@ backtest seria o valor de hoje, não o publicado em `t`. Hoje não morde (o pré
 usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declaradas`, `tipo:
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
+
+## P-133 · O acervo da CVM tem 49 arquivos com sha256 e nenhum com origem declarada
+
+**Dono:** Claude Code · **Gatilho:** antes de a captura virar rotina (P-57) ·
+**Classe:** `BLOQUEIA_O_SISTEMA`
+
+Visto na primeira captura integrada (24/09): o `manifesto_cvm.py` imprime *"P-06: 49 de 49
+arquivo(s) tem sha256 e NAO tem de onde vieram"*. O `docs/acervo/cvm/origem.csv` nunca
+existiu. A URL de cada arquivo canônico está no registro (`capturas.csv`), e a de cada
+snapshot também, na linha `deslocado`. Mas o manifesto não lê o registro, e os
+`(1).zip` do navegador não têm linha nenhuma. As saídas: o manifesto ler a origem do
+registro (os dois papéis continuam separados, e só a **URL** atravessa), ou a captura
+escrever o `origem.csv`. Não foi feito junto para não misturar a integração com uma mudança
+no `manifesto_cvm.py`, que também serve ao acervo da B3.
 
 ## P-132 · Emenda ao pré-registro v2 (período de desenvolvimento) — fundamento só existe a partir de 27/01/2011
 

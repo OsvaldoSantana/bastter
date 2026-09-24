@@ -133,6 +133,8 @@ registrados junto — *um retrato sem hash não é um retrato: é um arquivo*.
 **O que impede hoje:** nada além de estar na máquina. `dados.cvm.gov.br` me responde
 `ROBOTS_DISALLOWED` e eu não contorno.
 
+> ⚠ **RETRATAÇÃO — 24/09/2026:** tratada como manual; um script na máquina dele resolve. A limitação era da ferramenta de quem respondia, não da tarefa. Hoje é `py -3.11 fase0/capturar_cvm.py` (CLAUDE.md §3, §5-B.17).
+
 </details>
 
 ### ~~2 · A série ajustada de 2023~~ — **FEITO em 18/09/2026**
