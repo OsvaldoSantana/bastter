@@ -112,6 +112,11 @@ Claude Outputs/
 # Remove-Item porque o OneDrive segurava o lock. Ignorada para nao voltar.
 dot-claude/
 
+# 24/09/2026. `settings.local.json` e local por definicao: e o arquivo de permissoes
+# desta maquina no Claude Code, e o proprio nome diz que nao se compartilha. Esteve no
+# indice ate hoje. O `settings.json` (do projeto) continua rastreavel.
+.claude/settings.local.json
+
 # ── 18/09/2026 — P-98. O acervo COTAHIST inteiro caiu DENTRO de docs/fontes/ ──────
 # As linhas de docs/fontes/** acima cobrem por EXTENSAO, e o arquivo da B3 muda de
 # convencao dentro do proprio ZIP: de 1986 a 2001 o conteudo sai SEM extensao

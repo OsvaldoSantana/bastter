@@ -32,9 +32,13 @@ jobs:
     runs-on: ubuntu-24.04   # fixo: o label ubuntu-latest muda de imagem em 19/10/2026
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      # Acoes de terceiro fixadas pelo SHA do commit, nao pelo tag: o tag e movel, e este
+      # job tem os segredos do R2 no ambiente de dois passos e escrita no repositorio. O SHA
+      # e o que `v4`/`v5` apontavam em 24/09/2026 (git ls-remote) -- o mesmo codigo que rodou
+      # verde na 36045126980. Subir de versao e trocar o SHA e o comentario juntos.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: '3.11'
 

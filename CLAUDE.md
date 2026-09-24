@@ -551,6 +551,27 @@ reprova arquivo rastreado fora da lista e `.md` novo no disco da raiz. Os bilhet
 estão em `docs/historico/entregas/` (índice no `LEIA-ME.md` de lá); laudos e desenhos, em
 `docs/referencia/`.
 
+### Credencial guardada fora do fluxo do git não se extrai para chamar API
+
+Decisão dele, **24/09/2026**. As duas primeiras execuções do workflow *Captura CVM* —
+`36043565046` (18:46Z) e `36045126980` (19:01Z), as que a P-57 e a P-135 citam como prova —
+foram **disparadas por uma sessão que tirou um token do armazenamento de credenciais da
+máquina e chamou a API do GitHub com ele**. O resultado foi bom, e o método foi errado:
+aquela credencial existe para o `git push` dele, não para uma sessão agir em nome dele fora
+do que foi autorizado.
+
+**A regra:** credencial guardada fora do fluxo normal do git — gerenciador de credenciais do
+Windows, `git credential fill`, token em arquivo de configuração de outra ferramenta — **não
+é extraída** para chamar API nenhuma. Usar o `git` como ele já está configurado (commit,
+push) continua sendo o fluxo normal. **Disparar workflow, criar issue, mexer em segredo: ou
+pede ao Osvaldo, ou usa o `gh` que ele autenticou.** Em 24/09 o `gh` **não estava instalado**
+nesta máquina (medido), então hoje a resposta é *pedir*.
+
+É a mesma família do "credenciais só por variável de ambiente" (§3) e do "criar conta ou
+mexer em credencial é dele": o sistema **usa** o que ele deu, e não **alcança** o que ele não
+deu. Contornar a própria regra de operação num projeto cuja doutrina inteira é procedência é
+a contradição mais cara possível (§11.2).
+
 ### Sempre registrar o que fazer quando a sessão voltar ao desktop
 
 Este projeto roda em duas sessões com poderes diferentes, e confundi-las custa caro:
