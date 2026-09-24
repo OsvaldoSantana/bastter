@@ -2899,7 +2899,7 @@ emenda deveria fixar a **impressão de conteúdo** (que sobrevive a uma regeraç
 o sha256 do ZIP (que não sobrevive) — mas isso é emenda, com a régua da P-138, e não se faz
 por aqui.
 
-## P-138 · Confirmar a régua de "variante" do pré-registro — contador como alarme
+## ~~P-138~~ · Confirmar a régua de "variante" do pré-registro — contador como alarme — **FECHADA em 24/09/2026**
 
 **Dono:** Osvaldo · **Gatilho:** antes da próxima emenda ou extensão de um pré-registro
 (a P-132 é a candidata) · **Classe:** `DECISAO_DE_DESENHO` ·
@@ -2918,6 +2918,35 @@ decisão dele fora do caminho.
 A resposta é `confirmo` ou o que ele mudaria; a escolha que mais pesa é **alarme × bloqueio**
 — a decisão 4 já fez divergência de veredito **bloquear**, e o contador ficou mais brando
 que ela.
+
+### Fechamento, 24/09/2026 — **decisão dele: bloqueio, e a única saída é uma emenda empurrada ao repositório**
+
+O resto do desenho de 13/09 fica confirmado; o que mudou é o contador, de **alarme** para
+**bloqueio**. `alocacao/preregistro.py`:
+- `conferir_orcamento(P, estrategia)` conta ORIGINAL + VARIANTE da estratégia no diário
+  contra o `variantes_permitidas` dela, mais as emendas **publicadas**. Acima disso levanta
+  `OrcamentoEstourado`, e `operativo()` chama a conferência **antes** da decisão 4;
+- `politica.yaml → pesquisa.orcamento` (`politica: BLOQUEIA`, `ramo_publicado: origin/main`)
+  e `pesquisa.emendas` (vazia). Uma emenda tem estratégia, `variantes_adicionais` ≥ 1,
+  `escrita_em` e justificativa de ≥ 120 caracteres;
+- **"empurrada" é medida:** a emenda só destrava se existir, com o mesmo conteúdo, no
+  `politica.yaml` de `origin/main` (`git show`). A conferência é por conteúdo, e não por um
+  sha escrito na emenda, porque o commit que a publica ainda não existe quando ela é
+  escrita. Emenda commitada e não empurrada **não** destrava; sem git ou sem o ramo, o
+  portão **fecha** (P-102);
+- **emendar encarece:** as variantes da emenda entram no `m_orcado` assim que escritas,
+  publicadas ou não. Se não entrassem, estourar o orçamento sairia de graça.
+
+**Testes:** 20 novos em `test_preregistro.py`. Os dois que bloqueiam **reprovam por
+mutação** (a chamada de `operativo` trocada por `pass`); três rodam contra um git de verdade
+com remoto nu (não empurrada → não vale; empurrada → vale; outro texto → não vale).
+**Inerte hoje:** nenhuma estratégia passou do orçamento; `m_orcado` 13, `m_executado` 2,
+R3/R4 reproduzem. `politica.yaml` 1.29.0.
+
+**Limite declarado (P5):** o verificador lê a referência **local** do remoto, ou seja o que
+esta máquina soube no último fetch ou push, e não vai à rede. Forjar essa referência com
+`git update-ref` passa no portão; o push seguinte ou o histórico público entregam a
+diferença.
 
 ## P-136 · Ler a licença de redistribuição comercial dos dados da B3 — portão antes de servir outro usuário
 
@@ -3014,6 +3043,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 |---|---|---|
 | **P-43** | um terceiro catálogo (`motor.montar_rotas`) e uma segunda simulação (`motor.simular`) só chamados por testes, divergindo até 17,4% da de produção (B-16) | 24/09 — **apagados** (decisão técnica delegada). Antes: `simular_custo` passou a ler `custodia_rv_interpretacao` (B-17), K-06 e K-07 da Vest trazidos para o `test_alocacao`. Instantâneo dourado idêntico. Retratação da recomendação *"migrar e confrontar"* na própria P-43 |
 | **Limpeza CVM** | acervo com 4 `(1).zip` duplicados, 2 `(1).zip` que eram a **única** cópia da versão de 13/09 de 2024, 6 pastas extraídas e uma página da B3 salva por engano em `itr/` | 24/09 — **aprovado por ele.** `capturar_cvm.py --arrumar limpeza`: 4 duplicatas apagadas (sha256 idêntico), os 2 de 2024 viraram `_snapshots/*__v20260913__*`, as 6 pastas saíram depois de todo CSV bater em CRC-32 e tamanho com um membro (cada uma é inteira igual a um ZIP que fica; as de 2024 à versão `v20260830`), e a página foi apagada à mão. Manifesto: 49 → **45 arquivos**, 918 → 849 MB. **Tropeço no caminho, meu:** na primeira aplicação o Windows negou o `rmdir` de pasta `ReadOnly` depois de o `rmtree` apagar os 18 CSVs de `dfp_2012`. O `\| tail` escondeu o código de saída, e a cadeia `&&` seguiu até o manifesto. Conserto: `_tirar_somente_leitura` no `rmtree`, com teste que reprova sem ele |
+| **P-138** | o contador de variantes do pré-registro era desenhado como **alarme** (exige justificativa, não trava), mais brando que a decisão 4, e a resposta dele ao item 6 de 13/09 não estava registrada | 24/09 — **decisão dele: bloqueio; a única saída é emenda empurrada ao repositório.** `preregistro.conferir_orcamento` antes da decisão 4; emenda conferida por conteúdo contra `origin/main`; emenda entra no `m_orcado`. 20 testes, os de bloqueio reprovam por mutação. Inerte hoje (13/2) |
 | **P-131** | `JA_CORRETO` saía de `plano()` antes de `conferir()` — nome certo lido como conteúdo certo, e foi assim que a P-126 contou *"24 já corretas"* e a P-120 escreveu *"cada uma conferida por CRC-32"* | 24/09 — `JA_CORRETO` passa por `conferir()` e sai `RECUSADO` se falhar; teste com cópia de nome certo e conteúdo truncado **reprova contra a versão anterior**. Retratações na P-120 e na P-126, sem apagar |
 | **P-120** | o manifesto só via `*.zip` e 41 cópias extraídas (5,99 GB, 88% dos bytes) estavam no acervo sem sha256 | 24/09 — **decisão dele: apagar.** 41 conferidas uma a uma por `conferir()` (cabeçalho, tamanho, CRC-32) e apagadas; `pregoes()` idêntico (2023 248 `e4a9d81d…`, total 10.059 `2700aca0…`, `arquivos()` 41 `7469fb94…`). O manifesto conta o que sobrar sem hash (`extracoes_soltas`, 7 testes, 4 mutações): **41 arquivos, todos com origem, contagem 0**. Abriu a **P-131** |
 | **P-125** | `conferir_cabecalho` devolvia `'.202'` como ano — fatia `[10:14]` pegando o ponto de `COTAHIST.`; ninguém lia o retorno | 23/09 — `[11:15]`; `fase0/test_p125_ano_do_cabecalho.py`, **6 de 6 reprovam por mutação** (fatia antiga reintroduzida). Achado lateral: as posições do header moram em Python (P-130) |

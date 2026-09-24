@@ -175,7 +175,7 @@ hml_puro_v1:
       escolhido: ">= 15"
       alternativa_defensavel: "qualquer corte de 5 a 18"
       consequencia_medida: "nenhuma -- identico ao 5o decimal em todo o intervalo"
-  variantes_permitidas: 1           # ALARME, nao trava -- exige justificativa escrita
+  variantes_permitidas: 1           # BLOQUEIA desde 24/09 (P-138); era ALARME neste desenho
   execucoes:                        # o DIARIO. Instrumento principal.
     - id: R1
       tipo: ORIGINAL
@@ -244,3 +244,8 @@ O que pegou aquilo foi um **comentário em português no alto de um arquivo e do
 > **a limitação declarada vale mais que a proteção presumida.** O modelo de dados governa
 > as escolhas que você sabe que fez. As que você não sabe que fez continuam sendo pegas
 > por leitura, teste e conversa — e é por isso que o contador é alarme, não defesa.
+>
+> **24/09/2026 — P-138, decisão dele:** o contador passou a **bloquear**, e a única saída é
+> uma emenda empurrada ao repositório (`preregistro.conferir_orcamento`). A frase acima
+> continua valendo no que ela diz: o contador não pega o grau de liberdade que ninguém
+> declarou. O que mudou é o que acontece quando ele pega um que foi declarado.

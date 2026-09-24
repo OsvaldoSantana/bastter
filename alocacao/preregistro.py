@@ -15,6 +15,16 @@ DECISAO 3 — o `m` dos DOIS LADOS, e nenhum dos dois e afirmado:
   que o julga. E `pesquisa_id` idem — derivado do sha256 da fonte e da regra de
   amostra, nunca escrito, para que renomear o conjunto nao reinicie o contador.
 
+P-138 — o orcamento de variantes BLOQUEIA, decidido por ele em 24/09/2026. O desenho de
+  13/09 fazia do contador um ALARME (exige justificativa, nao trava), e ele ficou mais
+  brando que a decisao 4. Agora uma estrategia que gastou mais especificacoes do que o
+  `variantes_permitidas` dela nao decide nada, e a UNICA saida e uma emenda em
+  `pesquisa.emendas` que ja esteja no ramo publicado. Justificativa escrita so no disco
+  nao destrava: o verificador externo deste projeto e o historico publico datado
+  (auditoria/PREREGISTRO-EVIDENCIA.md), e emenda que ninguem de fora pode ver nao passou
+  por ele. E a emenda nao sai de graca: as variantes que ela acrescenta entram no
+  `m_orcado`, e o corte orcado de toda a familia sobe junto.
+
 DECISAO 4 — divergencia BLOQUEIA. A regra dele foi escrita para R1 contra uma
   extensao Rn, e aqui ela ganhou um primeiro caso que nao estava previsto: os dois
   lados do `m` da decisao 3 podem dar vereditos opostos sobre a MESMA execucao.
@@ -30,6 +40,9 @@ portugues e dois testes.
 """
 from __future__ import annotations
 import hashlib
+import os
+import subprocess
+import yaml
 import multiplicidade as X
 
 # EXTENSAO re-roda uma especificacao que ja esta contada: mais observacao da mesma
@@ -50,6 +63,12 @@ class FonteTrocada(Exception):
 
 class DivergenciaNaoEscrita(Exception):
     """Decisao 4. A estrategia nao decide nada enquanto a divergencia nao estiver escrita."""
+
+class OrcamentoEstourado(Exception):
+    """P-138. Mais especificacoes do que o orcado, e nenhuma emenda publicada cobrindo."""
+
+class EmendaInvalida(Exception):
+    """Uma emenda malformada nao destrava nada, e tambem nao pode sumir calada."""
 
 
 def bloco(P):
@@ -104,11 +123,115 @@ def m_executado(P):
 
 
 def m_orcado(P):
-    """Soma dos `variantes_permitidas`. Tambem calculado: o 13 do registro nunca foi
-    um numero que alguem escolheu — e a consequencia de nove escolhas anteriores."""
+    """Soma dos `variantes_permitidas`, mais o que as emendas acrescentaram. Tambem
+    calculado: o 13 do registro nunca foi um numero que alguem escolheu — e a
+    consequencia de nove escolhas anteriores.
+
+    P-138: a emenda entra aqui DECLARADA, publicada ou nao. E o lado conservador — uma
+    emenda escrita e ainda nao empurrada ja encarece a familia, e so destrava quando
+    estiver publicada. Se ela nao entrasse no `m`, estourar o orcamento sairia de graca."""
     E = P["estrategias_pre_registradas"]
-    return sum(v["variantes_permitidas"] for v in E.values()
+    base = sum(v["variantes_permitidas"] for v in E.values()
                if isinstance(v, dict) and "variantes_permitidas" in v)
+    return base + sum(e["variantes_adicionais"] for e in emendas(P))
+
+
+CAMPOS_DA_EMENDA = ("estrategia", "variantes_adicionais", "escrita_em", "justificativa")
+
+
+def emendas(P):
+    """As emendas ao orcamento, validadas. Malformada levanta, nunca some."""
+    conhecidas = set(P["estrategias_pre_registradas"])
+    out = []
+    for e in bloco(P)["emendas"]:
+        faltando = [c for c in CAMPOS_DA_EMENDA if c not in e]
+        if faltando:
+            raise EmendaInvalida(f"emenda sem {faltando}: {e!r}")
+        if e["estrategia"] not in conhecidas:
+            raise EmendaInvalida(f"emenda para {e['estrategia']!r}, que nao esta "
+                                 f"pre-registrada")
+        n = e["variantes_adicionais"]
+        if not isinstance(n, int) or isinstance(n, bool) or n < 1:
+            raise EmendaInvalida(f"{e['estrategia']}: variantes_adicionais={n!r}; uma "
+                                 f"emenda acrescenta pelo menos uma especificacao")
+        if len(str(e["justificativa"])) < LEITURA_MINIMA:
+            raise EmendaInvalida(
+                f"{e['estrategia']}: justificativa com {len(str(e['justificativa']))} "
+                f"caracteres. Emenda sem motivo escrito e so um numero maior.")
+        out.append(e)
+    return out
+
+
+def _chave_da_emenda(e):
+    return (e["estrategia"], e["variantes_adicionais"], str(e["escrita_em"]),
+            " ".join(str(e["justificativa"]).split()))
+
+
+def emendas_publicadas(P, raiz=None):
+    """As emendas que existem no `politica.yaml` do ramo publicado (`pesquisa.orcamento.
+    ramo_publicado`), conferidas por CONTEUDO — estrategia, numero, data e
+    justificativa —, nunca por um sha escrito na propria emenda: o sha do commit que a
+    publica nao existe quando ela e escrita.
+
+    Levanta `OrcamentoEstourado` quando nao consegue ler o ramo: sem git, sem o ramo, sem
+    o arquivo nele. "Nao consegui conferir" nao pode ter a saida de "conferi e esta
+    publicada" (P-102), e o lado seguro de um portao e fechado.
+
+    O QUE ELE NAO MEDE (P5): le a referencia local do ramo remoto, que e o que esta
+    maquina soube do servidor no ultimo fetch ou push. Nao vai a rede. Forjar a
+    referencia com `git update-ref` passa — e deixa o `git push` seguinte recusado ou o
+    historico publico sem a emenda, que e onde um leitor de fora a procuraria."""
+    raiz = raiz or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ramo = bloco(P)["orcamento"]["ramo_publicado"]
+    try:
+        r = subprocess.run(["git", "show", f"{ramo}:alocacao/politica.yaml"], cwd=raiz,
+                           capture_output=True, check=True)
+    except (OSError, subprocess.CalledProcessError) as ex:
+        raise OrcamentoEstourado(
+            f"nao consegui ler alocacao/politica.yaml em {ramo!r} ({type(ex).__name__}). "
+            f"Sem o ramo publicado nao ha como saber se a emenda foi empurrada, e o "
+            f"portao fica fechado.") from ex
+    publicado = yaml.safe_load(r.stdout.decode("utf-8")) or {}
+    lista = ((publicado.get("pesquisa") or {}).get("emendas") or [])
+    chaves = {_chave_da_emenda(e) for e in lista
+              if isinstance(e, dict) and all(c in e for c in CAMPOS_DA_EMENDA)}
+    return [e for e in emendas(P) if _chave_da_emenda(e) in chaves]
+
+
+def conferir_orcamento(P, estrategia, publicadas=None):
+    """P-138. Quantas especificacoes a estrategia gastou (ORIGINAL + VARIANTE no diario)
+    contra o que ela tem (o `variantes_permitidas` mais as emendas PUBLICADAS). Acima,
+    levanta; dentro, devolve o saldo.
+
+    `publicadas` e injetavel para teste; em producao sai do git (`emendas_publicadas`),
+    e so e consultado quando o orcamento de fato estourou — dentro do orcamento, o
+    portao nao depende de git nenhum."""
+    orc = bloco(P)["orcamento"]
+    if orc["politica"] != "BLOQUEIA":
+        raise NotImplementedError(
+            f"orcamento.politica={orc['politica']!r}: so BLOQUEIA esta implementado "
+            f"(P-138). Um ALARME declarado aqui seria o E-03: interruptor que nao liga "
+            f"em nada.")
+    gastas = sum(1 for r in diario(P)
+                 if r["estrategia"] == estrategia and r["tipo"] in TIPOS_QUE_CONTAM_NO_M)
+    base = P["estrategias_pre_registradas"][estrategia]["variantes_permitidas"]
+    if gastas <= base:
+        return base - gastas
+    if publicadas is None:
+        publicadas = emendas_publicadas(P)
+    extra = sum(e["variantes_adicionais"] for e in publicadas
+                if e["estrategia"] == estrategia)
+    if gastas <= base + extra:
+        return base + extra - gastas
+    escritas = sum(e["variantes_adicionais"] for e in emendas(P)
+                   if e["estrategia"] == estrategia)
+    raise OrcamentoEstourado(
+        f"{estrategia}: {gastas} especificacoes gastas, {base} pre-registradas e {extra} "
+        f"por emenda publicada em {orc['ramo_publicado']!r}"
+        + (f" ({escritas} escritas no disco e ainda nao empurradas)" if escritas > extra
+           else "")
+        + ". A estrategia nao decide nada. A unica saida e uma emenda em "
+          "pesquisa.emendas, com justificativa, empurrada ao repositorio.")
 
 
 def cortes_tabelados(P, gl):
@@ -188,13 +311,15 @@ def conferir_registro(P, registro, cortes, vered, tolerancia=1e-3):
     return fora
 
 
-def operativo(P, estrategia, vered):
-    """Decisao 4. Divergencia de veredito BLOQUEIA ate estar escrita.
+def operativo(P, estrategia, vered, publicadas=None):
+    """Decisao 4. Divergencia de veredito BLOQUEIA ate estar escrita. E, antes dela, a
+    P-138: orcamento de variantes estourado sem emenda publicada bloqueia tambem.
 
     "Preservar tudo" sem esta regra vira "escolha o que preferir" — p-hacking com
     auditoria completa. E o bloqueio e o ponto, nao o efeito colateral: um veredito
     que se inverte conforme a familia e o evento mais informativo que este aparato
     pode produzir, e merece uma parada."""
+    conferir_orcamento(P, estrategia, publicadas)
     dv = bloco(P)["divergencia"]
     if dv["politica"] != "BLOQUEIA":
         raise NotImplementedError(

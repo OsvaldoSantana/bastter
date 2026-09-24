@@ -287,3 +287,178 @@ def test_o_HML_nao_sobrevive_ao_ORCAMENTO_que_ele_mesmo_pre_registrou():
     assert t > tabelado, "a afirmacao antiga: sobrevive por pouco"
     assert t < medido, "a afirmacao medida: nao sobrevive"
     assert medido - tabelado > 0.15, f"o custo da suposicao: {medido - tabelado:.4f}"
+
+
+# ── P-138: o orcamento de variantes BLOQUEIA; a saida e emenda EMPURRADA ───────
+JUSTIFICATIVA = ("A variante troca o filtro de liquidez de 15 para 18 dias porque a "
+                 "serie do NEFIN passou a publicar a contagem por mes; declarada antes "
+                 "de rodar, e o preco e o corte orcado da familia subir.")
+
+
+def _estourado():
+    """hml_puro_v1 tem `variantes_permitidas: 1` e ja gastou R1. Uma VARIANTE a mais
+    estoura o orcamento em um."""
+    q = _copia()
+    q["pesquisa"]["diario"].append(dict(q["pesquisa"]["diario"][0], id="RV",
+                                        tipo="VARIANTE", data="2026-09-25"))
+    return q
+
+
+def _emenda(**kw):
+    e = dict(estrategia="hml_puro_v1", variantes_adicionais=1,
+             escrita_em="2026-09-25", justificativa=JUSTIFICATIVA)
+    e.update(kw)
+    return e
+
+
+def _vered_sem_divergencia():
+    return {"executado": "NAO_REJEITA", "orcado": "NAO_REJEITA", "divergem": False}
+
+
+def test_P138_orcamento_estourado_SEM_emenda_BLOQUEIA():
+    """A decisao dele. Na versao anterior `operativo` devolvia o veredito: o contador
+    nao existia nem como alarme."""
+    q = _estourado()
+    with pytest.raises(R.OrcamentoEstourado, match="unica saida"):
+        R.operativo(q, "hml_puro_v1", _vered_sem_divergencia(), publicadas=[])
+
+
+def test_P138_emenda_ESCRITA_e_nao_empurrada_continua_bloqueando():
+    """Justificativa no disco e o alarme de 13/09 com outro nome. O que destrava e o
+    historico publico."""
+    q = _estourado()
+    q["pesquisa"]["emendas"] = [_emenda()]
+    with pytest.raises(R.OrcamentoEstourado, match="ainda nao empurradas"):
+        R.operativo(q, "hml_puro_v1", _vered_sem_divergencia(), publicadas=[])
+
+
+def test_P138_emenda_PUBLICADA_destrava_e_so_na_medida_dela():
+    q = _estourado()
+    q["pesquisa"]["emendas"] = [_emenda()]
+    pub = R.emendas(q)
+    assert R.operativo(q, "hml_puro_v1", _vered_sem_divergencia(),
+                       publicadas=pub) == "NAO_REJEITA"
+    assert R.conferir_orcamento(q, "hml_puro_v1", pub) == 0
+    # uma segunda variante estoura de novo: a emenda cobre o que diz, nao um cheque em branco
+    q["pesquisa"]["diario"].append(dict(q["pesquisa"]["diario"][0], id="RV2",
+                                        tipo="VARIANTE", data="2026-09-26"))
+    with pytest.raises(R.OrcamentoEstourado):
+        R.conferir_orcamento(q, "hml_puro_v1", pub)
+
+
+def test_P138_emenda_para_OUTRA_estrategia_nao_destrava_esta():
+    q = _estourado()
+    q["pesquisa"]["emendas"] = [_emenda(estrategia="tamanho_smb_v1")]
+    with pytest.raises(R.OrcamentoEstourado):
+        R.conferir_orcamento(q, "hml_puro_v1", R.emendas(q))
+
+
+def test_P138_emenda_ENCARECE_a_familia_publicada_ou_nao():
+    """Se emendar nao entrasse no `m`, estourar o orcamento sairia de graca."""
+    q = _copia()
+    q["pesquisa"]["emendas"] = [_emenda(variantes_adicionais=2)]
+    assert R.m_orcado(q) == R.m_orcado(P) + 2
+
+
+@pytest.mark.parametrize("estrago", [
+    {"variantes_adicionais": 0}, {"variantes_adicionais": True},
+    {"variantes_adicionais": "1"}, {"justificativa": "porque sim"},
+    {"estrategia": "nao_existe_v1"}])
+def test_P138_emenda_malformada_LEVANTA(estrago):
+    q = _copia()
+    q["pesquisa"]["emendas"] = [_emenda(**estrago)]
+    with pytest.raises(R.EmendaInvalida):
+        R.emendas(q)
+
+
+@pytest.mark.parametrize("campo", R.CAMPOS_DA_EMENDA)
+def test_P138_emenda_sem_campo_LEVANTA(campo):
+    q = _copia()
+    e = _emenda(); del e[campo]
+    q["pesquisa"]["emendas"] = [e]
+    with pytest.raises(R.EmendaInvalida):
+        R.m_orcado(q)
+
+
+def test_P138_politica_de_orcamento_diferente_de_BLOQUEIA_LEVANTA():
+    """ALARME declarado e nao implementado seria o E-03."""
+    q = _copia()
+    q["pesquisa"]["orcamento"]["politica"] = "ALARME"
+    with pytest.raises(NotImplementedError):
+        R.conferir_orcamento(q, "hml_puro_v1", [])
+
+
+def test_P138_dentro_do_orcamento_o_portao_nao_depende_de_git(monkeypatch):
+    def sem_git(*a, **k):
+        raise AssertionError("consultou o ramo publicado sem precisar")
+    monkeypatch.setattr(R, "emendas_publicadas", sem_git)
+    for r in P["pesquisa"]["diario"]:
+        assert R.conferir_orcamento(P, r["estrategia"]) >= 0
+
+
+def test_P138_o_repositorio_esta_dentro_do_orcamento_e_o_m_nao_andou():
+    """Instantaneo: a guarda nova e inerte hoje. m_orcado 13 e m_executado 2 como antes."""
+    assert P["pesquisa"]["emendas"] == []
+    assert (R.m_orcado(P), R.m_executado(P)) == (13, 2)
+
+
+# o verificador de verdade, contra um git de verdade
+def _git(cwd, *args):
+    import subprocess
+    subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+                   cwd=cwd, check=True, capture_output=True)
+
+
+def _repo_com_remoto(tmp_path, emendas):
+    import shutil
+    if shutil.which("git") is None:
+        pytest.skip("git ausente")
+    remoto, local = tmp_path / "remoto.git", tmp_path / "local"
+    _git(tmp_path, "init", "-q", "--bare", "-b", "main", str(remoto))
+    _git(tmp_path, "clone", "-q", str(remoto), str(local))
+    (local / "alocacao").mkdir()
+    _escrever(local, emendas)
+    _git(local, "add", "-A"); _git(local, "commit", "-q", "-m", "base")
+    _git(local, "push", "-q", "origin", "HEAD:main")
+    return local
+
+
+def _escrever(local, emendas):
+    import yaml
+    (local / "alocacao" / "politica.yaml").write_text(
+        yaml.safe_dump({"pesquisa": {"emendas": emendas}}, allow_unicode=True),
+        encoding="utf-8")
+
+
+def test_P138_verificador_so_aceita_o_que_foi_EMPURRADO(tmp_path):
+    local = _repo_com_remoto(tmp_path, [])
+    q = _estourado()
+    q["pesquisa"]["emendas"] = [_emenda()]
+    # commitada e nao empurrada: nao conta
+    _escrever(local, [_emenda()])
+    _git(local, "commit", "-q", "-am", "emenda")
+    assert R.emendas_publicadas(q, raiz=str(local)) == []
+    with pytest.raises(R.OrcamentoEstourado):
+        R.conferir_orcamento(q, "hml_puro_v1", R.emendas_publicadas(q, raiz=str(local)))
+    # empurrada: conta, e destrava
+    _git(local, "push", "-q", "origin", "HEAD:main")
+    pub = R.emendas_publicadas(q, raiz=str(local))
+    assert [e["estrategia"] for e in pub] == ["hml_puro_v1"]
+    assert R.conferir_orcamento(q, "hml_puro_v1", pub) == 0
+
+
+def test_P138_emenda_publicada_com_OUTRO_texto_nao_vale(tmp_path):
+    """Por conteudo: trocar a justificativa depois de publicar nao herda a publicacao."""
+    outra = _emenda(justificativa=JUSTIFICATIVA.replace("18 dias", "20 dias"))
+    local = _repo_com_remoto(tmp_path, [outra])
+    q = _estourado()
+    q["pesquisa"]["emendas"] = [_emenda()]
+    assert R.emendas_publicadas(q, raiz=str(local)) == []
+
+
+def test_P138_sem_ramo_publicado_o_portao_FECHA(tmp_path):
+    """"Nao consegui conferir" nao pode ter a saida de "conferi" (P-102)."""
+    q = _estourado()
+    q["pesquisa"]["emendas"] = [_emenda()]
+    with pytest.raises(R.OrcamentoEstourado, match="nao consegui ler"):
+        R.emendas_publicadas(q, raiz=str(tmp_path))

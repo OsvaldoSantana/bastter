@@ -13,10 +13,17 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.28.0
+  versao: 1.29.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.29.0: >-
+      24/09/2026. P-138 decidida por ele: o orcamento de variantes BLOQUEIA, e a unica
+      saida e uma emenda empurrada ao repositorio. Entram `pesquisa.orcamento`
+      (politica BLOQUEIA, ramo_publicado origin/main) e `pesquisa.emendas` (vazia).
+      `preregistro.conferir_orcamento` roda antes da decisao 4 em `operativo`; as
+      variantes de emenda entram no `m_orcado`. Nenhuma estrategia gastou alem do
+      orcado hoje: m_orcado 13, m_executado 2, vereditos de R3 e R4 inalterados.
     1.28.0: >-
       24/09/2026. P-135, passos (1) e (2): a B3 respondeu 200 ao runner (execucao
       36043565046), e o COTAHIST entrou no captura_cvm.yml pelo mesmo armazem --
@@ -1832,6 +1839,21 @@ pesquisa:
       resultado, e portanto e o unico dos dois que nao pode ter sido escolhido pelo
       resultado. O executado descreve a evidencia e cresce so quando alguem roda
       mais coisa -- e quem roda ja viu o numero anterior.
+  # P-138, decidida por ele em 24/09/2026: o orcamento de variantes BLOQUEIA. Uma
+  # estrategia com mais especificacoes (ORIGINAL + VARIANTE no diario) do que o seu
+  # `variantes_permitidas` nao decide nada, e a UNICA saida e uma entrada em `emendas`
+  # que ja exista no `politica.yaml` do ramo publicado. Justificativa so no disco nao
+  # destrava: o verificador externo deste projeto e o historico publico datado. O
+  # desenho de 13/09 fazia do contador um alarme, e ele era mais brando que a decisao 4.
+  orcamento:
+    politica: BLOQUEIA
+    ramo_publicado: origin/main   # a referencia local do remoto; nao vai a rede (P5)
+  # Cada emenda: estrategia, variantes_adicionais (>= 1), escrita_em, justificativa
+  # (>= 120 caracteres). As variantes dela entram no `m_orcado` assim que escritas --
+  # emendar encarece a familia inteira, publicada ou nao --, e so destravam depois de
+  # empurradas. Conferida por conteudo contra o ramo publicado, nunca por um sha
+  # escrito aqui: o sha do commit que a publica nao existe quando ela e escrita.
+  emendas: []
   diario:
     - id: R1
       estrategia: hml_puro_v1
