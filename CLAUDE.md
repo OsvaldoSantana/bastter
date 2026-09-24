@@ -311,7 +311,8 @@ fase0/
                    ZIP pelo CONTEÚDO, não pela extensão (P-99), e lê o leiaute do YAML
   moeda.py         as fronteiras de MODREF, medidas e NÃO aplicadas (C-03)
   nomear_extracoes.py  cópias extraídas → `COTAHIST_A<ANO>.TXT`, só depois de conferir
-                   cabeçalho, tamanho e CRC-32 contra o ZIP. Não apaga nada (P-120 é dele)
+                   cabeçalho, tamanho e CRC-32 contra o ZIP. Não apaga arquivo nenhum;
+                   remove só a subpasta de ano que ficou vazia depois da renomeação (P-121)
   manifesto_cvm.py sha256 + dt_captura do acervo; `comparar()` separa REORDENADO de
                    REAPRESENTADO — comparar por hash dá 100% de falso positivo na CVM
   ajustar.py       a série de preços ajustada por proventos

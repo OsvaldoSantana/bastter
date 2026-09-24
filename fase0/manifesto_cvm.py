@@ -78,6 +78,29 @@ def zips(raiz):
     return sorted(out)
 
 
+def extracoes_soltas(raiz):
+    """Todo arquivo com cara de COTAHIST que NAO e .zip sob a raiz, em ordem estavel.
+
+    P-120, decisao dele em 24/09/2026: as copias extraidas sairam do acervo -- o ZIP e a
+    fonte, a extracao e derivada e se refaz. Sem isto a decisao dependeria de alguem
+    lembrar de nao extrair ali de novo (P7), e o `manifesto()`, que so ve `*.zip`, nao a
+    enxergaria: 88% dos bytes do acervo ficaram um mes sem sha256 e ninguem soube.
+
+    CONTA e nao calcula hash: manifestar derivado seria pagar 7x de leitura para provar o
+    que o ZIP ja prova, que e a saida que ele recusou.
+
+    O criterio e o PREFIXO, e nao o `calendario.ano_de()`, de proposito: este e o alarme,
+    e tem de ser mais largo que o leitor. Tudo o que o `ano_de()` aceita comeca com
+    COTAHIST, entao nada que o calendario leria escapa daqui; e um `COTAHIST_A2023.TXT.part`
+    que ele recusaria continua sendo sobra de extracao no acervo."""
+    out = []
+    for pasta, _, arquivos in os.walk(raiz):
+        for a in arquivos:
+            if a.upper().startswith("COTAHIST") and not a.lower().endswith(".zip"):
+                out.append(os.path.join(pasta, a))
+    return sorted(out)
+
+
 def origem_declarada(pasta):
     """De ONDE cada arquivo veio, lido de `origem.csv` ao lado do manifesto.
 
@@ -356,6 +379,18 @@ def main(argv=None):
         if orfas:
             print(f"\nP7: {len(orfas)} declaracao(oes) sem acervo: "
                   f"{', '.join(sorted(orfas))}. Declaracao apodrecida.", file=sys.stderr)
+        # P-120: por ultimo, para ser a linha que fica na tela. O numero sai SEMPRE,
+        # inclusive o zero (§5-B.14): "0" medido e silencio nao podem ter a mesma cara.
+        soltas = extracoes_soltas(a.manifesto)
+        print(f"\nP-120: {len(soltas)} copia(s) extraida(s) de COTAHIST fora de ZIP.")
+        if soltas:
+            print(f"AVISO P-120: {len(soltas)} arquivo(s) com cara de COTAHIST que NAO sao "
+                  f".zip, sem sha256 no manifesto:\n"
+                  + "".join(f"  {os.path.relpath(s, a.manifesto)}\n" for s in soltas)
+                  + "  A decisao da P-120 e que o acervo guarda so o ZIP: a extracao e "
+                  "derivada e se refaz.\n  Apague-as (conferindo antes com "
+                  "fase0/nomear_extracoes.py) ou extraia fora do acervo.",
+                  file=sys.stderr)
         return 0
     p.print_help()
     return 1

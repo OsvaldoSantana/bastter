@@ -22,7 +22,9 @@ do ZIP do mesmo ano:
 O QUE ELE RECUSA FAZER, e as recusas sao o modulo:
   - nao renomeia sem o ZIP ao lado: sem a fonte, a copia nao tem como ser conferida;
   - nao sobrescreve: se o nome certo ja existe, a linha diz isso e para ali;
-  - nao apaga nada. Apagar as copias e a decisao da P-120, e ela e dele;
+  - nao apaga arquivo nenhum; remove so a subpasta de ano que ficou vazia depois da
+    renomeacao (P-121). Apagar as copias foi decisao dele na P-120 (24/09), e foi
+    feito fora daqui;
   - nao toca nos ZIPs, que sao a fonte e tem sha256 no manifesto.
 
 Por padrao so MOSTRA o plano. `--aplicar` executa.
