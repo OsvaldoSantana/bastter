@@ -94,3 +94,13 @@ def test_o_extra_captura_existe_e_o_projeto_constroi():
     captura = pp["project"]["optional-dependencies"]["captura"]
     assert any(d.startswith("boto3==") for d in captura)
     assert pp["tool"]["setuptools"]["packages"] == []
+
+
+def test_sonda_da_p135_roda_e_nao_derruba_a_captura():
+    """A sonda mede a resposta da B3 ao runner. Se ela deixasse o job vermelho, uma recusa
+    da B3 -- que e dado, nao defeito -- impediria a captura da CVM de rodar."""
+    nomes = [p.get("name") for p in _passos()]
+    sonda = _passo("Sondar o COTAHIST (P-135)")
+    assert sonda["continue-on-error"] is True
+    assert "fase0/sondar_cotahist.py" in sonda["run"]
+    assert nomes.index("Sondar o COTAHIST (P-135)") < nomes.index("Capturar")

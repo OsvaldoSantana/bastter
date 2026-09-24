@@ -672,6 +672,28 @@ Ele escreveu sozinho o que eu devia ter entregado. Isso é a **U-01/P7 pela quar
 pôr o Osvaldo no caminho crítico de algo que é do sistema, aqui com cinco CAPTCHAs manuais
 que não existiam.
 
+> **Reincidência — 24/09/2026, seis dias depois, e com a retratação escrita no arquivo.** O
+> Claude do chat, redigindo o prompt da P-57, escreveu que *"a página da B3 exige validação
+> por imagem, que não se contorna"*, e mandou declarar o COTAHIST como `NAO_CONSERTADA` por
+> esse motivo. A entrada `captura_do_cotahist_passa_por_captcha` estava **`RETIRADA` desde
+> 18/09**, com a afirmação citada, a evidência e a causa raiz.
+>
+> **O mecanismo não foi o de 18/09.** Lá eu concluí de uma medição estreita; aqui não houve
+> medição nenhuma: a frase veio de uma **regra geral** — *"formulário da B3 tem CAPTCHA"* —
+> e não do que o projeto já tinha medido e registrado. Uma retratação que existe só no
+> arquivo não protege quem escreve sem abrir o arquivo.
+>
+> **E foi pega antes de gravar.** A sessão local, ao executar o prompt, mediu de novo (HEAD
+> em `COTAHIST_A2026.ZIP` → `200`, `Content-Length`, `Last-Modified`, `ETag`; os 4 primeiros
+> bytes do A2025 são `PK`) e **não declarou** o que o prompt mandava: a limitação entrou como
+> *"ainda não é capturado na nuvem"*, apontando para a P-135 (`medido_2026_09_24`,
+> `docs/decisoes/P-57.md`). O instrumento funcionou; quem falhou foi o redator.
+>
+> **Regra acrescentada:** antes de afirmar uma limitação de uma fonte, **ler as entradas
+> dessa fonte em `limitacoes_declaradas`, inclusive as `RETIRADA`**. A retirada é
+> exatamente a que diz o que já se sabe ser falso — pular as retiradas é ler só o que
+> sobreviveu e reescrever o que morreu.
+
 ### 14. Controle sem o número de pares é decoração
 
 Acrescentada em **19/09/2026**, e ela veio de um relatório meu me corrigindo antes de eu

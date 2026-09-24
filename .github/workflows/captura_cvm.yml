@@ -39,6 +39,12 @@ jobs:
       - name: Instalar
         run: python -m pip install ".[captura]"
 
+      # P-135: a B3 responde ao IP do runner? Mede e transcreve; nunca deixa o job
+      # vermelho -- uma recusa e o dado que a sonda existe para trazer (regua 5-B.13).
+      - name: Sondar o COTAHIST (P-135)
+        continue-on-error: true
+        run: python fase0/sondar_cotahist.py
+
       - name: Capturar
         id: captura
         env:

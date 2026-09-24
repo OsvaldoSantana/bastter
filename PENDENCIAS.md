@@ -2800,6 +2800,22 @@ conteúdo `b3/cotahist/...`, mesma regra 2.5 — a P-100 mostrou que o ano corre
 streaming); (3) se não responder, a limitação muda de texto para o erro medido, e o
 `o_que_resolveria` passa a ser o que ele disser.
 
+**24/09, 18:23Z — a sonda existe e mediu da máquina dele** (`fase0/sondar_cotahist.py`, HEAD
+sem retentativa). **Da máquina, não do runner** — isso não fecha o passo (1):
+
+| arquivo | status | Content-Length | Last-Modified |
+|---|---|---|---|
+| `COTAHIST_A2026.ZIP` | 200 | 84.469.516 | Wed, 23 Sep 2026 23:43:07 GMT |
+| `COTAHIST_D23092026.ZIP` | 200 | 463.627 | Wed, 23 Sep 2026 23:41:41 GMT |
+| `COTAHIST_D22092026.ZIP` | 200 | 465.043 | Wed, 23 Sep 2026 00:03:01 GMT |
+| `COTAHIST_D21092026.ZIP` | 200 | 497.066 | Mon, 21 Sep 2026 23:34:01 GMT |
+| `COTAHIST_D18092026.ZIP` | 200 | 652.381 | Fri, 18 Sep 2026 23:34:50 GMT |
+| `COTAHIST_D17092026.ZIP` | 200 | 640.513 | Thu, 17 Sep 2026 23:33:28 GMT |
+
+Achado lateral: **o arquivo diário existe e mede ~0,5 MB** — ~170× menor que o anual. A
+sonda virou passo do `captura_cvm.yml` (`continue-on-error`: uma recusa é dado, não
+defeito), e a resposta ao runner sai no resumo da próxima execução.
+
 ## P-136 · Ler a licença de redistribuição comercial dos dados da B3 — portão antes de servir outro usuário
 
 **Dono:** Claude (leitura) · Osvaldo (decisão) · **Gatilho:** **antes de servir qualquer
