@@ -123,7 +123,7 @@ b3:
     valor: null
     status: NAO_CONFIRMADO
     motivo: "a pagina da B3 nao diz se o responsavel e o participante ou o investidor final"
-    nota: "Itau, Safra, Caixa, C6, Inter, XP, Rico, Toro e modalmais DECLARAM absorver. Ver cenario custodia_absorvida."
+    nota: "Itau, Safra, Caixa, C6, Inter, XP, Rico, Toro e modalmais DECLARAM absorver. A absorcao entra no ranking de corretoras (corretoras.py, dimensao custodia); o cenario custodia_absorvida de motor.simular saiu com a P-43."
 tesouro:
   custodia_aa:
     expira: 2026-12-04   # tarifa de bolsa: 90 dias — a B3 republica sem aviso

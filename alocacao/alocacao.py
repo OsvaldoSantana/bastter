@@ -426,9 +426,8 @@ def custo_entrada_fixo_pct(r, aporte):
     TODA rota no G3 (inclusive as de tarifa zero) e `_conferir_invariantes` recusava
     pesos somando 0 em vez de 1. Para aporte>0 o resultado e identico ao de antes.
 
-    A irma e `motor.custo_entrada_pct`, que em 12/09 ganhou o mesmo tratamento (E-01).
-    Elas NAO se unificam como estao: esta le `r.entrada_extra` de `RotaAloc`, a de la le
-    `r.entrada_pct` de `motor.Rota` -- dataclasses diferentes, e juntar e outra tarefa."""
+    A irma era `motor.custo_entrada_pct`, que em 12/09 ganhou o mesmo tratamento (E-01)
+    e saiu com a P-43 em 24/09: esta e a unica."""
     if r.corr_fix == 0:
         return 0.0
     return r.corr_fix/aporte if aporte else math.inf
@@ -457,6 +456,9 @@ def simular_custo(r, C, aporte, anos):
     B3V  = val(C["b3"]["vista_total_pct"], contexto="b3")
     ISEN = val(C["b3"]["custodia_rv_isencao"], contexto="isen")
     FX   = C["b3"]["custodia_rv_faixas"]["valor"]
+    # B-17: ate 24/09 a unica leitura desta chave morava em `motor.simular`, que so testes
+    # chamavam; aqui valia o default "deducao" da funcao -- igual ao YAML por acidente.
+    INTERP = val(C["b3"]["custodia_rv_interpretacao"], contexto="b3.interp")
     TDC  = val(C["tesouro"]["custodia_aa"], contexto="tdc")
     TDI  = val(C["tesouro"]["isencao_selic"], contexto="tdi")
     bruto = val(C["macro"]["cdi_aa"], contexto="cdi")
@@ -470,7 +472,7 @@ def simular_custo(r, C, aporte, anos):
         if r.interno_aa:
             t = pat*((1+r.interno_aa)**(1/12)-1); pat -= t; custo += t
         if r.custodia_rv:
-            t = custodia_rv_aa(pat, FX, ISEN)/12; pat -= t; custo += t
+            t = custodia_rv_aa(pat, FX, ISEN, INTERP)/12; pat -= t; custo += t
         if r.custodia_td:
             base = max(0.0, pat-TDI) if r.td_isento else pat
             t = base*((1+TDC)**(1/12)-1); pat -= t; custo += t

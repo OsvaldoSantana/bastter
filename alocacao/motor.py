@@ -9,11 +9,12 @@ Mudancas em relacao a v1:
   K-05       taxa de administracao aparece na tabela de entrada
   K-06       perna de saida modelada (corretagem, B3 na venda, IOF de repatriacao)
   K-08       premissas de modelagem declaradas; c>aporte emite alerta em vez de truncar em silencio
+  (P-43, 24/09/2026: K-05, K-06 e K-08 viviam em `simular`/`montar_rotas`, que sairam;
+   K-06 hoje e `alocacao.custo_saida_pct`, e o alerta do K-08.3 ficou pendente -- P-134)
   K-11       constantes vem do YAML com procedencia; caminhos relativos; roda com -m; testes
 """
 from __future__ import annotations
-import math, os, sys, datetime as dt
-from dataclasses import dataclass, field
+import os, sys, datetime as dt
 import yaml
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +65,9 @@ def val(no, *, permitir_parcial=True, contexto="", hoje=None):
     return no["valor"]
 
 # ── K-03: custodia progressiva de verdade ─────────────────────────────────────
+# as duas leituras que a fonte admite -- custos.yaml, b3.custodia_rv_interpretacao.nota
+INTERPRETACOES_DA_ISENCAO = ("deducao", "limiar")
+
 def custodia_rv_aa(patrimonio, faixas, isencao, interpretacao="deducao"):
     """Taxa anual EM REAIS da custodia de renda variavel da B3.
 
@@ -71,6 +75,11 @@ def custodia_rv_aa(patrimonio, faixas, isencao, interpretacao="deducao"):
     o excedente. A isencao apenas retira os primeiros `isencao` reais da base.
     Confundir os dois sistemas de coordenadas foi o bug que o teste canonico pegou.
     """
+    # B-17: a leitura desta escolha passou a vir do YAML. Valor fora das duas leituras
+    # que a fonte admite falha aqui -- um erro de digitacao viraria "limiar" calado (A-05).
+    if interpretacao not in INTERPRETACOES_DA_ISENCAO:
+        raise ValueError(f"custodia_rv_interpretacao = {interpretacao!r}: a fonte admite "
+                         f"{INTERPRETACOES_DA_ISENCAO}")
     if patrimonio <= isencao:
         return 0.0
     isento_restante = isencao if interpretacao == "deducao" else 0.0
@@ -86,173 +95,9 @@ def custodia_rv_aa(patrimonio, faixas, isencao, interpretacao="deducao"):
         piso = teto
     return total
 
-# ── rotas ─────────────────────────────────────────────────────────────────────
-@dataclass
-class Rota:
-    grupo: str
-    nome: str
-    corr_fix: float = 0.0
-    corr_pct: float = 0.0
-    b3_vista: bool = False          # paga tarifa da B3 na compra E na venda
-    entrada_pct: float = 0.0        # spread + IOF (exterior)
-    saida_pct: float = 0.0          # IOF de repatriacao + spread de volta
-    adm_aa: float = 0.0
-    custodia_rv: bool = False
-    custodia_td: bool = False
-    td_isento: bool = False
-    bloqueios: list = field(default_factory=list)   # motivos que a tiram da ordenacao
-    nota: str = ""
-
-    @property
-    def confiavel(self): return not self.bloqueios
-
-def montar_rotas(C):
-    """Monta as rotas da CAMADA DE CUSTO, capturando InsumoBloqueado como marcador em
-    vez de abortar.
-
-    ACHADO T-01 (06/09/2026), encontrado pelo ruff e confirmado pelo `impacto.py`.
-    Este e um SEGUNDO CATALOGO, paralelo ao `catalogo.yaml`: 22 rotas contra 25, com
-    13 nomes que so existem aqui. A P-36 tirou o catalogo de alocacao do Python e
-    deixou este — havia tres catalogos e eu contei dois.
-
-    Nenhum modulo de producao o chama; so o `test_motor.py`. Nao foi apagado: apagar
-    codigo com teste proprio sem medir o que os testes guardam e como se perde uma
-    rede. A pendencia P-43 registra a decisao a tomar.
-
-    A linha `B3V = val(...)` foi removida daqui: a atribuicao era morta (copia da
-    funcao de baixo) e a CHAMADA contradizia a propria docstring — ela ABORTARIA se
-    `b3.vista_total_pct` fosse NAO_CONFIRMADO, numa funcao que promete capturar o
-    bloqueio como marcador. O ruff viu a variavel; o defeito era a chamada."""
-    IOF_I = val(C["exterior"]["iof_investimento"], contexto="iof.investimento")
-    IOF_R = val(C["exterior"]["iof_repatriacao"], contexto="iof.repatriacao")
-    R = []
-    def add(**kw): R.append(Rota(**kw))
-
-    # renda fixa / caixa
-    add(grupo="Caixa e renda fixa", nome="Tesouro Reserva / Selic ate R$10k",
-        custodia_td=True, td_isento=True, nota="isento de custodia ate R$10k por CPF")
-    add(grupo="Caixa e renda fixa", nome="Tesouro Selic acima de R$10k",
-        custodia_td=True, td_isento=True, nota="0,20% a.a. so sobre o excedente")
-    add(grupo="Caixa e renda fixa", nome="Tesouro IPCA+ / Prefixado",
-        custodia_td=True, td_isento=False, nota="0,20% a.a. desde o primeiro real")
-    add(grupo="Caixa e renda fixa", nome="Cofrinho / RDB 100% CDI (FGC)",
-        nota="sem taxa; o custo e risco de credito do emissor")
-
-    # ETF Brasil
-    for tk in ("PIBB11","DIVO11","BOVA11","IVVB11","SMAL11","HASH11"):
-        try:
-            adm = val(C["etf"][tk], contexto=f"etf.{tk}")
-            add(grupo="ETF na B3", nome=f"{tk} — corretora zero", b3_vista=True,
-                adm_aa=adm, custodia_rv=True)
-        except InsumoBloqueado as e:
-            add(grupo="ETF na B3", nome=f"{tk} — corretora zero", b3_vista=True,
-                custodia_rv=True, bloqueios=[str(e)])
-    try:
-        adm = val(C["etf"]["BOVV11"], contexto="etf.BOVV11")
-        add(grupo="ETF na B3", nome="BOVV11 — corretora zero", b3_vista=True,
-            adm_aa=adm, custodia_rv=True)
-    except InsumoBloqueado as e:
-        add(grupo="ETF na B3", nome="BOVV11 — corretora zero", b3_vista=True,
-            custodia_rv=True, bloqueios=[str(e)])
-    add(grupo="ETF na B3", nome="BOVA11 — via XP (0,50% em ETF)", b3_vista=True,
-        corr_pct=val(C["corretagem"]["xp_etf_pct"], contexto="xp.etf"),
-        saida_pct=val(C["corretagem"]["xp_etf_pct"], contexto="xp.etf"),
-        adm_aa=val(C["etf"]["BOVA11"], contexto="etf.BOVA11"), custodia_rv=True,
-        nota="0,50% na entrada E na saida")
-
-    # acao individual
-    add(grupo="Acao individual", nome="Corretora taxa zero", b3_vista=True, custodia_rv=True,
-        nota="tem a isencao de R$20 mil/mes na venda")
-    add(grupo="Acao individual", nome="Safra / Terra — R$4,50 por ordem", b3_vista=True,
-        corr_fix=val(C["corretagem"]["safra_terra"], contexto="corr.safra"), custodia_rv=True)
-    add(grupo="Acao individual", nome="Caixa — R$4,49 + 0,02%", b3_vista=True,
-        corr_fix=val(C["corretagem"]["caixa_fixa"], contexto="corr.caixa"),
-        corr_pct=val(C["corretagem"]["caixa_pct"], contexto="corr.caixa"), custodia_rv=True)
-    try:
-        xp = val(C["corretagem"]["xp_swing"], permitir_parcial=False, contexto="corr.xp_swing")
-        add(grupo="Acao individual", nome="XP swing trade", b3_vista=True,
-            corr_fix=xp, custodia_rv=True)
-    except InsumoBloqueado as e:
-        add(grupo="Acao individual", nome="XP swing trade — R$4,90", b3_vista=True,
-            corr_fix=4.90, custodia_rv=True, bloqueios=[str(e)])
-
-    # exterior
-    IVV = val(C["etf"]["IVV"], contexto="etf.IVV")
-    for nome, spread in (("Avenue — melhor degrau", C["exterior"]["spread_avenue_melhor"]),
-                         ("Avenue — degrau inicial", C["exterior"]["spread_avenue_inicial"]),
-                         ("Nomad — nivel 5",        C["exterior"]["spread_nomad_n5"]),
-                         ("Nomad — nivel 1",        C["exterior"]["spread_nomad_n1"])):
-        s = val(spread, contexto=f"spread.{nome}")
-        add(grupo="Exterior", nome=f"ETF EUA (IVV) — {nome}",
-            entrada_pct=s+IOF_I, saida_pct=IOF_R, adm_aa=IVV,
-            nota=f"spread {s*100:.2f}% + IOF 1,10%; saida 0,38%")
-    # Vest — BLOQUEADA: o "sem IOF" e posicao da plataforma, nao fato confirmado
-    vs = val(C["exterior"]["vest_stablecoin"]["spread"], contexto="vest.spread")
-    add(grupo="Exterior", nome="ETF EUA (IVV) — Vest stablecoin",
-        entrada_pct=vs, saida_pct=IOF_R, adm_aa=IVV,
-        bloqueios=[C["exterior"]["vest_stablecoin"]["iof"]["motivo"]],
-        nota="se o IOF de 1,10% se aplicar, vai a 2,50% e fica PIOR que a Avenue")
-    add(grupo="Exterior", nome="Rota Wise como conta",
-        entrada_pct=(val(C["exterior"]["spread_wise"], contexto="wise")
-                     + val(C["exterior"]["iof_conta"], contexto="iof.conta")),
-        saida_pct=IOF_R, adm_aa=IVV, nota="IOF de conta (3,5%), nao de investimento")
-    return R
-
-# ── simulacao ─────────────────────────────────────────────────────────────────
-def custo_entrada_pct(r, aporte, b3v):
-    """Custo de entrada como fracao do aporte.
-
-    E-01: `aporte=0` levantava ZeroDivisionError. A irma
-    `alocacao.custo_entrada_fixo_pct` ja tratava o caso, e o tratamento dela e o certo:
-    tarifa fixa ZERO custa zero em qualquer aporte, e tarifa fixa com aporte zero e
-    custo infinito -- diluicao ao contrario.
-
-    As duas NAO se unificam como estao: esta le `r.entrada_pct` de `motor.Rota`, a de la
-    le `r.entrada_extra` de `alocacao.RotaAloc`. Sao dataclasses diferentes, e juntar e
-    outra tarefa."""
-    fixo = 0.0 if r.corr_fix == 0 else (r.corr_fix/aporte if aporte else math.inf)
-    return fixo + r.corr_pct + (b3v if r.b3_vista else 0.0) + r.entrada_pct
-
-def custo_saida_pct(r, b3v):
-    return r.corr_pct + (b3v if r.b3_vista else 0.0) + r.saida_pct
-
-def simular(r, C, aporte, anos, bruto=None, custodia_absorvida=False, verbose=False):
-    """Retorna (patrimonio, custo_total, alertas). Rendimento bruto identico em todas as rotas:
-    o objetivo e ISOLAR O CUSTO, nao prever retorno."""
-    # E-01/F-02: rota BLOQUEADA nao simula. O insumo ausente vira `adm_aa = 0.0` pelo
-    # default do dataclass, e zero e o melhor valor possivel -- a BOVV11 (taxa
-    # NAO_CONFIRMADA) empatava EXATO com a "Corretora taxa zero". A guarda gemea mora em
-    # `alocacao.simular_custo`; aqui ela faltava. Nao vai pelo canal `alertas`: alerta e
-    # para problema que ainda deixa o numero valer, e este numero nao vale.
-    if not r.confiavel:
-        raise InsumoBloqueado(f"rota {r.nome} bloqueada: {'; '.join(r.bloqueios)}")
-    bruto = bruto if bruto is not None else val(C["macro"]["cdi_aa"], contexto="cdi")
-    B3V   = val(C["b3"]["vista_total_pct"], contexto="b3.vista")
-    ISEN  = val(C["b3"]["custodia_rv_isencao"], contexto="b3.isencao")
-    FX    = C["b3"]["custodia_rv_faixas"]["valor"]
-    INTERP= val(C["b3"]["custodia_rv_interpretacao"], contexto="b3.interp")
-    TD_C  = val(C["tesouro"]["custodia_aa"], contexto="td.custodia")
-    TD_I  = val(C["tesouro"]["isencao_selic"], contexto="td.isencao")
-
-    m_bruto = (1+bruto)**(1/12) - 1
-    pat = custo = 0.0
-    alertas = []
-    e_pct = custo_entrada_pct(r, aporte, B3V)
-    for _ in range(anos*12):
-        c = e_pct * aporte
-        if c >= aporte:                                  # K-08.3
-            alertas.append(f"custo de entrada >= aporte: rota inviavel a R${aporte}")
-            c = aporte
-        pat += aporte - c; custo += c
-        pat *= (1 + m_bruto)
-        if r.adm_aa:
-            t = pat*((1+r.adm_aa)**(1/12)-1); pat -= t; custo += t
-        if r.custodia_rv and not custodia_absorvida:
-            t = custodia_rv_aa(pat, FX, ISEN, INTERP)/12; pat -= t; custo += t
-        if r.custodia_td:
-            base = max(0.0, pat-TD_I) if r.td_isento else pat
-            t = base*((1+TD_C)**(1/12)-1); pat -= t; custo += t
-    # K-06: perna de saida, cobrada uma vez sobre o patrimonio final
-    s_pct = custo_saida_pct(r, B3V)
-    saida = pat * s_pct
-    return pat - saida, custo + saida, alertas
+# ── P-43 (24/09/2026): o catalogo e a simulacao da camada de custo SAIRAM daqui ──
+# `Rota`, `montar_rotas`, `custo_entrada_pct`, `custo_saida_pct` e `simular` eram um
+# TERCEIRO catalogo (T-01) e uma segunda simulacao que so testes chamavam. A medicao da
+# sessao B (B-16) mostrou que ela divergia ate 17,4% da de producao porque o F-01 so foi
+# corrigido do lado da alocacao, e que a unica leitura de `custodia_rv_interpretacao`
+# morava nela (B-17). A simulacao de producao e `alocacao.simular_custo`.

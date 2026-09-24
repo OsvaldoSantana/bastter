@@ -1230,6 +1230,63 @@ def test_custodia_interna_muda_o_custo_medido_e_nao_so_o_texto():
     assert (c_com - c_sem)/c_sem > 0.01
 
 
+# ── B-17: a interpretacao da isencao da custodia vem do YAML ─────────────────
+def test_B17_mudar_a_interpretacao_no_yaml_muda_o_custo():
+    """Ate 24/09 `simular_custo` nao lia `b3.custodia_rv_interpretacao`: usava o default
+    "deducao" de `custodia_rv_aa`, e concordava com o YAML por acidente. A unica leitura
+    da chave estava em `motor.simular`, que so testes chamavam (P-43). Mede-se trocando o
+    VALOR no YAML e exigindo outro numero -- um teste de atributo passaria nas duas."""
+    b = {r.id: r for r in catalogo(C)}["bova11"]
+    C2 = copy.deepcopy(C)
+    C2["b3"]["custodia_rv_interpretacao"]["valor"] = "limiar"
+    _, c_deducao, _ = al_simular(b, C, 5000.0, 25)
+    _, c_limiar, _ = al_simular(b, C2, 5000.0, 25)
+    # limiar tira a isencao da base: acima dela, cobra desde o primeiro real
+    assert c_limiar > c_deducao
+
+def test_B17_interpretacao_fora_das_duas_leituras_falha_em_vez_de_virar_limiar():
+    """`custodia_rv_aa` tratava todo valor diferente de "deducao" como "limiar". Com a
+    chave lida do YAML, um erro de digitacao mudaria o custo calado (A-05)."""
+    b = {r.id: r for r in catalogo(C)}["bova11"]
+    C2 = copy.deepcopy(C)
+    C2["b3"]["custodia_rv_interpretacao"]["valor"] = "marginal"
+    with pytest.raises(ValueError, match="custodia_rv_interpretacao"):
+        al_simular(b, C2, 5000.0, 25)
+
+
+# ── K-06 e K-07, trazidos do test_motor quando o `motor.simular` saiu (P-43) ──
+def test_K06_perna_de_saida_e_contabilizada():
+    """Teria pego K-06: a rota XP cobra 0,50% na entrada E na saida, e o exterior paga
+    IOF de repatriacao. Ate 24/09 isto so era afirmado sobre o catalogo morto
+    (`motor.montar_rotas`); aqui e sobre o que o sistema usa -- atributo E simulacao."""
+    from alocacao import custo_saida_pct
+    rotas = {r.id: r for r in catalogo(C)}
+    b3v = val(C["b3"]["vista_total_pct"], contexto="b3")
+    xp = rotas["bova11_xp"]
+    assert xp.saida_extra == pytest.approx(val(C["corretagem"]["xp_etf_pct"], contexto="xp"))
+    assert custo_saida_pct(xp, b3v) == pytest.approx(xp.corr_pct + b3v + xp.saida_extra)
+    ext = rotas["ext_avenue"]
+    assert ext.saida_extra == pytest.approx(val(C["exterior"]["iof_repatriacao"], contexto="iof"))
+    # a perna precisa CUSTAR, nao so existir: sem ela o custo total cai
+    for r in (xp, ext):
+        _, c_com, _ = al_simular(r, C, 500.0, 10)
+        _, c_sem, _ = al_simular(dataclasses.replace(r, saida_extra=0.0), C, 500.0, 10)
+        assert c_com > c_sem, r.id
+
+def test_K07_vest_com_iof_nao_confirmado_nao_entra_na_ordenacao():
+    """Teria pego K-07: a rota Vest aparecia como a mais barata do exterior porque um
+    NAO_CONFIRMADO era renderizado como zero. O teste do BOVV11 (F-02, abaixo) ja existia
+    aqui; o da Vest so existia no catalogo morto."""
+    from motor import InsumoBloqueado
+    vest = {r.id: r for r in catalogo(C)}["ext_vest"]
+    assert not vest.confiavel
+    with pytest.raises(InsumoBloqueado):
+        al_simular(vest, C, 500.0, 10)
+    r = alocar(Estado(**BASE), C, P, anos=10)
+    assert "ext_vest" in {x.id for x in r["universo"]["fora_status"]}
+    assert "ext_vest" not in r["alvo"]["pesos"]
+
+
 # ── F-02: bloqueio antes de custo ────────────────────────────────────────────
 def test_rota_bloqueada_recusa_simular_em_vez_de_valer_zero():
     """Antes, BOVV11 (adm NAO_CONFIRMADO) simulava com custo zero e aparecia como

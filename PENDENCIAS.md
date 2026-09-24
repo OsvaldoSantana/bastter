@@ -525,7 +525,7 @@ sem atualizar este registro.
 
 ---
 
-## P-43 · Há um TERCEIRO catálogo — achado T-01
+## ~~P-43~~ · Há um TERCEIRO catálogo — achado T-01 — **FECHADA em 24/09/2026: apagado**
 
 `motor.montar_rotas` é paralelo ao `catalogo.yaml`: **22 rotas contra 25, com 13 nomes
 que só existem lá**. A P-36 disse "os dois catálogos" e havia três. Nenhum módulo de
@@ -547,6 +547,45 @@ medir o que os testes guardam é como se perde uma rede. As opções:
 
 **Recomendo a segunda**, com um teste que confronte os dois onde eles se sobrepõem —
 mas é decisão sua, e não é urgente.
+
+> **RETRATAÇÃO — 24/09/2026.** A recomendação acima (*"migrá-lo para YAML também … com um
+> teste que confronte os dois"*) estava errada, e a medição da sessão B a derrubou (B-16):
+>
+> - `motor.simular` e `montar_rotas` **só eram chamados por testes** — nenhum módulo de
+>   produção, nenhum script (`impacto.py` e `grep` nas três pastas);
+> - o `motor.simular` **não tem a custódia interna do F-01**: lê `adm_aa`, e a alocação lê
+>   `interno_aa` (adm + custódia interna). Com o espelho honesto, 9 de 57 pares divergem —
+>   `bova11` até **+17,4%**;
+> - ou seja, **a divergência inteira estava no código morto**. Migrar e confrontar teria
+>   construído um YAML e um teste para manter viva uma segunda simulação cujo único
+>   comportamento distinto era um defeito já corrigido do outro lado.
+>
+> **A causa raiz do erro de método:** recomendei a opção que parecia mais rigorosa
+> (*"passa a poder discordar visivelmente"*) sem medir se havia um consumidor para quem a
+> discordância importasse. Confronto entre duas implementações só vale quando as duas
+> servem a alguém; quando uma não serve a ninguém, confrontá-la é manter o A-07 com
+> teste. **Decisão técnica delegada ao Claude em 24/09**, e tomada: apagar.
+
+**Fechamento, 24/09/2026:**
+
+1. **B-17 antes de apagar:** a única leitura de `b3.custodia_rv_interpretacao` estava no
+   `motor.simular`. `simular_custo` passou a lê-la, e `custodia_rv_aa` recusa valor fora de
+   `deducao`/`limiar` (um erro de digitação viraria `limiar` calado). Dois testes em
+   `test_alocacao.py` (`test_B17_*`), **os dois reprovam por mutação** (leitura retirada).
+2. **Cobertura medida antes de apagar os testes:** F-02/E-01 (rota bloqueada recusa) e aporte
+   zero já estavam no `test_alocacao`; K-07 estava só para o BOVV11. **K-06 (perna de saída) e
+   K-07 da Vest só existiam no `test_motor`** — trazidos como `test_K06_*` (atributo **e**
+   simulação: zerar `saida_extra` tem de baixar o custo) e `test_K07_*`.
+3. **Apagados:** `Rota`, `montar_rotas`, `custo_entrada_pct`, `custo_saida_pct` e `simular` do
+   `motor.py`, e 7 testes do `test_motor.py`. **Perda declarada:** o cenário
+   `custodia_absorvida` do K-04 não tem par na alocação; a absorção vive no ranking de
+   corretoras (`corretoras.py`), e a nota do `custos.yaml` que apontava para o cenário foi
+   corrigida. O alerta do K-08.3 (custo de entrada ≥ aporte) virou a **P-134**.
+4. **Instantâneo dourado inalterado:** `simular_custo` + `arrasto_anualizado` +
+   `custo_pct_aportado` em 25 rotas × 4 configurações (100 pares, 76 simulados, 24
+   bloqueados), `sha256 afea5570…` antes e depois; `cenarios.py` (`393f4925…`) e
+   `demo_aporte.py` (`fda2cedc…`) byte a byte idênticos. `alocacao`: 537 → **534 passed**
+   (−7 apagados, +4 novos).
 
 ---
 
@@ -2795,6 +2834,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-43** | um terceiro catálogo (`motor.montar_rotas`) e uma segunda simulação (`motor.simular`) só chamados por testes, divergindo até 17,4% da de produção (B-16) | 24/09 — **apagados** (decisão técnica delegada). Antes: `simular_custo` passou a ler `custodia_rv_interpretacao` (B-17), K-06 e K-07 da Vest trazidos para o `test_alocacao`. Instantâneo dourado idêntico. Retratação da recomendação *"migrar e confrontar"* na própria P-43 |
 | **Limpeza CVM** | acervo com 4 `(1).zip` duplicados, 2 `(1).zip` que eram a **única** cópia da versão de 13/09 de 2024, 6 pastas extraídas e uma página da B3 salva por engano em `itr/` | 24/09 — **aprovado por ele.** `capturar_cvm.py --arrumar limpeza`: 4 duplicatas apagadas (sha256 idêntico), os 2 de 2024 viraram `_snapshots/*__v20260913__*`, as 6 pastas saíram depois de todo CSV bater em CRC-32 e tamanho com um membro (cada uma é inteira igual a um ZIP que fica; as de 2024 à versão `v20260830`), e a página foi apagada à mão. Manifesto: 49 → **45 arquivos**, 918 → 849 MB. **Tropeço no caminho, meu:** na primeira aplicação o Windows negou o `rmdir` de pasta `ReadOnly` depois de o `rmtree` apagar os 18 CSVs de `dfp_2012`. O `\| tail` escondeu o código de saída, e a cadeia `&&` seguiu até o manifesto. Conserto: `_tirar_somente_leitura` no `rmtree`, com teste que reprova sem ele |
 | **P-131** | `JA_CORRETO` saía de `plano()` antes de `conferir()` — nome certo lido como conteúdo certo, e foi assim que a P-126 contou *"24 já corretas"* e a P-120 escreveu *"cada uma conferida por CRC-32"* | 24/09 — `JA_CORRETO` passa por `conferir()` e sai `RECUSADO` se falhar; teste com cópia de nome certo e conteúdo truncado **reprova contra a versão anterior**. Retratações na P-120 e na P-126, sem apagar |
 | **P-120** | o manifesto só via `*.zip` e 41 cópias extraídas (5,99 GB, 88% dos bytes) estavam no acervo sem sha256 | 24/09 — **decisão dele: apagar.** 41 conferidas uma a uma por `conferir()` (cabeçalho, tamanho, CRC-32) e apagadas; `pregoes()` idêntico (2023 248 `e4a9d81d…`, total 10.059 `2700aca0…`, `arquivos()` 41 `7469fb94…`). O manifesto conta o que sobrar sem hash (`extracoes_soltas`, 7 testes, 4 mutações): **41 arquivos, todos com origem, contagem 0**. Abriu a **P-131** |
