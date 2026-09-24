@@ -59,6 +59,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import sys
 import time
 import urllib.error
@@ -561,9 +562,18 @@ def aplicar(plano):
                 os.replace(x["origem"], x["destino"])
         elif x["acao"] == APAGAR:
             if os.path.isdir(x["origem"]):
-                shutil.rmtree(x["origem"])
+                shutil.rmtree(x["origem"], onerror=_tirar_somente_leitura)
             else:
                 os.remove(x["origem"])
+
+
+def _tirar_somente_leitura(funcao, caminho, _exc):
+    """24/09, na primeira aplicacao real: as pastas extraidas pelo Windows vinham com
+    atributo ReadOnly, e `rmdir` de diretorio ReadOnly da "Acesso negado" -- os CSVs de
+    dentro sairam e a pasta ficou, vazia. Limpa o atributo e tenta de novo; se falhar
+    outra vez, a excecao sobe."""
+    os.chmod(caminho, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+    funcao(caminho)
 
 
 # ── main ──────────────────────────────────────────────────────────────────────

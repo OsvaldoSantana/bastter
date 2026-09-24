@@ -2728,6 +2728,11 @@ registro (os dois papéis continuam separados, e só a **URL** atravessa), ou a 
 escrever o `origem.csv`. Não foi feito junto para não misturar a integração com uma mudança
 no `manifesto_cvm.py`, que também serve ao acervo da B3.
 
+**24/09, depois da limpeza:** o acervo tem **45** arquivos, e os dois snapshots
+`__v20260913__` de 2024 vieram de `(1).zip` do navegador e **não têm linha no registro**.
+A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
+baixada à mão em 18/09 (manifesto de 18/09).
+
 ## P-132 · Emenda ao pré-registro v2 (período de desenvolvimento) — fundamento só existe a partir de 27/01/2011
 
 **Dono:** Osvaldo (decisão) · **Gatilho:** antes da montagem da ML-1 e antes de qualquer
@@ -2777,6 +2782,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **Limpeza CVM** | acervo com 4 `(1).zip` duplicados, 2 `(1).zip` que eram a **única** cópia da versão de 13/09 de 2024, 6 pastas extraídas e uma página da B3 salva por engano em `itr/` | 24/09 — **aprovado por ele.** `capturar_cvm.py --arrumar limpeza`: 4 duplicatas apagadas (sha256 idêntico), os 2 de 2024 viraram `_snapshots/*__v20260913__*`, as 6 pastas saíram depois de todo CSV bater em CRC-32 e tamanho com um membro (cada uma é inteira igual a um ZIP que fica; as de 2024 à versão `v20260830`), e a página foi apagada à mão. Manifesto: 49 → **45 arquivos**, 918 → 849 MB. **Tropeço no caminho, meu:** na primeira aplicação o Windows negou o `rmdir` de pasta `ReadOnly` depois de o `rmtree` apagar os 18 CSVs de `dfp_2012`. O `\| tail` escondeu o código de saída, e a cadeia `&&` seguiu até o manifesto. Conserto: `_tirar_somente_leitura` no `rmtree`, com teste que reprova sem ele |
 | **P-131** | `JA_CORRETO` saía de `plano()` antes de `conferir()` — nome certo lido como conteúdo certo, e foi assim que a P-126 contou *"24 já corretas"* e a P-120 escreveu *"cada uma conferida por CRC-32"* | 24/09 — `JA_CORRETO` passa por `conferir()` e sai `RECUSADO` se falhar; teste com cópia de nome certo e conteúdo truncado **reprova contra a versão anterior**. Retratações na P-120 e na P-126, sem apagar |
 | **P-120** | o manifesto só via `*.zip` e 41 cópias extraídas (5,99 GB, 88% dos bytes) estavam no acervo sem sha256 | 24/09 — **decisão dele: apagar.** 41 conferidas uma a uma por `conferir()` (cabeçalho, tamanho, CRC-32) e apagadas; `pregoes()` idêntico (2023 248 `e4a9d81d…`, total 10.059 `2700aca0…`, `arquivos()` 41 `7469fb94…`). O manifesto conta o que sobrar sem hash (`extracoes_soltas`, 7 testes, 4 mutações): **41 arquivos, todos com origem, contagem 0**. Abriu a **P-131** |
 | **P-125** | `conferir_cabecalho` devolvia `'.202'` como ano — fatia `[10:14]` pegando o ponto de `COTAHIST.`; ninguém lia o retorno | 23/09 — `[11:15]`; `fase0/test_p125_ano_do_cabecalho.py`, **6 de 6 reprovam por mutação** (fatia antiga reintroduzida). Achado lateral: as posições do header moram em Python (P-130) |

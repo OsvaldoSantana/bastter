@@ -468,3 +468,19 @@ def test_registro_le_o_proprio_formato(tmp_path):
     with open(reg, encoding="utf-8") as f:
         assert next(csv.reader(f, delimiter=";")) == list(C.COLUNAS)
     assert C.ler_registro(reg)[0]["etag"] == '"a-b"'
+
+
+def test_3_pasta_somente_leitura_sai_inteira(tmp_path):
+    """24/09: `rmtree` apagou os CSVs de `dfp_cia_aberta_2012` e o Windows negou o `rmdir`
+    da pasta, que tinha atributo ReadOnly. A pasta ficou vazia e o plano seguinte virou
+    PARAR ("pasta vazia")."""
+    import stat
+    raiz, dfp, _ = _acervo_sujo(tmp_path)
+    ext = dfp / "dfp_cia_aberta_2012"
+    os.chmod(ext, stat.S_IREAD | stat.S_IEXEC)
+    try:
+        C.aplicar(C.plano_de_limpeza(str(raiz)))
+        assert not ext.exists()
+    finally:
+        if ext.exists():
+            os.chmod(ext, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
