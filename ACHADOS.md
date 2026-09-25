@@ -2693,6 +2693,25 @@ nenhuma máquina conferia.
 **Conserto:** `pull_request` para o `main` roda o job rápido, e só ele. PR não recebe segredo, e
 o completo lê o armazém. `auditoria/test_workflows.py::test_pr_roda_o_rapido_e_nunca_o_completo`.
 
+
+---
+
+## GIT-02 · O Dependabot reprovava a guarda do GIT-01 em toda máquina que fizesse `git fetch`
+
+*25/09/2026. Achado pelo Claude Code (nuvem) ao rodar a suíte `auditoria` depois da P-148.*
+
+O `.github/dependabot.yml` da Sessão B abriu quatro branches na primeira rodada
+(`dependabot/pip/{mypy,numpy,pandas,ruff}-…`). A guarda do GIT-01 exige que toda ref de
+`origin/` esteja no HEAD, e passou a reprovar em qualquer clone com `git fetch`, por branches
+que **não** são outra sessão fazendo a tarefa: são propostas que só entram por PR, pelo portão
+do CI-05. A cada segunda-feira viriam outras — o alarme que dispara sempre (A-08), e a guarda
+que existe para pegar uma segunda redação de pré-registro deixaria de ser lida.
+
+**Conserto:** `origin/dependabot/` fica fora da GIT-01, pelo prefixo que só o Dependabot usa.
+`auditoria/test_git01_branches_integradas.py::test_git02_so_o_dependabot_fica_de_fora` prende
+que o corte não alarga (`origin/dependabotx`, `origin/wip/…` e `origin/claude/…` continuam
+pegos).
+
 ---
 
 ## CV-07 · Captura local sem `--armazem` desincroniza o registro e o R2: o byte nunca sobe

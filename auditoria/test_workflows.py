@@ -70,3 +70,24 @@ def test_pr_roda_o_rapido_e_nunca_o_completo():
     assert "pull_request" in d["jobs"]["rapido"]["if"]
     assert "pull_request" not in d["jobs"]["completo"]["if"]
     assert "push" not in d["jobs"]["completo"]["if"]
+
+
+def test_P148_dependabot_ignora_exatamente_as_dependencias_numericas():
+    """P-148: o Dependabot nao propoe o que muda numero pre-registrado (P-15), e so isso.
+
+    Derivado de pyproject -> tool.meol.dependencias.numericas, a mesma lista que o
+    `ambiente.py` usa para dizer MUDA NUMERO: uma lista so (N-01). Numerica nova sem ignore
+    volta o PR vermelho semanal; ignore numa ferramenta (ruff, mypy) cala atualizacao que
+    nao muda numero nenhum."""
+    import tomllib
+    with open(os.path.join(RAIZ, "pyproject.toml"), "rb") as f:
+        numericas = set(tomllib.load(f)["tool"]["meol"]["dependencias"]["numericas"])
+    with open(os.path.join(RAIZ, ".github", "dependabot.yml"), encoding="utf-8") as f:
+        d = yaml.safe_load(f)
+    pip = [u for u in d["updates"] if u["package-ecosystem"] == "pip"]
+    assert len(pip) == 1
+    ignorados = {i["dependency-name"] for i in pip[0].get("ignore", [])}
+    assert numericas, "a lista de numericas sumiu do pyproject"
+    assert ignorados == numericas, (sorted(ignorados), sorted(numericas))
+    acoes = [u for u in d["updates"] if u["package-ecosystem"] == "github-actions"]
+    assert acoes and not acoes[0].get("ignore"), "as acoes nao mudam numero: nada a ignorar"

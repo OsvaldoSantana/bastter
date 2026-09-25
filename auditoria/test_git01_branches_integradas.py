@@ -12,6 +12,12 @@ outra sessao reprova aqui ate alguem integra-la ou apaga-la -- e e esse o ponto.
 O QUE ELA NAO VE (P5): so enxerga as refs que este clone buscou. No CI o checkout busca so o
 `main` (fetch-depth 1), entao la ela passa sem medir nada; o `git fetch` e dever de quem roda
 na maquina. E nao distingue branch esquecida de branch em andamento: as duas reprovam.
+
+GIT-02 (25/09/2026): `origin/dependabot/*` fica de fora. O `dependabot.yml` da Sessao B abriu
+quatro branches na primeira rodada, e todo `git fetch` passou a reprovar esta guarda por eles.
+Nao sao outra sessao fazendo a tarefa do projeto: sao propostas que so entram por PR, com o
+portao do CI-05. Deixa-las reprovar seria o alarme que dispara sempre (A-08). O corte e pelo
+PREFIXO que so o Dependabot usa, e `test_git02_...` prende que ele nao alarga.
 """
 from __future__ import annotations
 
@@ -22,6 +28,7 @@ import subprocess
 import pytest
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FORA = ("origin/dependabot/",)   # GIT-02
 
 
 def _git(*args: str) -> str:
@@ -32,7 +39,8 @@ def _git(*args: str) -> str:
 def nao_integradas(alvo: str = "HEAD") -> list[str]:
     """Refs de origin/ que `alvo` nao contem. `origin/HEAD` e apelido, nao branch."""
     saida = _git("branch", "-r", "--no-merged", alvo, "--format=%(refname:short)")
-    return sorted(r for r in saida.split() if r.startswith("origin/") and r != "origin/HEAD")
+    return sorted(r for r in saida.split() if r.startswith("origin/") and r != "origin/HEAD"
+                  and not r.startswith(FORA))
 
 
 def _repositorio_git() -> bool:
@@ -65,3 +73,11 @@ def test_git01_a_guarda_ve_um_commit_fora_do_head():
     if not no_head:
         pytest.skip("nenhuma branch remota aponta para o HEAD; controle sem objeto")
     assert set(no_head) <= set(nao_integradas("HEAD~1"))
+
+
+def test_git02_so_o_dependabot_fica_de_fora():
+    # Controle do corte: um prefixo mais largo (`origin/d`, `origin/`) calaria a GIT-01 inteira.
+    assert FORA == ("origin/dependabot/",)
+    assert "origin/dependabot/pip/numpy-2.4.6".startswith(FORA)
+    for r in ("origin/main", "origin/claude/x", "origin/wip/sessao-b", "origin/dependabotx"):
+        assert not r.startswith(FORA), r
