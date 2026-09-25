@@ -3034,10 +3034,42 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
 
-## P-132 · Emenda ao pré-registro v2 (período de desenvolvimento) — fundamento só existe a partir de 27/01/2011
+## P-143 · A ponte ticker ↔ `CD_CVM` de 2010 a 2017 não existe no projeto — o universo do ML não se monta antes de 2018
+
+**Dono:** Claude Code (achar e medir a fonte) · **Gatilho:** antes de medir o mês da emenda 1 e
+antes de qualquer variável da ML-3 · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+Achado CV-05. O FCA só traz `Codigo_Negociacao` a partir de 2018 (0 ações com código de 2010 a
+2017). Sem ponte, o universo da §2 (identidade pelo `codeCVM`) não se monta no desenvolvimento,
+e o mês da emenda 1 mediria a ponte e não o fundamento. **O mês não foi medido, de propósito.**
+Candidatas, `NAO_CONFIRMADO`: cadastro de ISIN da B3 (emissores, código de 4 letras e CNPJ) e o
+Formulário de Referência da CVM. O critério da fonte certa: cobrir **empresas deslistadas** antes
+de 2018. Uma ponte só dos sobreviventes repete o viés que a §2 existe para evitar.
+
+## P-144 · Emenda de desenho não tem mecanismo que a leia — a P-138 só enxerga emenda de orçamento
+
+**Dono:** Claude Code · **Gatilho:** ao escrever a montagem da ML que decide o início do
+desenvolvimento · **Classe:** `DECISAO_DE_DESENHO`
+
+Medido em 25/09: `preregistro.emendas_publicadas()` devolve `[]` para a emenda 1. Ela está
+publicada, e o sha256 no `origin/main` é igual ao do disco (`1aac96023fdc0de9`). O mecanismo da
+P-138 lê `pesquisa.emendas` do `politica.yaml`, só aceita `variantes_adicionais ≥ 1`, e a família
+ML nem está em `estrategias_pre_registradas`. Esta emenda não acrescenta variante. Forçá-la ali
+inflaria o `m` com uma especificação que não existe. **Não construído agora:** uma função de
+conferência sem consumidor seria a P-77/P-106. O consumidor é a montagem, que deve abrir
+`preregistro-ml-v2.md` e as emendas **pelo conteúdo no ramo publicado**, como a P-138 faz com o
+orçamento, e recusar rodar se o sha divergir.
+
+## ~~P-132~~ · Emenda ao pré-registro v2 (período de desenvolvimento) — **FECHADA em 25/09/2026**
 
 **Dono:** Osvaldo (decisão) · **Gatilho:** antes da montagem da ML-1 e antes de qualquer
 resultado; a emenda vai empurrada antes (P-116) · **Classe:** `DECISAO_DE_DESENHO`
+
+> **Fechada:** decisão dele, opção (a), limiar 90%. Regra em
+> `docs/aprendizado/preregistro-ml-v2-emenda-1.md`, empurrada em `00aa622` **antes** de qualquer
+> medição (sha256 `1aac96023fdc0de9`; v2 intocada, `2e2c46d4de72057f`). **O mês que a regra
+> produz não foi medido:** a ponte ticker ↔ `CD_CVM` não existe antes de 2018 (CV-05). Segue
+> na **P-143**. O reconhecimento pela P-138 segue na **P-144**.
 
 Achado CV-04. O `preregistro-ml-v2.md` §2 declara período desde jan/2010 *"com fundamentos DFP
 desde 2010"*, e a regra `DT_RECEB` ≤ data de decisão deixa **0 empresas** com fundamento de
@@ -3105,6 +3137,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-132** | o pré-registro v2 promete fundamento desde jan/2010, e o primeiro `DT_RECEB` é 27/01/2011 (CV-04) | 25/09 — **decisão dele, opção (a):** emenda 1 (início do desenvolvimento = primeiro mês com ≥ 90% do universo coberto), empurrada em `00aa622` antes de medir. O FCA passou a ser capturado (17 anos, 6,6 MB). O mês **não** foi medido: o FCA não tem ticker antes de 2018 (CV-05) → **P-143**; a P-138 não enxerga emenda de desenho → **P-144** |
 | **P-141** | o pytest foi **58% do tempo** dos pedidos de 21–24/09 (268 de 458 min; `tools/analisar_sessoes.py`); o `fase0` sequencial media **537 s**, a 63 s do teto de 10 min do Bash, e 3 rodadas morreram nele sem resultado | 25/09 — **medido antes e depois, mesma máquina:** completa sequencial **34 + 538 + 35 = 607 s** → completa `-n auto --dist loadgroup` **11 + 103 + 21 + 3 (tools) = 138 s**; ciclo `-m "not slow"` **30 + 7 + 8 + 1 = 46 s**. Memo de sessão por sha256 (`fase0/memo_acervo.py`): os dois pares que liam o mesmo acervo, **338 → 202 s** sequenciais (o segundo de cada par: 95 → 1,2 s e 64 → 1,1 s). Fixtures de módulo (`med`, `jan`, `real`) em `xdist_group`, senão cada trabalhador refaz 45–62 s. `pytest-xdist==3.8.0` no grupo **`paralelo`, não no `dev`**: o `dev` entra na impressão `7565df…` gravada em 4 resultados (`test_p141_paralelo.py`, com mutação). Único teste com caminho fixo (`_pyproject_frouxo.toml`) foi para `tmp_path`. 3 guardas novas, as 3 reprovam por mutação. Protocolo na §9 do `CLAUDE.md`. **Achado lateral: P-142** |
 | **P-43** | um terceiro catálogo (`motor.montar_rotas`) e uma segunda simulação (`motor.simular`) só chamados por testes, divergindo até 17,4% da de produção (B-16) | 24/09 — **apagados** (decisão técnica delegada). Antes: `simular_custo` passou a ler `custodia_rv_interpretacao` (B-17), K-06 e K-07 da Vest trazidos para o `test_alocacao`. Instantâneo dourado idêntico. Retratação da recomendação *"migrar e confrontar"* na própria P-43 |
 | **Limpeza CVM** | acervo com 4 `(1).zip` duplicados, 2 `(1).zip` que eram a **única** cópia da versão de 13/09 de 2024, 6 pastas extraídas e uma página da B3 salva por engano em `itr/` | 24/09 — **aprovado por ele.** `capturar_cvm.py --arrumar limpeza`: 4 duplicatas apagadas (sha256 idêntico), os 2 de 2024 viraram `_snapshots/*__v20260913__*`, as 6 pastas saíram depois de todo CSV bater em CRC-32 e tamanho com um membro (cada uma é inteira igual a um ZIP que fica; as de 2024 à versão `v20260830`), e a página foi apagada à mão. Manifesto: 49 → **45 arquivos**, 918 → 849 MB. **Tropeço no caminho, meu:** na primeira aplicação o Windows negou o `rmdir` de pasta `ReadOnly` depois de o `rmtree` apagar os 18 CSVs de `dfp_2012`. O `\| tail` escondeu o código de saída, e a cadeia `&&` seguiu até o manifesto. Conserto: `_tirar_somente_leitura` no `rmtree`, com teste que reprova sem ele |

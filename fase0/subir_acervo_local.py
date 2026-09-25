@@ -45,7 +45,7 @@ SUBIR, PARAR, DESCONHECIDO = "SUBIR", "PARAR", "DESCONHECIDO"
 SNAPSHOT = re.compile(r"^(?P<stem>.+)__v(?P<versao>\d{8}|DESCONHECIDA)__(?P<sha12>[0-9a-f]{12})"
                       r"(?P<ext>\.\w+)$")
 COTAHIST = re.compile(r"^COTAHIST_A\d{4}\.ZIP$", re.IGNORECASE)
-RECURSOS_CVM = ("dfp", "itr", "cad")
+RECURSOS_CVM = ("dfp", "itr", "fca", "cad")   # fca: P-132, 25/09
 
 
 def _item(fonte, recurso, arquivo, caminho, papel, versao=""):

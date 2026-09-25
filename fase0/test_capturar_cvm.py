@@ -57,7 +57,7 @@ class Servidor:
 
     def __init__(self):
         self.arquivos = {}
-        self.indices = {DFP: [], ITR: []}
+        self.indices = {u: [] for u in C.INDICES.values()}
         self.falhas = {}
         self.cortar = {}
         self.chamadas = []
@@ -84,7 +84,7 @@ class Servidor:
         if fila:
             raise urllib.error.HTTPError(url, fila.pop(0), "falso", {}, None)
         if url in self.indices:
-            rec = "dfp" if url == DFP else "itr"
+            rec = next(k for k, v in C.INDICES.items() if v == url)
             html = "".join(f'<a href="{rec}_cia_aberta_{a}.zip">x</a>'
                            for a in self.indices[url])
             return _Resp(html.encode(), {})
@@ -120,8 +120,14 @@ def _servidor_basico():
     srv = Servidor()
     srv.publicar("dfp", 2012, _zip({"dfp_cia_aberta_2012.csv": "a;b\n1;2\n"}))
     srv.publicar("itr", 2012, _zip({"itr_cia_aberta_2012.csv": "a;b\n3;4\n"}))
+    srv.publicar("fca", 2012, _zip({"fca_cia_aberta_2012.csv": "a;b\n5;6\n"}))
     srv.publicar_cad(b"CNPJ;DENOM\n1;X\n")
     return srv
+
+
+# Quantos arquivos o servidor basico publica: um por recurso de INDICES, mais o cad.
+# Derivado, nao escrito: era `3` em seis testes, e o FCA (P-132) fez 4 (N-01).
+N_BASICO = len(_servidor_basico().arquivos)
 
 
 # ── 2.1 ───────────────────────────────────────────────────────────────────────
@@ -334,7 +340,7 @@ def test_2_7_toda_observacao_vira_linha_com_caminho_relativo(tmp_path):
     _rodar(tmp_path, srv)
     linhas = _linhas(tmp_path / "docs" / "acervo" / "cvm" / "capturas.csv")
     sit = [x["situacao"] for x in linhas]
-    assert sit.count("novo") == 3 and sit.count("inalterado") == 3
+    assert sit.count("novo") == N_BASICO and sit.count("inalterado") == N_BASICO
     for x in linhas:
         assert not os.path.isabs(x["caminho"]) and "\\" not in x["caminho"]
         assert x["caminho"].startswith("cvm/") or x["caminho"].startswith("data/")
@@ -484,3 +490,12 @@ def test_3_pasta_somente_leitura_sai_inteira(tmp_path):
     finally:
         if ext.exists():
             os.chmod(ext, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+
+
+def test_P132_o_FCA_entra_na_rotina_como_os_outros_recursos():
+    """O universo do pre-registro ML identifica empresa pelo CD_CVM, e o COTAHIST so tem
+    ticker. A ponte e o FCA (`valor_mobiliario`); se ele saisse da captura, a montagem do
+    universo voltaria a depender de alguem baixar a mao (P7)."""
+    urls = [u for u, rec in C.alvos(abrir=_servidor_basico(), dormir=lambda s: None)
+            if rec == "fca"]
+    assert urls == [C.INDICES["fca"] + "fca_cia_aberta_2012.zip"]

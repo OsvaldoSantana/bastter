@@ -2449,6 +2449,49 @@ aberto:** a emenda ao pré-registro é decisão dele e vai empurrada antes de qu
 
 ---
 
+## CV-05 · O FCA não traz código de negociação antes de 2018, e o universo do ML identifica empresa pelo `CD_CVM`
+
+*25/09/2026, medido ao preparar a medição da emenda 1 (P-132), depois de ela ser empurrada e
+antes de qualquer mês ser calculado.*
+
+A §2 do `preregistro-ml-v2.md` monta o universo com o COTAHIST, que fala **ticker**, e
+identifica a empresa pelo **`codeCVM`**. Os documentos da CVM (DFP, ITR) falam `CD_CVM`. A ponte
+entre os dois, na fonte primária, é o FCA (`fca_cia_aberta_valor_mobiliario_AAAA.csv`, coluna
+`Codigo_Negociacao`), capturado pela primeira vez neste dia.
+
+**A medição**, ações (`Valor_Mobiliario` = ações ordinárias/preferenciais) com
+`Codigo_Negociacao` preenchido, por arquivo:
+
+| FCA | linhas de ações | com código | CNPJs com código |
+|---|---|---|---|
+| 2010 … 2017 | 425, 358, 316, 265, 446, 432, 415, 411 | **0 em todos** | **0** |
+| 2018 | 569 | 460 | 321 |
+| 2021 | 660 | 571 | 413 |
+| 2026 | 562 | 519 | 378 |
+
+**Oito anos sem ticker nenhum.** O campo existe no leiaute e vem vazio. Uma ponte montada com o
+FCA de 2018 em diante só enxerga quem **continuou listado até 2018**: é viés de sobrevivência
+dentro do instrumento. Com a operacionalização 2 da emenda (*sem `CD_CVM` conta como sem
+documento*), toda empresa deslistada entre 2010 e 2017 empurraria o início do desenvolvimento
+para frente. A medição estaria medindo **a ponte**, não a chegada do fundamento.
+
+**Por isso o mês da emenda NÃO foi medido.** A regra diz que o primeiro mês fecha a questão, e
+registrar um mês produzido por um instrumento sabidamente defeituoso o fecharia errado. É a
+régua §5-B.1: a frase do que a medição mediria (*"quantas empresas a ponte de 2018 reconhece
+em 2011"*) é mais estreita que a conclusão (*"quando o fundamento chegou"*).
+
+**O alcance é maior que a emenda:** o universo da §2 inteiro, de 2010 a 2017 — a maior parte do
+desenvolvimento —, não se monta com o que o projeto tem. Os eventos da B3 trazem `codeCVM` para
+as 74 emissoras atuais do Ibovespa, o que é sobrevivência de novo.
+
+**Candidatas não tentadas, `NAO_CONFIRMADO`:** o cadastro de ISIN da B3 (tabela de emissores:
+código de 4 letras e CNPJ) e o Formulário de Referência da CVM. Uma tentativa de endpoint do
+arquivo de ISIN deu `404`; o endereço tinha sido suposto, não lido de uma página, e parei ali
+para não inventar URL. **Não é afirmação de que a ponte não existe** (§5-B.13): é afirmação de
+que o FCA não é ela antes de 2018. Pendência: **P-143**.
+
+---
+
 ## CV-01 · A versão de 06/09 da CVM não foi capturada, e não volta
 
 *24/09/2026. FISICA: a CVM serve só a versão corrente de cada arquivo.*

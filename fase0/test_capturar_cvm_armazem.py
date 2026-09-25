@@ -24,7 +24,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)
 import armazem as A  # noqa: E402
 import capturar_cvm as C  # noqa: E402
-from test_capturar_cvm import LM2, _servidor_basico, _zip  # noqa: E402
+from test_capturar_cvm import LM2, N_BASICO, _servidor_basico, _zip  # noqa: E402
 
 
 def _rodar(tmp_path, srv, arm, *extra):
@@ -53,11 +53,11 @@ def test_primeira_rodada_sobe_cada_arquivo_pela_chave_de_conteudo(tmp_path):
     rc, raiz, reg = _rodar(tmp_path, srv, arm)
     assert rc == 0
     ks = _conteudo(arm)
-    assert len(ks) == 3
+    assert len(ks) == N_BASICO
     for k in ks:
         assert A.sha_da_chave(k) is not None, "toda chave de conteudo carrega o sha256"
     linhas = C.ler_registro(reg)
-    assert [x["situacao"] for x in linhas] == ["novo"] * 3
+    assert [x["situacao"] for x in linhas] == ["novo"] * N_BASICO
     for x in linhas:
         assert A.chave("cvm", x["recurso"], x["arquivo"], x["sha256"]) in ks, \
             "a chave se deriva do registro: recurso, arquivo e sha256"
@@ -77,7 +77,7 @@ def test_rodada_sem_mudanca_vai_so_para_o_log(tmp_path):
     logs = _logs(arm)
     assert len(logs) == 2 and arm.envios == envios + 1, "so o log novo foi escrito"
     segundo = _log(arm, logs[-1])            # "<dia>.csv" ordena antes de "<dia>__<hora>Z.csv"
-    assert {x["situacao"] for x in segundo} == {"inalterado"} and len(segundo) == 3
+    assert {x["situacao"] for x in segundo} == {"inalterado"} and len(segundo) == N_BASICO
 
 
 def test_hash_coincide_vai_ao_registro_e_fecha_o_portao_na_rodada_seguinte(tmp_path):
@@ -221,7 +221,7 @@ def test_teto_abaixo_do_aviso_captura_e_o_nivel_e_abaixo(tmp_path, monkeypatch):
     arm = A.ArmazemMemoria().limitar(10 ** 6)
     rc, reg, out = _rodar_com_teto(tmp_path, arm, monkeypatch)
     assert rc == 0 and out["armazem_nivel"] == "abaixo"
-    assert [x["situacao"] for x in C.ler_registro(reg)] == ["novo"] * 3
+    assert [x["situacao"] for x in C.ler_registro(reg)] == ["novo"] * N_BASICO
 
 
 def test_teto_entre_aviso_e_teto_captura_e_o_nivel_e_aviso(tmp_path, monkeypatch):
@@ -229,7 +229,7 @@ def test_teto_entre_aviso_e_teto_captura_e_o_nivel_e_aviso(tmp_path, monkeypatch
     _ocupar(arm, 5_000)
     rc, reg, out = _rodar_com_teto(tmp_path, arm, monkeypatch)
     assert rc == 0 and out["armazem_nivel"] == "aviso" and out["armazem_gb"] == "0.00"
-    assert [x["situacao"] for x in C.ler_registro(reg)] == ["novo"] * 3
+    assert [x["situacao"] for x in C.ler_registro(reg)] == ["novo"] * N_BASICO
 
 
 def test_teto_acima_recusa_registra_e_fica_vermelho(tmp_path, monkeypatch):
@@ -242,7 +242,7 @@ def test_teto_acima_recusa_registra_e_fica_vermelho(tmp_path, monkeypatch):
     assert rc == 1 and out["armazem_nivel"] == "teto"
     assert _conteudo(arm) == ["b3/x/ja.zip/" + "0" * 64 + ".zip"]
     linhas = C.ler_registro(reg)
-    assert [x["situacao"] for x in linhas] == ["recusado_por_teto"] * 3
+    assert [x["situacao"] for x in linhas] == ["recusado_por_teto"] * N_BASICO
     assert all(x["sha256"] and "teto" in x["motivo"] for x in linhas)
     assert C.estado_do_registro(linhas) == {}
     assert {x["situacao"] for x in _log(arm, _logs(arm)[-1])} == {"recusado_por_teto"}

@@ -98,6 +98,10 @@ import armazem as armazem_mod  # noqa: E402
 INDICES = {
     "dfp": "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/",
     "itr": "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/ITR/DADOS/",
+    # P-132, 25/09: o FCA traz a ponte `CD_CVM` <-> codigo de negociacao
+    # (`valor_mobiliario`). Sem ela o universo da secao 2 do pre-registro ML nao se
+    # monta: o COTAHIST fala ticker, o DFP/ITR fala CD_CVM. ~0,4 MB por ano.
+    "fca": "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/FCA/DADOS/",
 }
 CAD_URL = "https://dados.cvm.gov.br/dados/CIA_ABERTA/CAD/DADOS/cad_cia_aberta.csv"
 # "Os arquivos serao atualizados semanalmente ... os ultimos cinco anos"
