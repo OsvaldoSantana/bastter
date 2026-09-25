@@ -29,15 +29,28 @@ jobs:
           python-version: '3.11'
       - name: Instalar
         run: python -m pip install ".[dev,mutacao]"
+      # A contagem sai como anotacao (::notice), que a API publica le sem login; o log do
+      # job nao. Nenhuma alteracao testada = job VERMELHO: a primeira execucao ficou verde
+      # em 46 s sem dizer se testou algo (F-02). Contagem pelos `mutants/*.meta`, com a
+      # tabela de status do proprio mutmut (auditoria/mutmut_contagem.py).
       - name: Rodar o mutmut
         run: |
           set +e
-          python -m mutmut run
-          echo "mutmut saiu com $?"
+          python -m mutmut run > mutmut-run.txt 2>&1
+          rc=$?
+          cat mutmut-run.txt
           python -m mutmut results > mutmut-resultados.txt 2>&1
           cat mutmut-resultados.txt
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+          python auditoria/mutmut_contagem.py --saida-mutmut "$rc"
+          conta=$?
+          if [ "$conta" -ne 0 ]; then
+            tail -n 15 mutmut-run.txt | tr -d '\r' | sed 's/%/%25/g; s/^/::error title=mutmut run::/'
+          fi
+          exit $conta
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         if: always()
         with:
           name: mutmut-resultados
-          path: mutmut-resultados.txt
+          path: |
+            mutmut-resultados.txt
+            mutmut-run.txt

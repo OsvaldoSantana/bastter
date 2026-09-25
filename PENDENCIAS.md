@@ -3080,6 +3080,21 @@ baixada à mão em 18/09 (manifesto de 18/09).
 >
 > A *Captura CVM* (`36152688055`) ficou verde com checkout v7.0.1, e o push do bot funcionou.
 
+> **25/09, fim do dia (Claude Code, local), e o estado mudou:**
+>
+> - **Item 1 FEITO:** o FCA e o `cad` estão no R2 (carga das 14:23Z, 18 envios, inventário
+>   commitado). O *Testes #9* mediu **0 faltas**.
+> - **CI-04 CONSERTADA**, as duas metades, pelas propostas do PR #1: `origem_declarada` lê
+>   também o `capturas.csv`, e o `materializar_acervo` põe as 23 versões fixadas do ML no
+>   cache. Prova na árvore do runner, com as quatro suítes verdes sem `R2_*` no passo dos
+>   testes. Detalhe em `ACHADOS.md → CI-04`.
+> - **CI-03: o portão entrou, a causa não.** A *Mutacao* publica a contagem como anotação
+>   e **fica vermelha** quando nada é testado. Com a rodada limpa ainda falhando, a próxima
+>   execução **vai sair vermelha**, e isso é o certo. A escolha entre restringir os testes
+>   e excluir por marcador continua **dele**.
+> - **Falta (dele):** *Run workflow* em **Testes** (espera-se verde) e em **Mutacao**
+>   (espera-se vermelho, com `gerados=… testados=0` na anotação).
+
 ## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
 
 **Dono:** Claude Code (medir) · Osvaldo (as duas escolhas) · **Gatilho:** antes da primeira

@@ -25,6 +25,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 if AQUI not in sys.path:
     sys.path.insert(0, AQUI)
 import acervo  # noqa: E402
+import insumo_ml  # noqa: E402
 
 
 def conhecidos(repo=None):
@@ -61,13 +62,42 @@ def materializar(itens, repo, abrir=None):
     return copiados, ja, faltas
 
 
+def fixados(repo=None):
+    """{(recurso, arquivo, sha256)} de toda versao FIXADA pelo pre-registro do ML (P-139).
+
+    CI-04: o leitor do ML abre a versao fixada, nao a vigente. Quando a captura traz outra
+    versao (2026, em 24/09), a fixada deixa de estar em `data/bronze/`, e o leitor vai ao
+    armazem -- e no passo dos testes nao ha segredo. Ela entra no cache `data/armazem/`
+    aqui, no unico passo que tem as credenciais."""
+    repo = repo or acervo.raiz_repo()
+    pins = insumo_ml.carregar_pins(os.path.join(repo, insumo_ml.PINS_RELATIVO))
+    return {(insumo_ml.RECURSO, p["arquivo"], p["sha256"])
+            for p in (pins.get("cotahist") or {}).values()}
+
+
+def materializar_fixados(itens, abrir=None):
+    """Poe cada versao fixada onde o `acervo.abrir` a acha sem rede. Devolve (prontos,
+    faltas). O que ja esta em disco com o mesmo sha256 nao e baixado."""
+    abrir = abrir or acervo.abrir
+    prontos, faltas = [], []
+    for recurso, arquivo, sha in sorted(itens):
+        try:
+            prontos.append(abrir(recurso, arquivo, sha, conferir=True))
+        except Exception as e:
+            faltas.append(f"fixado {recurso}/{arquivo}@{sha[:12]}: {type(e).__name__}: {e}")
+    return prontos, faltas
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--faltas", help="grava aqui a lista do que o armazem nao entregou")
     a = ap.parse_args(argv)
     repo = acervo.raiz_repo()
     copiados, ja, faltas = materializar(conhecidos(repo), repo)
-    print(f"materializados {len(copiados)}, ja no lugar {len(ja)}, FALTAS {len(faltas)}")
+    prontos, faltas_fix = materializar_fixados(fixados(repo))
+    faltas += faltas_fix
+    print(f"materializados {len(copiados)}, ja no lugar {len(ja)}, "
+          f"fixados prontos {len(prontos)}, FALTAS {len(faltas)}")
     for f in faltas:
         print(f"  FALTA  {f}")
     if a.faltas:

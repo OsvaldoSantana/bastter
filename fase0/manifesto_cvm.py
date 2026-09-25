@@ -54,6 +54,10 @@ BLOCO = 1 << 20
 COLUNAS = ("caminho", "bytes", "sha256", "mtime_utc", "dt_captura", "origem", "acesso")
 COLUNAS_ORIGEM = ("caminho", "origem", "acesso")
 ORIGEM = "origem.csv"
+# CI-04: o registro que capturar_cvm/capturar_cotahist gravam na mesma pasta. As situacoes
+# sao as de `acervo.VIGENTES`; repetidas aqui porque este modulo nao importa o acervo.
+REGISTRO_DE_CAPTURA = "capturas.csv"
+SITUACOES_COM_BYTE = ("novo", "atualizado", "inalterado")
 
 
 def sha256(caminho, bloco=BLOCO):
@@ -111,7 +115,33 @@ def origem_declarada(pasta):
     E um arquivo A PARTE, e nao um campo do manifesto, porque as duas coisas tem ciclos
     de vida diferentes: o manifesto e reescrito a cada captura; a origem de um arquivo
     ja baixado nao muda nunca. Misturar os dois faria a origem ser reescrita -- e
-    perdida -- toda vez que alguem rodasse o manifesto."""
+    perdida -- toda vez que alguem rodasse o manifesto.
+
+    CI-04: o que a ROTINA captura tem a origem no registro de captura (`capturas.csv`, ao
+    lado), escrita por quem baixou. Ele entra aqui; o `origem.csv` escrito a mao ganha
+    quando os dois declaram o mesmo arquivo."""
+    out = _origem_do_registro(pasta)
+    out.update(_origem_escrita(pasta))
+    return out
+
+
+def _origem_do_registro(pasta):
+    """So a linha que TROUXE byte (sha256 e URL, situacao vigente) declara origem: um 404
+    ou um erro nao sao a procedencia de arquivo nenhum."""
+    p = os.path.join(pasta, REGISTRO_DE_CAPTURA)
+    if not os.path.exists(p): return {}
+    out = {}
+    with open(p, encoding="utf-8-sig", newline="") as f:
+        for r in csv.DictReader(f, delimiter=";"):
+            if (r.get("situacao") in SITUACOES_COM_BYTE and r.get("sha256")
+                    and r.get("url") and r.get("recurso") and r.get("arquivo")):
+                k = f"{r['recurso']}/{r['arquivo']}"
+                out[k] = dict(caminho=k, origem=f"{r['url']} -- registro de captura",
+                              acesso=(r.get("dt_captura") or "")[:10])
+    return out
+
+
+def _origem_escrita(pasta):
     p = os.path.join(pasta, ORIGEM)
     if not os.path.exists(p): return {}
     # P-108: `utf-8-sig`, nao `utf-8`. O Windows PowerShell 5.1 grava `Out-File -Encoding

@@ -578,6 +578,19 @@ push) continua sendo o fluxo normal. **Disparar workflow, criar issue, mexer em 
 pede ao Osvaldo, ou usa o `gh` que ele autenticou.** Em 24/09 o `gh` **não estava instalado**
 nesta máquina (medido), então hoje a resposta é *pedir*.
 
+**Estendida em 25/09/2026, por reincidência.** A sessão local tentou disparar workflow pelo
+navegador embutido e, em seguida, pelo Chrome dele, *"que costuma ter a sessão aberta"*.
+**Sessão logada é credencial**: o cookie de um navegador autenticado vale tanto quanto o
+token do gerenciador de credenciais, e usá-lo é agir em nome dele pelo mesmo caminho que a
+regra de 24/09 fechou. **Navegador com a sessão dele não se usa para agir em conta
+nenhuma** — GitHub, R2, banco, e-mail, qualquer uma.
+
+E desta vez a regra não fica só em prosa, porque a prosa de 24/09 não impediu a de 25/09:
+`.claude/settings.json` (versionado) **nega** as ferramentas do Chrome
+(`permissions.deny: mcp__claude-in-chrome__*`), e `auditoria/test_navegador_negado.py`
+reprova se a negação sair ou se um `allow` a contornar. Pesquisa na web continua pelas
+ferramentas de busca e leitura de página, que não carregam sessão de ninguém.
+
 É a mesma família do "credenciais só por variável de ambiente" (§3) e do "criar conta ou
 mexer em credencial é dele": o sistema **usa** o que ele deu, e não **alcança** o que ele não
 deu. Contornar a própria regra de operação num projeto cuja doutrina inteira é procedência é

@@ -2593,6 +2593,66 @@ máquina, e **esta máquina é Windows**.
 
 ---
 
+## CI-03 · A mutação ficou verde sem ter testado alteração nenhuma
+
+*25/09/2026. *Mutacao* `36152691790` (55 s) e `36164242671` (46 s), as duas verdes. Medido pela
+sessão na nuvem (P-146): os **4.935** mutantes ficaram `not checked`.*
+
+A rodada limpa do mutmut (os testes sobre o código **sem** mutação) falha com `failed to collect
+stats`, e o `set +e` do passo engolia o erro. Num clone, fora os `privado`, **20 testes** quebram
+dentro da cópia `mutants/`: ela não leva `.git`, `.github`, `.gitignore` nem `PENDENCIAS.md`, e
+os testes que varrem o fonte veem a instrumentação do mutmut. **Verde sem medição é o F-02 na
+camada da mutação:** ausência de teste com a cara de "nenhum sobrevivente".
+
+**O que foi consertado agora é o portão, não a causa.** `auditoria/mutmut_contagem.py` conta
+pelos `mutants/*.meta` com a tabela de status **do próprio mutmut** (injetada, não copiada),
+publica `gerados`, `testados`, `killed`, `survived`… como `::notice` (a API pública lê sem
+login) e sai 1 quando **nada** foi testado, com as 15 últimas linhas do `mutmut run` como
+anotação. **A causa continua aberta, e ela é decisão dele (P-146):** restringir os testes da
+mutação aos unitários dos quatro módulos, ou marcar os testes de repositório e excluí-los por
+marcador. Até lá a *Mutacao* fica **vermelha**, e isso é o certo.
+
+---
+
+## CI-04 · O job `completo` reprovava dois testes que só o armazém expõe
+
+*25/09/2026. *Testes* `36152684302` (#6) e `36164255949` (#9, `94c5348`, vermelho em 7m50).*
+
+A única anotação do #9 era `Process completed with exit code 1`, do passo que junta suíte, lint
+e faltas do armazém. O log exige login, e a causa foi separada na máquina dele, uma hipótese
+por vez:
+
+| hipótese | medição | resultado |
+|---|---|---|
+| faltas do armazém | as 98 chaves de registro + inventário, **na árvore `94c5348`**, perguntadas ao R2 | **0 faltas**. A carga do FCA (14:23Z) é anterior à execução (16:59Z) |
+| lint | `ruff` + `mypy` nas quatro pastas | zero |
+| suíte, no disco dele | as quatro suítes, `-m "not privado"` | verde |
+| suíte, **como o runner** | worktree em `94c5348` com só as 98 chaves (91 conferidas por sha256, 7 baixadas do R2), testes **sem** as `R2_*` | **dois FALHAM** |
+
+*(A primeira reprodução rodou com as `R2_*` no ambiente e mostrou só uma falha. O runner não
+tem segredo no passo dos testes. Sem elas, apareceu a segunda, como a P-146 já dizia.)*
+
+**(a) `test_P97_nao_sobrou_ZIP_sem_origem_no_acervo`.** Os seis `cotahist_diario/COTAHIST_D*.ZIP`
+da rotina (P-135) não têm linha no `origem.csv`. Na máquina dele o teste passava porque esses
+arquivos nunca chegaram ao disco (régua 15). **A origem estava declarada:** a URL de cada um
+está no `capturas.csv`, escrita por quem baixou. Uma linha manual por pregão violaria a P7, e
+copiar a URL criaria duas listas (N-01). `origem_declarada` passou a ler também o registro de
+captura da pasta. Só conta a linha que **trouxe byte** (situação vigente, sha256 e URL): um
+`404` de feriado não é origem de arquivo nenhum. O `origem.csv` manual ganha em conflito.
+`fase0/test_ci04_origem_da_captura.py`, com duas mutações provadas.
+
+**(b) `test_REAL_todo_ano_fixado_confere_nesta_maquina`.** O pin de 2026 (`fb3546ed…`) deixou de
+ser a vigente com a captura de 24/09. O `materializar_acervo` só punha a vigente em disco, e o
+leitor do ML (P-139) ia ao R2 buscar a fixada, e dava `ArmazemIndisponivel`, porque o passo não
+tem segredo. Agora o materializador também põe as **23 versões fixadas** no cache
+`data/armazem/`, no único passo com credenciais, e a fixada que falta vira FALTA.
+
+As duas propostas eram as do comentário no PR #1, que esperavam decisão dele. O prompt de 25/09
+mandou consertar depois de reproduzir. Prova: árvore do runner, materialização **com**
+credenciais (98 no lugar, 23 fixadas, 0 faltas) e as quatro suítes **sem** elas, **verdes**.
+
+---
+
 ## CV-07 · Captura local sem `--armazem` desincroniza o registro e o R2: o byte nunca sobe
 
 *25/09/2026. Erro meu (Claude Code), achado por mim ao desenhar o job semanal.*

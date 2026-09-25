@@ -48,3 +48,28 @@ def test_conhecidos_inclui_o_registro_e_o_inventario():
     itens = M.conhecidos()
     assert ("b3", "cotahist", "COTAHIST_A2023.ZIP") in itens
     assert ("cvm", "dfp", "dfp_cia_aberta_2010.zip") in itens
+
+
+def test_CI04_as_versoes_fixadas_do_ML_entram_na_lista():
+    """CI-04: o pin de 2026 (fb3546ed...) nao e a vigente; sem ele aqui, o leitor do ML ia ao
+    armazem no passo dos testes, que nao tem segredo."""
+    fix = M.fixados()
+    assert ("cotahist", "COTAHIST_A2026.ZIP",
+            "fb3546ed27cc8a138e93c141adce3e8dc684df219ebffa4d49bff5d557b3e5e3") in fix
+    assert all(len(sha) == 64 for _r, _a, sha in fix)
+
+
+def test_CI04_a_fixada_e_pedida_PELA_VERSAO_e_conferida(tmp_path):
+    pedidos = []
+
+    def abrir(recurso, arquivo, versao=None, conferir=False):
+        pedidos.append((arquivo, versao, conferir))
+        if arquivo == "COTAHIST_A2025.ZIP":
+            raise OSError("armazem indisponivel")
+        return str(tmp_path / arquivo)
+
+    prontos, faltas = M.materializar_fixados(
+        {("cotahist", "COTAHIST_A2026.ZIP", "a" * 64),
+         ("cotahist", "COTAHIST_A2025.ZIP", "b" * 64)}, abrir)
+    assert ("COTAHIST_A2026.ZIP", "a" * 64, True) in pedidos
+    assert len(prontos) == 1 and len(faltas) == 1 and "COTAHIST_A2025.ZIP@bbbbbbbbbbbb" in faltas[0]
