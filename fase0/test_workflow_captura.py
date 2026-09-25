@@ -156,3 +156,15 @@ def test_P137_conciliacao_no_workflow_com_csv_commitado_e_vermelho_proprio():
     assert "docs/acervo/b3/conciliacoes.csv" in _passo("Commitar o registro, se mudou")["run"]
     assert "steps.conciliacao_b3.outputs.codigo != '0'" in \
         _passo("Falhar se a captura falhou")["if"]
+
+
+def test_P136_publicacao_da_CVM_no_workflow_com_token_do_proprio_job():
+    """A release usa o GITHUB_TOKEN do job -- nenhuma credencial nova -- e a falha dela fica
+    vermelha no mesmo portao. O job precisa de `contents: write` para criar a release."""
+    p = _passo("publicacao_cvm")
+    assert "fase0/publicar_cvm.py --armazem s3 --aplicar" in p["run"] and "set +e" in p["run"]
+    assert p["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert _wf()["permissions"]["contents"] == "write"
+    assert "steps.publicacao_cvm.outputs.codigo != '0'" in \
+        _passo("Falhar se a captura falhou")["if"]
+

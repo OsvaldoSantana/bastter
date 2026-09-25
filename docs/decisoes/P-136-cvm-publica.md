@@ -1,7 +1,10 @@
 # P-136, decisão 2 — servir ao público as versões da CVM
 
-*25/09/2026. Decisão dele: **"pode ser público"**. Este documento é o desenho, para ele aprovar
-na segunda-feira antes de qualquer byte sair. Nada foi publicado.*
+*25/09/2026. Decisão dele: **"pode ser público"**, e em seguida **"pode executar o desenho"**.
+Executado no mesmo dia: `fase0/publicar_cvm.py` (17 testes; a mutação que tira a guarda da fonte
+reprova) e o passo `Publicar CVM` do `captura_cvm.yml`. A primeira release sai na próxima
+execução do workflow — plano medido sobre o registro real: **64 versões, uma release,
+`cvm-acervo-2026`**.*
 
 ## O que se quer
 
@@ -57,9 +60,11 @@ publicaria a B3.**
 - *Share-alike*: se um dia o projeto publicar uma **base derivada** da CVM (a série de
   fundamentos, por exemplo), ela sai sob ODbL também.
 
-## O que falta para executar
+## O que foi executado (25/09/2026)
 
-1. **Ele:** aprovar este desenho (segunda, 28/09). Nenhuma conta, nenhuma credencial.
-2. **Claude:** `fase0/publicar_cvm.py` + teste (inclusive o de recusa da B3), o passo no workflow
-   com `contents: write` (que o job já tem para commitar o registro), e a linha no
-   `docs/reproduzir.md` apontando para as releases.
+1. **Ele:** aprovou o desenho ("pode executar o desenho").
+2. **Claude:** `fase0/publicar_cvm.py` + `fase0/test_publicar_cvm.py` (17 testes, inclusive a
+   recusa da B3 **antes** do primeiro envio), o passo `Publicar CVM` no workflow com o
+   `GITHUB_TOKEN` do job, e as linhas no `docs/reproduzir.md` e no `NOTICE`.
+3. **Falta, e é do executor, não de ninguém:** a primeira rodada do workflow cria a release e
+   envia as 64 versões. A P-136 fecha quando ela existir.

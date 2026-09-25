@@ -62,8 +62,11 @@ Cada arquivo sai em uma de quatro situações, com a contagem e o `n` no fim:
 **A CVM serve só a versão corrente de cada arquivo.** Os cinco anos mais recentes do DFP e do ITR
 são reescritos toda semana com as reapresentações
 ([`fontes/cvm-dfp-politica-atualizacao.md`](fontes/cvm-dfp-politica-atualizacao.md)). Uma versão
-que o projeto capturou e a CVM já substituiu **só existe no nosso armazém**. Para esses arquivos,
-`DIFERENTE` é o resultado esperado, e não prova que ninguém errou: prova que a fonte mudou depois.
+que o projeto capturou e a CVM já substituiu **não está mais na CVM**. Desde 25/09/2026 ela está
+nas **releases `cvm-acervo-<ano>`** deste repositório (licença ODbL, com a atribuição da CVM nas
+notas), com o nome `<arquivo>__<sha256[:12]>`: baixe de lá e compare o sha256. Enquanto a versão
+não estiver lá, `DIFERENTE` é o resultado esperado, e não prova que ninguém errou: prova que a
+fonte mudou depois.
 O registro diz quando cada versão foi vista (`dt_captura`), e o `Last-Modified` que a fonte
 declarava.
 
@@ -71,6 +74,7 @@ O mesmo vale para o NEFIN quando ele publicar uma série nova, e para o anual do
 corrente, que cresce a cada pregão. Ano fechado do COTAHIST é congelado: medido em 18/09 e em
 23/09, mesmo sha256 (P-96).
 
-**Por que o armazém não é aberto:** redistribuir um arquivo exige licença, e ler hash não. Se a
-licença de uma fonte permitir, as versões antigas dela podem ser publicadas. Até lá o que se
-publica é a prova de qual arquivo era, não o arquivo.
+**Por que o armazém não é aberto:** redistribuir um arquivo exige licença, e ler hash não. A CVM
+permite (ODbL) e é publicada pelas releases; a B3 e o NEFIN não permitem, e deles o que se publica
+é a prova de qual arquivo era, não o arquivo. O acesso público do R2 abriria o bucket inteiro, B3
+junto — por isso release, e não bucket ([`decisoes/P-136-cvm-publica.md`](decisoes/P-136-cvm-publica.md)).

@@ -28,7 +28,9 @@ O QUE NÃO É DESTE PROJETO, e nenhuma das duas licenças alcança:
       consentimento prévio e expresso da B3 (docs/fontes/b3-termos-de-uso.md).
       CVM: Open Database License (ODbL), com citação obrigatória: "Dados acessados pelo
       Portal de Dados Abertos da CVM, disponível em https://dados.cvm.gov.br/"
-      (docs/fontes/cvm-dados-abertos-licenca.md).
+      (docs/fontes/cvm-dados-abertos-licenca.md). As versões da CVM que o projeto observou
+      são publicadas, sem alteração e sob ODbL, nas releases cvm-acervo-<ano> deste
+      repositório -- não nos arquivos do git.
 
 O projeto foi inspirado no método publicado pelo site Bastter.com, e não tem vínculo com
 o site nem com seus autores. O que se adota do método e onde se diverge está em
