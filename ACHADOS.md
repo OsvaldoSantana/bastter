@@ -2526,6 +2526,40 @@ nome contra eles procura Duratex e acha zero.
 
 ---
 
+## GIT-01 · Duas redações publicadas da mesma seção de pré-registro, porque uma sessão olhou só o `main`
+
+*25/09/2026. Erro meu (Claude Code, sessão local). Achado ao responder se o repositório estava
+pronto para terceiros, listando as branches remotas.*
+
+**O que houve.** Às 15:11Z uma sessão na nuvem empurrou a §6 da emenda 1 do pré-registro ML
+(`2f939ae`, sha256 `71621ba64c899281`) para `origin/claude/brave-gates-g4zm6k`. A mesma sessão
+trocou as actions para node24 e registrou CI-03 e CI-04. Nada disso chegou ao `main`. Às 16:54Z,
+eu, numa sessão local, conferi só `git log` e `git status` do `main`, escrevi *"nada dos dois
+itens chegou ao repositório"* e publiquei **outra redação** da mesma §6 (`53112d6`, sha256
+`7fc09d780c5012ac`). A troca de actions também saiu duplicada, e a minha, pior: trocou o SHA e
+deixou o comentário dizendo v4/v5.
+
+**A medição.** `git branch -r --no-merged HEAD` listava `origin/claude/brave-gates-g4zm6k`, com
+4 commits. As duas §6 têm a mesma substância (t-2..t; ≥ mediana, empate entra) e hashes
+diferentes. O Osvaldo não sabia que a branch existia: o nome `claude/…` é o padrão das sessões
+na nuvem.
+
+**A consequência.** Um pré-registro vale pelo que foi publicado primeiro (P-116). Com duas
+versões no `origin`, *"qual texto valia antes da medição"* deixa de ter uma resposta só. Não
+houve dano porque nenhum número da P-145 tinha sido medido. E os dois vermelhos do job completo
+(CI-04) ficaram invisíveis no `main` por duas horas.
+
+**A forma é a da régua 15 (§5-B), um nível acima:** *"o repositório"* medido como *"a branch em
+que eu estou"*. Medi o `main` e concluí sobre o `origin`.
+
+**O conserto.** Merge da branch no `main`, com a versão dela onde as duas se sobrepõem, porque
+foi a primeira no `origin` e é a mais completa. `53112d6` fica no histórico como registro.
+`auditoria/test_git01_branches_integradas.py` reprova qualquer ref do `origin` que o HEAD não
+contenha. Ele reprovou antes do merge. **O limite dele:** só vê o que o clone buscou. No CI
+(`fetch-depth` 1) passa sem medir nada, e na máquina depende de um `git fetch` antes.
+
+---
+
 ## CI-01 · Dois testes dependiam do `estado.yaml` privado, e ninguém sabia porque nenhum portão rodava fora desta máquina
 
 *25/09/2026. Achado pela primeira execução do workflow *Testes* (`36142833762`, vermelha),

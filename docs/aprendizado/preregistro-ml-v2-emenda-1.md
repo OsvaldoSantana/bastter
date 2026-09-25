@@ -73,20 +73,20 @@ o **universo** do ML, e é esse mês que a medição vai dizer.
 
 ## 6. Esclarecimentos
 
-*Decididos por ele em **25/09/2026**, antes de qualquer número do universo do ML que dependa
-deles (P-145). Valem a partir do commit **empurrado ao `origin`** que os contém (P-116). As
-§§1–5 acima não mudaram: o sha256 `1aac96023fdc0de9…` citado na medição é o do arquivo em
-`00aa622`, e continua sendo.*
+*Decididos por ele em **25/09/2026**, depois de medido o mês da emenda
+(`preregistro-ml-v2-emenda-1-medicao.md`) e **antes** de qualquer número da P-145 que dependa
+deles. Vale a partir do commit empurrado ao `origin` que contém esta seção (P-116). Não mudam a
+regra da §1, e o mês medido não se move: ele saiu igual nas duas leituras de janela.*
 
-Duas escolhas que a §2 da v2 não faz e que mudam o universo. A medição da emenda não precisou
-delas (mar/2011 saiu igual nas duas janelas); o universo de 2013–2019 precisa.
+São dois termos da §2 da v2 que admitiam mais de uma leitura. Nenhum dos dois é hipótese,
+variante ou mudança de grade: fixam a leitura que valerá para o universo do ML inteiro.
 
-1. **"3 meses anteriores" = t-2, t-1, t.** Os três meses que terminam na data de decisão.
-   A decisão é tomada no fechamento de `t` (último pregão do mês), então a janela usa tudo o que
-   já aconteceu até ali e nada depois: não enxerga o futuro. A leitura t-3..t-1 fica descartada.
-2. **"Percentil ≥ 50" = volume financeiro médio da janela ≥ a mediana** das ações que passaram
-   no filtro de pregões (≥ 90% dos pregões da janela), no mesmo mês `t`. A mediana é a do
-   conjunto já filtrado, não a do mercado inteiro. Empate com a mediana entra.
+1. **"3 meses anteriores" = `t-2..t`**: os três meses que terminam no mês `t`, inclusive. A
+   decisão é tomada no fechamento de `t` (último pregão do mês), então a janela usa só pregões
+   até a data de decisão e não enxerga o futuro. A leitura `t-3..t-1` fica descartada.
+2. **"percentil ≥ 50" = volume financeiro médio da janela `≥` a mediana**, calculada entre as
+   empresas que passaram no filtro de pregões (≥ 90% dos pregões da janela). A comparação é
+   inclusiva: a empresa que empata com a mediana entra.
 
-São leituras, não mudanças: nenhuma entra na lista da §9 da v2, e o orçamento de testes não se
-move.
+**O que isto não decide:** a ponte ticker ↔ `CD_CVM` de 2013–2019 e a captura do banco de ISIN
+como rotina. Continuam na P-145.

@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+"""GIT-01 -- branch no origin que o HEAD nao contem.
+
+Em 25/09/2026 uma sessao na nuvem empurrou a secao 6 da emenda 1 do pre-registro ML para
+`claude/brave-gates-g4zm6k` (2f939ae, 15:11Z). Uma sessao local olhou so o `main`, achou que
+nada tinha sido feito e publicou uma segunda redacao da mesma secao (53112d6, 16:54Z). Duas
+versoes publicadas de um pre-registro, e ninguem viu, porque nada media branch fora do `main`.
+
+A guarda: toda ref em `refs/remotes/origin/` tem de estar contida no HEAD. Branch nova de
+outra sessao reprova aqui ate alguem integra-la ou apaga-la -- e e esse o ponto.
+
+O QUE ELA NAO VE (P5): so enxerga as refs que este clone buscou. No CI o checkout busca so o
+`main` (fetch-depth 1), entao la ela passa sem medir nada; o `git fetch` e dever de quem roda
+na maquina. E nao distingue branch esquecida de branch em andamento: as duas reprovam.
+"""
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+
+import pytest
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=RAIZ, capture_output=True, text=True,
+                          check=True).stdout
+
+
+def nao_integradas(alvo: str = "HEAD") -> list[str]:
+    """Refs de origin/ que `alvo` nao contem. `origin/HEAD` e apelido, nao branch."""
+    saida = _git("branch", "-r", "--no-merged", alvo, "--format=%(refname:short)")
+    return sorted(r for r in saida.split() if r.startswith("origin/") and r != "origin/HEAD")
+
+
+def _repositorio_git() -> bool:
+    if shutil.which("git") is None:
+        return False
+    try:
+        return _git("rev-parse", "--is-inside-work-tree").strip() == "true"
+    except subprocess.CalledProcessError:
+        return False
+
+
+pytestmark = pytest.mark.skipif(not _repositorio_git(), reason="fora de um clone git")
+
+
+def test_git01_toda_branch_do_origin_esta_no_head():
+    pendentes = nao_integradas()
+    assert not pendentes, (
+        f"GIT-01: {pendentes} tem commits que o HEAD nao contem. Leia antes de trabalhar "
+        "(`git log HEAD..<branch>`), integre ou apague -- outra sessao pode ter feito a tarefa.")
+
+
+def test_git01_a_guarda_ve_um_commit_fora_do_head():
+    # Controle (B-13): a guarda tem de reprovar quando ha o que reprovar. O pai do HEAD nao
+    # contem o HEAD; se ha branch remota apontando para o HEAD, ela aparece como pendente.
+    if _git("rev-list", "--count", "HEAD").strip() == "1":
+        pytest.skip("historico de um commit so")
+    no_head = [r for r in _git("branch", "-r", "--points-at", "HEAD",
+                               "--format=%(refname:short)").split()
+               if r.startswith("origin/") and r != "origin/HEAD"]
+    if not no_head:
+        pytest.skip("nenhuma branch remota aponta para o HEAD; controle sem objeto")
+    assert set(no_head) <= set(nao_integradas("HEAD~1"))

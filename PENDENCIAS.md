@@ -3059,6 +3059,27 @@ baixada à mão em 18/09 (manifesto de 18/09).
 3. **A medição de mutação:** Actions → *Mutacao* → *Run workflow*. Até essa execução, a
    configuração `[tool.mutmut]` é `NAO_CONFIRMADO`. Cada sobrevivente vira achado candidato.
 
+> **25/09, os itens 2 e 3 rodaram no branch `claude/brave-gates-g4zm6k`, disparados pela sessão
+> na nuvem a pedido dele** (conferir os workflows depois da troca para node24). Dois achados:
+>
+> - **CI-03: a *Mutacao* sai verde sem ter medido nada** (execução `36152691790`, 55 s). Os 4.935
+>   mutantes ficaram `not checked`. A rodada limpa do mutmut falha (`failed to collect stats`)
+>   e o `set +e` do workflow engole o erro. Reproduzido num clone: fora os `privado`, **20 testes**
+>   quebram na cópia `mutants/`. A cópia não leva `.git`, `.github`, `.gitignore` nem `PENDENCIAS.md`
+>   (os de `test_workflow_captura`, `p67`, `p82` e `limitacoes_tipo`), e os testes que varrem o
+>   fonte veem a instrumentação do mutmut (`test_nenhum_literal_de_politica_fixo_no_modulo`
+>   acusa `101`, `1.01`, `366.25`…). **Decisão dele:** restringir os testes da mutação aos
+>   unitários dos quatro módulos mutados, ou marcar os testes de repositório e excluí-los por
+>   marcador. Nos dois casos o workflow passa a falhar quando nenhum mutante é checado.
+> - **CI-04: o job `completo` do *Testes* fica vermelho em dois testes que já falhavam no `main`**
+>   (execução `36152684302`, a primeira do job). (a) `test_P97_nao_sobrou_ZIP_sem_origem_no_acervo`:
+>   os 6 `COTAHIST_D*.ZIP` da P-135 têm origem no `capturas.csv`, não no `origem.csv`. (b)
+>   `test_REAL_todo_ano_fixado_confere_nesta_maquina`: o pin de 2026 (`fb3546ed…`) não é a versão
+>   vigente, a materialização só copia a vigente, e o R2 não tem segredo no passo dos testes.
+>   Propostas no PR osvaldosantana/bastter#1. **Decisão dele** nas duas.
+>
+> A *Captura CVM* (`36152688055`) ficou verde com checkout v7.0.1, e o push do bot funcionou.
+
 ## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
 
 **Dono:** Claude Code (medir) · Osvaldo (as duas escolhas) · **Gatilho:** antes da primeira
@@ -3071,10 +3092,16 @@ emenda não precisou fazer, porque o mês saiu igual nas duas:
 1. *"3 meses anteriores"*: t-2..t ou t-3..t-1;
 2. *"percentil ≥ 50"*: aplicado aqui como `≥ mediana` dos que passaram no filtro de pregões.
 
-> **As duas escolhas: decididas por ele em 25/09** — t-2..t, e `≥ mediana` dos que passaram no
-> filtro de pregões. Gravadas na §6 da emenda 1 e empurradas **antes** de qualquer número desta
-> pendência (P-116). Resta a ponte de 2013–2019 e a captura do banco de ISIN.
-
+> **As duas escolhas foram decididas por ele em 25/09:** `t-2..t` e `≥ mediana` (inclusiva). Estão
+> em `preregistro-ml-v2-emenda-1.md` §6 "Esclarecimentos", empurrada em `2f939ae` **antes** de
+> qualquer número desta pendência (P-116). **sha256 publicado: `71621ba64c899281`.** O texto do
+> commit `2f939ae` cita `380d747051f5e9b5`, o sha de um rascunho anterior à última correção de
+> redação; o commit não foi reescrito, e o sha que vale é o do arquivo no `origin`. Falta a
+> ponte de 2013–2019 e a captura do ISIN.
+> **Houve uma segunda publicação da mesma §6, e ela não vale.** Uma sessão local, sem ver esta
+> branch, empurrou ao `main` em `53112d6` (16:54Z) um texto de mesma substância e outra redação
+> (sha256 `7fc09d780c5012ac`). O merge de 25/09 ficou com a versão de `2f939ae`, a primeira no
+> `origin`; `53112d6` fica no histórico como registro. Achado GIT-01.
 **E a captura do banco de ISIN não é rotina** (P7): foi uma vez, 25/09, `isinp.zip` sha256
 `c4654dbd…`. Para 2010–2017 isso basta (o passado não muda), mas a ponte de um ano novo precisa
 de captura, ou de limitação declarada.
