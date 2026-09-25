@@ -2926,7 +2926,19 @@ lado, porque o pré-registro não fixou esses anos. Fixá-los é a **P-140**.
 do ML que dependa da ordem das linhas pode dar número diferente com a mesma impressão, e
 quem lê tem de ordenar.
 
-## P-140 · Fixar os bytes de 2010–2025 que a família ML vai ler
+## ~~P-140~~ · Fixar os bytes de 2010–2025 que a família ML vai ler — **FECHADA em 25/09/2026**
+
+> **Fechada** (decisão técnica do Claude, 25/09, pela impressão de conteúdo). **Anos 2004 a
+> 2025**, e não 2010: a maior janela de preço do §5.1 é a reversão, 36–60 meses (H-ML7).
+> De jan/2010, 60 meses para trás é o fim de jan/2005, e o último negócio até essa data pode
+> estar em dez/2004. Medido do texto do pré-registro por teste, que reprova se 2004 sair.
+> **Hierarquia do pin:** impressão = principal; sha256 e bytes = observado, secundário.
+> `abrir_cotahist` tenta o byte observado; sem ele, lê a vigente, e a impressão igual segue
+> com `AvisoRecompressao`, diferente vira `InsumoBloqueado`. O teste da P-139 que proibia
+> cair para a vigente foi **substituído** pelos dois casos, porque a regra mudou por decisão.
+> **Nesta máquina:** medição dos 22 anos em **54,5 s**; conferência dos 23 pelo leitor em
+> **53,7 s** (`test_REAL_todo_ano_fixado_confere_nesta_maquina`) e 61 s pelo comando; 23/23
+> `FIXADO`, nenhum aviso. Os 22 sha256 medidos conferem com a vigente do inventário do acervo.
 
 **Dono:** Osvaldo (decisão) · Claude Code (execução) · **Gatilho:** antes de a primeira
 variável da ML-3 ser montada · **Classe:** `DECISAO_DE_DESENHO` · **Origem:** P-139.
@@ -3148,6 +3160,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-140** | o pré-registro ML só fixava 2026; os outros anos saíam da versão vigente, sem pin | 25/09 — **2004–2025** fixados pela impressão de conteúdo (2004 derivado da janela de 60 meses do §5.1, com teste). Impressão = pino principal; sha256 = observado. Mesma impressão com sha diferente → aviso e segue; impressão diferente → `InsumoBloqueado`. 23/23 conferem nesta máquina em 53,7 s |
 | **P-142** | 9 testes do C-02 contra o acervo real pulavam em toda rodada: raiz em `data/bronze/b3`, e o COTAHIST em `.../cotahist` desde a P-114 | 25/09 — raiz certa com `anos={2023}`; **os 9 passaram sem mudar número**. `exigir_acervo`: sem `data/` pula, com `data/` e arquivo faltando falha; guarda reprova `skipif` em arquivo com `test_REAL_*` |
 | **P-132** | o pré-registro v2 promete fundamento desde jan/2010, e o primeiro `DT_RECEB` é 27/01/2011 (CV-04) | 25/09 — **decisão dele, opção (a):** emenda 1 (início do desenvolvimento = primeiro mês com ≥ 90% do universo coberto), empurrada em `00aa622` antes de medir. O FCA passou a ser capturado (17 anos, 6,6 MB). O mês **não** foi medido: o FCA não tem ticker antes de 2018 (CV-05) → **P-143**; a P-138 não enxerga emenda de desenho → **P-144** |
 | **P-141** | o pytest foi **58% do tempo** dos pedidos de 21–24/09 (268 de 458 min; `tools/analisar_sessoes.py`); o `fase0` sequencial media **537 s**, a 63 s do teto de 10 min do Bash, e 3 rodadas morreram nele sem resultado | 25/09 — **medido antes e depois, mesma máquina:** completa sequencial **34 + 538 + 35 = 607 s** → completa `-n auto --dist loadgroup` **11 + 103 + 21 + 3 (tools) = 138 s**; ciclo `-m "not slow"` **30 + 7 + 8 + 1 = 46 s**. Memo de sessão por sha256 (`fase0/memo_acervo.py`): os dois pares que liam o mesmo acervo, **338 → 202 s** sequenciais (o segundo de cada par: 95 → 1,2 s e 64 → 1,1 s). Fixtures de módulo (`med`, `jan`, `real`) em `xdist_group`, senão cada trabalhador refaz 45–62 s. `pytest-xdist==3.8.0` no grupo **`paralelo`, não no `dev`**: o `dev` entra na impressão `7565df…` gravada em 4 resultados (`test_p141_paralelo.py`, com mutação). Único teste com caminho fixo (`_pyproject_frouxo.toml`) foi para `tmp_path`. 3 guardas novas, as 3 reprovam por mutação. Protocolo na §9 do `CLAUDE.md`. **Achado lateral: P-142** |

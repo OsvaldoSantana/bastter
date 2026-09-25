@@ -11,11 +11,246 @@
 # e troca a ordem das linhas sem mudar o conteudo, entao o sha256 do ZIP muda sem o dado
 # mudar. Medida em 24/09/2026 no fb3546ed e no 4f2cf2aa, com o mesmo resultado.
 #
-# Ano que nao esta aqui NAO foi fixado pelo pre-registro. O leitor devolve a versao
-# vigente com o sha256 ao lado e `fixado: False` -- fixar 2010-2025 e decisao (P-140).
+# P-140 (25/09/2026, decisao tecnica registrada): 2004 a 2025 fixados aqui. A HIERARQUIA
+# de cada entrada:
+#   impressao  -- o PINO PRINCIPAL. Conteudo da janela (linhas TIPREG=01 ordenadas). E ela
+#                 que decide: diferente, `InsumoBloqueado`.
+#   sha256, bytes -- o OBSERVADO, secundario: o byte medido. O leitor o abre primeiro (so
+#                 ele garante tambem a ordem das linhas); se nao estiver disponivel, le a
+#                 vigente e, com a mesma impressao, segue com `AvisoRecompressao` (CH-01).
+# Por que 2004: a maior janela de preco da secao 5.1 e a reversao, 36 a 60 meses atras
+# (H-ML7). Do primeiro mes de decisao possivel (jan/2010), 60 meses e o fim de jan/2005, e
+# o ultimo negocio ate essa data pode estar em dez/2004. Guardado por
+# test_insumo_ml.py::test_P140_os_anos_fixados_cobrem_a_maior_janela_do_preregistro.
+# `ate` = 31/12 do ano; 2026 continua com a janela do teste (ago/2026). Medidos com
+# `py -3.11 fase0/insumo_ml.py --medir 2004-2025` (54,5 s nesta maquina, 25/09), e
+# conferidos contra a versao vigente do inventario do acervo: 22 de 22.
+#
+# Ano que nao esta aqui NAO foi fixado. O leitor devolve a versao vigente com o sha256 ao
+# lado e `fixado: False`.
 
 preregistro: docs/aprendizado/preregistro-ml-v2.md
 cotahist:
+  2004:
+    arquivo: COTAHIST_A2004.ZIP
+    sha256: f750ba8ee9e25299ed96811979befb29315d91667fedc3885c709440b4989467
+    bytes: 7902413
+    impressao:
+      ate: 2004-12-31
+      registros: 166937
+      pregoes: 249
+      sha256: fd188fe7c1a75a7176613053df359f84a49d0112e5d28f4632b054ce9ba4604c
+    # medido em 0.3 s
+  2005:
+    arquivo: COTAHIST_A2005.ZIP
+    sha256: 41eac6d743d9c3e812bb001c4d327582fa7c408dbc99ff4a1734698da8b18f52
+    bytes: 8533024
+    impressao:
+      ate: 2005-12-31
+      registros: 181408
+      pregoes: 249
+      sha256: dc440c31fd95f15ac7a650d1b459dd603fe9dfed5492f2cb5002bf8cf548ae3d
+    # medido em 0.3 s
+  2006:
+    arquivo: COTAHIST_A2006.ZIP
+    sha256: b5432089f8788ea122b4102cd1f09b1a0a3436c176b8f8c548eef50ec3e02687
+    bytes: 9318595
+    impressao:
+      ate: 2006-12-31
+      registros: 198367
+      pregoes: 246
+      sha256: 0907f3e3478e1ef8c83e9e9b573ac45f220034ed2f99e3bb467de32f7f2932f4
+    # medido em 0.3 s
+  2007:
+    arquivo: COTAHIST_A2007.ZIP
+    sha256: 3c46f425112f838f3eb09023c987d7e5e81500610d3e5e40fedefb52d3dffd66
+    bytes: 10530129
+    impressao:
+      ate: 2007-12-31
+      registros: 280255
+      pregoes: 245
+      sha256: 481fa10374274c4ed9f82cf085833311a5c53ecef6d37221dbcefa1c1f9464c7
+    # medido em 0.4 s
+  2008:
+    arquivo: COTAHIST_A2008.ZIP
+    sha256: b4d92bcea3c253ab9379ad6ddcb42115c8afb72fd94d39ded2b5912528cf3786
+    bytes: 10330640
+    impressao:
+      ate: 2008-12-31
+      registros: 284235
+      pregoes: 249
+      sha256: 1837c79cebc26f66ee2957040d591058c79583e77bcde6a0b7f0f0bf7e5865d3
+    # medido em 0.4 s
+  2009:
+    arquivo: COTAHIST_A2009.ZIP
+    sha256: bb9421050bfd98a91b6023c1df540e43f421734c6fa0834ab2891c30af581adc
+    bytes: 9620954
+    impressao:
+      ate: 2009-12-31
+      registros: 265046
+      pregoes: 246
+      sha256: befa87f32500216af55455dc2c871dfbf098569f3d0c3b99acfcd30cf8b36a7b
+    # medido em 0.4 s
+  2010:
+    arquivo: COTAHIST_A2010.ZIP
+    sha256: 65637311ced65ba54a617ab9cc2543974fdd4ed0ce416a5235e01b2f1aae66f5
+    bytes: 10385444
+    impressao:
+      ate: 2010-12-31
+      registros: 287480
+      pregoes: 247
+      sha256: 50f3535c8d91cacc12c2735eec40ce014ae164934f6713ae75e1330d258c3637
+    # medido em 0.4 s
+  2011:
+    arquivo: COTAHIST_A2011.ZIP
+    sha256: 0cf67787cc1b77dde67a4ff1a340123ab261ce252245d24b5d32ec5b8b162359
+    bytes: 10856136
+    impressao:
+      ate: 2011-12-31
+      registros: 298370
+      pregoes: 249
+      sha256: 297fe96c928746b3ecbcfea0bde9e4a7200a5c00005eee9c7c107f296b2c041a
+    # medido em 0.4 s
+  2012:
+    arquivo: COTAHIST_A2012.ZIP
+    sha256: 98771b1248a3f19b547609ed4fd6c8da0eb396140afb6de91946db457c855465
+    bytes: 11883689
+    impressao:
+      ate: 2012-12-31
+      registros: 330633
+      pregoes: 246
+      sha256: 62d7544f4e4e4a372b70712f6cf8fd63b4c8b6b9c1a89dda743cfeb8421523ec
+    # medido em 0.9 s
+  2013:
+    arquivo: COTAHIST_A2013.ZIP
+    sha256: b6dfb0d73181a60cc65083c2b185a1cbb0c95b87b21f873cc151515c65e47636
+    bytes: 13300034
+    impressao:
+      ate: 2013-12-31
+      registros: 378917
+      pregoes: 248
+      sha256: c3bec17486560e16031434ad3b6bfc725196f68929f3ca49fe88caad7c9d3bb9
+    # medido em 1.2 s
+  2014:
+    arquivo: COTAHIST_A2014.ZIP
+    sha256: 613d76f8a64c7ffba0406cb54c1fd187266f55ed8b6037cb85993b2071a5aae7
+    bytes: 13684612
+    impressao:
+      ate: 2014-12-31
+      registros: 392228
+      pregoes: 248
+      sha256: c9fcbb0c336c53dc184f933c7b5c8c6702ee2ccbfc210c080c8161e6d0d277cf
+    # medido em 1.3 s
+  2015:
+    arquivo: COTAHIST_A2015.ZIP
+    sha256: 593f8740ec1aa87c80c54c623f1759530b6b32cdadd34a64f0fc66a529f34e35
+    bytes: 14129467
+    impressao:
+      ate: 2015-12-31
+      registros: 414177
+      pregoes: 246
+      sha256: 13d1db3be82bc6ba1de9b37d5e476223521f6562a1c966bf3ab8f171d5990e26
+    # medido em 1.3 s
+  2016:
+    arquivo: COTAHIST_A2016.ZIP
+    sha256: ffc82a9b973cb5901e68dc11bea1bbc9bf0a2c46749e0efe5a7a89229bc0d81f
+    bytes: 15715361
+    impressao:
+      ate: 2016-12-31
+      registros: 466734
+      pregoes: 249
+      sha256: 06d21272c87cb97575b98958d7086514820e8ad5e4ca4de5d6cdc6767c3dd4a6
+    # medido em 1.4 s
+  2017:
+    arquivo: COTAHIST_A2017.ZIP
+    sha256: af6aaa85187c1d58ec6565522644066da573a7dc5b579c1d4c906ae95a2dea86
+    bytes: 16527191
+    impressao:
+      ate: 2017-12-31
+      registros: 489115
+      pregoes: 246
+      sha256: 016178392231bfdb0042ec33d3f9a0166c72aaf4af9cdb46ae8a2bae5639aa04
+    # medido em 1.6 s
+  2018:
+    arquivo: COTAHIST_A2018.ZIP
+    sha256: 9d66136179d9822476c6035000167aecf2665f4396619e4d74c0011745a0c507
+    bytes: 19488404
+    impressao:
+      ate: 2018-12-31
+      registros: 580155
+      pregoes: 245
+      sha256: c93ef4a8373ff02d98633d1017b5d2c9d01cc83abfb7df08438635aec17f46f8
+    # medido em 1.8 s
+  2019:
+    arquivo: COTAHIST_A2019.ZIP
+    sha256: 5170d3f8f079c3306424b36c2fae9b467391f8fa37d16d389f487b4c5c28edb9
+    bytes: 26650371
+    impressao:
+      ate: 2019-12-31
+      registros: 779229
+      pregoes: 248
+      sha256: 7d87898098f2cd1731e216f19b30b69b246d405696c2a441dcf6ccdac322d672
+    # medido em 2.4 s
+  2020:
+    arquivo: COTAHIST_A2020.ZIP
+    sha256: 86442168939b9da7b3cc1ec1662c333ee5ab4c75f2be1865b5bf55ba4c52168f
+    bytes: 37181542
+    impressao:
+      ate: 2020-12-31
+      registros: 1251646
+      pregoes: 249
+      sha256: a91a6dae423744ddab18dd9672343451f7469613cc58abaf1bd8437161376a67
+    # medido em 3.7 s
+  2021:
+    arquivo: COTAHIST_A2021.ZIP
+    sha256: b0d4aed17d609c7ba615a23320c2fd513b580a251ae7d884a5015ef8a3fe4705
+    bytes: 49678679
+    impressao:
+      ate: 2021-12-31
+      registros: 1831862
+      pregoes: 247
+      sha256: e3ed5d914fd3329b340aba695a99723d95e9ff66bf10f637b4e5421cd43dcf87
+    # medido em 5.9 s
+  2022:
+    arquivo: COTAHIST_A2022.ZIP
+    sha256: a4f9015b755f797d9c08b0d13f19dbfab18a6c75f379c0271a1cf1b5f6323cd8
+    bytes: 58597842
+    impressao:
+      ate: 2022-12-31
+      registros: 2117440
+      pregoes: 250
+      sha256: 06ad281265c5f7c7566926912eacb5af4c8bfd5236fed370183c8f675b1c9bb0
+    # medido em 6.7 s
+  2023:
+    arquivo: COTAHIST_A2023.ZIP
+    sha256: ad1603788d78aaa1de806498572277f1d9443f88ae116452751b5800cb23523e
+    bytes: 70216090
+    impressao:
+      ate: 2023-12-31
+      registros: 2257424
+      pregoes: 248
+      sha256: aed4de287bcab144e98f1ed782dba9b74d7dae730b6c938cc5930c28d79fecc3
+    # medido em 6.6 s
+  2024:
+    arquivo: COTAHIST_A2024.ZIP
+    sha256: 96a003d10fab0fa2ace0c64cdc2b892b4c111adf9da8e538aa0b28437bd2a172
+    bytes: 79261198
+    impressao:
+      ate: 2024-12-31
+      registros: 2635561
+      pregoes: 251
+      sha256: e951ba2841a077348c9afeb150f801b252fb2662d4213482b1fc54772b36af82
+    # medido em 7.1 s
+  2025:
+    arquivo: COTAHIST_A2025.ZIP
+    sha256: 6cc0ad851c8f605ca30418acac48be81f1767f6ed05b4f563772d06ae448047d
+    bytes: 89056788
+    impressao:
+      ate: 2025-12-31
+      registros: 3174698
+      pregoes: 250
+      sha256: bcc3c7b29497f6b65aefb227f15bb30bbba28a7a9c2a8ac5bc08402a20f1580b
+    # medido em 9.8 s
   2026:
     arquivo: COTAHIST_A2026.ZIP
     sha256: fb3546ed27cc8a138e93c141adce3e8dc684df219ebffa4d49bff5d557b3e5e3

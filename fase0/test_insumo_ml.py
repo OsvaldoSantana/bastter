@@ -20,6 +20,7 @@ import pytest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import acervo  # noqa: E402
 import insumo_ml as M  # noqa: E402
+from acervo_de_teste import exigir_acervo  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ATE = dt.date(2026, 8, 31)
@@ -108,16 +109,62 @@ def test_ano_fixado_abre_pela_VERSAO_e_nao_pela_vigente(tmp_path):
         "abriu sem a versao, ou sem conferir o sha256"
 
 
-def test_versao_fixada_indisponivel_BLOQUEIA_e_nao_cai_para_a_vigente(tmp_path):
+def _so_a_vigente(caminho):
+    """Um acervo em que o byte observado sumiu e so a vigente abre."""
+    def abrir(recurso, arquivo, versao=None, conferir=False):
+        if versao is None:
+            return str(caminho)
+        raise acervo.VersaoDesconhecida(versao)
+    return abrir
+
+
+# P-140 (25/09): substitui o teste da P-139 "versao fixada indisponivel BLOQUEIA e nao cai
+# para a vigente". A regra mudou por decisao registrada: a impressao e o pino principal, e
+# a vigente com a MESMA impressao e o mesmo conteudo (CH-01) -- bloquear seria recusar o
+# dado certo por causa da compressao.
+def test_P140_sha_DIFERENTE_e_impressao_IGUAL_segue_com_AVISO(tmp_path):
+    fixado = _zip(tmp_path / "fixado.zip", LINHAS)
+    pins = _pins(fixado)
+    recomprimido = _zip(tmp_path / "vigente.zip", list(reversed(LINHAS)), gerado="20260923")
+    assert _sha(recomprimido) != pins["cotahist"][2026]["sha256"]
+    with pytest.warns(M.AvisoRecompressao, match="IGUAL"):
+        lt = M.abrir_cotahist(2026, pins=pins, abrir=_so_a_vigente(recomprimido))
+    assert lt.fixado and lt.sha256 == _sha(recomprimido) and "IGUAL" in lt.aviso
+
+
+def test_P140_impressao_DIFERENTE_na_vigente_BLOQUEIA(tmp_path):
+    fixado = _zip(tmp_path / "fixado.zip", LINHAS)
+    pins = _pins(fixado)
+    outro = _zip(tmp_path / "vigente.zip", LINHAS[:1] + LINHAS[2:])     # uma linha a menos
+    with pytest.raises(M.InsumoBloqueado, match="impressao"):
+        M.abrir_cotahist(2026, pins=pins, abrir=_so_a_vigente(outro))
+
+
+def test_P140_byte_observado_disponivel_nao_avisa(tmp_path, recwarn):
+    fixado = _zip(tmp_path / "fixado.zip", LINHAS)
+    pins = _pins(fixado)
+    sha = pins["cotahist"][2026]["sha256"]
+    lt = M.abrir_cotahist(2026, pins=pins, abrir=_abrir_de(
+        {("COTAHIST_A2026.ZIP", sha): str(fixado)}, []))
+    assert lt.aviso == "" and not [w for w in recwarn if w.category is M.AvisoRecompressao]
+
+
+def test_P140_nada_abre_BLOQUEIA(tmp_path):
     fixado = _zip(tmp_path / "fixado.zip", LINHAS)
     pins = _pins(fixado)
 
     def abrir(recurso, arquivo, versao=None, conferir=False):
-        if versao is None:
-            return str(fixado)          # a vigente esta ali, e nao pode ser usada
         raise acervo.VersaoDesconhecida(versao)
-    with pytest.raises(M.InsumoBloqueado, match="NAO a substitui"):
+    with pytest.raises(M.InsumoBloqueado, match="nem o byte observado"):
         M.abrir_cotahist(2026, pins=pins, abrir=abrir)
+
+
+def test_P140_medir_pin_e_a_mesma_medida_que_o_leitor_confere(tmp_path):
+    """Quem escreve o pin e quem o confere usam uma funcao so (N-01)."""
+    fixado = _zip(tmp_path / "fixado.zip", LINHAS)
+    p = M.medir_pin(fixado, 2026, ATE)
+    assert p == _pins(fixado)["cotahist"][2026]
+    assert M.medir_pin(fixado, 2026)["impressao"]["ate"] == dt.date(2026, 12, 31)
 
 
 def test_impressao_diferente_da_fixada_BLOQUEIA(tmp_path):
@@ -171,14 +218,46 @@ def test_o_pin_do_yaml_e_o_do_PRE_REGISTRO():
     assert re.search(r"COTAHIST_A2026\.ZIP", md)
 
 
+def _meses_da_maior_janela_de_preco(md):
+    """A maior janela em MESES da tabela de variaveis (secao 5.1), lida do texto."""
+    secao = md.split("### 5.1", 1)[1].split("### 5.2", 1)[0]
+    meses = [int(x) for x in re.findall(r"(\d+) meses", secao)]
+    meses += [int(x) for x in re.findall(r"(\d+)m\b", secao)]
+    return max(meses)
+
+
+def test_P140_os_anos_fixados_cobrem_a_maior_janela_do_preregistro():
+    """3.1 medido, nao suposto: a maior janela de preco do pre-registro (a reversao, 60
+    meses) contada do primeiro mes de decisao (secao 2) define o primeiro ano que o ML le.
+    O ultimo negocio ate o fim daquele mes pode estar no ano anterior -- por isso -1."""
+    pins = M.carregar_pins()
+    md = open(os.path.join(REPO, pins["preregistro"]), encoding="utf-8").read()
+    ano0 = int(re.search(r"\*\*Per[ií]odo:\*\* jan/(\d{4})", md).group(1))
+    n = _meses_da_maior_janela_de_preco(md)
+    assert n == 60, "a maior janela mudou -- e o conjunto de anos fixados tem de mudar junto"
+    primeiro = ano0 - (n + 11) // 12 - 1        # jan/2010 - 60 meses = jan/2005; -1 = 2004
+    faltando = set(range(primeiro, 2026)) - set(pins["cotahist"])
+    assert primeiro == 2004 and not faltando, sorted(faltando)
+
+
 @pytest.mark.slow
-def test_a_impressao_do_yaml_e_a_do_BYTE_FIXADO_quando_ele_esta_no_disco():
-    """A medida do CH-01 reproduzida pelo leitor, sobre o arquivo real. Lento (~700 MB)."""
+def test_REAL_todo_ano_fixado_confere_nesta_maquina():
+    """3.4: todo pin do pins.yaml abre e confere no acervo real, pelo leitor do ML."""
+    exigir_acervo(os.path.join(REPO, "data", "bronze", "b3", "cotahist"))
+    pins = M.carregar_pins()
+    lidos = [M.abrir_cotahist(a, pins=pins) for a in sorted(pins["cotahist"])]
+    assert all(lt.fixado for lt in lidos) and len(lidos) == len(pins["cotahist"])
+
+
+@pytest.mark.slow
+def test_REAL_a_impressao_do_yaml_e_a_do_arquivo_no_disco_2026():
+    """A medida do CH-01 reproduzida pelo leitor, sobre o arquivo real. Lento (~700 MB).
+    P-140: a impressao e o pino principal, entao ela vale para QUALQUER versao no disco --
+    o fixado ou a vigente recomprimida. Antes pulava quando o disco tinha a vigente."""
     pins = M.carregar_pins()
     pin = pins["cotahist"][2026]
     local = os.path.join(REPO, "data", "bronze", "b3", "cotahist", pin["arquivo"])
-    if not os.path.exists(local) or os.path.getsize(local) != pin["bytes"]:
-        pytest.skip("o byte fixado nao esta no disco desta maquina")
+    exigir_acervo(local)
     imp = pin["impressao"]
     assert M.impressao(local, imp["ate"]) == (imp["sha256"], imp["registros"],
                                               imp["pregoes"])
