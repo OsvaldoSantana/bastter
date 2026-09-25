@@ -3070,6 +3070,11 @@ manual cresce com eles. Há também duas escolhas da §2 que mudam o universo e 
 emenda não precisou fazer, porque o mês saiu igual nas duas:
 1. *"3 meses anteriores"*: t-2..t ou t-3..t-1;
 2. *"percentil ≥ 50"*: aplicado aqui como `≥ mediana` dos que passaram no filtro de pregões.
+
+> **As duas escolhas: decididas por ele em 25/09** — t-2..t, e `≥ mediana` dos que passaram no
+> filtro de pregões. Gravadas na §6 da emenda 1 e empurradas **antes** de qualquer número desta
+> pendência (P-116). Resta a ponte de 2013–2019 e a captura do banco de ISIN.
+
 **E a captura do banco de ISIN não é rotina** (P7): foi uma vez, 25/09, `isinp.zip` sha256
 `c4654dbd…`. Para 2010–2017 isso basta (o passado não muda), mas a ponte de um ano novo precisa
 de captura, ou de limitação declarada.

@@ -70,3 +70,23 @@ dez/2010. O menor `DT_RECEB` do `dfp_cia_aberta_2010` é **27/01/2011**, e não 
 
 Medição completa em `ACHADOS.md` → CV-04. Esses números são do mercado inteiro; a regra é sobre
 o **universo** do ML, e é esse mês que a medição vai dizer.
+
+## 6. Esclarecimentos
+
+*Decididos por ele em **25/09/2026**, antes de qualquer número do universo do ML que dependa
+deles (P-145). Valem a partir do commit **empurrado ao `origin`** que os contém (P-116). As
+§§1–5 acima não mudaram: o sha256 `1aac96023fdc0de9…` citado na medição é o do arquivo em
+`00aa622`, e continua sendo.*
+
+Duas escolhas que a §2 da v2 não faz e que mudam o universo. A medição da emenda não precisou
+delas (mar/2011 saiu igual nas duas janelas); o universo de 2013–2019 precisa.
+
+1. **"3 meses anteriores" = t-2, t-1, t.** Os três meses que terminam na data de decisão.
+   A decisão é tomada no fechamento de `t` (último pregão do mês), então a janela usa tudo o que
+   já aconteceu até ali e nada depois: não enxerga o futuro. A leitura t-3..t-1 fica descartada.
+2. **"Percentil ≥ 50" = volume financeiro médio da janela ≥ a mediana** das ações que passaram
+   no filtro de pregões (≥ 90% dos pregões da janela), no mesmo mês `t`. A mediana é a do
+   conjunto já filtrado, não a do mercado inteiro. Empate com a mediana entra.
+
+São leituras, não mudanças: nenhuma entra na lista da §9 da v2, e o orçamento de testes não se
+move.
