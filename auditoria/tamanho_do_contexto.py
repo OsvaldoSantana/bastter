@@ -61,6 +61,7 @@ SEMPRE = {
 }
 SOB_DEMANDA = {
     "ACHADOS.md": "historia dos achados -- so quando a tarefa toca a area",
+    "README.md": "porta de entrada para humanos; repete o CLAUDE.md em resumo, nao instrui sessao",
     # 24/09/2026: a raiz foi limpa. Os bilhetes de entrega (LEIA-*, SEGUNDA-21, ENTREGA-19-09,
     # PROMPTS-*, RECRIAR-REPOSITORIO, DEPENDE-DE-VOCE) foram para docs/historico/entregas/, e
     # os laudos e desenhos para docs/referencia/. Quem pode morar na raiz e dado:

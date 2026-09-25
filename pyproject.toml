@@ -58,6 +58,7 @@ name = "bastter"
 version = "1.18.0"                 # acompanha politica.yaml -> meta.versao
 description = "Sistema pessoal de analise e aporte — motor de alocacao, custos com procedencia e backtest pre-registrado"
 requires-python = "==3.11.*"
+license = "Apache-2.0"               # a prosa (.md) e CC-BY-4.0: ver NOTICE
 # A faixa e FECHADA de proposito. Nao e conservadorismo: 3.12 mudou o comportamento
 # de `datetime.date` em alguns caminhos de comparacao e o projeto compara datas de
 # `expira` em quase todo `val()`. Abrir a faixa sem medir seria supor.
