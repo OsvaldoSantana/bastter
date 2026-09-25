@@ -3046,7 +3046,31 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
 
-## P-143 · A ponte ticker ↔ `CD_CVM` de 2010 a 2017 não existe no projeto — o universo do ML não se monta antes de 2018
+## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
+
+**Dono:** Claude Code (medir) · Osvaldo (as duas escolhas) · **Gatilho:** antes da primeira
+variável da ML-3 · **Classe:** `DECISAO_DE_DESENHO`
+
+A P-143 fechou a ponte para **2010–2012** (a janela da emenda). O desenvolvimento vai até 2019:
+os emissores do universo de 2013–2019 ainda não passaram pela conferência da CV-06, e a ponte
+manual cresce com eles. Há também duas escolhas da §2 que mudam o universo e que a medição da
+emenda não precisou fazer, porque o mês saiu igual nas duas:
+1. *"3 meses anteriores"*: t-2..t ou t-3..t-1;
+2. *"percentil ≥ 50"*: aplicado aqui como `≥ mediana` dos que passaram no filtro de pregões.
+**E a captura do banco de ISIN não é rotina** (P7): foi uma vez, 25/09, `isinp.zip` sha256
+`c4654dbd…`. Para 2010–2017 isso basta (o passado não muda), mas a ponte de um ano novo precisa
+de captura, ou de limitação declarada.
+
+## ~~P-143~~ · A ponte ticker ↔ `CD_CVM` de 2010 a 2017 não existe no projeto — **FECHADA em 25/09/2026**
+
+> **Fechada.** A ponte é o banco de ISIN da B3: o download estava no JS da página `isinPage/`, e o
+> `404` de antes era o endereço suposto. O FCA antigo não tem ISIN (medido). O `EMISSOR.TXT`
+> descreve o dono **atual** de cada código (CV-06): liga 136 dos 190 emissores do universo de
+> 2010–2012, deixa 50 de fora e tem 4 códigos reaproveitados. **Ponte manual** para 42
+> (`docs/aprendizado/ponte-emissor-cvm.yaml`), por sucessão conferida à mão, com os 42 pares
+> CNPJ/CD_CVM conferidos no cadastro por teste. 6 ficaram sem ponte, declarados. **Mês da emenda
+> 1: mar/2011** (95,8%), igual nas duas leituras de janela
+> (`docs/aprendizado/preregistro-ml-v2-emenda-1-medicao.md`). Segue na **P-145**.
 
 **Dono:** Claude Code (achar e medir a fonte) · **Gatilho:** antes de medir o mês da emenda 1 e
 antes de qualquer variável da ML-3 · **Classe:** `BLOQUEIA_O_SISTEMA`
@@ -3160,6 +3184,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-143** | sem ponte ticker ↔ `CD_CVM` antes de 2018, o universo do ML e o mês da emenda 1 não se mediam (CV-05) | 25/09 — banco de ISIN da B3 (achado no JS da página) + ponte manual de 42 emissores conferida à mão (CV-06). **Mês da emenda: mar/2011**, 95,8%, igual nas duas janelas. Resto na P-145 |
 | **P-140** | o pré-registro ML só fixava 2026; os outros anos saíam da versão vigente, sem pin | 25/09 — **2004–2025** fixados pela impressão de conteúdo (2004 derivado da janela de 60 meses do §5.1, com teste). Impressão = pino principal; sha256 = observado. Mesma impressão com sha diferente → aviso e segue; impressão diferente → `InsumoBloqueado`. 23/23 conferem nesta máquina em 53,7 s |
 | **P-142** | 9 testes do C-02 contra o acervo real pulavam em toda rodada: raiz em `data/bronze/b3`, e o COTAHIST em `.../cotahist` desde a P-114 | 25/09 — raiz certa com `anos={2023}`; **os 9 passaram sem mudar número**. `exigir_acervo`: sem `data/` pula, com `data/` e arquivo faltando falha; guarda reprova `skipif` em arquivo com `test_REAL_*` |
 | **P-132** | o pré-registro v2 promete fundamento desde jan/2010, e o primeiro `DT_RECEB` é 27/01/2011 (CV-04) | 25/09 — **decisão dele, opção (a):** emenda 1 (início do desenvolvimento = primeiro mês com ≥ 90% do universo coberto), empurrada em `00aa622` antes de medir. O FCA passou a ser capturado (17 anos, 6,6 MB). O mês **não** foi medido: o FCA não tem ticker antes de 2018 (CV-05) → **P-143**; a P-138 não enxerga emenda de desenho → **P-144** |

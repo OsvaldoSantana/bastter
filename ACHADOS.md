@@ -2490,6 +2490,40 @@ arquivo de ISIN deu `404`; o endereço tinha sido suposto, não lido de uma pág
 para não inventar URL. **Não é afirmação de que a ponte não existe** (§5-B.13): é afirmação de
 que o FCA não é ela antes de 2018. Pendência: **P-143**.
 
+> **Seguimento, 25/09 (P-143 fechada):** a ponte existe, e o endereço estava no JS da página
+> `isinPage/` (`GetTextDownload/` lista; `GetFileDownload/<btoa(id)>` entrega o `isinp.zip`). O
+> `404` da primeira tentativa era o endereço suposto. O FCA de 2010 a 2017 também **não** tem
+> coluna de ISIN (cabeçalho medido em 2010, 2014 e 2017). Ver CV-06.
+
+---
+
+## CV-06 · A tabela de emissores da B3 descreve o dono ATUAL de cada código, e um código de 2010 pode apontar para outra empresa
+
+*25/09/2026, medido ao montar a ponte da P-143.*
+
+O banco de ISIN da B3 (`EMISSOR.TXT`, 69.359 emissores, todos com data `20180628`) liga código
+de 4 caracteres a CNPJ. Aplicado aos 190 emissores do universo do ML de 2010–2012:
+
+| resultado | emissores |
+|---|---|
+| ligados a um CNPJ registrado na CVM | 136 |
+| — deles, nome incompatível com o do COTAHIST | 20, **todos corretos** na conferência à mão (renomeações: Hypera, Brookfield, T4F…) |
+| código **ausente** do `EMISSOR.TXT` (trocou depois de 2010: CCRO, ELET, BVMF, DTEX…) | 50 |
+| código **reaproveitado**, CNPJ de outra entidade | 4: `EMBR` = Embrast Ltda (a Embraer está em `EMBJ`), `JBSS` = JBS N.V., `TRPL` = um FII, `PMAM` |
+
+**O perigo não são os 50, é a forma dos 4:** eles só apareceram porque o dono novo não tem
+registro na CVM. Um código reaproveitado por uma empresa registrada ligaria o papel de 2010 a
+ela **em silêncio**. É o A-01 com outra porta, e a conferência por nome dos 136 não achou
+nenhum caso. Isso vale **para esta amostra**, não como regra.
+
+**O segundo tropeço:** os índices DFP/ITR de 2010–2012 não trazem o nome da época. A CVM os
+regerou em 08/2024 (CV-02) e o `DENOM_CIA` é o atual: "Terra Santa Agro" em 2010. Casar por
+nome contra eles procura Duratex e acha zero.
+
+**A regra:** tabela de identidade de hoje não é identidade de ontem. Ponte histórica passa por
+**sucessão conferida**, com o par CNPJ/CD_CVM checado no cadastro por teste, como na
+`docs/aprendizado/ponte-emissor-cvm.yaml` (42 linhas, 6 sem ponte declaradas).
+
 ---
 
 ## CV-01 · A versão de 06/09 da CVM não foi capturada, e não volta

@@ -57,6 +57,10 @@ campos:
   PREMIN:  {inicio: 83,  fim: 95,  tamanho: 13, tipo: "(11)V99", descricao: "preco minimo"}
   PREMED:  {inicio: 96,  fim: 108, tamanho: 13, tipo: "(11)V99", descricao: "preco medio"}
   PREULT:  {inicio: 109, fim: 121, tamanho: 13, tipo: "(11)V99", descricao: "preco de fechamento"}
+  # P-143, 25/09: transcritos de docs/fontes/SeriesHistoricas_Layout.md (linhas 60 e 66),
+  # para o universo da secao 2 do pre-registro ML (volume e emissor pelo ISIN).
+  VOLTOT:  {inicio: 171, fim: 188, tamanho: 18, tipo: "(16)V99", descricao: "volume total negociado no papel-mercado"}
+  CODISI:  {inicio: 231, fim: 242, tamanho: 12, tipo: "X(12)", descricao: "codigo ISIN do papel (a partir de 15/05/1995)"}
 
 # `(11)V99` = 11 inteiros + 2 decimais IMPLICITOS. O valor lido divide por 100.
 escala_de_preco: 100

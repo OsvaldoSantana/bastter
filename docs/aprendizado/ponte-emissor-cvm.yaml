@@ -1,0 +1,71 @@
+# Ponte MANUAL emissor (4 caracteres do ISIN) -> CNPJ, para o universo do ML de 2010-2012.
+# P-143, 25/09/2026. Ultimo recurso, como pedido: so onde o EMISSOR.TXT do banco de ISIN
+# da B3 nao liga o codigo a uma empresa registrada na CVM.
+#
+# POR QUE ELA EXISTE (medido em 25/09, fase0/universo_ml.py):
+#   - o EMISSOR.TXT descreve o DONO ATUAL de cada codigo (todo registro tem data 20180628):
+#     o codigo trocado depois de 2010 (CCRO -> MOTV, ELET -> AXIA, BVMF -> B3SA...) nao esta
+#     la, e o codigo REAPROVEITADO aponta para outra entidade (EMBR = Embrast Ltda, JBSS =
+#     JBS N.V., TRPL = um fundo imobiliario, PMAM = CNPJ fora da CVM);
+#   - os indices DFP/ITR de 2010-2012 NAO trazem o nome da epoca: a CVM os regerou em 08/2024
+#     (CV-02) e o DENOM_CIA e o atual -- "Terra Santa Agro" aparece em 2010.
+#
+# COMO CADA LINHA FOI CONFERIDA: a mao, uma a uma (nao amostra), por Claude Code em 25/09:
+# sucessao conhecida (troca de nome ou incorporacao) E o CNPJ sucessor no cad_cia_aberta com
+# DFP 2010-2011 E data de registro coerente com o IPO. `motivo` diz qual foi a sucessao.
+# Nenhuma linha saiu so de semelhanca de nome.
+#
+# `sem_ponte`: o que NAO foi ligado, e conta como SEM documento (emenda 1, secao 3, item 2).
+
+conferido_por: "Claude Code, 25/09/2026, a mao"
+ponte:
+  ABNB: {cnpj: "33.113.309/0001-47", cd_cvm: 20028, motivo: "American Banknote (Abnote) -> Valid Solucoes, 2012"}
+  ABRE: {cnpj: "02.541.982/0001-54", cd_cvm: 22551, motivo: "Abril Educacao -> Somos Educacao; registro 07/2011 = IPO"}
+  ALLL: {cnpj: "02.387.241/0001-60", cd_cvm: 17450, motivo: "ALL America Latina Logistica -> Rumo S.A. (DENOM_COMERC no cad ainda e ALL)"}
+  ARZZ: {cnpj: "16.590.234/0001-76", cd_cvm: 22349, motivo: "Arezzo&Co -> Azzas 2154; registro 01/2011 = IPO"}
+  BBTG: {cnpj: "30.306.294/0001-45", cd_cvm: 22616, motivo: "unit BBTG11 = Banco BTG Pactual S.A. + BTG Pactual Participations (Bermuda); a parte registrada na CVM e o banco"}
+  BPNM: {cnpj: "59.285.411/0001-13", cd_cvm: 21199, motivo: "Banco Panamericano -> Banco Pan"}
+  BRIN: {cnpj: "11.721.921/0001-60", cd_cvm: 22217, motivo: "Brasil Insurance -> Alper; registro 10/2010 = IPO"}
+  BRTO: {cnpj: "76.535.764/0001-43", cd_cvm: 11312, motivo: "Brasil Telecom S.A. -> Oi S.A. (DENOM_COMERC no cad ainda e Brasil Telecom)"}
+  BTOW: {cnpj: "00.776.574/0001-56", cd_cvm: 20990, motivo: "B2W Cia Global do Varejo -> Americanas S.A. (2021)"}
+  BVMF: {cnpj: "09.346.601/0001-25", cd_cvm: 21610, motivo: "BM&FBOVESPA -> B3 S.A."}
+  CCRO: {cnpj: "02.846.056/0001-97", cd_cvm: 18821, motivo: "CCR S.A.; o codigo virou MOTV (A-03, P-93)"}
+  CTIP: {cnpj: "09.358.105/0001-91", cd_cvm: 21792, motivo: "Cetip S.A. (cancelada apos a incorporacao pela B3, 2017)"}
+  DROG: {cnpj: "61.585.865/0001-51", cd_cvm: 5258, motivo: "Drogasil S.A. -> Raia Drogasil (o CNPJ sobrevivente e o da Drogasil)"}
+  DTEX: {cnpj: "97.837.181/0001-47", cd_cvm: 21091, motivo: "Duratex -> Dexco"}
+  ECOD: {cnpj: "05.799.312/0001-20", cd_cvm: 20354, motivo: "Brasil Ecodiesel -> Vanguarda Agro -> Terra Santa Agro; registro 11/2006 = IPO"}
+  ELET: {cnpj: "00.001.180/0001-26", cd_cvm: 2437, motivo: "Centrais Eletricas Brasileiras; o codigo virou AXIA (A-03)"}
+  EMBR: {cnpj: "07.689.002/0001-89", cd_cvm: 20087, motivo: "Embraer S.A.; EMBR foi REAPROVEITADO (hoje Embrast Ltda), a Embraer esta em EMBJ"}
+  ESTC: {cnpj: "08.807.432/0001-10", cd_cvm: 21016, motivo: "Estacio Participacoes -> YDUQS"}
+  HRTP: {cnpj: "10.629.105/0001-68", cd_cvm: 22187, motivo: "HRT Participacoes em Petroleo -> PetroRio -> PRIO; registro 10/2010 = IPO"}
+  INPR: {cnpj: "67.571.414/0001-41", cd_cvm: 20702, motivo: "Inpar S.A. -> Viver Incorporadora (2011)"}
+  JBSS: {cnpj: "02.916.265/0001-60", cd_cvm: 20575, motivo: "JBS S.A.; JBSS foi REAPROVEITADO (hoje JBS N.V.), a JBS S.A. esta em JYSS"}
+  KROT: {cnpj: "02.800.026/0001-40", cd_cvm: 17973, motivo: "Kroton Educacional -> Cogna"}
+  LLIS: {cnpj: "49.669.856/0001-43", cd_cvm: 21440, motivo: "Restoque (Le Lis Blanc) -> Veste S.A. Estilo"}
+  LLXL: {cnpj: "08.741.499/0001-08", cd_cvm: 21482, motivo: "LLX Logistica -> Prumo Logistica"}
+  MPXE: {cnpj: "04.423.567/0001-21", cd_cvm: 21237, motivo: "MPX Energia -> Eneva"}
+  MRFG: {cnpj: "03.853.896/0001-40", cd_cvm: 20788, motivo: "Marfrig; o codigo virou MBRF (A-03)"}
+  ODPV: {cnpj: "58.119.199/0001-51", cd_cvm: 20125, motivo: "Odontoprev S.A."}
+  OHLB: {cnpj: "02.919.555/0001-67", cd_cvm: 19771, motivo: "OHL Brasil -> Arteris"}
+  PMAM: {cnpj: "60.398.369/0004-79", cd_cvm: 9393, motivo: "Paranapanema S.A.; o CNPJ do EMISSOR.TXT (0001-26) nao esta na CVM, o do cad e o 0004-79"}
+  PRTX: {cnpj: "10.846.981/0001-46", cd_cvm: 21776, motivo: "Portx Operacoes Portuarias"}
+  QGEP: {cnpj: "11.669.021/0001-10", cd_cvm: 22365, motivo: "QGEP Participacoes -> Enauta; registro 02/2011 = IPO"}
+  SSBR: {cnpj: "05.878.397/0001-32", cd_cvm: 22357, motivo: "Sonae Sierra Brasil -> Aliansce Sonae -> Allos (a Sonae Sierra foi a sobrevivente); registro 02/2011 = IPO"}
+  SULA: {cnpj: "29.978.814/0001-87", cd_cvm: 21121, motivo: "Sul America S.A."}
+  TBLE: {cnpj: "02.474.103/0001-19", cd_cvm: 17329, motivo: "Tractebel Energia -> Engie Brasil Energia"}
+  TCSL: {cnpj: "02.558.115/0001-21", cd_cvm: 17639, motivo: "TIM Participacoes (codigo antigo TCSL)"}
+  TIMP: {cnpj: "02.558.115/0001-21", cd_cvm: 17639, motivo: "TIM Participacoes"}
+  TLPP: {cnpj: "02.558.157/0001-62", cd_cvm: 17671, motivo: "Telesp -> Telefonica Brasil (2011), mesmo CNPJ"}
+  TNLP: {cnpj: "02.558.134/0001-58", cd_cvm: 17655, motivo: "Tele Norte Leste Participacoes (NOMRES TELEMAR)"}
+  TRNA: {cnpj: "07.859.971/0001-30", cd_cvm: 20257, motivo: "Terna Participacoes -> Transmissora Alianca (TAESA), troca de nome em 2009; registro 09/2006 = IPO da Terna"}
+  TRPL: {cnpj: "02.998.611/0001-04", cd_cvm: 18376, motivo: "CTEEP; TRPL foi REAPROVEITADO (hoje um FII), a CTEEP virou ISAE (A-03)"}
+  VAGR: {cnpj: "05.799.312/0001-20", cd_cvm: 20354, motivo: "V-Agro = Vanguarda Agro, ex-Brasil Ecodiesel -> Terra Santa Agro"}
+  VIVO: {cnpj: "02.558.074/0001-73", cd_cvm: 17710, motivo: "Vivo Participacoes"}
+
+sem_ponte:
+  BBRK: "Brasil Brokers: nenhum sucessor com registro achado no cad"
+  DUFB: "Dufry South America (Bermuda): a Dufry A.G. no cad (80110) e estrangeira e NAO e a mesma entidade"
+  GPCP: "GPC Participacoes: o unico GPC no cad foi cancelado em 1982"
+  IDNT: "Ideiasnet: nenhum registro achado no cad por nome"
+  INET: "Inepar Telecomunicacoes: os Inepar do cad sao outras empresas do grupo"
+  JBDU: "J B Duarte: nenhum registro achado no cad por nome"

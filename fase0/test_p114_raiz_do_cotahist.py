@@ -200,4 +200,7 @@ def test_P97_nao_sobrou_ZIP_sem_origem_no_acervo():
         if rel not in origens:
             sem.append(rel)
     assert not sem, "zip(s) sem origem declarada no acervo da B3: %s" % sem
-    assert len(todos) == 41, "esperava 41 zips no acervo, achei %d" % len(todos)
+    # P-143 (25/09): o acervo da B3 ganhou `isin/.../isinp.zip`. O 41 sempre foi o numero de
+    # anos do COTAHIST; a exigencia de origem acima continua valendo para TODO zip.
+    cotahist = [c for c in todos if os.path.basename(c).upper().startswith("COTAHIST_A")]
+    assert len(cotahist) == 41, "esperava 41 COTAHIST no acervo, achei %d" % len(cotahist)
