@@ -141,3 +141,18 @@ def test_nefin_no_mesmo_workflow_com_registro_commitado_e_vermelho_proprio():
     assert "docs/acervo/nefin/capturas.csv" in _passo("Commitar o registro, se mudou")["run"]
     falha = [p for p in _passos() if p.get("name") == "Falhar se a captura falhou"][0]
     assert "steps.captura_nefin.outputs.codigo != '0'" in falha["if"]
+
+
+def test_P137_conciliacao_no_workflow_com_csv_commitado_e_vermelho_proprio():
+    """A conciliacao roda depois das capturas, com o CSV no commit do bot e o vermelho
+    no mesmo portao das capturas -- falha escondida seria o buraco calado que ela existe
+    para acusar."""
+    nomes = [p.get("name") for p in _passos()]
+    c = _passo("conciliacao_b3")
+    assert "fase0/conciliar_cotahist.py --armazem s3" in c["run"] and "set +e" in c["run"]
+    assert c["if"] == "always()"
+    assert nomes.index("Capturar COTAHIST") < nomes.index("Conciliar COTAHIST") < \
+        nomes.index("Commitar o registro, se mudou")
+    assert "docs/acervo/b3/conciliacoes.csv" in _passo("Commitar o registro, se mudou")["run"]
+    assert "steps.conciliacao_b3.outputs.codigo != '0'" in \
+        _passo("Falhar se a captura falhou")["if"]

@@ -2881,6 +2881,24 @@ pregão.
   série: um par por mês, de graça, porque os dois anuais já estão no armazém. Um dia que
   mude ali é revisão da B3 — e é a única medição que diria se o anual mensal perde versões.
 
+
+**25/09/2026 — o código existe, e está ligado ao workflow.** `fase0/conciliar_cotahist.py` +
+12 testes (duas mutações reprovam: tirar a ordenação do multiconjunto e tirar o
+`ANTES_DA_ROTINA`). Passo `Conciliar COTAHIST` no `captura_cvm.yml`, com vermelho próprio;
+resultado em `docs/acervo/b3/conciliacoes.csv`, commitado pelo bot. **Medido antes de
+escrever:** o diário tem o mesmo leiaute do anual (header `00COTAHIST.2026BOVESPA 20260924`,
+245 posições, trailer com 15.903), então a leitura é a do `calendario.registros()`.
+
+Duas escolhas de desenho, escritas no módulo: pregão anterior ao primeiro diário capturado é
+`ANTES_DA_ROTINA`, não perda (a rotina começou em 17/09); e a versão anterior do anual é
+escolhida pelo **instante** observado, não pela ordem das linhas do registro.
+
+**O que vai acontecer, simulado sobre o registro real:** em 26/09 ele concilia **agosto** (o
+anual de 24/09 cobre o mês); todos os pregões saem `ANTES_DA_ROTINA`, e a comparação entre o
+anual de 24/09 (`4f2cf2…`) e o íntegro do inventário (`fb3546…`, até 18/09) é o **primeiro
+ponto da série do CH-01** — quantos dias a B3 revisou. Em 01/10, setembro contra os diários.
+**Fecha quando** a conciliação de setembro rodar no executor, com os diários de 17/09 em diante.
+
 ## ~~P-139~~ · O pré-registro v2 fixa o sha256 do ZIP, e o leitor não confere pin nenhum — **FECHADA em 24/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** antes de a primeira linha do código da família ML ler
