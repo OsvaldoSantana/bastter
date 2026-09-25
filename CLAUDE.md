@@ -222,7 +222,11 @@ série.
 >
 > ```powershell
 > py -3.11 -m pip install "PyYAML==6.0.3" "numpy==2.4.4" "pandas==3.0.2" "pytest==9.1.1" ruff mypy types-PyYAML
+> py -3.11 -m pip install "pytest-xdist==3.8.0" "execnet==2.1.2"   # P-141: grupo `paralelo`
 > ```
+>
+> O `pytest-xdist` fica **fora** do `dev` de propósito: o `dev` entra na impressão do
+> ambiente, e o executor de teste não muda número nenhum (P-141).
 >
 > É o comando que o próprio `ambiente.py --instalar` imprime. Use-o.
 >
@@ -247,7 +251,7 @@ de um antigo.
 ```bash
 cd alocacao
 python ambiente.py           # confere o ambiente ANTES de acreditar num número
-python -m pytest -q          # 269 testes, ~7,8 s
+python -m pytest -q -m "not slow"   # durante a tarefa; ver §9 (P-141)
 ruff check . && mypy .       # ambos em ZERO (P-40); pulam se não instalados
 python impacto.py <alvo>     # o que alcança uma constante, função ou campo
 python demo_aporte.py        # motor de aporte
@@ -384,11 +388,15 @@ fase0/
   armazem.py       o armazém de objetos: chave = conteúdo, nunca sobrescreve, confere sha256
                    nas duas pontas. `ArmazemS3` (R2) e `ArmazemMemoria` (testes)
   acervo.py        a porta de LEITURA: `abrir(recurso, arquivo, versao)` e `frescor(recurso)`
+  memo_acervo.py   memo de SESSAO das leituras do acervo nos testes, chave = sha256 do que
+                   `calendario.arquivos()` le; exposto por `fase0/conftest.py` (P-141)
   insumo_ml.py     o COTAHIST da familia ML: a versao FIXADA pelo pre-registro (pins em
                    `docs/aprendizado/preregistro-ml-v2.pins.yaml`), conferida pela impressao
                    de conteudo -- nunca a vigente (P-139, CH-01)
   subir_acervo_local.py  carga inicial do disco dele para o R2; plano por padrão
 .github/workflows/captura_cvm.yml   o executor diário da P-57
+tools/analisar_sessoes.py   para onde vai o tempo das sessões do Claude Code: lê
+                   `~/.claude/projects`, grava só em `data/analise-sessoes/`. Mediu a P-141
 docs/decisoes/     decisões com desenho, alternativas e riscos (`P-57.md`)
 docs/historico/entregas/  bilhetes de entrega VENCIDOS (LEIA-*, SEGUNDA-21, PROMPTS-*…),
                    com índice em LEIA-ME.md. Registro, nunca instrução (§5-A)
@@ -1200,7 +1208,7 @@ Isto substitui "eu me viro": é o método que a semana produziu, e ele existe po
 | 2 | ler os **pontos cegos** do relatório | chave dinâmica não aparece no mapa |
 | 3 | mudança de contrato? **instantâneo dourado antes** | garantiu P-36 (39 registros) e P-37 (38 cenários) |
 | 4 | editar |  |
-| 5 | `python -m pytest` — o júri, nunca o guia | |
+| 5 | `pytest -m "not slow"` **da suíte tocada** durante a tarefa; a completa, uma vez, antes do commit (abaixo) — o júri, nunca o guia | P-141 |
 | 6 | `ruff check . && mypy .` — ambos em zero | T-01 |
 | 7 | comparar o instantâneo — **campo a campo, não só os números** | |
 | 8 | registrar em `PENDENCIAS.md` e, se for achado, em `ACHADOS.md` | |
@@ -1209,6 +1217,29 @@ Isto substitui "eu me viro": é o método que a semana produziu, e ele existe po
 **A árvore medida é a árvore parada — enquanto a suíte roda, não se edita.** Os passos 5 e
 6 atestam a árvore que existia quando começaram; um arquivo mexido no meio deixa o "verde"
 valendo para uma árvore que já não existe, e o commit leva a outra.
+
+**Duas rodadas, dois papéis — P-141, 25/09/2026.** Medido em 21–24/09: o pytest foi
+**58% do tempo dos pedidos** (268 de 458 min), 31 rodadas completas de 4 a 10 min, e 3
+morreram no teto de 10 min do Bash **sem resultado**. As rodadas só do que a tarefa tocou
+somaram 30 min.
+
+| quando | o quê | quanto (25/09) |
+|---|---|---|
+| durante a tarefa | `py -3.11 -m pytest <suíte tocada> -m "not slow"` | as quatro juntas: **46 s** |
+| uma vez só, árvore parada, antes do commit | as três suítes + `tools`, **com** `slow`, `-n auto --dist loadgroup` | ver P-141 |
+
+```bash
+for s in alocacao fase0 auditoria tools; do py -3.11 -m pytest $s -n auto --dist loadgroup -p no:cacheprovider; done
+```
+
+- **`--dist loadgroup` não é opcional.** Memo de sessão e fixture de módulo são **por
+  processo**; sem o grupo, o par que divide uma leitura do acervo cai em dois trabalhadores
+  e a leitura dupla volta, calada. `fase0/test_memo_acervo.py` reprova teste sem grupo.
+- **A regra 15 (§5-B) fica intacta:** "passed" só se escreve da rodada completa, e com o
+  nome da árvore ao lado se ela for parcial. `-m "not slow"` é guia, não júri.
+- **Nenhuma rodada encosta no teto de 10 min.** Acima de 8 min, roda em segundo plano e
+  espera — **sem editar nada** enquanto ela roda. O `fase0` sequencial media 8 min 57 s
+  em 25/09: já estava a 63 s de morrer calado.
 
 **O passo 3 não é opcional em refatoração.** Refatorar sem rede é reescrever e torcer,
 e as duas maiores mudanças da semana só foram defensáveis porque a rede existia.

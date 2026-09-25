@@ -1930,7 +1930,7 @@ def test_P15_toda_dependencia_de_terceiro_esta_declarada():
         "passa a descrever um ambiente maior que o necessario.")
 
 
-def test_P15_nenhuma_dependencia_tem_faixa_de_versao():
+def test_P15_nenhuma_dependencia_tem_faixa_de_versao(tmp_path):
     """`>=` permite que um `pip install` amanha mude um numero registrado hoje sem
     nada avisar. Este projeto nao e uma biblioteca que outros importam: e um sistema
     que produz numeros que alguem vai defender."""
@@ -1942,15 +1942,15 @@ def test_P15_nenhuma_dependencia_tem_faixa_de_versao():
     # e a recusa e do LEITOR, nao um grep no texto: `build-system.requires` usa `>=68`
     # legitimamente, e um teste que olhasse o arquivo inteiro estaria olhando a linha
     # errada. O que precisa ser pinado sao as dependencias do projeto.
-    frouxo = os.path.join(AQUI, "_pyproject_frouxo.toml")
-    open(frouxo, "w", encoding="utf-8").write(
+    # P-141: era `AQUI/_pyproject_frouxo.toml`, caminho fixo dentro do repositorio: duas
+    # rodadas simultaneas disputavam o mesmo arquivo, e o `os.remove` de uma derrubava a
+    # outra. Era o unico teste das tres suites que escrevia em caminho fixo.
+    frouxo = tmp_path / "_pyproject_frouxo.toml"
+    frouxo.write_text(
         '[project]\nname="x"\nversion="0"\nrequires-python="==3.11.*"\n'
-        'dependencies=["numpy>=2.0"]\n')
-    try:
-        with pytest.raises(ambiente.AmbienteIndeclarado):
-            ambiente.declarado(frouxo)
-    finally:
-        os.remove(frouxo)
+        'dependencies=["numpy>=2.0"]\n', encoding="utf-8")
+    with pytest.raises(ambiente.AmbienteIndeclarado):
+        ambiente.declarado(str(frouxo))
 
 
 def test_P15_toda_dependencia_declarada_esta_instalada():

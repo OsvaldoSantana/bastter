@@ -57,6 +57,10 @@ SILVER = os.path.join(RAIZ_REPO, "data", "silver",
                       "eventos_silver_2026-09-11_cal-1986-2026.csv")
 ANOS = set(range(2021, 2026))
 
+# P-141: a fixture de modulo que le o acervo e POR PROCESSO. Sob `--dist loadgroup`, sem
+# este grupo cada trabalhador que recebe um teste daqui refaz a leitura inteira.
+pytestmark = pytest.mark.xdist_group("p113_med")
+
 acervo = pytest.mark.skipif(
     not (os.path.isdir(ACERVO) and os.path.isfile(SILVER)),
     reason="acervo ou silver ausente -- ESTE TESTE NAO RODOU")

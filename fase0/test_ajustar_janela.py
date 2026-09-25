@@ -370,6 +370,10 @@ def _janela_no_disco():
                for a in JANELA)
 
 
+# P-141: a fixture de modulo que le o acervo e POR PROCESSO. Sob `--dist loadgroup`, sem
+# este grupo cada trabalhador que recebe um teste daqui refaz a leitura inteira.
+pytestmark = pytest.mark.xdist_group("janela_jan")
+
 acervo = pytest.mark.skipif(not _janela_no_disco(),
                             reason="COTAHIST 2021-2025 ausente -- ESTES TESTES NAO RODARAM")
 

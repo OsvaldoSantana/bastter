@@ -209,23 +209,29 @@ def test_P2_o_alcance_da_enumeracao_viaja_com_ela():
 
 # ── o acervo real, quando ele estiver na maquina ──────────────────────────────
 
+@pytest.mark.slow
+@pytest.mark.xdist_group("cotahist_pregoes")  # P-141: o memo e por processo
 @pytest.mark.skipif(not os.path.isdir(ACERVO_REAL),
                     reason="acervo de COTAHIST ausente -- ESTE TESTE NAO RODOU")
-def test_P99_instantaneo_dourado_2023_nao_se_moveu():
+def test_P99_instantaneo_dourado_2023_nao_se_moveu(memo_do_acervo):
     """O que o passo 3 do §9 exige: a correcao trouxe 17 anos e NAO mexeu no ano que
     ja funcionava. 248 pregoes, mesmo sha256 do refactor de 18/09."""
-    datas, _ = C.pregoes(ACERVO_REAL)
+    datas, _ = memo_do_acervo("calendario.pregoes", ACERVO_REAL,
+                              lambda: C.pregoes(ACERVO_REAL))
     d23 = sorted(d for d in datas if d.year == 2023)
     assert len(d23) == PREGOES_2023
     assert hashlib.sha256(str(d23).encode()).hexdigest() == SHA_2023
 
 
+@pytest.mark.slow
+@pytest.mark.xdist_group("cotahist_pregoes")  # P-141: o memo e por processo
 @pytest.mark.skipif(not os.path.isdir(ACERVO_REAL),
                     reason="acervo de COTAHIST ausente -- ESTE TESTE NAO RODOU")
-def test_P99_todo_ano_no_disco_entra_no_calendario_ou_e_ACUSADO():
+def test_P99_todo_ano_no_disco_entra_no_calendario_ou_e_ACUSADO(memo_do_acervo):
     """A contagem que decai (familia do `sem_origem`): ano no disco que nao aparece no
     calendario so e aceitavel se o arquivo dele for ilegivel e isso ter sido dito."""
-    datas, _ = C.pregoes(ACERVO_REAL)
+    datas, _ = memo_do_acervo("calendario.pregoes", ACERVO_REAL,
+                              lambda: C.pregoes(ACERVO_REAL))
     no_calendario = {d.year for d in datas}
     ilegiveis = set()
     for chave, caminho in C.arquivos(ACERVO_REAL).items():

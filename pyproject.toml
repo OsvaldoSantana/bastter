@@ -93,6 +93,16 @@ lint = [
 captura = [
   "boto3==1.43.101",
 ]
+# P-141 (25/09/2026): a suite completa roda em paralelo (`-n auto --dist loadgroup`).
+# NAO vai em `dev`, e a razao e medida: `ambiente.declarado()` le `dependencies` + `dev`,
+# e a impressao 7565df1381e2c1ed esta gravada em quatro resultados do politica.yaml.
+# Colocar `pytest-xdist` em `dev` mudaria a impressao sem mudar numero nenhum -- o resultado
+# pre-registrado passaria a acusar ambiente diferente por causa de um executor de teste.
+# Mesma razao do grupo `lint`. Guardado por alocacao/test_p141_paralelo.py.
+paralelo = [
+  "pytest-xdist==3.8.0",
+  "execnet==2.1.2",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["alocacao"]
@@ -101,7 +111,12 @@ addopts = "-q"
 # P-111 (21/09/2026): `slow` e usado pelos testes da P-88 (bootstrap de 10.000
 # repeticoes) e nunca foi registrado -- o pytest avisava "Unknown pytest.mark.slow".
 # Registrar e o conserto; pular os lentos e `pytest -m "not slow"`.
-markers = ["slow: bootstrap longo da P-88 e test_REAL_* contra o acervo; pule com -m \"not slow\""]
+markers = [
+  "slow: bootstrap longo da P-88 e leitura do acervo real que custa segundos; pule com -m \"not slow\"",
+  # P-141: o memo de sessao e por processo. Testes que dividem uma leitura do acervo
+  # levam o mesmo grupo, e `--dist loadgroup` os poe no mesmo trabalhador.
+  "xdist_group(nome): mesmo trabalhador sob --dist loadgroup (P-141)",
+]
 
 # ── Classificacao das dependencias por CONSEQUENCIA ─────────────────────────
 # O que separa as duas listas nao e importancia, e o tipo de estrago:

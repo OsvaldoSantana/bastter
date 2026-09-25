@@ -171,6 +171,7 @@ def test_o_pin_do_yaml_e_o_do_PRE_REGISTRO():
     assert re.search(r"COTAHIST_A2026\.ZIP", md)
 
 
+@pytest.mark.slow
 def test_a_impressao_do_yaml_e_a_do_BYTE_FIXADO_quando_ele_esta_no_disco():
     """A medida do CH-01 reproduzida pelo leitor, sobre o arquivo real. Lento (~700 MB)."""
     pins = M.carregar_pins()

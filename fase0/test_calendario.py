@@ -106,6 +106,7 @@ def test_anos_diferentes_SOMAM(tmp_path):
         "a virada do ano so fecha porque os dois anos estao no acervo"
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(not os.path.isdir(RAIZ_ACERVO), reason="acervo nao esta neste ambiente")
 def test_o_caso_REAL_do_FLRY_contra_o_acervo():
     """O caso que deu origem ao achado. Se nao houver COTAHIST no acervo, isto SKIPA --

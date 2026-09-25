@@ -3066,6 +3066,28 @@ conteúdo do ZIP continua `JA_CORRETO`, para a conferência não virar recusa ge
 verde, `ruff` e `mypy` em zero. Custo: a segunda execução passa a ler as cópias inteiras
 para o CRC — é o preço de o status dizer o que mediu.
 
+## P-142 · Nove testes do C-02 contra o acervo real **nunca rodam**: a raiz aponta para a pasta errada
+
+**Dono:** Claude Code · **Gatilho:** a próxima tarefa que toque `ajustar.py` ou o C-02 ·
+**Classe:** `BLOQUEIA_O_SISTEMA` (a guarda do C-02 em 2023 está desligada sem ninguém saber)
+
+Achado lateral da P-141, na rodada de base de 25/09 (`-rs`). `fase0/test_ajustar.py`
+(`RAIZ_ACERVO`, 8 testes `test_REAL_*`) e `fase0/test_calendario.py`
+(`test_o_caso_REAL_do_FLRY_contra_o_acervo`) leem o COTAHIST em `data/bronze/b3/`, e ele mora
+em `data/bronze/b3/cotahist/` desde a P-114. Resultado: **9 SKIPPED** em toda rodada, com a
+mensagem *"nenhum COTAHIST no acervo -- ESTES TESTES NAO RODARAM"* — verdadeira e ninguém a lê.
+É a P-114 (*raiz padrão na pasta errada produz recorte com cara de todo*) dentro dos testes: o
+`test_ajustar_janela.py` e o `test_calendario_p99.py` já usam `.../cotahist`, e os dois antigos
+ficaram para trás.
+
+**Não consertado na P-141, de propósito:** apontar para a pasta certa **liga** 9 testes com
+números de 18/09 que ninguém confere desde então; se reprovarem, é trabalho de C-02, não de
+velocidade de suíte. O conserto é trocar a raiz e, se algum reprovar, medir antes de mexer no
+número. **E a classe inteira pede guarda:** um `skip` com *"NAO RODARAM"* na máquina que **tem**
+o acervo devia ser falha, não aviso.
+
+---
+
 ## P-130 · As posições do header do COTAHIST moram em Python
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `conferir_cabecalho` ou no leiaute ·
@@ -3083,6 +3105,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-141** | o pytest foi **58% do tempo** dos pedidos de 21–24/09 (268 de 458 min; `tools/analisar_sessoes.py`); o `fase0` sequencial media **537 s**, a 63 s do teto de 10 min do Bash, e 3 rodadas morreram nele sem resultado | 25/09 — **medido antes e depois, mesma máquina:** completa sequencial **34 + 538 + 35 = 607 s** → completa `-n auto --dist loadgroup` **11 + 103 + 21 + 3 (tools) = 138 s**; ciclo `-m "not slow"` **30 + 7 + 8 + 1 = 46 s**. Memo de sessão por sha256 (`fase0/memo_acervo.py`): os dois pares que liam o mesmo acervo, **338 → 202 s** sequenciais (o segundo de cada par: 95 → 1,2 s e 64 → 1,1 s). Fixtures de módulo (`med`, `jan`, `real`) em `xdist_group`, senão cada trabalhador refaz 45–62 s. `pytest-xdist==3.8.0` no grupo **`paralelo`, não no `dev`**: o `dev` entra na impressão `7565df…` gravada em 4 resultados (`test_p141_paralelo.py`, com mutação). Único teste com caminho fixo (`_pyproject_frouxo.toml`) foi para `tmp_path`. 3 guardas novas, as 3 reprovam por mutação. Protocolo na §9 do `CLAUDE.md`. **Achado lateral: P-142** |
 | **P-43** | um terceiro catálogo (`motor.montar_rotas`) e uma segunda simulação (`motor.simular`) só chamados por testes, divergindo até 17,4% da de produção (B-16) | 24/09 — **apagados** (decisão técnica delegada). Antes: `simular_custo` passou a ler `custodia_rv_interpretacao` (B-17), K-06 e K-07 da Vest trazidos para o `test_alocacao`. Instantâneo dourado idêntico. Retratação da recomendação *"migrar e confrontar"* na própria P-43 |
 | **Limpeza CVM** | acervo com 4 `(1).zip` duplicados, 2 `(1).zip` que eram a **única** cópia da versão de 13/09 de 2024, 6 pastas extraídas e uma página da B3 salva por engano em `itr/` | 24/09 — **aprovado por ele.** `capturar_cvm.py --arrumar limpeza`: 4 duplicatas apagadas (sha256 idêntico), os 2 de 2024 viraram `_snapshots/*__v20260913__*`, as 6 pastas saíram depois de todo CSV bater em CRC-32 e tamanho com um membro (cada uma é inteira igual a um ZIP que fica; as de 2024 à versão `v20260830`), e a página foi apagada à mão. Manifesto: 49 → **45 arquivos**, 918 → 849 MB. **Tropeço no caminho, meu:** na primeira aplicação o Windows negou o `rmdir` de pasta `ReadOnly` depois de o `rmtree` apagar os 18 CSVs de `dfp_2012`. O `\| tail` escondeu o código de saída, e a cadeia `&&` seguiu até o manifesto. Conserto: `_tirar_somente_leitura` no `rmtree`, com teste que reprova sem ele |
 | **P-139** | o pré-registro v2 fixava `fb3546ed…` e nenhum leitor conferia: o acervo marcava `4f2cf2aa…` como vigente, e o ML leria uma versão diferente conforme a máquina (CH-01) | 24/09 — `fase0/insumo_ml.py` abre a versão fixada e confere a impressão de conteúdo da janela; pin em `docs/aprendizado/preregistro-ml-v2.pins.yaml`, amarrado ao `.md` por teste. Arquivo real: `2026 FIXADO`. 11 testes, 2 mutações reprovadas. Abriu a **P-140** |

@@ -202,6 +202,11 @@ def test_o_modulo_NAO_aplica_a_reexpressao(tmp_path):
 
 # ── o acervo real, quando estiver na maquina ──────────────────────────────────
 
+def _relatorio_real(memo):
+    """Os dois testes abaixo leem o MESMO relatorio: 108 s e 95 s em 25/09 (P-141)."""
+    return memo("moeda.relatorio", ACERVO, lambda: M.relatorio(ACERVO, saida=io.StringIO()))
+
+
 MEDIDO_19_09 = {
     "COTAHIST_A1986": ("19860227", "19860304", M.SEM_QUEBRA, 1.1973),
     "COTAHIST_A1989": ("19890113", "19890118", M.SEM_QUEBRA, 0.9677),
@@ -210,13 +215,14 @@ MEDIDO_19_09 = {
 }
 
 
+@pytest.mark.slow
+@pytest.mark.xdist_group("cotahist_moeda")  # P-141: o memo e por processo
 @pytest.mark.skipif(not os.path.isdir(ACERVO),
                     reason="acervo de COTAHIST ausente -- ESTE TESTE NAO RODOU")
-def test_C03_o_acervo_real_reproduz_as_quatro_fronteiras_medidas():
+def test_C03_o_acervo_real_reproduz_as_quatro_fronteiras_medidas(memo_do_acervo):
     """O instantaneo do achado. Se um destes numeros mudar, ou o acervo mudou ou o
     instrumento mudou -- e as duas coisas exigem saber qual."""
-    fora = io.StringIO()
-    linhas, _desc, _ile = M.relatorio(ACERVO, saida=fora)
+    linhas, _desc, _ile = _relatorio_real(memo_do_acervo)
     por_arq = {r["arquivo"]: r for r in linhas}
     for arq, (a, b, status, mediana) in MEDIDO_19_09.items():
         if arq not in por_arq:
@@ -227,15 +233,16 @@ def test_C03_o_acervo_real_reproduz_as_quatro_fronteiras_medidas():
         assert r["mediana"] == pytest.approx(mediana, abs=5e-4), arq
 
 
+@pytest.mark.slow
+@pytest.mark.xdist_group("cotahist_moeda")  # P-141: o memo e por processo
 @pytest.mark.skipif(not os.path.isdir(ACERVO),
                     reason="acervo de COTAHIST ausente -- ESTE TESTE NAO RODOU")
-def test_C03_a_unica_quebra_do_acervo_mede_2_744_e_nao_2750():
+def test_C03_a_unica_quebra_do_acervo_mede_2_744_e_nao_2750(memo_do_acervo):
     """A conversao legal e CR$ 2.750 = R$ 1, e a quebra medida e de **2,744**. As tres
     casas de diferenca sao o achado embutido: a coluna de preco antes de 04/07/1994 esta
     em MILHARES de cruzeiros reais. `NAO_CONFIRMADO` -- e a leitura que reconcilia a lei
     com a medicao, sem documento da B3 que a confirme."""
-    fora = io.StringIO()
-    linhas, _d, _i = M.relatorio(ACERVO, saida=fora)
+    linhas, _d, _i = _relatorio_real(memo_do_acervo)
     quebras = [r for r in linhas if r["status"] == M.QUEBRA]
     assert len(quebras) == 1, [r["arquivo"] for r in quebras]
     assert quebras[0]["fator"] == pytest.approx(2.744, abs=2e-3)

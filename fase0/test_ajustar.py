@@ -494,6 +494,10 @@ def test_a_corrida_inteira_fecha_e_escreve_os_dois_csv(tmp_path):
 
 # ═══════════════════════════════════════════════ contra o acervo real ═══════
 
+# P-141: a fixture de modulo que le o acervo e POR PROCESSO. Sob `--dist loadgroup`, sem
+# este grupo cada trabalhador que recebe um teste daqui refaz a leitura inteira.
+pytestmark = pytest.mark.xdist_group("ajustar_real")
+
 acervo = pytest.mark.skipif(not os.path.isfile(SILVER_ACERVO),
                             reason="acervo nao esta neste ambiente")
 
