@@ -28,6 +28,10 @@ name: Testes
 on:
   push:
     branches: [main]
+  # 25/09/2026: PR de contribuidor e do Dependabot tambem precisam de portao. So o rapido:
+  # PR nao recebe segredo, e o completo le o armazem.
+  pull_request:
+    branches: [main]
   schedule:
     - cron: '0 11 * * 1'           # segunda, 08:00 em Brasilia
   workflow_dispatch:
@@ -41,7 +45,7 @@ permissions:
 
 jobs:
   rapido:
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -73,7 +77,7 @@ jobs:
           for d in alocacao fase0 auditoria tools; do (cd "$d" && python -m mypy .); done
 
   completo:
-    if: github.event_name != 'push'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     permissions:

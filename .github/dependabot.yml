@@ -1,0 +1,26 @@
+# Dependabot (25/09/2026). Semanal, os dois ecossistemas.
+#
+# github-actions: as acoes sao fixadas por SHA com a tag em comentario
+# (auditoria/test_workflows.py exige o SHA). O Dependabot atualiza o SHA e o comentario juntos,
+# e o trabalho manual de `git ls-remote` deixa de existir.
+#
+# pip: os pinos exatos do pyproject.toml. Um PR que suba numpy ou pandas muda a impressao do
+# ambiente, e `test_alocacao.py` o reprova DE PROPOSITO: o numero pre-registrado passaria a
+# ser um numero novo (P-15). Aceitar esse PR e decisao, com os resultados reconferidos -- o
+# vermelho e o aviso, nao um defeito do Dependabot.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "CI"
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "Dependencias"

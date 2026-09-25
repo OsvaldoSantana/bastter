@@ -1,0 +1,40 @@
+name: Pendência
+description: Algo que falta fazer ou decidir, com dono, gatilho e classe.
+title: "Pendência: "
+labels: ["pendencia"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sem dono, gatilho e classe não é pendência, é desabafo (CLAUDE.md, §5-A).
+        Pergunta de controle: um cliente novo desta ferramenta teria isto?
+  - type: textarea
+    id: oque
+    attributes:
+      label: O que falta
+    validations:
+      required: true
+  - type: input
+    id: dono
+    attributes:
+      label: Dono
+      description: Quem faz, ou quem decide.
+    validations:
+      required: true
+  - type: input
+    id: gatilho
+    attributes:
+      label: Gatilho
+      description: O evento que a torna acionável ("antes de escrever o parser"). "nenhum" é resposta válida.
+    validations:
+      required: true
+  - type: dropdown
+    id: classe
+    attributes:
+      label: Classe
+      options:
+        - "BLOQUEIA_O_SISTEMA: o sistema não faz o trabalho dele"
+        - "DECISAO_DE_DESENHO: precisa de um humano decidindo sobre o sistema"
+        - "DADO_DE_UM_USUARIO: o estado de uma carteira; nunca bloqueia desenvolvimento"
+    validations:
+      required: true

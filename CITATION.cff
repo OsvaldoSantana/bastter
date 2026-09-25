@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "Se voce usar este projeto, cite-o assim. If you use this project, please cite it as below."
+title: "MEOL"
+abstract: >-
+  Personal portfolio-allocation system for the Brazilian market in which every number carries
+  its provenance. Rules live in versioned YAML, assets pass through named gates, and hypotheses
+  are pre-registered with hashes before any data is touched.
+type: software
+authors:
+  - family-names: "Santana da Silva Junior"
+    given-names: "Osvaldo"
+repository-code: "https://github.com/OsvaldoSantana/meol"
+license:
+  - Apache-2.0
+  - CC-BY-4.0
+keywords:
+  - provenance
+  - pre-registration
+  - portfolio allocation
+  - Brazil
+references:
+  - type: data
+    title: "Risk Factors"
+    authors:
+      - name: "NEFIN - Center for Research in Financial Economics, University of Sao Paulo"
+    year: 2026
+    url: "https://nefin.com.br/data/risk-factors/"
+    notes: "Citacao pedida pela fonte. O arquivo nao e redistribuido neste repositorio."

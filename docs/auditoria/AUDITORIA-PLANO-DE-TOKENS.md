@@ -112,7 +112,7 @@ bloco único da leitura inicial — e **nenhum dos três planos o ataca**: os tr
 > lookback de 20 blocos**, que é um risco diferente e menor.
 >
 > **O que sobrevive desta seção:** que nenhum dos três planos mediu o cache — e agora, que
-> eu também não tinha. Laudo com as contas em `auditoria/CACHE-E-O-CORTE.md`.
+> eu também não tinha. Laudo com as contas em `docs/auditoria/CACHE-E-O-CORTE.md`.
 
 ### O texto original, mantido como retratação
 
@@ -213,7 +213,7 @@ a declara na §6.2 — o que o torna honesto, não correto.
 > contra ele. É a régua §5-B.5: a cláusula citada não cobre o item. **O que sobrevive:**
 > um plano de custo de token não é a porta para mudar escopo — e o ML não entrou por ela,
 > entrou por pré-registro próprio (`docs/aprendizado/preregistro-ml-v1.md`). Detalhe em
-> `auditoria/AUDITORIA-PREREGISTRO-ML-V1.md` §0. O texto original fica abaixo, riscado
+> `docs/auditoria/AUDITORIA-PREREGISTRO-ML-V1.md` §0. O texto original fica abaixo, riscado
 > pela nota e não apagado.
 
 
@@ -255,7 +255,7 @@ ancorado que o Plano 1.
 
 E o Plano 2 tem um defeito de casa próprio: *"estudos demonstram"*, *"pesquisas
 recentes"*, *"reduz substancialmente as taxas de erro"* — **zero referências**. O projeto
-tem o precedente em `auditoria/PREREGISTRO-EVIDENCIA.md`: 25 fontes, e a evidência
+tem o precedente em `docs/auditoria/PREREGISTRO-EVIDENCIA.md`: 25 fontes, e a evidência
 **contrariou** a minha própria recomendação. Afirmação sem fonte que soa técnica é pior
 que ausência, porque passa.
 

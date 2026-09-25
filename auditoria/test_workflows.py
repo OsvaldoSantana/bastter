@@ -61,3 +61,12 @@ def test_testes_clona_com_historico_e_tags():
         co = [p for p in _wf("testes.yml")["jobs"][job]["steps"]
               if str(p.get("uses", "")).startswith("actions/checkout@")]
         assert co and co[0].get("with", {}).get("fetch-depth") == 0, job
+
+
+def test_pr_roda_o_rapido_e_nunca_o_completo():
+    """PR (contribuidor, Dependabot) ganha portao, mas nao segredo: so o rapido."""
+    d = _wf("testes.yml")
+    assert d["on"]["pull_request"]["branches"] == ["main"]
+    assert "pull_request" in d["jobs"]["rapido"]["if"]
+    assert "pull_request" not in d["jobs"]["completo"]["if"]
+    assert "push" not in d["jobs"]["completo"]["if"]

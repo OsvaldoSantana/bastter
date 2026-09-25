@@ -3,7 +3,7 @@
 
 A DECISAO (dele, 23/09/2026): usar o fechamento do COTAHIST quando a B3 nao traz
 `closingPricePriorExDate`, com uma coluna dizendo de onde veio cada preco, e **a B3
-ganhando quando existe**. Criterios em `auditoria/P113-CRITERIOS.md`, commitados e
+ganhando quando existe**. Criterios em `docs/auditoria/P113-CRITERIOS.md`, commitados e
 EMPURRADOS antes da corrida (commit `9a08a55`) -- e por isso o "antes" e verificavel
 pela P4, que e o que a P-116 cobrava.
 
@@ -210,7 +210,7 @@ def med():
 def test_P113_REAL_os_numeros_da_corrida(med):
     """C1 e C7 do pre-registro, corrigidos pela A-13. A previsao de C1 era **172** e
     saiu **11**: os outros 161 eram duplicata. O criterio reprovou, e reprovar foi o
-    resultado -- ver auditoria/P113-MEDIDO.md."""
+    resultado -- ver docs/auditoria/P113-MEDIDO.md."""
     assert med.do_cotahist == DO_COTAHIST
     assert med.repetidos == REPETIDOS
     assert len(med.degraus) == DEGRAUS

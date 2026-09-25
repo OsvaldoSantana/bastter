@@ -1,0 +1,73 @@
+# Reproduzir o dado de mercado sem o nosso armazém
+
+O armazém do projeto (Cloudflare R2) é **privado**. Os termos da B3, da CVM e do NEFIN não
+foram lidos como autorização para redistribuir, e os do NEFIN não autorizam (P-136,
+[`fontes/nefin.md`](fontes/nefin.md)). O que é público é o **sha256 de cada arquivo que o
+projeto viu**, em [`docs/acervo/`](acervo/). Reproduzir é capturar da fonte, na sua máquina, e
+comparar os hashes.
+
+## O que você precisa
+
+Python 3.11 e as dependências da captura (`boto3` vem junto, mas o modo local não o usa):
+
+```bash
+python -m pip install ".[captura]"
+export ARMAZEM_LOCAL=$HOME/meol-armazem      # onde os arquivos vão morar; padrão: data/armazem-local
+```
+
+**Use sempre um registro seu (`--registro`).** O registro do projeto guarda o `Last-Modified`
+de cada arquivo que ele viu, e o portão da captura não baixa o que não mudou. Com o nosso
+registro, a sua captura acharia tudo "inalterado", não baixaria nada, e a reprodução sairia
+vazia com cara de conferida.
+
+## Capturar
+
+```bash
+python fase0/capturar_nefin.py    --armazem local --registro reg-nefin.csv
+python fase0/capturar_cvm.py      --armazem local --registro reg-cvm.csv
+python fase0/capturar_cotahist.py --armazem local --registro reg-b3.csv
+```
+
+| captura | o que traz | tamanho |
+|---|---|---|
+| NEFIN | os fatores de risco, um CSV | ~0,9 MB |
+| CVM | DFP, ITR e FCA de todos os anos do índice, e o cadastro | ~0,6 GB (52 arquivos no inventário, 25/09) |
+| COTAHIST | os diários dos últimos 7 dias e o anual do mês que acabou | ~90 MB |
+
+O **histórico** do COTAHIST (1986 em diante) não tem comando: a rotina só observa o presente. Os
+anuais estão num GET aberto, `https://bvmf.bmfbovespa.com.br/InstDados/SerHist/COTAHIST_A<ANO>.ZIP`,
+e basta compará-los à mão com `sha256sum` contra
+[`docs/acervo/b3/inventario-armazem.csv`](acervo/b3/inventario-armazem.csv).
+
+## Comparar
+
+```bash
+python fase0/conferir_reproducao.py
+```
+
+Cada arquivo sai em uma de quatro situações, com a contagem e o `n` no fim:
+
+| situação | o que quer dizer |
+|---|---|
+| `IGUAL` | você baixou uma versão que o projeto registrou. Reproduzido |
+| `DIFERENTE` | o arquivo existe dos dois lados, e a sua versão nunca foi vista pelo projeto |
+| `SO_NOSSO` | o projeto registrou, você não capturou (ou a fonte já não serve) |
+| `SO_SEU` | você capturou, o projeto nunca registrou |
+
+## O limite, e ele não é consertável daqui
+
+**A CVM serve só a versão corrente de cada arquivo.** Os cinco anos mais recentes do DFP e do ITR
+são reescritos toda semana com as reapresentações
+([`fontes/cvm-dfp-politica-atualizacao.md`](fontes/cvm-dfp-politica-atualizacao.md)). Uma versão
+que o projeto capturou e a CVM já substituiu **só existe no nosso armazém**. Para esses arquivos,
+`DIFERENTE` é o resultado esperado, e não prova que ninguém errou: prova que a fonte mudou depois.
+O registro diz quando cada versão foi vista (`dt_captura`), e o `Last-Modified` que a fonte
+declarava.
+
+O mesmo vale para o NEFIN quando ele publicar uma série nova, e para o anual do COTAHIST do ano
+corrente, que cresce a cada pregão. Ano fechado do COTAHIST é congelado: medido em 18/09 e em
+23/09, mesmo sha256 (P-96).
+
+**Por que o armazém não é aberto:** redistribuir um arquivo exige licença, e ler hash não. Se a
+licença de uma fonte permitir, as versões antigas dela podem ser publicadas. Até lá o que se
+publica é a prova de qual arquivo era, não o arquivo.

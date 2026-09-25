@@ -16,7 +16,7 @@ os livros não estão no repositório, porque não são deste projeto. A auditor
 |---|---|---|---|
 | Patrimônio não se gira | atrito medido (custo fixo e percentual) e compromisso de carrego | **adota** | portões G3 e G8, `alocacao/politica.yaml → portoes` |
 | Sequência: zerar dívidas → reserva → investimentos | portões da fase *aporte*, antes da fase *universo* | **adota a ordem** | `alocacao/politica.yaml → portoes` |
-| Nunca faça dívidas | a dívida é paga quando o custo **líquido** dela passa o retorno **líquido** da alternativa | diverge | portão G1, [doutrina P3](../CLAUDE.md#2-as-sete-doutrinas) |
+| Nunca faça dívidas | a dívida é paga quando o custo **líquido** dela passa o retorno **líquido** da alternativa | diverge | portão G1, [doutrina P3](doutrinas.md) |
 | Reserva de emergência ≥ 6 meses, em poupança | a reserva vem antes; o destino é escolhido por retorno líquido entre as rotas elegíveis | diverge no destino | portão G2, `alocacao/reserva.py` |
 | Renda fixa entre 10% e 50%, nunca 0%, nunca 100% | piso e teto de renda variável, em YAML | **adota o princípio**; os números são parâmetro | `alocacao/politica.yaml → crescimento` |
 | Nenhum ativo acima de 2% do patrimônio | teto por papel parametrizado (5% hoje), testável | diverge no valor e na forma | `alocacao/politica.yaml → tetos` |
@@ -29,9 +29,9 @@ os livros não estão no repositório, porque não são deste projeto. A auditor
 ## O que vale para o projeto inteiro
 
 - **Regra como dado.** Todo parâmetro acima vive em YAML versionado, com procedência. Trocar um
-  deles é um commit que pode ser lido e revertido ([P1 e P2](../CLAUDE.md#2-as-sete-doutrinas)).
+  deles é um commit que pode ser lido e revertido ([P1 e P2](doutrinas.md)).
 - **Ausência de régua não exclui.** O que o projeto ainda não sabe avaliar fica no catálogo com
-  peso zero e o motivo escrito ([P6](../CLAUDE.md#2-as-sete-doutrinas)).
+  peso zero e o motivo escrito ([P6](doutrinas.md)).
 
 ## Como este registro muda
 

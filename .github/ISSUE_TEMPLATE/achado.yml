@@ -1,0 +1,56 @@
+name: Achado
+description: O sistema não faz o que o arquivo diz, ou um número não se sustenta.
+title: "Achado: "
+labels: ["achado"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Um achado precisa de medição, não de impressão. Antes de abrir, leia os achados da
+        área no ACHADOS.md: vários defeitos daqui são o mesmo padrão com outra roupa.
+  - type: textarea
+    id: afirmacao
+    attributes:
+      label: O que o sistema diz que faz
+      description: Cite o arquivo e a linha, ou a doutrina, exatamente como está escrito.
+    validations:
+      required: true
+  - type: textarea
+    id: medicao
+    attributes:
+      label: A medição
+      description: O comando que você rodou, o que ele devolveu e o tamanho da amostra (n). Um controle ao lado, se houver.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: alcance
+    attributes:
+      label: O que a medição NÃO cobre
+      description: Em uma frase, o que ela mediu. Se a frase for mais estreita que a conclusão, a conclusão é que muda.
+    validations:
+      required: true
+  - type: textarea
+    id: teste
+    attributes:
+      label: O teste que falharia na versão atual
+      description: Um teste que passaria antes e depois não documenta nada.
+    validations:
+      required: false
+  - type: dropdown
+    id: regua
+    attributes:
+      label: Régua da casa que se aplica (CLAUDE.md, §5-B)
+      options:
+        - "não sei"
+        - "1: a medição é mais estreita que a conclusão"
+        - "2: parte do sistema ficou fora do instrumento (YAML, leitura não literal)"
+        - "3: a vizinhança não foi lida"
+        - "4: a guarda nunca falhou"
+        - "5: a cláusula da fonte não cobre o item"
+        - "14: controle sem o número de pares"
+        - "15: verde numa árvore parcial"
+        - "16: falha técnica declarada como limitação"
+        - "outra"
+    validations:
+      required: true

@@ -21,7 +21,7 @@ P-138 — o orcamento de variantes BLOQUEIA, decidido por ele em 24/09/2026. O d
   `variantes_permitidas` dela nao decide nada, e a UNICA saida e uma emenda em
   `pesquisa.emendas` que ja esteja no ramo publicado. Justificativa escrita so no disco
   nao destrava: o verificador externo deste projeto e o historico publico datado
-  (auditoria/PREREGISTRO-EVIDENCIA.md), e emenda que ninguem de fora pode ver nao passou
+  (docs/auditoria/PREREGISTRO-EVIDENCIA.md), e emenda que ninguem de fora pode ver nao passou
   por ele. E a emenda nao sai de graca: as variantes que ela acrescenta entram no
   `m_orcado`, e o corte orcado de toda a familia sobe junto.
 

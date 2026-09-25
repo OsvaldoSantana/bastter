@@ -202,7 +202,7 @@ def relatorio(raiz, saida=sys.stdout):
     if quebras:
         print("  A reexpressao NAO foi aplicada: isto e medicao, e escolher a base e\n"
               "  decisao de desenho (P6 -- ausencia de criterio e tarefa aberta, nao\n"
-              "  veredito). Ver auditoria/C03-A-QUEBRA-DE-MOEDA.md", file=saida)
+              "  veredito). Ver docs/auditoria/C03-A-QUEBRA-DE-MOEDA.md", file=saida)
     return linhas, desconhecidos, ilegiveis
 
 

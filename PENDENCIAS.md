@@ -482,7 +482,7 @@ precisa de régua ou de reclassificação para pendência.
 ## P-17 · C-04 e C-05 não foram lidos — ⚙ **exige o desktop**
 
 O regime do bloco C está escrito, mas a lista de campos vive em
-`auditoria/escopo-campos-de-analise.md`, na sua máquina, e a ponte estava fora do ar.
+`docs/auditoria/escopo-campos-de-analise.md`, na sua máquina, e a ponte estava fora do ar.
 C-01 a C-03 são conhecidos por referência cruzada dentro do próprio `politica.yaml`;
 **C-04 e C-05 são citados como existentes e nunca nomeados ali.**
 
@@ -936,7 +936,7 @@ Ocupação na carga inicial: **1,64 GB** (soma dos dois `inventario-armazem.csv`
 
 ## P-58 a P-61 · Regimes de leitura de balanço — a pergunta que expôs o defeito
 
-**Documento:** `auditoria/regimes-de-leitura-de-balanco.md`. **Classe:** todas
+**Documento:** `docs/auditoria/regimes-de-leitura-de-balanco.md`. **Classe:** todas
 `BLOQUEIA_O_SISTEMA`. **Gatilho:** depois da P-18 (contar `SETOR_ATIV`), que bloqueia as
 quatro.
 
@@ -1363,7 +1363,7 @@ testpaths = ["alocacao", "auditoria", "fase0"]
 ```
 
 e, no lado do lint, `ruff check .` a partir da RAIZ. Esse segundo pede uma decisão a
-mais: a raiz tem **14 violações** em `pesquisa-custos-2026-08/calc/`, que é cópia
+mais: a raiz tem **14 violações** em `docs/historico/pesquisa-custos-2026-08/calc/`, que é cópia
 congelada de pesquisa. Ou ela entra em `[tool.ruff] exclude` com o motivo escrito ao
 lado, ou o portão nasce com linha de base — e linha de base conhecida não é barreira
 (é o próprio texto do `test_P40_ruff_esta_em_zero`).
@@ -1477,7 +1477,7 @@ com `cwd=alocacao/`. **A P-80 cobrou a primeira conta em menos de uma hora.**
 ### O que é caro aqui não é o erro, é que a regra já estava escrita
 
 O `.gitignore` ignora `Claude outputs/` com o motivo por extenso: *"ela contém uma CÓPIA
-INTEIRA do projeto... não é só tamanho: é a armadilha do `pesquisa-custos-2026-08/calc/`
+INTEIRA do projeto... não é só tamanho: é a armadilha do `docs/historico/pesquisa-custos-2026-08/calc/`
 outra vez, e pior."* A armadilha tinha **nome**, tinha **precedente citado**, e tinha
 **remédio** — e o remédio era uma **lista de nomes de pasta que alguém precisa lembrar de
 estender**. `pacote_segunda/` não estava na lista. É a P7 na forma mais limpa que o
@@ -1491,7 +1491,7 @@ pacotes, e **pasta de pacote aninhada** — a segunda existe porque a primeira n
 
 ### O que fica aberto dentro dela
 
-`pesquisa-custos-2026-08/calc/` tem `motor.py`, `test_motor.py` e `custos.yaml` — os
+`docs/historico/pesquisa-custos-2026-08/calc/` tem `motor.py`, `test_motor.py` e `custos.yaml` — os
 mesmos nomes do projeto vivo, congelados em 28/08. Entrou em `COPIAS_DECLARADAS` com o
 motivo escrito, que é o terceiro caminho honesto do protocolo das órfãs. **Mas declarar
 não é resolver:** quem abrir `calc/motor.py` continua lendo uma versão de três semanas
@@ -1649,7 +1649,7 @@ do vivo, e ainda com os cinco `*-patch.py` e a pasta `pacote_segunda/` que o P-8
 estive a um `device_commit_files` de escrever o trabalho de três dias dentro dela. O que
 impediu foi conferir tamanho e `mtime` antes de gravar — não uma guarda.
 
-> **É a armadilha do `pesquisa-custos-2026-08/calc/` e do `pacote_segunda/` num terceiro
+> **É a armadilha do `docs/historico/pesquisa-custos-2026-08/calc/` e do `pacote_segunda/` num terceiro
 > andar, e é o pior dos três:** os dois primeiros moram *dentro* do repositório e o
 > `test_p82_copia_do_projeto.py` os mede pelo índice do git. Este mora **fora**, tem git
 > próprio, e nenhum teste do projeto pode alcançá-lo — um teste mede o repositório em que
@@ -1671,7 +1671,7 @@ recebeu — e **P7: conferência que depende de alguém lembrar não é conferê
 
 **Dono:** próxima sessão (integrar no `multiplicidade.py`) · **Gatilho:** quando o
 `multiplicidade.py` estiver em mãos · **Classe:** `DECISAO_DE_DESENHO` ·
-*(laudo em `auditoria/P88-DEPENDENCIA-SERIAL.md`)*
+*(laudo em `docs/auditoria/P88-DEPENDENCIA-SERIAL.md`)*
 
 > **A previsão desta pendência estava certa.** Ljung-Box(12) no **resíduo** — a série que o
 > bootstrap de fato reamostra: **HML p = 0,031** (tem dependência), **SMB p = 0,166** (não
@@ -1749,7 +1749,7 @@ está pronta para começar · **Classe:** `BLOQUEIA_O_SISTEMA`
 Correção dele, 18/09: *"se a informação existe e você não conseguiu, o item não deve ser
 excluído — mas o problema de conseguir a informação deve ser solucionado."*
 
-A metade "não excluir" está feita (`auditoria/P90-INFORMACAO-NAO-OBTIDA.md`). **Esta
+A metade "não excluir" está feita (`docs/auditoria/P90-INFORMACAO-NAO-OBTIDA.md`). **Esta
 pendência é a outra metade**, e ela existe porque o campo `pegadinha` guardava um
 fracasso do meu raspador como se fosse característica da instituição:
 
@@ -1781,7 +1781,7 @@ B3. **Não registrar nenhuma como fonte antes de abrir e ler.**
 **Dono:** próxima sessão · **Gatilho:** antes de escrever a rotina semanal automática ·
 **Classe:** `DECISAO_DE_DESENHO`
 
-Medido em 18/09 (`auditoria/CVM-PRIMEIRO-RETRATO.md`): o `dfp_cia_aberta_2024.zip` mudou
+Medido em 18/09 (`docs/auditoria/CVM-PRIMEIRO-RETRATO.md`): o `dfp_cia_aberta_2024.zip` mudou
 de sha256 em 14 dias **sem nenhuma mudança de dado** — a CVM regerou o arquivo e 8 linhas
 de 94.517 trocaram de posição. `sorted(a) == sorted(b)`.
 
@@ -1799,7 +1799,7 @@ sobrevive a uma mudança de separador ou de codificação, e é a mais cara.
 **Dono:** Osvaldo (download) · **Gatilho:** antes de qualquer execução do pré-registro ·
 **Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
 
-`fase0/ajustar.py` existe e foi medido contra o mercado (`auditoria/C02-O-DEGRAU-MEDIDO.md`):
+`fase0/ajustar.py` existe e foi medido contra o mercado (`docs/auditoria/C02-O-DEGRAU-MEDIDO.md`):
 a série ajustada de **2023** está de pé, com 293 datas-ex medidas e controle em 86.736
 pares. O módulo não tem mais nada a fazer — **o que falta é preço.**
 
@@ -2184,7 +2184,7 @@ se a série utilizável começa em **04/07/1994** ou em **02/01/1986** — decis
 
 **Dono:** próxima sessão · **Gatilho:** nenhum — fechada no que dava para fechar ·
 **Classe:** `DECISAO_DE_DESENHO` · *(retratação na §11.4; laudo em
-`auditoria/AUDITORIA-PLANO-DE-TOKENS.md`)*
+`docs/auditoria/AUDITORIA-PLANO-DE-TOKENS.md`)*
 
 A §11.4 declarava a leitura de sessão em **"~26 mil"** antes do corte de 06/09 e
 **"~13 mil"** depois. Medido em 19/09 com `tiktoken`: a razão real deste repositório é
@@ -2204,7 +2204,7 @@ prova por mutação. A §11.4 não afirma mais valor — aponta para o comando.
 
 | # | o que | classe |
 |---|---|---|
-| 1 | ~~O cache não foi medido~~ **FECHADO em 19/09 na fonte oficial, e ele me derrubou.** O write é **2,0x** e o read 0,1x; como o fator incide sobre todo o prefixo, **cortar X% corta X% do custo, com cache ou sem** — medido, **−25%**. A inversão de prioridade que eu anunciei não existe. O risco do split é a **janela de 20 blocos**, não o prefixo. `auditoria/CACHE-E-O-CORTE.md` | — |
+| 1 | ~~O cache não foi medido~~ **FECHADO em 19/09 na fonte oficial, e ele me derrubou.** O write é **2,0x** e o read 0,1x; como o fator incide sobre todo o prefixo, **cortar X% corta X% do custo, com cache ou sem** — medido, **−25%**. A inversão de prioridade que eu anunciei não existe. O risco do split é a **janela de 20 blocos**, não o prefixo. `docs/auditoria/CACHE-E-O-CORTE.md` | — |
 | 2 | **O variável não tem instrumento.** Resposta, saída de ferramenta e arquivo reescrito são o que custa integral em todo turno, e eu não os meço | `DECISAO_DE_DESENHO` |
 | 3 | **A §11.5 está `NAO_CONFIRMADO`** — ordenação sem número, e o título dizia "medido" | — |
 | 4 | **`## Fechadas` = 7.457 tokens** (7,7% da leitura). Mover para `FECHADAS.md` é o único item de tamanho com número verificado | `DECISAO_DE_DESENHO` |
@@ -2302,7 +2302,7 @@ instrumento do C-03.
 `preregistro-ml-v1.md`** — ele vale *"a partir do commit que o contém"*; depois disso, cada
 correção é uma v2 · **Classe:** `DECISAO_DE_DESENHO`
 
-Auditoria completa em `auditoria/AUDITORIA-PREREGISTRO-ML-V1.md`. Medido com o instrumento
+Auditoria completa em `docs/auditoria/AUDITORIA-PREREGISTRO-ML-V1.md`. Medido com o instrumento
 da P-88 sobre o NEFIN recortado a n = 80 (o tamanho do teste do ML, jan/2020 em diante):
 
 | L | blocos | HML | SMB (controle) |
@@ -2423,7 +2423,7 @@ não o traz, com uma **coluna nova de origem** (`B3` / `COTAHIST` / `B3+COTAHIST
 ganhando quando existe**. Sem segundo leitor de COTAHIST (N-01).
 
 **Feita pela P-116, e é a primeira do projeto:** os critérios foram escritos, commitados e
-**empurrados** antes da corrida — `auditoria/P113-CRITERIOS.md`, commit **`9a08a55`**. O hash
+**empurrados** antes da corrida — `docs/auditoria/P113-CRITERIOS.md`, commit **`9a08a55`**. O hash
 é a impressão digital; sem ele, *"pré-registrado"* não é verificável pela P4.
 
 **E o pré-registro pagou na primeira vez que foi usado: quatro dos sete critérios
@@ -2451,7 +2451,7 @@ coluna de procedência que a decisão dele mandou criar.
 um degrau**, e o instantâneo dourado do C-02 continua de pé (a minha previsão R6 dizia que
 mudaria; errei na direção conservadora).
 
-Laudo em `auditoria/P113-MEDIDO.md`. Guarda: `fase0/test_p113_preco_de_vespera.py`, 17 testes.
+Laudo em `docs/auditoria/P113-MEDIDO.md`. Guarda: `fase0/test_p113_preco_de_vespera.py`, 17 testes.
 
 **O que NÃO foi mudado, e continua dele:** `diagnostico()` conta `SEM_FATOR` (subscrição, que
 por desenho não ajusta preço) como insumo ausente. Conferido e é verdade; hoje vale 1 série.
@@ -2540,7 +2540,7 @@ numa pasta sem evento nenhum tem de produzir data ex, e um COTAHIST na raiz de *
 **Dono:** Osvaldo decide · **Gatilho:** antes de medir qualquer janela nova (2016–2020, ou o
 acervo inteiro) · **Classe:** `DECISAO_DE_DESENHO`
 
-O critério do C-02 reprovou em 4 de 5 anos (`auditoria/C02-JANELA-2021-2025.md`) e o nulo
+O critério do C-02 reprovou em 4 de 5 anos (`docs/auditoria/C02-JANELA-2021-2025.md`) e o nulo
 estava errado: o dia ex ajustado tem o retorno do mercado, e o dividendo tira do preço 1,16×
 o que paga. O critério corrigido — dias **limpos**, **descontado o mercado** do dia, razão
 queda/provento **por tipo** — foi desenhado **depois** de ver 2021–2025, então só vale como
@@ -2548,7 +2548,7 @@ pré-registro para dado que ainda não foi medido.
 
 **E só vale se for commitado e empurrado ANTES de rodar sobre 2016–2020.** Commit local não
 basta: o que torna o "antes" verificável (P4) é o histórico **público** datado — o verificador
-externo do laudo `auditoria/PREREGISTRO-EVIDENCIA.md`. Sem o push anterior à corrida, o
+externo do laudo `docs/auditoria/PREREGISTRO-EVIDENCIA.md`. Sem o push anterior à corrida, o
 critério corrigido repete o defeito da P-116.
 
 ## P-116 · O critério da janela entrou no mesmo commit que os resultados
@@ -2962,7 +2962,7 @@ ele, e por isso a decisão é dele.
 
 A pergunta era: *"confirma o desenho?"* — especificação congelada, graus de liberdade
 declarados, diário de execuções, e o **contador de variantes como alarme** (exige
-justificativa escrita, **não** bloqueia), em `auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`.
+justificativa escrita, **não** bloqueia), em `docs/auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`.
 O desenho foi **implementado** em 18/09 (`alocacao/preregistro.py`) junto com as decisões
 2, 3 e 4, que ele respondeu. **A resposta ao item 6 não está registrada em lugar nenhum** —
 nem no `PENDENCIAS.md`, nem no `CLAUDE.md`, nem no laudo. Código construído sobre um desenho
@@ -3053,6 +3053,19 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 `__v20260913__` de 2024 vieram de `(1).zip` do navegador e **não têm linha no registro**.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
+
+## P-148 · O Dependabot vai propor numpy e pandas, e aceitar muda o número pré-registrado
+
+**Dono:** Osvaldo (decisão) · **Gatilho:** o primeiro PR do Dependabot que suba `numpy` ou
+`pandas` · **Classe:** `DECISAO_DE_DESENHO`
+
+O `.github/dependabot.yml` (25/09) atualiza, toda segunda, os SHAs das ações e os pinos do
+`pyproject.toml`. Para as ações é o que se quer. Para `numpy` e `pandas`, o PR muda a impressão
+do ambiente (`7565df1381e2c1ed`), e o `test_alocacao.py` o reprova **de propósito**: o
+resultado pré-registrado deixaria de ser conferência e viraria número novo (P-15). Três
+saídas, e a escolha é dele: (a) deixar como está, com o vermelho servindo de aviso a cada
+versão; (b) `ignore` para as duas no `dependabot.yml`; (c) aceitar, reconferir os resultados
+pré-registrados e registrar a impressão nova. Até ele decidir, fica (a).
 
 ## P-147 · A captura do NEFIN ainda não rodou no executor
 
@@ -3299,11 +3312,11 @@ validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca 
 | **P-100** | o `COTAHIST_A2026.ZIP` de 18/09 chegou truncado (38.328.935 bytes, sem diretório central), e eu **declarei 2026 indisponível** em vez de pedir outro download — o período da família ML foi cortado em dez/2025 por isso | 23/09 — rebaixado por ele em 21/09 11:59, **íntegro**: 85.779.964 bytes, `fb3546ed27cc…`, trailer `TOTREG` 2.871.743 = registros `01` contados, **179 pregões de 02/01 a 18/09/2026**. Duas medições independentes concordam. `origem.csv` e manifesto atualizados. **Retratação** no `CLAUDE.md`: o arquivo foi descartado em vez de consertado — nasce a §5-B.16 |
 | **P-114** | a raiz padrão do `refinar.py` e do `ajustar.py` era `data/bronze/b3`, e `calendario.arquivos()` não é recursivo: os 41 anos moram em `cotahist/` e o padrão enxergava **um** — o avulso de 04/09. O relatório dizia `acervo COTAHIST_A2023` e ninguém perguntava | 23/09 — **decisão dele**: a raiz vira `data/bronze/b3/cotahist`. No `refinar.py` isso exigiu **separar dois parâmetros** (`--raiz` de eventos, `--cotahist` do calendário), porque um servia aos dois acervos. Calendário de 248 → **10.059 pregões**; `data_ex` derivada de 383 → **9.271**. Instantâneo dourado fecha nos três níveis: 2023 em 248 pregões `e4a9d81d…`, silver com **0 colunas alteradas** e **0 data ex perdidas**, e os dois CSVs de 2023 byte a byte idênticos. 8 testes, 4 reprovam contra a versão anterior |
 | **P-97** | o `COTAHIST_A2023.ZIP` de 04/09 estava no acervo **sem origem**, e o manifesto contava `1 de 42` | 23/09 — **decisão dele**: é duplicata, sai do acervo. Medido **antes** de mover: ZIP e TXT extraído são byte a byte idênticos aos de `cotahist/`, que **têm** origem declarada. Movido para `data/quarentena/` com `LEIA.md`, não apagado. Manifesto: **`P-06: os 41 arquivos tem origem declarada`**. Guarda na suíte, porque manifesto é comando que alguém roda (P7) |
-| **P-113** | 173 proventos sem `closingPricePriorExDate` deixavam 78 séries `INCOMPLETO`; a decisão era se o COTAHIST pode substituir a fonte | 23/09 — **decisão dele**: pode, com coluna de origem e a B3 ganhando. **Primeiro pré-registro do projeto com impressão digital** (critérios empurrados em `9a08a55` antes da corrida, P-116) — e **quatro dos sete critérios reprovaram**. 11 fatores novos em vez de 172; `INCOMPLETO` 78 → 74; degraus 1.586 → 1.593; 2023 inalterado. `auditoria/P113-MEDIDO.md`, 17 testes |
+| **P-113** | 173 proventos sem `closingPricePriorExDate` deixavam 78 séries `INCOMPLETO`; a decisão era se o COTAHIST pode substituir a fonte | 23/09 — **decisão dele**: pode, com coluna de origem e a B3 ganhando. **Primeiro pré-registro do projeto com impressão digital** (critérios empurrados em `9a08a55` antes da corrida, P-116) — e **quatro dos sete critérios reprovaram**. 11 fatores novos em vez de 172; `INCOMPLETO` 78 → 74; degraus 1.586 → 1.593; 2023 inalterado. `docs/auditoria/P113-MEDIDO.md`, 17 testes |
 | **A-13** | os 161 restantes não eram fator faltando: eram **o mesmo pagamento chegando pelas duas esteiras** da B3, que `_chave_de_evento` não colapsa porque `origem` entra nela de propósito (A-09). A cópia do suplemento era inerte só por não ter preço — dar preço a ela subtrairia o provento **duas vezes** | 23/09 — `_provento()` identifica o **pagamento**, sem a porta de entrada. Provado pelo resíduo de 2025: **t +0,39 colapsando, +6,31 sem**. E a armadilha registrada: **o agregado melhorava enquanto o ano quebrava**, então o critério R3 pré-registrado teria aprovado a versão errada. Quem pegou foi a coluna de procedência |
 | **A-12** | `_chave_de_evento` montava a identidade do evento com `data_ex`, que é **derivado** e estava vazio em 8.889 das 9.272 linhas — e **128 eventos reais** colapsavam como "duplicata exata" | 23/09 — chave passa a usar `ultimo_dia_com_direito`, o campo **observado**, preenchido em 9.272 de 9.272. Contagem: 334 → **206**, e 206 **nos dois silvers** — deixa de depender do calendário. Achado só apareceu porque a P-114 moveu o número; com o calendário largo a chave antiga também daria 206 e o defeito **se auto-encobriria**. 8 testes |
-| PLANO passo 3 | a série ajustada cobria só 2023, com duas bordas, e o C-01 tinha **um** caso de preço | 21/09 — `ajustar.py --anos 2021-2025` + `fase0/test_ajustar_janela.py`. Controle fecha nos cinco anos (632.384 pares, pior 1e-27); **C-01 com 54 eventos de quantidade**, 49 encolhem, os dois primeiros grupamentos com preço (MGLU3 +896% → −0,38%; HAPV3 +1378% → −1,46%); as duas bordas de 2023 fecharam. O critério por ano **reprovou em 4 de 5** e fica em `xfail` estrito (P-115). Achados A-10 e A-11. Ver `auditoria/C02-JANELA-2021-2025.md` |
-| C-01, a corroboração de preço | a regra do `factor` tinha sido fechada pela **distribuição**, com UM caso de preço, e a data ex derivada também tinha UM. A série de preços ajustada não existia | 18/09 — `fase0/ajustar.py` + `fase0/test_ajustar.py` (32 testes, 8 contra o acervo). **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360% (t = −0,29) em 293 datas-ex**, com controle em 86.736 pares de pregões sem evento (pior divergência 1e-27, arredondamento de `Decimal`). Duas mutações presas na suíte: data ex deslocada deixa o degrau **inteiro** e cria um **falso** na véspera (+1,91%, t = +11,20); fator invertido **dobra** o degrau (−3,16%). Ver `auditoria/C02-O-DEGRAU-MEDIDO.md` |
+| PLANO passo 3 | a série ajustada cobria só 2023, com duas bordas, e o C-01 tinha **um** caso de preço | 21/09 — `ajustar.py --anos 2021-2025` + `fase0/test_ajustar_janela.py`. Controle fecha nos cinco anos (632.384 pares, pior 1e-27); **C-01 com 54 eventos de quantidade**, 49 encolhem, os dois primeiros grupamentos com preço (MGLU3 +896% → −0,38%; HAPV3 +1378% → −1,46%); as duas bordas de 2023 fecharam. O critério por ano **reprovou em 4 de 5** e fica em `xfail` estrito (P-115). Achados A-10 e A-11. Ver `docs/auditoria/C02-JANELA-2021-2025.md` |
+| C-01, a corroboração de preço | a regra do `factor` tinha sido fechada pela **distribuição**, com UM caso de preço, e a data ex derivada também tinha UM. A série de preços ajustada não existia | 18/09 — `fase0/ajustar.py` + `fase0/test_ajustar.py` (32 testes, 8 contra o acervo). **O degrau do dia ex cai de −1,6263% (t = −9,88) para −0,0360% (t = −0,29) em 293 datas-ex**, com controle em 86.736 pares de pregões sem evento (pior divergência 1e-27, arredondamento de `Decimal`). Duas mutações presas na suíte: data ex deslocada deixa o degrau **inteiro** e cria um **falso** na véspera (+1,91%, t = +11,20); fator invertido **dobra** o degrau (−3,16%). Ver `docs/auditoria/C02-O-DEGRAU-MEDIDO.md` |
 | — | `calendario.py` era o único leitor de COTAHIST; o segundo (`ajustar.py`) ia redigitar a descoberta de arquivo e a posição da data | 18/09 — extraídos `arquivos()`, `registros()` e `data_de()`. Um fato, um dono. Instantâneo dourado de `pregoes()` antes e depois: **248 pregões, `sha256 e4a9d81d…` idêntico** |
 | manifesto da CVM | gravado em `data/bronze/cvm/manifesto/` — dentro do caminho que o `.gitignore` ignora na linha 12. **Não entrou no commit `64a5c97`**, e o `CVM-PRIMEIRO-RETRATO.md` afirmava que entrava | 18/09 — destino padrão passou a ser `docs/acervo/cvm/`, achado pela raiz do repositório; `gravar()` **recusa** qualquer caminho sob `data/`. 3 testes, um provado por mutação. Encontrado lendo a lista de `create mode` do commit dele e não achando o manifesto lá |
 | P-87 | uma segunda cópia do projeto na máquina, no OneDrive, com `.git` próprio parado em 09/09 — e foi a pasta que a sessão de nuvem recebeu conectada | 18/09 — **apagada por ele.** `Desktop\Bastter` é o caminho único |
@@ -3451,7 +3464,7 @@ máquina é o que fecha.**
 | 1 | copiar os 7 arquivos do chat (lista em `docs/historico/entregas/SEGUNDA-21.md`) | 5 min |
 | 2 | **as três suítes verdes** — `origin/main` está VERMELHO (P-102) | 5 min |
 | 3 | commit + push | 2 min |
-| 4 | ~~**`ajustar.py` sobre 2021–2025 contíguos**~~ **FEITO em 21/09** — `auditoria/C02-JANELA-2021-2025.md` | — |
+| 4 | ~~**`ajustar.py` sobre 2021–2025 contíguos**~~ **FEITO em 21/09** — `docs/auditoria/C02-JANELA-2021-2025.md` | — |
 
 **Duas coisas com data:** `macro.poupanca_am` vence **28/09**; e a CVM reescreve DFP/ITR
 toda semana — cada semana sem captura é uma rodada de reapresentações que **não volta**.

@@ -1085,7 +1085,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > **X-01 — o dado estruturado não alcança a decisão. 06/09/2026, e é o achado mais caro
 > desta sessão.**
 >
-> O Osvaldo respondeu como se lê uma incorporadora (`auditoria/regime-incorporacao.md`).
+> O Osvaldo respondeu como se lê uma incorporadora (`docs/auditoria/regime-incorporacao.md`).
 > A sequência dele tem dez passos. **Três são obtíveis nas 8 demonstrações estruturadas da
 > CVM.** VSO, vendas líquidas, distratos, receita a apropriar, unidades em estoque, e a
 > separação entre dívida SFH e corporativa **não existem** nos CSVs — vivem em **nota
@@ -1256,7 +1256,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 >
 > Instalar o Python 3.11 é o que devolve o verde. Não é preferência.
 >
-> *(O ruff na raiz acusa 20 erros, **14 deles em `pesquisa-custos-2026-08/calc/`** — a
+> *(O ruff na raiz acusa 20 erros, **14 deles em `docs/historico/pesquisa-custos-2026-08/calc/`** — a
 > cópia congelada de agosto que o §4 marca como armadilha. Corretamente não tocada.)*
 
 > **B-03 — não há regra única, e isso muda a estratégia. Medido em 11/09/2026.**
@@ -1463,7 +1463,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > uma pergunta de auditoria, e vale para todo par de funções irmãs do projeto.
 
 > **A auditoria do A-07 — seis achados, quatro medidos. 12/09/2026.**
-> *Documento inteiro em `auditoria/AUDITORIA-A07-FUNCOES-IRMAS.md`. Status `PARCIAL`:
+> *Documento inteiro em `docs/auditoria/AUDITORIA-A07-FUNCOES-IRMAS.md`. Status `PARCIAL`:
 > medida sobre o instantâneo de 06/09, não sobre o repositório real. Reconferir.*
 >
 > **E-01 — o `simular` de um módulo recusa rota bloqueada; o do outro devolve número.**
@@ -1552,7 +1552,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > sobre intenções** — a P4 entrega a impressão digital e o compromisso fica em prosa.
 >
 > **E-06 — as duas medições que mudaram a pergunta. 12/09/2026.**
-> *Documento em `auditoria/E06-O-QUE-CONTA-COMO-VARIANTE.md`. Decisão de desenho aberta.*
+> *Documento em `docs/auditoria/E06-O-QUE-CONTA-COMO-VARIANTE.md`. Decisão de desenho aberta.*
 >
 > Antes de contar variantes é preciso saber o que se conta. Fui procurar, no próprio
 > pré-registro, um grau de liberdade não declarado. Achei dois candidatos, **e nenhum
@@ -1597,7 +1597,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > sem espaço. **O número segue a ambiguidade da fonte.**
 
 > **E-06 decidido por ele em 12/09/2026 — e a decisão corrigiu o meu desenho em três
-> pontos.** *Modelo de dados em `auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`.*
+> pontos.** *Modelo de dados em `docs/auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`.*
 >
 > **1. Dado novo, mesma spec = EXTENSÃO**, não variante. A razão dele é de incentivo e
 > é decisiva: transformar atualização temporal em variante ensina *"não atualize o
@@ -1678,7 +1678,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > conclusão não muda — ele sobrevive — mas a margem é ainda mais fina do que escrevi.
 
 > **P-77 FECHADA em 13/09/2026 — e a pendência estava descrevendo o sintoma errado.**
-> *Documento em `auditoria/P77-CAMPO-MORTO.md`.*
+> *Documento em `docs/auditoria/P77-CAMPO-MORTO.md`.*
 >
 > A pendência dizia que *"`retorno_liquido_aa` zera o IR de ganho do FII"*. **Não zera:
 > devolve `None`** — o FII é `indexador: rv` e a função sai antes da linha do imposto.
@@ -1749,7 +1749,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > cara-ou-coroa, e comparar um `[:12]` com um `[:16]` nunca bate, em silêncio.
 
 > **P-76, P-78 e B-04 — fechadas em 13/09/2026, e duas mudaram de forma ao serem
-> medidas.** *Documento em `auditoria/P76-P78-B04.md`.*
+> medidas.** *Documento em `docs/auditoria/P76-P78-B04.md`.*
 >
 > **P-76 — a doutrina, e ela vale sozinha:** uma conclusão **não herda** o status do
 > insumo mais fraco. Ela herda o resultado de uma **medição de sensibilidade** —
@@ -1923,7 +1923,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 
 > **E-08 FECHADO em 13/09/2026 — o `instituicoes.yaml` ganhou resolvedor de
 > referência.** *Decisão dele: resolvedor, não remoção. Documento em
-> `auditoria/E08-RESOLVEDOR.md`.*
+> `docs/auditoria/E08-RESOLVEDOR.md`.*
 >
 > `{de: "corretagem.xp_etf_pct"}` passa a valer em qualquer campo de custo, e a
 > resolução **passa por `val()`** — é isso que faz status, procedência, `expira` e
@@ -1968,7 +1968,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > **O relógio existia; faltava ligar o outro lado nele.**
 
 > **E-09 — a chave duplicada que apagou oito dias de trabalho. 13/09/2026, e é o
-> achado mais silencioso do projeto.** *Documento em `auditoria/F03-IMAB11-E09.md`.*
+> achado mais silencioso do projeto.** *Documento em `docs/auditoria/F03-IMAB11-E09.md`.*
 >
 > `custos.yaml -> etf:` tinha **`IMAB11:` duas vezes**: a de cima (05/09) com
 > `valor: 0.0025, status: PARCIAL` e a página do gestor como fonte; a de baixo, oitenta
@@ -2008,7 +2008,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 > apontei era do insumo, não da conclusão.**
 
 > **A evidência sobre pré-registro — e ela contraria a MINHA recomendação. 13/09/2026.**
-> *Documentos em `auditoria/PREREGISTRO-EVIDENCIA.md` e o relatório completo, 25 fontes.*
+> *Documentos em `docs/auditoria/PREREGISTRO-EVIDENCIA.md` e o relatório completo, 25 fontes.*
 >
 > Ele confirmou o desenho e pediu evidência. A evidência apoia duas camadas, é ambígua
 > numa e **contraria a quarta — o contador como alarme, que fui eu quem recomendou.**
@@ -2048,7 +2048,7 @@ E-05 retirado, porque achado retirado fica como retratação.
 
 ## C-03 · Quatro moedas no COTAHIST, e só uma deixou quebra no arquivo
 
-**19/09/2026.** Documento completo em `auditoria/C03-A-QUEBRA-DE-MOEDA.md`.
+**19/09/2026.** Documento completo em `docs/auditoria/C03-A-QUEBRA-DE-MOEDA.md`.
 
 O acervo passou de 1 para 41 anos e a série começa em 02/01/1986, atravessando seis planos
 econômicos. O campo **`MODREF`** (posições 53–56, *moeda de referência* — o nome certo,
@@ -2245,7 +2245,7 @@ Três correções que vêm junto:
 
 ## C-02 na janela · O critério do degrau esperava zero, e o dia ex ajustado tem o retorno do mercado
 
-**21/09/2026.** Documento completo em `auditoria/C02-JANELA-2021-2025.md`.
+**21/09/2026.** Documento completo em `docs/auditoria/C02-JANELA-2021-2025.md`.
 
 O critério do C-02 para 2023 foi aplicado a cada ano de 2021–2025 como critério **declarado
 pré-registrado, sem impressão digital** — escrito antes da primeira corrida, mas commitado junto
@@ -2342,7 +2342,7 @@ preservado ao lado do novo, porque ele é o artefato por trás de um laudo publi
 ## A-13 · O mesmo provento chega pelas duas esteiras, e dar preço a ele o aplicaria duas vezes
 
 **23/09/2026.** Achado ao executar a decisão da P-113 — usar o fechamento do COTAHIST onde a
-B3 não traz `closingPricePriorExDate`. A previsão pré-registrada (`auditoria/P113-CRITERIOS.md`,
+B3 não traz `closingPricePriorExDate`. A previsão pré-registrada (`docs/auditoria/P113-CRITERIOS.md`,
 commit `9a08a55`) era de **172** eventos ganhando fator. Ganharam **11**.
 
 **Os outros 161 não eram fatores faltando: eram o mesmo pagamento chegando pela segunda
@@ -2677,6 +2677,21 @@ diária), e o `materializar_acervo.py` põe a versão **fixada** no lugar no job
 testes que leem o arquivo ganharam o marcador `acervo`: o push os exclui por nome, o semanal
 os roda. Os commits anteriores continuam contendo o arquivo, porque o histórico publicado não
 se reescreve (CLAUDE.md §6).
+
+---
+
+## CI-05 · Pull request nunca teve portão
+
+*25/09/2026. Achado ao configurar o Dependabot (Sessão B).*
+
+O `testes.yml` rodava em `push` para o `main`, no agendamento e no disparo manual. Pull request
+não estava em lugar nenhum. Um PR de contribuidor, ou o PR semanal que o Dependabot passaria a
+abrir, chegaria ao `main` sem nenhuma suíte ter rodado nele: o primeiro vermelho seria o do
+merge, depois do fato. O template de PR que pede "suítes em zero" teria pedido uma coisa que
+nenhuma máquina conferia.
+
+**Conserto:** `pull_request` para o `main` roda o job rápido, e só ele. PR não recebe segredo, e
+o completo lê o armazém. `auditoria/test_workflows.py::test_pr_roda_o_rapido_e_nunca_o_completo`.
 
 ---
 

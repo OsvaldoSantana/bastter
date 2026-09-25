@@ -18,6 +18,15 @@ Adota a disciplina do método e diverge em pontos documentados, um a um, em
 
 </div>
 
+> **Abstract.** MEOL is a personal portfolio-allocation system for the Brazilian market in which
+> every number carries its provenance: source, access date, status, and what it blocks. A
+> calculation that depends on an unconfirmed input refuses to run instead of defaulting to zero.
+> Rules live in versioned YAML, assets pass through named gates rather than a score, and
+> hypotheses are pre-registered with hashes before any data is touched. Written in Portuguese.
+
+**Por onde começar:** o [guia do leitor](docs/guia-do-leitor.md) tem três caminhos — 5 minutos
+para saber o que é, 30 para auditar um número de ponta a ponta, e o de quem quer contribuir.
+
 ---
 
 ## O que é
@@ -42,18 +51,13 @@ O que ele **não** é:
 
 ## As sete doutrinas
 
-Código que viola uma delas está errado mesmo com os testes passando. O texto completo, com
-os erros que deram origem a cada uma, está em [`CLAUDE.md`](CLAUDE.md#2-as-sete-doutrinas).
+O projeto é governado por sete doutrinas: procedência por valor, regras como dados, portões em
+vez de pontuação, pré-registro com impressão digital, limitações declaradas, nada sai do
+universo por falta de régua, e rotina que não depende de alguém lembrar. Código que viola uma
+delas está errado mesmo com os testes passando.
 
-| | doutrina | na prática |
-|---|---|---|
-| **P1** | Procedência por valor, não por bloco | Cada constante carrega `status`, `fonte` e o que ela `bloqueia`. Um cálculo que dependa de valor não confirmado **recusa-se a rodar**, em vez de usar zero. |
-| **P2** | Regras como dados | Todo parâmetro vive em YAML versionado. Trocar política é um commit, nunca um deploy. Chave declarada e nunca lida reprova um teste. |
-| **P3** | Portões, não pontuação | Nove portões em ordem declarada, e cada eliminação sai com o motivo. Nenhum score agregado esconde qual critério matou o quê. |
-| **P4** | Pré-registro com impressão digital | Teses e compromissos têm hash. Reescrever depois do fato é possível, e deixa rastro. |
-| **P5** | Limitações declaradas | O que o motor sabe que não modela fica escrito, com a direção do viés e de quem é o limite: do mundo ou ainda não consertado. |
-| **P6** | Ausência de critério não é critério de exclusão | Nada sai do universo por falta de régua. O que falta dado perde **peso**, nunca presença, e fica visível com o motivo. |
-| **P7** | Rotina que depende de alguém lembrar não é rotina | Todo processo periódico roda sozinho, ou é declarado como limitação. |
+O texto, com os erros que deram origem a cada uma, está num lugar só:
+**[`docs/doutrinas.md`](docs/doutrinas.md)**.
 
 ## Como funciona
 
@@ -162,9 +166,13 @@ O projeto foi feito para ser conferido, não acreditado. Os caminhos:
 ```
 alocacao/        o motor: custos, política, portões, teses, aporte, fatores
 fase0/           o dado: captura, armazém, leitura do COTAHIST e da CVM, ajuste por proventos
-auditoria/       os instrumentos que auditam o próprio projeto, e seus laudos
+auditoria/       os instrumentos que auditam o próprio projeto
 tools/           análise das sessões de trabalho
 docs/
+  doutrinas.md   as sete doutrinas, fonte única
+  guia-do-leitor.md  três caminhos: 5 min, 30 min, contribuidor
+  reproduzir.md  capturar da fonte e conferir os sha256, sem o armazém
+  auditoria/     os laudos: escopo, definições, medições
   aprendizado/   pré-registros da família de aprendizado de máquina
   acervo/        registro e hash de cada captura
   fontes/        uma nota por fonte primária, com o trecho conferido
@@ -179,21 +187,13 @@ PENDENCIAS.md    o que está aberto
 ACHADOS.md       o que foi achado, e como
 ```
 
-> **Armadilha:** `pesquisa-custos-2026-08/calc/` guarda uma versão **antiga** do motor, de
-> agosto de 2026. Nunca importe de lá.
-
 ## Contribuir
 
-Issues e pull requests são bem-vindos. Três pedidos, porque são as regras da casa:
-
-1. **Um achado, um teste que falha na versão anterior.** Um teste que passaria antes e
-   depois da mudança não prova nada.
-2. **Número com procedência.** Valor novo entra no YAML com `fonte` e `status`, nunca como
-   literal no código.
-3. **Leia os achados da área antes de mexer nela.** Vários defeitos deste projeto são o
-   mesmo padrão com outra roupa, e o `ACHADOS.md` diz quais.
-
-O protocolo completo de mudança está na [§9 do `CLAUDE.md`](CLAUDE.md#9-o-protocolo-de-mudança--leia-antes-de-editar-qualquer-coisa).
+Issues e pull requests são bem-vindos. Instalação, testes, as três regras da casa e a convenção
+de commit estão em [`CONTRIBUTING.md`](CONTRIBUTING.md). Vulnerabilidade, inclusive dado pessoal
+exposto, vai por relato privado: [`SECURITY.md`](SECURITY.md). Para citar o projeto:
+[`CITATION.cff`](CITATION.cff). Para conferir o dado de mercado sem o nosso armazém:
+[`docs/reproduzir.md`](docs/reproduzir.md).
 
 ## Licença
 

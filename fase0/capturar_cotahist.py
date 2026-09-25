@@ -82,8 +82,8 @@ def anual_do_mes(hoje, linhas):
 def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, armazem=None,
          hoje=None):
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--armazem", choices=["s3"], required=True,
-                   help="credenciais so por variavel de ambiente R2_*")
+    p.add_argument("--armazem", choices=["s3", "local"], required=True,
+                   help="s3: o R2 do projeto, credenciais so por R2_*; local: uma pasta (ARMAZEM_LOCAL)")
     p.add_argument("--raiz", default=None, help=f"padrao: {RAIZ_RELATIVA}")
     p.add_argument("--registro", default=None, help=f"padrao: {REGISTRO_RELATIVO}")
     p.add_argument("--cache", default=None, help="guarda tambem uma copia em <cache>/<chave>")

@@ -3,7 +3,7 @@
 **Data:** 03/09/2026 · **Política:** 1.1.0 · **Testes:** 43 → 77, todos passando
 
 Responde ao backlog §7 da `docs/referencia/auditoria-camada-alocacao.md` e à recomendação de sequência
-da §8 do `auditoria/escopo-campos-de-analise.md` ("bloco K primeiro — antes de qualquer campo
+da §8 do `docs/auditoria/escopo-campos-de-analise.md` ("bloco K primeiro — antes de qualquer campo
 calculado").
 
 ---

@@ -32,7 +32,7 @@ FLRY). Entao a medicao confirma, com 293 casos:
 
 E NAO confirma, porque ali a amostra e de um: a leitura PERCENTUAL do campo `factor` nos
 178 eventos de QUANTIDADE. Essa continua sustentada pela DISTRIBUICAO dos valores (ver
-`auditoria/C01-FATOR.md`) mais este unico caso de preco. Quem quiser fechar a ponta
+`docs/auditoria/C01-FATOR.md`) mais este unico caso de preco. Quem quiser fechar a ponta
 precisa do COTAHIST de 2021 e 2025, onde estao 50 dos eventos de quantidade.
 
 O QUE ELE RECUSA
@@ -369,7 +369,7 @@ def _data(texto):
 
 
 # ── P-113: o preco de vespera, e DE ONDE ele veio ─────────────────────────────
-# Decisao dele, 23/09/2026. Criterios em auditoria/P113-CRITERIOS.md, commitados e
+# Decisao dele, 23/09/2026. Criterios em docs/auditoria/P113-CRITERIOS.md, commitados e
 # EMPURRADOS antes desta corrida (P-116) -- o hash do commit e a impressao digital.
 
 ORIGEM_B3 = "B3"                # closingPricePriorExDate, do endpoint paginado
@@ -933,7 +933,7 @@ def ajustar(raiz=RAIZ_PADRAO, silver=None, saida=SAIDA_PADRAO, anos=None):
         print("  O QUE ISTO CONFIRMA, nos %d casos: a data ex derivada do calendario, o"
               "\n  SENTIDO do fator, e a formula do fator de provento."
               "\n  O QUE NAO CONFIRMA: a leitura PERCENTUAL do campo `factor` -- dos %d"
-              "\n  casos, %d e evento de QUANTIDADE. Ver auditoria/C02-O-DEGRAU-MEDIDO.md."
+              "\n  casos, %d e evento de QUANTIDADE. Ver docs/auditoria/C02-O-DEGRAU-MEDIDO.md."
               % (n, n, quant))
     elif n:
         print("  O DEGRAU NAO ENCOLHEU. Isto REPROVA o ajuste como esta escrito: leitura"

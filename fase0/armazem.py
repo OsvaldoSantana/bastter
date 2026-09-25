@@ -318,17 +318,74 @@ class ArmazemS3(Armazem):
         return out
 
 
+class ArmazemLocal(Armazem):
+    """Uma pasta no lugar do bucket, com o mesmo contrato: `<pasta>/<chave>`, nunca
+    sobrescreve, sha256 conferido nas duas pontas (a regra mora na classe-mae).
+
+    POR QUE ELE EXISTE (25/09/2026). Quem e de fora nao tem as credenciais do R2, que e
+    privado (P-136). Com este backend, a captura roda inteira na maquina de quem quer
+    reproduzir, e `conferir_reproducao.py` compara os sha256 com os nossos
+    (docs/reproduzir.md)."""
+
+    def __init__(self, pasta):
+        self.pasta = os.path.abspath(pasta)
+
+    def __repr__(self):
+        return f"ArmazemLocal({self.pasta!r})"
+
+    def _caminho(self, k):
+        return os.path.join(self.pasta, *k.split("/"))
+
+    def _existe(self, k):
+        return os.path.isfile(self._caminho(k))
+
+    def _enviar(self, k, caminho):
+        destino = self._caminho(k)
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        shutil.copyfile(caminho, destino + ".part")
+        os.replace(destino + ".part", destino)
+
+    def _baixar(self, k, destino):
+        if not self._existe(k):
+            raise KeyError(k)
+        shutil.copyfile(self._caminho(k), destino)
+
+    def _listar(self, prefixo):
+        return [k for k, _ in self._tamanhos(prefixo)]
+
+    def _tamanhos(self, prefixo):
+        out = []
+        for raiz, _, nomes in os.walk(self.pasta):
+            for n in nomes:
+                if n.endswith(".part"):
+                    continue
+                c = os.path.join(raiz, n)
+                k = os.path.relpath(c, self.pasta).replace(os.sep, "/")
+                if k.startswith(prefixo):
+                    out.append((k, os.path.getsize(c)))
+        return out
+
+
+PASTA_LOCAL_PADRAO = os.path.join("data", "armazem-local")   # data/ esta no .gitignore
+
+
 def raiz_do_repositorio():
     import manifesto_cvm
     return manifesto_cvm.raiz_do_repositorio(os.path.dirname(os.path.abspath(__file__)))
 
 
 def do_ambiente(tipo="s3", env=None, raiz_repo=None):
-    """O armazem que a linha de comando pede, JA COM O TETO da politica. Um tipo so hoje;
-    o parametro existe para a linha de comando nao prometer o que o codigo nao tem."""
-    if tipo != "s3":
+    """O armazem que a linha de comando pede, JA COM O TETO da politica. `s3` e o R2 do
+    projeto (credenciais R2_*); `local` e uma pasta -- `ARMAZEM_LOCAL`, ou
+    data/armazem-local -- para quem reproduz de fora (25/09/2026)."""
+    if tipo not in ("s3", "local"):
         raise ValueError(f"armazem {tipo!r} desconhecido")
-    _, teto = limites_da_politica(raiz_repo or raiz_do_repositorio())
+    raiz = raiz_repo or raiz_do_repositorio()
+    _, teto = limites_da_politica(raiz)
+    if tipo == "local":
+        env = os.environ if env is None else env
+        pasta = env.get("ARMAZEM_LOCAL") or os.path.join(raiz, PASTA_LOCAL_PADRAO)
+        return ArmazemLocal(pasta).limitar(teto)
     return ArmazemS3.de_ambiente(env).limitar(teto)
 
 

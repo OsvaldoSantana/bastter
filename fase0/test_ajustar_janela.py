@@ -382,7 +382,7 @@ def jan():
 # O PRE-REGISTRO REPROVOU EM QUATRO ANOS, e fica escrito como foi. Decisao dele, 21/09:
 # xfail ESTRITO -- a reprovacao continua visivel, e se um ano passar a suite avisa, porque
 # ai o texto que explica a reprovacao deixou de ser verdade. As causas foram MEDIDAS
-# depois de ver (auditoria/C02-JANELA-2021-2025.md), e nenhuma e o ajuste errando:
+# depois de ver (docs/auditoria/C02-JANELA-2021-2025.md), e nenhuma e o ajuste errando:
 _REPROVOU = {
     2021: "bruto: 17 desdobramentos na media; ajustado: BRAP3/4 CONTAMINADO (-54%) e 3 dias "
           "com marca de bonificacao sem evento no silver",

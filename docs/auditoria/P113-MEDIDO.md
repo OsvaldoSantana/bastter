@@ -1,6 +1,6 @@
 # P-113 — a medição, contra os critérios de `9a08a55`
 
-**23/09/2026.** Os critérios estão em `auditoria/P113-CRITERIOS.md`, commitados e
+**23/09/2026.** Os critérios estão em `docs/auditoria/P113-CRITERIOS.md`, commitados e
 **empurrados antes desta corrida** — commit `9a08a55`, que é a impressão digital que a
 P-116 cobrava. Este arquivo é o resultado, e ele **reprova quatro dos sete critérios que
 eu mesmo escrevi**.
@@ -168,7 +168,7 @@ Planalto (`l11033compilado.htm`, acesso 03/09/2026):
 
 Duas coisas que a transcrição deixa explícitas e que importam para a hipótese: a isenção é
 sobre o **valor das alienações no mês**, não sobre o ganho; e ela vale para o **mercado à
-vista de ações**, o que a distingue de ETF e FII (`auditoria/escopo-acoes-on.md`).
+vista de ações**, o que a distingue de ETF e FII (`docs/auditoria/escopo-acoes-on.md`).
 
 ### Investidor não residente — regime próprio, com exceção
 
