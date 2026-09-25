@@ -2943,3 +2943,27 @@ O subprocesso não desligava o cache do pytest. No Windows o rename da pasta de 
 (`WinError 5`), sai um `PytestCacheWarning`, e a linha de contagem vira `2 passed, 1 warning, 1
 error` — a substring `"2 passed, 1 error"` reprova por um aviso alheio. Conserto: `-p
 no:cacheprovider` nos subprocessos. Reproduzido fora da suíte, com o aviso transcrito.
+
+---
+
+## B-19 · Aporte R$ 0 virava NaN dentro do `min()` da P-134, e a interação G3×G4 acertava por acidente
+
+*25/09/2026. Achado pelo Claude Code (nuvem) ao consertar a P-134.*
+
+`simular_custo` fazia `c = min(e*aporte, aporte)`. Com aporte **R$ 0**, a entrada fixa dá
+`e = inf`, `inf*0` é **NaN**, e `min(NaN, 0)` devolve NaN: o custo, o patrimônio e o arrasto
+viravam NaN, sem erro. `interacao_g3_g4` roda com `estado.aporte_mensal` — que é zero para um
+usuário novo — e comparava `NaN < x`, que é sempre falso: a resposta ("nenhuma rota eliminada
+venceria") saía **certa por acidente**. É a forma do F-02 em aritmética, a mesma do `t_quantil`
+saturado de 18/09: número de borda com cara de número.
+
+**Conserto (P-134):** a condição tem nome, `AporteConsumidoPelaEntrada`, e a simulação recusa
+em vez de devolver número. Quem simula aporte fracionado (o `custo_pct_aportado` do alvo, o
+`custo_de_discordar`) converte em motivo escrito; a interação G3×G4 tira a rota da comparação,
+porque rota que come o aporte não vence ninguém.
+
+**Declarado:** `test_P134_com_aporte_zero_a_interacao_g3_g4_nao_cai_nem_vira_NaN` **passaria na
+versão antiga** — o NaN dava a resposta certa. Ele guarda contra a queda que a exceção nova
+poderia trazer, não contra o defeito antigo. Os dois que reprovam na versão antiga são os da
+recusa e o da proposta com peso mínimo.
+

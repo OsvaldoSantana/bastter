@@ -2881,6 +2881,24 @@ pregão.
   série: um par por mês, de graça, porque os dois anuais já estão no armazém. Um dia que
   mude ali é revisão da B3 — e é a única medição que diria se o anual mensal perde versões.
 
+
+**25/09/2026 — o código existe, e está ligado ao workflow.** `fase0/conciliar_cotahist.py` +
+12 testes (duas mutações reprovam: tirar a ordenação do multiconjunto e tirar o
+`ANTES_DA_ROTINA`). Passo `Conciliar COTAHIST` no `captura_cvm.yml`, com vermelho próprio;
+resultado em `docs/acervo/b3/conciliacoes.csv`, commitado pelo bot. **Medido antes de
+escrever:** o diário tem o mesmo leiaute do anual (header `00COTAHIST.2026BOVESPA 20260924`,
+245 posições, trailer com 15.903), então a leitura é a do `calendario.registros()`.
+
+Duas escolhas de desenho, escritas no módulo: pregão anterior ao primeiro diário capturado é
+`ANTES_DA_ROTINA`, não perda (a rotina começou em 17/09); e a versão anterior do anual é
+escolhida pelo **instante** observado, não pela ordem das linhas do registro.
+
+**O que vai acontecer, simulado sobre o registro real:** em 26/09 ele concilia **agosto** (o
+anual de 24/09 cobre o mês); todos os pregões saem `ANTES_DA_ROTINA`, e a comparação entre o
+anual de 24/09 (`4f2cf2…`) e o íntegro do inventário (`fb3546…`, até 18/09) é o **primeiro
+ponto da série do CH-01** — quantos dias a B3 revisou. Em 01/10, setembro contra os diários.
+**Fecha quando** a conciliação de setembro rodar no executor, com os diários de 17/09 em diante.
+
 ## ~~P-139~~ · O pré-registro v2 fixa o sha256 do ZIP, e o leitor não confere pin nenhum — **FECHADA em 24/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** antes de a primeira linha do código da família ML ler
@@ -3086,14 +3104,20 @@ provavelmente mais simples. Declarada em
 >    **citação de passagens** com a fonte (Lei 9.610/1998, art. 46, III) — o leiaute como dado já
 >    mora em `docs/schemas/cotahist-v02.yaml`; (b) pedir autorização à B3; (c) manter e declarar
 >    o risco. Recomendação: (a). O histórico do git continua tendo o texto, como no NEFIN.
-> 2. **O armazém da CVM pode ser público.** A ODbL permite redistribuir com atribuição e
+> 2. **DECIDIDA por ele, 25/09/2026: "pode ser público".** Desenho em
+>    `docs/decisoes/P-136-cvm-publica.md` — release do GitHub, sem conta nem credencial nova,
+>    porque o acesso público do R2 é do bucket inteiro e abriria a B3. **Nada foi publicado:**
+>    executa depois do OK dele ao desenho (segunda, 28/09). O texto abaixo é o que ele tinha
+>    diante de si.
+>
+>    **O armazém da CVM pode ser público.** A ODbL permite redistribuir com atribuição e
 >    *share-alike*; as versões que a CVM já substituiu, que hoje só existem no R2, poderiam ser
 >    servidas a quem reproduz. É escolha, não exigência — e custa banda do R2.
 >
 > **Não lido (P5):** a Política Comercial de Market Data da B3 (é ela que diz como se pede o
 > consentimento) e a página de licença do ITR, FCA e CAD na CVM.
 
-## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
+## ~~P-134~~ · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16 — **FECHADA em 25/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
 chamador fora do pipeline usar `custo_pct_aportado`/`arrasto_anualizado` · **Classe:**
@@ -3105,6 +3129,14 @@ come o aporte inteiro **sem dizer nada**. O `motor.simular` alertava (K-08.3) �
 P-43. No pipeline o G3 barra a rota antes, então hoje é inerte; quem chama as duas funções
 direto recebe um número sem o aviso. O conserto é o mesmo desenho do G3: devolver a condição
 em vez de engoli-la, com teste que reprove contra a versão atual.
+
+
+**25/09/2026 — FECHADA.** `AporteConsumidoPelaEntrada`: a simulação recusa com nome. **E a
+premissa "hoje é inerte" estava errada:** o `custo_pct_aportado` do alvo e o `custo_de_discordar`
+simulam com o aporte **da rota** (`aporte × peso`), e a proposta do segundo não passa pelo G3.
+Medido: só `acao_450` (R$ 4,50 a ordem) alcança, com aporte da rota ≤ R$ 4,50. E embaixo havia o
+B-19 (aporte R$ 0 → NaN). Três testes; os caminhos que simulam aporte fracionado viram motivo
+escrito, e a interação G3×G4 deixa a rota fora.
 
 ## P-133 · O acervo da CVM tem 49 arquivos com sha256 e nenhum com origem declarada
 
@@ -3124,6 +3156,20 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 `__v20260913__` de 2024 vieram de `(1).zip` do navegador e **não têm linha no registro**.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
+
+## ~~P-149~~ · `cenarios.py` cai no `main` — `fora_status` mudou de forma — **FECHADA em 25/09/2026**
+
+**Dono:** Claude Code · **Gatilho:** no próximo toque em `cenarios.py` ou em `fase_universo` ·
+**Classe:** `BLOQUEIA_O_SISTEMA` (o `CLAUDE.md` §3 manda rodar `python cenarios.py`)
+
+Medido em 25/09 no `main`, antes da P-134: `for rt,e in u["fora_status"]` →
+`TypeError: cannot unpack non-iterable RotaAloc object`. Desde a F-02 o G5 roda **antes** do G3,
+sobre rotas nuas, e o `fora_status` passou a guardar rota, não par. O `cenarios.py` não foi junto,
+e nenhum teste o roda — é a P-80 (a rotina mede um terço) na forma de um script de exemplo.
+Conserto: ler o `fora_status` como rota, e um teste que rode o `main()` do `cenarios.py`.
+
+**FECHADA no mesmo commit.** `alocacao/test_cenarios.py` roda o script e exige os seis
+cenários; reprova no `main` de antes (conferido com o conserto guardado).
 
 ## P-147 · A captura do NEFIN ainda não rodou no executor
 
@@ -3354,6 +3400,8 @@ validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca 
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-149** | `cenarios.py` caía no `main` (`fora_status` virou lista de rotas) | 25/09 — lê rota nua; `test_cenarios.py` roda o script |
+| **P-134** | custo de entrada maior que o aporte virava `min()` calado | 25/09 — `AporteConsumidoPelaEntrada`; não era inerte (aporte da rota e proposta); achado B-19 (aporte R$ 0 → NaN) |
 | **P-57** | a captura da CVM dependia de alguém lembrar (W-01) | 25/09 — execução agendada `36148547193` verde; regime em `politica.yaml → regimes_de_captura.cvm`; limitação `RESOLVIDA` |
 | **P-135** | o COTAHIST não era capturado na nuvem | 25/09 — mesma execução, passo `captura_b3`; `regimes_de_captura.b3`; limitação `RESOLVIDA`. Conciliação segue na P-137 |
 | **P-148** | o Dependabot proporia `numpy` e `pandas` toda semana, e aceitar muda o número pré-registrado (P-15) | 25/09 — **decisão dele, opção (b):** `ignore` das duas no `.github/dependabot.yml`, derivado de `pyproject → tool.meol.dependencias.numericas`; `test_P148_…` reprova divergência nos dois sentidos (mutação: sem o `pandas`, reprova). Saída escrita no arquivo: pré-registro ML executado ou aviso de segurança. Os PRs `numpy-2.4.6` e `pandas-3.0.6` fecham |

@@ -442,6 +442,17 @@ def custo_entrada_pct(r, aporte, B3V):
 def custo_saida_pct(r, B3V):
     return r.corr_pct + (B3V if r.b3_vista else 0) + r.saida_extra
 
+class AporteConsumidoPelaEntrada(ValueError):
+    """P-134 (B-16, divergencia 4): o custo de entrada iguala ou passa o aporte.
+
+    Era `min(e*aporte, aporte)`: a rota comia o aporte inteiro e a simulacao devolvia um
+    numero, sem dizer nada -- a forma do F-02, condicao engolida virando valor. O G3 barra
+    a rota no pipeline com o aporte INTEIRO; mas `custo_pct_aportado` do alvo e o
+    `custo_de_discordar` simulam cada rota com o aporte DELA (`aporte * peso`), e a
+    proposta do segundo nem passa pelo G3. Medido em 25/09: `acao_450` (R$ 4,50 por
+    ordem) chega aqui com aporte da rota de ate R$ 4,50 -- peso de 0,9% a R$ 500/mes."""
+
+
 def simular_custo(r, C, aporte, anos):
     """Retorna (patrimonio_final, custo_total, aportado). Base das duas metricas.
 
@@ -465,9 +476,13 @@ def simular_custo(r, C, aporte, anos):
     m = (1+bruto)**(1/12)-1
     pat = custo = 0.0
     e = custo_entrada_pct(r, aporte, B3V)
+    if e >= 1.0:
+        raise AporteConsumidoPelaEntrada(
+            f"rota {r.id}: entrada de {e:.1%} do aporte de R$ {aporte:.2f} -- o custo come "
+            f"o aporte inteiro, e nao ha patrimonio a simular")
     n = int(anos*12)
     for _ in range(n):
-        c = min(e*aporte, aporte); pat += aporte-c; custo += c
+        c = e*aporte; pat += aporte-c; custo += c
         pat *= (1+m)
         if r.interno_aa:
             t = pat*((1+r.interno_aa)**(1/12)-1); pat -= t; custo += t
@@ -1032,9 +1047,15 @@ def interacao_g3_g4(fora_atrito, vivos, C, aporte, P, anos, memo=None):
         rivais = [v for v in vivos if v.exposicao == r.exposicao]
         if not rivais: continue
         for riv in rivais:
-            ganha = [h for h in hs
-                     if arrasto_anualizado(r, C, aporte, h, _memo) <
-                        arrasto_anualizado(riv, C, aporte, h, _memo) - 1e-12]
+            try:
+                ganha = [h for h in hs
+                         if arrasto_anualizado(r, C, aporte, h, _memo) <
+                            arrasto_anualizado(riv, C, aporte, h, _memo) - 1e-12]
+            except AporteConsumidoPelaEntrada:
+                # P-134: rota cuja entrada come o aporte nao vence ninguem. Antes ela
+                # entrava aqui como NaN (aporte R$ 0: inf*0 dentro do `min`) ou como numero
+                # falso -- e NaN < x e falso, entao a resposta saia certa por acidente.
+                continue
             if ganha:
                 out.append(dict(rota=r, rival=riv, horizontes_em_que_venceria=ganha,
                     nota=f"{r.nome} foi eliminada pelo G3 (atrito) e venceria "
@@ -1720,28 +1741,44 @@ def alocar(estado, C, P, anos=None, teses=None, carregos=None):
     saida["alvo"] = dict(fracao_rv=f_rv, fracao_rv_realizada=rv_realizada,
                          pesos=pesos, alertas=alertas,
                          diversificacao=diversificacao, bloco_por_rota=bloco_por_rota,
-                         custo_pct_aportado={rid: custo_pct_aportado(
+                         custo_pct_aportado={rid: _custo_ou_motivo(
                              next(v[0] for v in vivos if v[0].id==rid), C,
-                             max(estado.aporte_mensal*w, 1.0), anos)
+                             max(estado.aporte_mensal*w, 1.0), anos, alertas)
                              for rid, w in pesos.items()},
                          blocos=blocos,
                          fracao_datada=frac_datada)
     return saida
 
 
+def _custo_ou_motivo(r, C, aporte, anos, alertas):
+    """`custo_pct_aportado`, ou None com o motivo nos alertas (P-134): o peso pequeno pode
+    dar a rota um aporte menor que o custo fixo dela, e o numero seria mentira."""
+    try:
+        return custo_pct_aportado(r, C, aporte, anos)
+    except AporteConsumidoPelaEntrada as e:
+        alertas.append(f"P-134: {e}")
+        return None
+
+
 # ══ CUSTO DE DISCORDAR ═══════════════════════════════════════════════════════
 def custo_de_discordar(alvo, proposta, C, aporte, anos, rotas_por_id):
     """O sistema nunca impoe. Mostra o que a diferenca custa, em taxa."""
+    comem = []                    # P-134: rota cujo custo de entrada come o aporte dela
     def arrasto_carteira(pesos):
         tot = 0.0
         for rid, w in pesos.items():
             r = rotas_por_id.get(rid)
             if r is None: continue
-            tot += w * arrasto_anualizado(r, C, max(aporte*w, 1.0), anos)
+            try:
+                tot += w * arrasto_anualizado(r, C, max(aporte*w, 1.0), anos)
+            except AporteConsumidoPelaEntrada as e:
+                comem.append(str(e))
+                return None
         return tot
     a_alvo, a_prop = arrasto_carteira(alvo), arrasto_carteira(proposta)
+    dif = None if a_alvo is None or a_prop is None else (a_prop-a_alvo)*100
     return dict(arrasto_alvo_aa=a_alvo, arrasto_proposta_aa=a_prop,
-                diferenca_pp_aa=(a_prop-a_alvo)*100,
+                diferenca_pp_aa=dif, aporte_consumido=comem,
                 nota="diferenca de CUSTO, que e computavel. Diferenca de RETORNO nao e — "
                      "para isso existe o backtest com pre-registro, nao esta funcao")
 

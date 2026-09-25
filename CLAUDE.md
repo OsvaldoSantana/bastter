@@ -1035,8 +1035,9 @@ Não os repita de memória — leia do YAML.
   quando passa da data. Em 05/09/2026 `cdi_aa` e `selic_aa` foram reconferidos na
   API do BCB e **os dois valores estavam certos** — era prazo vencido, não número
   errado. É assim que o mecanismo deve funcionar: ele manda reconferir, não
-  presume erro. Próximo a vencer: `poupanca_am` em **28/09/2026**, e
-  `cofrinho.turbinado_condicao_de_isencao` em **05/10/2026**.
+  presume erro. Próximo a vencer: `cofrinho.turbinado_condicao_de_isencao` em
+  **05/10/2026** (só no app dele). `poupanca_am` foi reconferida em 25/09 (0,6654% a.m.,
+  aniversário de 24/09) e vence em **24/10/2026**.
 
   > **B-01, 11/09/2026 — e este parágrafo estava mentindo.** O aviso só dispara quando
   > `expira` é `dt.date`. **Quatro das 43 constantes datadas tinham a data entre aspas**

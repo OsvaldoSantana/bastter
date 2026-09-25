@@ -40,7 +40,16 @@ macro:
     acesso: '2026-09-05'
     expira: 2026-12-04
     nota: 'reconferido em 05/09/2026: meta de 14,00 vigente.'
-  poupanca_am: {valor: 0.006455, status: COMPLETO, fonte: "BCB/SGS 25",   acesso: 2026-08-28, expira: 2026-09-28}
+  poupanca_am:
+    valor: 0.006654
+    status: COMPLETO
+    fonte: "BCB/SGS 25 (api.bcb.gov.br/dados/serie/bcdata.sgs.25), aniversario 24/09/2026"
+    acesso: 2026-09-25
+    expira: 2026-10-24
+    nota: 'reconferido em 25/09/2026, tres dias antes de vencer. Mesma regra do valor anterior,
+      medida: o valor e o do ultimo aniversario publicado na data de acesso (0,6455 era o de
+      28/08, com dataFim 28/09 = o expira), e o expira e o dataFim desse periodo. A serie varia
+      por aniversario (0,6061 a 0,6694 entre 19 e 24/09) porque carrega a TR do dia.'
 
 b3:
   vista_total_pct:

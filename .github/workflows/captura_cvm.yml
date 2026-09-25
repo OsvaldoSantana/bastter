@@ -87,13 +87,30 @@ jobs:
           python fase0/capturar_nefin.py --armazem s3
           echo "codigo=$?" >> "$GITHUB_OUTPUT"
 
+      # P-137 (25/09/2026): o anual do mes contra os diarios, e contra o anual anterior.
+      # Idempotente: so trabalha quando existe anual observado depois do fim do mes e a
+      # conciliacao dele ainda nao esta no CSV. Pregao sem diario, diario divergente ou
+      # diario sem pregao deixam o job vermelho; revisao da B3 e informacao.
+      - name: Conciliar COTAHIST
+        id: conciliacao_b3
+        if: always()
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: |
+          set +e
+          python fase0/conciliar_cotahist.py --armazem s3
+          echo "codigo=$?" >> "$GITHUB_OUTPUT"
+
       # `git status`, nao `git diff`: o registro da B3 nasce nesta rotina, e arquivo novo
       # nao aparece no diff -- o primeiro registro nunca seria commitado.
       - name: Commitar o registro, se mudou
         if: always()
         run: |
           set -euo pipefail
-          REGS="docs/acervo/cvm/capturas.csv docs/acervo/b3/capturas.csv docs/acervo/nefin/capturas.csv"
+          REGS="docs/acervo/cvm/capturas.csv docs/acervo/b3/capturas.csv docs/acervo/nefin/capturas.csv docs/acervo/b3/conciliacoes.csv"
           if [ -z "$(git status --porcelain -- $REGS)" ]; then
             echo "registros inalterados: nada a commitar (a prova da rodada esta no log do armazem)"
             exit 0
@@ -126,7 +143,7 @@ jobs:
           fi
 
       - name: Falhar se a captura falhou
-        if: always() && (steps.captura.outputs.codigo != '0' || steps.captura_b3.outputs.codigo != '0' || steps.captura_nefin.outputs.codigo != '0')
+        if: always() && (steps.captura.outputs.codigo != '0' || steps.captura_b3.outputs.codigo != '0' || steps.captura_nefin.outputs.codigo != '0' || steps.conciliacao_b3.outputs.codigo != '0')
         run: |
-          echo "CVM saiu com '${{ steps.captura.outputs.codigo }}'; COTAHIST com '${{ steps.captura_b3.outputs.codigo }}'; NEFIN com '${{ steps.captura_nefin.outputs.codigo }}'"
+          echo "CVM saiu com '${{ steps.captura.outputs.codigo }}'; COTAHIST com '${{ steps.captura_b3.outputs.codigo }}'; NEFIN com '${{ steps.captura_nefin.outputs.codigo }}'; conciliacao com '${{ steps.conciliacao_b3.outputs.codigo }}'"
           exit 1

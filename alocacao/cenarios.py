@@ -64,7 +64,10 @@ def mostrar(titulo, estado, anos=None, teses=None, carregos=None):
                   f"{x['horizontes_em_que_venceria']} anos")
     if u["fora_status"]:
         print("\n  FORA DA ORDENACAO (insumo nao confirmado):")
-        for rt,e in u["fora_status"]:
+        # P-149: desde a F-02 o G5 roda antes do G3, sobre rotas NUAS -- o `fora_status`
+        # guarda rota, nao par (rota, custo). O desempacotamento antigo caia no main.
+        for x in u["fora_status"]:
+            rt = x[0] if isinstance(x, tuple) else x
             print(f"     {rt.nome:<52} {rt.bloqueios[0][:60]}")
     print(f"\n  ALOCACAO ALVO  (fracao em renda variavel: {a['fracao_rv']*100:.0f}%)")
     b = a["blocos"]
@@ -76,8 +79,12 @@ def mostrar(titulo, estado, anos=None, teses=None, carregos=None):
     for rid,w in sorted(a["pesos"].items(), key=lambda x:-x[1]):
         rt=ROTAS[rid]
         ap = max(estado.aporte_mensal*w, 1.0)
-        arr=arrasto_anualizado(rt,C,ap,anos or estado.horizonte_anos)
         cpa=a["custo_pct_aportado"][rid]
+        if cpa is None:            # P-134: a entrada come o aporte desta rota; motivo nos alertas
+            print(f"  {rt.nome[:43]:<44}{a['bloco_por_rota'].get(rid,'?'):>15}{w*100:>6.1f}%"
+                  f"{estado.aporte_mensal*w:>9,.0f}   a entrada come o aporte (P-134)")
+            continue
+        arr=arrasto_anualizado(rt,C,ap,anos or estado.horizonte_anos)
         print(f"  {rt.nome[:43]:<44}{a['bloco_por_rota'].get(rid,'?'):>15}{w*100:>6.1f}%"
               f"{estado.aporte_mensal*w:>9,.0f}{arr*100:>9.3f}%{cpa*100:>12.1f}%")
     for al in a["alertas"]:
