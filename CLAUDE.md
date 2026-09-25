@@ -607,6 +607,11 @@ resultado possível, pior que não fazer.
 
 ## 5-B. A régua da medição — onze erros meus em uma semana, e a forma que eles têm (17 linhas desde 24/09)
 
+*Conferido em 25/09: as 17 linhas são os **11 erros da tabela** (11 a 13/09) mais as **linhas
+12 a 17**. A tabela mostra 12 porque o erro da linha 13 (CAPTCHA) também está nela. As cinco
+perguntas numeradas de 1 a 5 são a régua em si, não linhas da contagem. Não existe texto
+numerado de 6 a 11: esses números são os erros da tabela.*
+
 *Escrita em 13/09/2026, a pedido dele: **régua de método, não lista de incidentes.***
 
 Entre 11 e 13/09 eu errei onze vezes. Publiquei dois dos erros e retirei os dois. A
@@ -1480,12 +1485,51 @@ incompatíveis ao mesmo tempo — isso continua verdade, e é a parte da §11.4 
 > exigiria ver tokens de entrada, de saída e cache da própria sessão — **instrumento que
 > eu não tenho**.
 
+> ## RETRATAÇÃO — 25/09/2026
+>
+> **O que esta seção afirmava, citado:** *"ordenado, **não medido**"*; *"Medi-la exigiria ver
+> tokens de entrada, de saída e cache da própria sessão — instrumento que eu não tenho"*; e,
+> no item 2, *"Rodar a suíte inteira depois de cada passo. 269 testes, ~8 s. Barato em tempo"*.
+>
+> **A evidência que derruba, medida.** O instrumento existe: `tools/analisar_sessoes.py` lê as
+> transcrições que o Claude Code grava em `~/.claude/projects` e decompõe cada pedido em
+> modelo, ferramenta e compactação, com contexto e tokens de saída por chamada. Medido sobre
+> os 25 pedidos de 21 a 24/09:
+>
+> | o quê | quanto |
+> |---|---|
+> | pytest | 58% do tempo dos pedidos, 268 de 458 min |
+> | modelo gerando | 17%, 707 chamadas, 6,5 s cada |
+> | rodadas completas da suíte | 31, de 4 a 10 min cada, 238 min |
+> | rodadas que morreram no teto de 10 min do Bash | 3, sem resultado |
+> | rodadas só do que a tarefa tocou | 30 min no total |
+>
+> E o item 2 estava errado nos dois números: a suíte não tinha 269 testes nem levava ~8 s. Em
+> 25/09, antes da P-141, a completa sequencial levava **607 s** (alocacao 34, fase0 538,
+> auditoria 35). Depois da P-141: **138 s** em paralelo e **46 s** no ciclo `-m "not slow"`.
+> "Barato em tempo" era o oposto: a suíte era o **maior** gasto de tempo da semana, maior que
+> o modelo.
+>
+> **A causa raiz é a §5-B.17, de novo.** "Instrumento que eu não tenho" foi escrito no Cowork,
+> que não vê as próprias transcrições, e valia para **aquela** ferramenta. Na máquina dele as
+> transcrições estão em disco, e um script de 300 linhas as lê. Eu tratei o que a sessão da
+> nuvem não alcança como o que ninguém mede. E o "269 testes, ~8 s" era um número de 06/09
+> que ninguém reconferiu enquanto a suíte triplicava: número em prosa sem data de medição
+> envelhece calado (§8).
+>
+> **O que foi corrigido no processo:** o tempo das sessões passou a ser comando
+> (`tools/analisar_sessoes.py`, com teste de união de intervalos), o protocolo da §9 separou a
+> rodada da tarefa da rodada do commit (P-141), e as métricas moram em
+> `docs/metricas/README.md`, que diz o que é medido, onde, e o que não é. A ordem abaixo fica
+> como foi escrita.
+
 Fora a leitura inicial, os três maiores gastos desta semana, em ordem:
 
 1. **Respostas longas minhas.** São o maior item isolado. Parte é o que ele pediu
    (análise profunda, nunca superficial) e parte é excesso meu — repetir na resposta o
    que já está no arquivo que acabei de escrever.
-2. **Rodar a suíte inteira depois de cada passo.** 269 testes, ~8 s. Barato em tempo,
+2. **Rodar a suíte inteira depois de cada passo.** ~~269 testes, ~8 s. Barato em tempo,~~
+   *(retratado em 25/09: 607 s, e o maior gasto de tempo medido; ver acima)*
    caro em token quando a saída volta inteira. `pytest -q | tail -3` resolve, e eu já
    faço isso — mas nem sempre.
 3. **Reler arquivo que acabei de escrever.** Desnecessário: a ferramenta de edição
@@ -1527,6 +1571,22 @@ nada"*. **Ausência de mudança precisa ser afirmada, nunca inferida da ausênci
 **O que NÃO é desperdício, e não deve ser cortado:** o instantâneo dourado. Ele custou
 caro em duas ocasiões e foi o que permitiu afirmar "zero desvio" em vez de "acho que
 está tudo bem". Medir antes de mexer é o método, não o excesso.
+
+---
+
+## 12. Métricas
+
+O que é medido, onde, com que frequência e o que **não** é: **`docs/metricas/README.md`**.
+Nenhum número dela é copiado para cá (§8): lê-se da fonte.
+
+- **Portões sem ninguém lembrar (P7):** `.github/workflows/testes.yml`. O push roda as suítes
+  sem `slow`, mais ruff e mypy; o semanal roda a completa contra o armazém, a cobertura e a
+  issue de `expira`. `privado` (lê o `estado.yaml`) fica fora do CI por nome.
+- **Regra permanente:** todo achado, retratação ou reincidência novo ganha a sua linha em
+  `docs/metricas/eventos.csv` **no mesmo commit** que o registra. Campo que o texto não
+  diz fica `desconhecido`, nunca inferido. Evento sem código reprova
+  (`auditoria/metricas_processo.py`).
+- **Tempo e tokens das sessões:** `py -3.11 tools/analisar_sessoes.py`, só na máquina dele.
 
 ---
 

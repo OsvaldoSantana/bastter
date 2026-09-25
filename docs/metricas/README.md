@@ -31,7 +31,10 @@ disparou (push) e o dono do repositório (agendado).
   subprocesso.
 - **Mutante sobrevivente é achado candidato.** Um mutante equivalente, que não muda o
   comportamento, também sobrevive. Quem o promove a achado é a leitura (régua §5-B, pergunta 3).
-- **`eventos.csv`:** `desconhecido` quer dizer "o registro não diz", e nunca é vazio. O resumo
+- **`eventos.csv`:** `desconhecido` quer dizer "o registro não diz", e nunca é vazio.
+  `mesmo-commit` em `commit_corrigiu` é o commit que acrescentou a linha: um commit não sabe o
+  próprio hash, e `git log -S "<codigo>" -- docs/metricas/eventos.csv` o encontra. `aberto` =
+  ainda não corrigido. O resumo
   semanal mostra quantos `quem_achou` são `desconhecido` ao lado da fração do Osvaldo, porque
   "0% de 26" com 11 desconhecidos não é "0%".
 
