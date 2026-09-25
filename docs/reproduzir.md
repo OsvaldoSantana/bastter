@@ -1,8 +1,11 @@
 # Reproduzir o dado de mercado sem o nosso armazém
 
-O armazém do projeto (Cloudflare R2) é **privado**. Os termos da B3, da CVM e do NEFIN não
-foram lidos como autorização para redistribuir, e os do NEFIN não autorizam (P-136,
-[`fontes/nefin.md`](fontes/nefin.md)). O que é público é o **sha256 de cada arquivo que o
+O armazém do projeto (Cloudflare R2) é **privado**. Os termos da B3 vedam redistribuir dado
+de mercado sem consentimento ([`fontes/b3-termos-de-uso.md`](fontes/b3-termos-de-uso.md)), e os
+do NEFIN não autorizam ([`fontes/nefin.md`](fontes/nefin.md)). A CVM publica sob ODbL, que
+permite redistribuir com atribuição
+([`fontes/cvm-dados-abertos-licenca.md`](fontes/cvm-dados-abertos-licenca.md)): para ela, o
+armazém ser privado é escolha, não exigência (P-136). O que é público é o **sha256 de cada arquivo que o
 projeto viu**, em [`docs/acervo/`](acervo/). Reproduzir é capturar da fonte, na sua máquina, e
 comparar os hashes.
 

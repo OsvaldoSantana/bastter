@@ -13,10 +13,16 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.31.0
+  versao: 1.32.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.32.0: >-
+      25/09/2026. P-136, leitura feita na fonte (docs/fontes/b3-termos-de-uso.md,
+      docs/fontes/cvm-dados-abertos-licenca.md). `licenca_de_redistribuicao_da_b3_nao_lida`
+      fica RESOLVIDA; entra `redistribuir_dado_da_b3_exige_consentimento` (FISICA: os termos
+      permitem uso pessoal e vedam redistribuir ou fornecer base a terceiros sem
+      consentimento). A CVM publica sob ODbL, com citacao obrigatoria.
     1.31.0: >-
       25/09/2026. P-57 passo 3 e P-135: a captura da CVM e do COTAHIST rodou SEM
       HUMANO -- execucao 36148547193, evento schedule, passos `captura` e `captura_b3`
@@ -2351,6 +2357,10 @@ limitacoes_declaradas:
       defeitos abertos do acervo em docs/fontes/b3-series-historicas-cotahist.md
 
   licenca_de_redistribuicao_da_b3_nao_lida:
+    RESOLVIDA: >-
+      25/09/2026: lida na fonte, com data de acesso -- docs/fontes/b3-termos-de-uso.md e
+      docs/fontes/cvm-dados-abertos-licenca.md. O limite que sobra e do mundo, nao nosso:
+      `redistribuir_dado_da_b3_exige_consentimento`.
     tipo: NAO_CONSERTADA
     o_que_falta: >
       Ninguem leu os termos de uso da B3 para redistribuicao -- e menos ainda para uso
@@ -2369,6 +2379,28 @@ limitacoes_declaradas:
     quando_deixa_de_importar: >
       Enquanto o sistema servir so o Osvaldo. Vira bloqueio no dia em que houver um
       segundo usuario.
+
+  redistribuir_dado_da_b3_exige_consentimento:
+    tipo: FISICA
+    o_que_falta: >
+      Os termos da B3 permitem o dado para "uso exclusivamente pessoal" e vedam, sem
+      "previo e expresso consentimento", a publicacao, a redistribuicao, a reformatacao e o
+      "fornecimento de bases de dados e produtos a terceiros" a partir de dados de mercado.
+      Hoje o sistema guarda cotacao e evento societario para UM usuario, num armazem
+      privado, e o repositorio publico nao tem nenhum (medido em 25/09). Servir um segundo
+      usuario -- inclusive com a serie AJUSTADA, que e reformatacao -- exige contrato com a
+      B3 antes.
+    direcao_do_vies: >
+      Nenhum sobre numero: e risco de uso. Por isso e PORTAO, nao ajuste.
+    por_que_fisica: >
+      O limite e dos termos da fonte, nao de conserto nosso. Deixa de valer com
+      consentimento escrito da B3 (instrumento contratual, pela Politica Comercial de Market
+      Data, que nao foi lida), ou se a B3 mudar os termos -- a pagina nao tem versao, e o
+      sha256 do texto em docs/fontes/b3-termos-de-uso.md e o que acusa a mudanca.
+    quando_deixa_de_importar: >
+      Enquanto o sistema servir so o Osvaldo. Vira bloqueio no dia em que houver um segundo
+      usuario.
+    fonte: "docs/fontes/b3-termos-de-uso.md, lido em 25/09/2026"
 
   o_teto_do_armazem_e_do_codigo:
     tipo: FISICA

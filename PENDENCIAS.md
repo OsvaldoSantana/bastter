@@ -3059,6 +3059,35 @@ provavelmente mais simples. Declarada em
 >    revisão** daquele PDF é medição, não suposição (§5-B.1). O URL da V5.0 da tarifação não
 >    está em lugar nenhum do repositório.
 
+
+> **25/09/2026, 20:02 UTC — LIDA.** Ele liberou os dois hosts, e a leitura foi feita com `curl`
+> (a ferramenta de leitura de página continuou com o bloqueio antigo). Texto das cláusulas,
+> data de acesso e sha256 em `docs/fontes/b3-termos-de-uso.md` e
+> `docs/fontes/cvm-dados-abertos-licenca.md`. O resumo do buscador estava certo nos dois pontos.
+>
+> - **B3:** "uso exclusivamente pessoal"; redistribuir, publicar, reformatar ou fornecer base
+>   a terceiros a partir de dado de mercado é vedado sem consentimento prévio e expresso —
+>   **sem** o qualificador "para fins comerciais". Virou `limitacoes_declaradas.
+>   redistribuir_dado_da_b3_exige_consentimento` (`FISICA`); a entrada "não lida" ficou
+>   `RESOLVIDA`. Servir um segundo usuário exige contrato com a B3.
+> - **CVM:** ODbL no DFP, e citação obrigatória em todo uso secundário. A frase está no `NOTICE`.
+>
+> **O que resta é decisão dele — por isso a pendência continua aberta, agora com dono único:**
+>
+> 1. **As duas transcrições de documento da B3** (`SeriesHistoricas_Layout.md`, 394 linhas;
+>    `Tarifacao_Equities_V5.0_PT.md`, 182). Os termos autorizam uso "exclusivamente pessoal" e a
+>    proibição de "reprodução […] publicação" é ambígua quanto a "fins comerciais"; nenhuma
+>    leitura torna a transcrição **integral** claramente permitida. Saídas: (a) reduzir a
+>    **citação de passagens** com a fonte (Lei 9.610/1998, art. 46, III) — o leiaute como dado já
+>    mora em `docs/schemas/cotahist-v02.yaml`; (b) pedir autorização à B3; (c) manter e declarar
+>    o risco. Recomendação: (a). O histórico do git continua tendo o texto, como no NEFIN.
+> 2. **O armazém da CVM pode ser público.** A ODbL permite redistribuir com atribuição e
+>    *share-alike*; as versões que a CVM já substituiu, que hoje só existem no R2, poderiam ser
+>    servidas a quem reproduz. É escolha, não exigência — e custa banda do R2.
+>
+> **Não lido (P5):** a Política Comercial de Market Data da B3 (é ela que diz como se pede o
+> consentimento) e a página de licença do ITR, FCA e CAD na CVM.
+
 ## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
@@ -3475,10 +3504,8 @@ máquina é o que fecha.**
 > **25/09/2026, noite — substitui a nota de 24/09 abaixo: a P-57 e a P-135 FECHARAM** (execução
 > agendada `36148547193`). O que fica para a sessão local, em ordem:
 >
-> 1. **P-136 — ler os termos da B3 e a licença da CVM** na fonte, com data de acesso, para
->    `docs/fontes/`. A nuvem não alcança `www.b3.com.br` nem `dados.cvm.gov.br` (bloqueio da
->    rede do ambiente, não da fonte). A pergunta tem duas metades: redistribuir **dado** e
->    reproduzir **documento** (`SeriesHistoricas_Layout.md`, `Tarifacao_Equities_V5.0_PT.md`).
+> 1. ~~P-136 — ler os termos da B3 e a licença da CVM~~ **lidos às 20:02 UTC**, pela nuvem,
+>    depois de ele liberar os hosts. Sobram duas decisões dele, escritas na P-136.
 > 2. **P-147 — conferir o NEFIN no executor** depois do cron de 26/09. O agendamento de 09:15
 >    UTC saiu às 14:35 UTC em 25/09: olhar à noite, não de manhã. Não exige desktop.
 > 3. **`macro.poupanca_am` vence em 28/09.**
