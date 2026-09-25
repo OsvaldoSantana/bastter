@@ -69,7 +69,7 @@ license = "Apache-2.0"               # a prosa (.md) e CC-BY-4.0: ver NOTICE
 # resultado registrado hoje sem nada avisar. `==` transforma essa mudanca num evento
 # visivel: o teste do ambiente falha e alguem decide.
 dependencies = [
-  "numpy==2.4.4",     # alfa_contra_fatores -> linalg.lstsq. MUDA NUMERO.
+  "numpy==2.4.6",     # alfa_contra_fatores -> linalg.lstsq. MUDA NUMERO.
   "pandas==3.0.2",    # mensal(), premios(), janelas_moveis(). MUDA NUMERO.
   "PyYAML==6.0.3",    # todo o carregamento de politica/custos/estado/teses.
 ]
