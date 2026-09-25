@@ -8,7 +8,7 @@ instrumento da P-88.
 
 ## 0. Primeiro, uma retratação minha — e ela veio deste documento
 
-Em 19/09, auditando três planos de otimização de token (`auditoria/AUDITORIA-PLANO-DE-TOKENS.md`
+Em 19/09, auditando três planos de otimização de token (`docs/auditoria/AUDITORIA-PLANO-DE-TOKENS.md`
 §4.5), eu recusei a proposta de *feature store* e aprendizado de máquina escrevendo:
 
 > *"Feature store para ML não é otimização de token — é mudança de escopo, **e o escopo tem

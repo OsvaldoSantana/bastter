@@ -270,7 +270,7 @@ não cobre metade do Ibovespa. **Tem prazo:** a CVM sobrescreve os arquivos anua
 Basileia e inadimplência não estão na CVM. A ordem entre as duas esteiras continua
 aberta, e o argumento é: a da CVM serve aos dois caminhos da A05, a do BCB só a um.
 
-**3. Reconciliar C-04 e C-05** com `auditoria/escopo-campos-de-analise.md`. O regime do
+**3. Reconciliar C-04 e C-05** com `docs/auditoria/escopo-campos-de-analise.md`. O regime do
 bloco C está escrito, mas dois dos cinco campos nunca foram nomeados — não os inventei.
 
 **4. Ligar o que já está especificado (P-29 a P-31).** Não exige o desktop, exige

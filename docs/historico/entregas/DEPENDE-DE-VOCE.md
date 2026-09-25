@@ -100,7 +100,7 @@ Eu escrevo no `custos.yaml` como `PARCIAL` (vira `COMPLETO` só com o regulament
 
 ### 6. A régua de "variante" — confirma o desenho? · *5 min*
 
-Está escrito em `auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`: especificação congelada,
+Está escrito em `docs/auditoria/PRE-REGISTRO-MODELO-DE-DADOS.md`: especificação congelada,
 graus de liberdade declarados, diário de execuções, e o contador como **alarme** (exige
 justificativa escrita, não bloqueia).
 
@@ -130,7 +130,7 @@ Get-ChildItem data -Recurse -Filter "COTAHIST*" | Select-Object FullName, Length
 
 ### 9. O download da CVM · *~1h de download, 5 min de comando*
 
-Passo a passo completo em `auditoria/CVM-DOWNLOAD-MANUAL.md`. O essencial:
+Passo a passo completo em `docs/auditoria/CVM-DOWNLOAD-MANUAL.md`. O essencial:
 
 1. abrir `https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/` no navegador;
 2. baixar **os 6 com prazo** primeiro: `dfp_cia_aberta_2021.zip` até `2026.zip`;

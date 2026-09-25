@@ -21,6 +21,11 @@ vivos:
   pyproject.toml: "versoes pinadas (P-15) e configuracao de lint e teste"
   .gitignore: "o que nunca entra no indice"
   .gitattributes: "fim de linha: o hash do dado nao muda com o CRLF"
+  # 25/09/2026, decisao dele (Sessao B): os arquivos que o GitHub procura na raiz.
+  CONTRIBUTING.md: "instalacao, testes, regras da casa e convencao de commit, para quem chega"
+  SECURITY.md: "relato privado; dado pessoal vazado conta como vulnerabilidade"
+  CODE_OF_CONDUCT.md: "Contributor Covenant 2.1, traducao oficial pt-BR"
+  CITATION.cff: "como citar o projeto, e o NEFIN que ele usa"
 destinos:
   bilhete: docs/historico/entregas/
   referencia: docs/referencia/

@@ -20,7 +20,7 @@ uma hora.**
 
 E o mais caro: a regra ja estava escrita. O `.gitignore` ignora `Claude outputs/` com
 o motivo por extenso -- *"ela contem uma COPIA INTEIRA do projeto... e a armadilha do
-`pesquisa-custos-2026-08/calc/` outra vez"*. A armadilha tinha nome, e o remedio era
+`docs/historico/pesquisa-custos-2026-08/calc/` outra vez"*. A armadilha tinha nome, e o remedio era
 uma LISTA DE PASTAS que alguem precisa lembrar de estender. `pacote_segunda/` nao
 estava na lista. **Isso e a P7: rotina que depende de lembrar nao e rotina.**
 
@@ -59,9 +59,9 @@ COPIAS_DECLARADAS = {
     # "armadilha" -- quem abrir `calc/motor.py` esta lendo uma versao de tres semanas
     # atras e nada no arquivo avisa. Fica, mas VISIVEL: tirar daqui exige mover a pasta
     # para `docs/historico/` ou renomear os arquivos, e isso e decisao do Osvaldo.
-    "pesquisa-custos-2026-08/calc/motor.py",
-    "pesquisa-custos-2026-08/calc/test_motor.py",
-    "pesquisa-custos-2026-08/calc/custos.yaml",
+    "docs/historico/pesquisa-custos-2026-08/calc/motor.py",
+    "docs/historico/pesquisa-custos-2026-08/calc/test_motor.py",
+    "docs/historico/pesquisa-custos-2026-08/calc/custos.yaml",
 }
 
 
@@ -79,8 +79,11 @@ def copias(rastreados):
         partes = p.split("/")
         if len(partes) == 2 and partes[0] in PACOTES:
             continue                                   # o proprio projeto
-        if any(x in PACOTES for x in partes[1:-1]):
-            achados.add(p)                             # regra 2: pasta de pacote ANINHADA
+        if any(x in PACOTES for x in partes[1:-1]) and p.endswith(EXTENSOES):
+            # regra 2: pasta de pacote ANINHADA -- com CODIGO. 25/09/2026: os laudos foram
+            # para `docs/auditoria/`, e prosa numa pasta de mesmo nome nao responde pergunta
+            # nenhuma com outro numero. Copia de verdade leva .py e .yaml, e continua pega.
+            achados.add(p)
             # `partes[1:-1]` e nao `partes[:-1]`: `alocacao/dados/nefin_factors.csv` tem
             # `alocacao` na posicao 0 e e o projeto vivo; copia e quando o nome do pacote
             # aparece DEPOIS de outra pasta.
@@ -148,3 +151,10 @@ def test_P82_a_linha_de_base_nao_guarda_copia_que_ja_saiu():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+def test_P82_laudo_em_docs_auditoria_nao_e_copia_e_codigo_la_dentro_e():
+    """25/09/2026: `docs/auditoria/` recebeu os laudos. Os dois lados da regra 2."""
+    assert copias(["auditoria/chaves_orfas.py", "docs/auditoria/C01-FATOR.md"]) == []
+    assert copias(["auditoria/chaves_orfas.py", "docs/auditoria/chaves_orfas.py"]) ==         ["docs/auditoria/chaves_orfas.py"]
+    assert copias(["alocacao/motor.py", "pacote/alocacao/E02-patch.py"]) ==         ["pacote/alocacao/E02-patch.py"]

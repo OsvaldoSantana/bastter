@@ -30,11 +30,11 @@ Get-FileHash CLAUDE.md, PENDENCIAS.md, SEGUNDA-21.md, fase0\calendario.py `
 | `SEGUNDA-21.md` | raiz (NOVO) | 9,971 | `a03cf86a82af` |
 | `alocacao/politica.yaml` | alocacao\ (igual ao que já está aí — 1.22.0) | 131,181 | `be02e1104e93` |
 | `alocacao/test_p98_acervo_fora_do_indice.py` | alocacao\ (NOVO) | 6,874 | `0d7a7bfae62e` |
-| `auditoria/AUDITORIA-PLANO-DE-TOKENS.md` | auditoria\ (NOVO) | 17,795 | `fcc5e3b54e19` |
-| `auditoria/AUDITORIA-PREREGISTRO-ML-V1.md` | auditoria\ (NOVO) | 11,288 | `0336be33833c` |
-| `auditoria/C03-A-QUEBRA-DE-MOEDA.md` | auditoria\ (NOVO) | 5,912 | `0997aaa178d4` |
-| `auditoria/CACHE-E-O-CORTE.md` | auditoria\ (NOVO) | 7,381 | `286bb2caed5b` |
-| `auditoria/P88-DEPENDENCIA-SERIAL.md` | auditoria\ (NOVO) | 8,163 | `e977d3dddb2d` |
+| `docs/auditoria/AUDITORIA-PLANO-DE-TOKENS.md` | auditoria\ (NOVO) | 17,795 | `fcc5e3b54e19` |
+| `docs/auditoria/AUDITORIA-PREREGISTRO-ML-V1.md` | auditoria\ (NOVO) | 11,288 | `0336be33833c` |
+| `docs/auditoria/C03-A-QUEBRA-DE-MOEDA.md` | auditoria\ (NOVO) | 5,912 | `0997aaa178d4` |
+| `docs/auditoria/CACHE-E-O-CORTE.md` | auditoria\ (NOVO) | 7,381 | `286bb2caed5b` |
+| `docs/auditoria/P88-DEPENDENCIA-SERIAL.md` | auditoria\ (NOVO) | 8,163 | `e977d3dddb2d` |
 | `auditoria/achados_ancorados.py` | auditoria\ (NOVO) | 7,561 | `6667c393b375` |
 | `auditoria/p88_block_bootstrap.py` | auditoria\ (NOVO) | 10,159 | `1da167624656` |
 | `auditoria/tamanho_do_contexto.py` | auditoria\ (NOVO — com P-110) | 8,772 | `0be3e31e7ccf` |

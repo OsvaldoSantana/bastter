@@ -41,7 +41,7 @@ contra a versão de hoje e passa depois da limpeza. Eu conferi as duas coisas.
 118 arquivos, incluindo o `.zip` de 700 KB e **uma cópia inteira do projeto** —
 `alocacao/motor.py`, `politica.yaml`, `custos.yaml`, tudo em duplicata.
 
-Não é questão de tamanho. É a armadilha do `pesquisa-custos-2026-08/calc/` outra vez,
+Não é questão de tamanho. É a armadilha do `docs/historico/pesquisa-custos-2026-08/calc/` outra vez,
 e pior: **lá a pasta ao menos tem nome diferente.** Uma sessão futura que abrir
 `Claude outputs/bastter-06set2026-v2/alocacao/motor.py` estará lendo uma versão
 congelada, e nada no arquivo avisa.

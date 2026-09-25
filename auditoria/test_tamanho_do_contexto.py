@@ -156,3 +156,11 @@ def test_mutacao_a_razao_grosseira_e_a_do_tiktoken_concordam_em_ORDEM_DE_GRANDEZ
 
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-q"]))
+
+
+def test_as_doutrinas_sao_leitura_de_sessao_mesmo_fora_da_raiz():
+    """25/09/2026: o secao 2 do CLAUDE.md foi para docs/doutrinas.md. Sem isto ele sairia da
+    conta da leitura de sessao, e a conta diria que a sessao ficou mais barata por ler menos."""
+    linhas = T.medir(RAIZ, lambda s: len(s))
+    sempre = {x[0] for x in linhas if x[1] == "SEMPRE"}
+    assert "docs/doutrinas.md" in sempre and "CLAUDE.md" in sempre

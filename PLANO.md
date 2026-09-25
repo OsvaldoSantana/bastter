@@ -92,7 +92,7 @@ As quatro decisões de 13/09 estão implementadas. O que era documento sobre int
 mecanismo: o `m` é **calculado** dos dois lados, o `pesquisa_id` é **derivado** do dado, o
 corte sai da **distribuição medida** e não da tabela, e divergência de veredito **bloqueia**
 até estar escrita. Isso não aproxima nenhum marco sozinho — **mas é o que torna o M3
-defensável quando ele chegar.** Ver `auditoria/ROMANO-WOLF.md`.
+defensável quando ele chegar.** Ver `docs/auditoria/ROMANO-WOLF.md`.
 
 ### O estado financeiro real (é dado de um usuário e nunca bloqueia desenvolvimento)
 
@@ -109,7 +109,7 @@ e o **valor** move 33 — e nenhum portão decide o segundo.
 > Manifesto gravado em 18/09 — **39 arquivos, 716 MB** —, mas no lugar errado
 > (`data/`, que o git ignora) e por defeito meu; corrigido para `docs/acervo/cvm/`, e
 > precisa ser regravado uma vez. E o download
-> rendeu um achado que muda o desenho da rotina semanal — ver `auditoria/CVM-PRIMEIRO-RETRATO.md`
+> rendeu um achado que muda o desenho da rotina semanal — ver `docs/auditoria/CVM-PRIMEIRO-RETRATO.md`
 > e a **P-91**: comparar por hash de arquivo declara reapresentação onde houve só
 > reordenação de linhas.
 
@@ -126,7 +126,7 @@ reapresentações, sob o mesmo nome. Cada semana sem retrato é uma rodada de co
 deixou de ser observável — e é exatamente o número **entregue na época** que um backtest
 honesto precisa, porque a decisão de compra teria sido tomada com ele.
 
-**Como:** `auditoria/CVM-DOWNLOAD-MANUAL.md`, revisado em 18/09. 12 ZIPs com prazo (6 DFP +
+**Como:** `docs/auditoria/CVM-DOWNLOAD-MANUAL.md`, revisado em 18/09. 12 ZIPs com prazo (6 DFP +
 6 ITR), `data\bronze\cvm\`, **sem descompactar**, e o `sha256` + a hora do download
 registrados junto — *um retrato sem hash não é um retrato: é um arquivo*.
 
@@ -165,7 +165,7 @@ leitura errada de fator encolhe um degrau* — é isso que faz da medição uma 
 >
 > A régua §5-B pegou isto antes da publicação, do lado de lá: *a conclusão que eu ia
 > imprimir é mais larga que a medição*. O relatório do módulo agora imprime as duas
-> metades separadas — o que confirma e o que não confirma. Ver `auditoria/C02-O-DEGRAU-MEDIDO.md`.
+> metades separadas — o que confirma e o que não confirma. Ver `docs/auditoria/C02-O-DEGRAU-MEDIDO.md`.
 
 <details><summary>a especificação, como estava</summary>
 
@@ -210,7 +210,7 @@ derrubá-la se ela estiver errada.
 > (49 encolhem; os primeiros grupamentos confirmados); **(b)** as duas bordas de 2023 fecharam.
 > E trouxe o que não prometia: o critério por ano **reprovou em 4 de 5** porque o nulo estava
 > errado (o dividendo tira do preço 1,16× o que paga), e o silver não tem bonificações
-> anteriores a 2025 que o COTAHIST marca (A-11, P-112). Ver `auditoria/C02-JANELA-2021-2025.md`.
+> anteriores a 2025 que o COTAHIST marca (A-11, P-112). Ver `docs/auditoria/C02-JANELA-2021-2025.md`.
 
 **O que destrava:** duas coisas ao mesmo tempo, e a segunda não estava na proposta.
 

@@ -370,7 +370,7 @@ def pontuar(inst: Instituicao, pesos: dict, aporte: float, horizonte_anos: float
     # apagava a casa do catalogo, mas apagava o que se sabia dela -- e o BTG tem 54,0
     # com 65% de cobertura, 7o de 15. O multiplicador CONTINUA zerando o `total` (G5/
     # F-02: status e pre-condicao de comparacao de custo); o que muda e o sistema parar
-    # de esconder o que sabe. Documento em `auditoria/P90-INFORMACAO-NAO-OBTIDA.md`.
+    # de esconder o que sabe. Documento em `docs/auditoria/P90-INFORMACAO-NAO-OBTIDA.md`.
     return dict(total=bruto*mult*cobertura, parcial=bruto*cobertura, bruto=bruto,
                 dim=d, notas=notas, multiplicador=mult, cobertura=cobertura,
                 avaliadas=sorted(validas), nao_avaliadas=sorted(set(d) - set(validas)))

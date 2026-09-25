@@ -6,7 +6,7 @@ aritmética que eu verifiquei de novo por conta própria.
 
 > **Procedência.** A pesquisa foi feita por um subagente com acesso à web; o relatório
 > completo, com 21 fontes e uma tabela de verificação fonte a fonte, está em
-> `auditoria/FDR-RELATORIO-COMPLETO.md`. **Os números decisivos abaixo eu recalculei
+> `docs/auditoria/FDR-RELATORIO-COMPLETO.md`. **Os números decisivos abaixo eu recalculei
 > aqui**, com a t de Student e 301 gl, antes de escrever qualquer coisa — por causa da
 > regra de 12/09: medir, ler a vizinhança, concluir.
 

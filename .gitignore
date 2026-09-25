@@ -39,7 +39,7 @@ Engenharia-Reversa-do-Bastter.html
 # Produto de rodar os demos. Versiona-se o gerador, nunca o gerado — senao o
 # diff de um commit de codigo vem poluido pela saida que ele mesmo mudou.
 alocacao/out_*.txt
-pesquisa-custos-2026-08/calc/tabelas.txt
+docs/historico/pesquisa-custos-2026-08/calc/tabelas.txt
 
 # ── Python ───────────────────────────────────────────────────────────────────
 __pycache__/
@@ -102,7 +102,7 @@ estado.yaml
 # "Claude outputs/" e onde o app deposita o que eu envio. Ela contem uma COPIA
 # INTEIRA do projeto mais o .zip — inclusive outra copia do estado.yaml.
 #
-# Nao e so tamanho: e a armadilha do `pesquisa-custos-2026-08/calc/` outra vez,
+# Nao e so tamanho: e a armadilha do `docs/historico/pesquisa-custos-2026-08/calc/` outra vez,
 # e pior. Uma sessao futura que abra `Claude outputs/.../alocacao/motor.py`
 # estaria lendo uma versao congelada, e nada no arquivo avisa isso.
 Claude outputs/

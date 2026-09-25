@@ -5,7 +5,7 @@ com evidências"*. Estudei. **A evidência apoia duas das quatro camadas, é amb
 e contraria a quarta — que é justamente a que eu recomendei.**
 
 > Relatório completo, com 25 fontes e marcação de fonte primária lida × secundária ×
-> não confirmada, em `auditoria/PREREGISTRO-RELATORIO-COMPLETO.md`. **Status `PARCIAL`:**
+> não confirmada, em `docs/auditoria/PREREGISTRO-RELATORIO-COMPLETO.md`. **Status `PARCIAL`:**
 > a pesquisa é de um subagente com acesso à web; eu não reli os 25 artigos.
 
 ---

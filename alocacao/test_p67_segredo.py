@@ -46,7 +46,7 @@ PERMITIDOS = ("estado.exemplo.yaml",)
 
 # Pastas que nao podem ser versionadas por carregarem copia congelada do projeto.
 # `Claude outputs/` guarda o que o Cowork entrega -- projeto inteiro mais o zip.
-# E a armadilha do `pesquisa-custos-2026-08/calc/` outra vez, e pior: la a copia
+# E a armadilha do `docs/historico/pesquisa-custos-2026-08/calc/` outra vez, e pior: la a copia
 # velha ao menos tem nome diferente.
 PASTAS_PROIBIDAS = ("claude outputs/", "dot-claude/")
 
@@ -98,7 +98,7 @@ def test_P67_copia_congelada_do_projeto_nao_esta_rastreada(indice):
         "COPIA CONGELADA DO PROJETO RASTREADA (%d arquivos). Primeiros:\n  " % len(achados)
         + "\n  ".join(achados[:12]) +
         "\n\nUma sessao futura que abrir um destes le uma versao antiga sem nenhum "
-        "aviso no arquivo. E a armadilha do `pesquisa-custos-2026-08/calc/`, e ali "
+        "aviso no arquivo. E a armadilha do `docs/historico/pesquisa-custos-2026-08/calc/`, e ali "
         "ao menos o nome era diferente.\n"
         "Corrija com: git rm -r --cached \"Claude outputs\" dot-claude"
     )

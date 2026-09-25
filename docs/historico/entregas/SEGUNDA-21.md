@@ -108,7 +108,7 @@ P-98 reprova se um ZIP escapar, mas olhar custa dez segundos.
 
 ---
 
-## Passo 3 · ~~O PRÓXIMO PASSO do projeto~~ **FEITO em 21/09 — commit `b54787b`** (ver `auditoria/C02-JANELA-2021-2025.md`)
+## Passo 3 · ~~O PRÓXIMO PASSO do projeto~~ **FEITO em 21/09 — commit `b54787b`** (ver `docs/auditoria/C02-JANELA-2021-2025.md`)
 
 ### `ajustar.py` sobre 2021–2025 contíguos
 
@@ -132,7 +132,7 @@ lado. Daqui eu não alcanço.
 
 **Prompt para o Claude Code:**
 
-> Leia `CLAUDE.md`, `PLANO.md` §3 (passo 3) e `auditoria/C02-O-DEGRAU-MEDIDO.md`.
+> Leia `CLAUDE.md`, `PLANO.md` §3 (passo 3) e `docs/auditoria/C02-O-DEGRAU-MEDIDO.md`.
 > Estenda `fase0/ajustar.py` para a janela contígua **2021 a 2025**, usando
 > `fase0/calendario.py` (não reescreva a descoberta de arquivo nem o parser — N-01).
 > Meça o degrau bruto e ajustado por ano, com o controle dos pares sem evento ao lado,

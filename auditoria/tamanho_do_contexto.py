@@ -58,10 +58,17 @@ SEMPRE = {
     "CLAUDE.md": "instrucao, doutrina e historia -- lido inteiro em toda sessao",
     "PENDENCIAS.md": "registro vivo do que esta aberto",
     "PLANO.md": "onde queremos chegar e a ordem do que falta",
+    # 25/09/2026: o secao 2 do CLAUDE.md virou este arquivo (fonte unica, P2). Fora daqui ele
+    # deixaria de ser lido, e as doutrinas sao o projeto.
+    "docs/doutrinas.md": "as sete doutrinas -- sairam do CLAUDE.md e continuam lidas em toda sessao",
 }
 SOB_DEMANDA = {
     "ACHADOS.md": "historia dos achados -- so quando a tarefa toca a area",
     "README.md": "porta de entrada para humanos; repete o CLAUDE.md em resumo, nao instrui sessao",
+    # 25/09/2026: os arquivos-padrao do GitHub. Sao para quem chega de fora, nao para a sessao.
+    "CONTRIBUTING.md": "para contribuidor humano; a sessao segue o CLAUDE.md, secao 9",
+    "SECURITY.md": "canal de relato privado; nao instrui sessao",
+    "CODE_OF_CONDUCT.md": "texto padrao de conduta; nao instrui sessao",
     # 24/09/2026: a raiz foi limpa. Os bilhetes de entrega (LEIA-*, SEGUNDA-21, ENTREGA-19-09,
     # PROMPTS-*, RECRIAR-REPOSITORIO, DEPENDE-DE-VOCE) foram para docs/historico/entregas/, e
     # os laudos e desenhos para docs/referencia/. Quem pode morar na raiz e dado:
@@ -102,6 +109,13 @@ def medir(raiz, contar):
         else:
             papel, motivo = "NAO CLASSIFICADO", ""
         fora.append((nome, papel, s.count("\n") + 1, len(s), contar(s), motivo))
+    # O que e SEMPRE e mora fora da raiz tambem e leitura de sessao, e entra na conta.
+    for nome in sorted(n for n in SEMPRE if "/" in n):
+        caminho = os.path.join(raiz, *nome.split("/"))
+        if os.path.isfile(caminho):
+            with io.open(caminho, encoding="utf-8", errors="replace") as f:
+                s = f.read()
+            fora.append((nome, "SEMPRE", s.count("\n") + 1, len(s), contar(s), SEMPRE[nome]))
     return fora
 
 

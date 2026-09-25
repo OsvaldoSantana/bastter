@@ -687,7 +687,7 @@ def test_REAL_o_fator_INVERTIDO_dobra_o_degrau(real):
 @pytest.mark.slow
 def test_REAL_a_populacao_medida_e_a_que_o_relatorio_diz(real):
     """Guarda de numero publicado: os numeros deste dia estao escritos em
-    `auditoria/C02-O-DEGRAU-MEDIDO.md` e no CLAUDE.md. Se o acervo mudar, isto reprova --
+    `docs/auditoria/C02-O-DEGRAU-MEDIDO.md` e no CLAUDE.md. Se o acervo mudar, isto reprova --
     e reprovar e o certo: o texto passa a descrever outra medicao."""
     ac, _cas, fora, fat, _aj, gs = real
     assert len(ac.precos) == 454

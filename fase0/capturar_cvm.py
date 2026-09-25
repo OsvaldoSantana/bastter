@@ -720,9 +720,9 @@ def main(argv=None, abrir=urllib.request.urlopen, dormir=time.sleep, manifestar=
     p.add_argument("--arrumar", choices=["snapshots", "limpeza"],
                    help="mostra o plano de arrumacao do acervo; com --aplicar, executa")
     p.add_argument("--aplicar", action="store_true")
-    p.add_argument("--armazem", choices=["s3"],
+    p.add_argument("--armazem", choices=["s3", "local"],
                    help="sobe para o armazem em vez de guardar no disco (P-57); "
-                        "credenciais so por variavel de ambiente R2_*")
+                        "s3 = R2, credenciais so por R2_*; local = pasta (ARMAZEM_LOCAL)")
     p.add_argument("--cache", default=None,
                    help="com --armazem: guarda tambem uma copia em <cache>/<chave>")
     p.add_argument("--raiz-repo", default=None, help=argparse.SUPPRESS)  # testes

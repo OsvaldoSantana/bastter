@@ -1149,7 +1149,7 @@ fase_A_recalculada:
 # ══ BLOCO C — SOLVENCIA (regime de exclusao) ═════════════════════════════════
 # Especificado em 05/09/2026. Especifica o REGIME: quando o bloco se aplica, quando
 # recusa, em que ordem, e o que decide um corte. NAO redefine a lista de campos —
-# ela ja existe em auditoria/escopo-campos-de-analise.md. Ver `lacuna_declarada`.
+# ela ja existe em docs/auditoria/escopo-campos-de-analise.md. Ver `lacuna_declarada`.
 bloco_C_solvencia:
   status: REGIME_ESPECIFICADO
   papel: >
@@ -1300,7 +1300,7 @@ bloco_C_solvencia:
   lacuna_declarada:
     o_que_falta: "a identidade de C-04 e C-05"
     por_que: >
-      A lista de campos do bloco C vive em auditoria/escopo-campos-de-analise.md, na
+      A lista de campos do bloco C vive em docs/auditoria/escopo-campos-de-analise.md, na
       maquina do usuario. A ponte estava fora do ar em 05/09/2026 e o arquivo nao pode
       ser lido. C-01 a C-03 sao conhecidos por referencia cruzada dentro do proprio
       politica.yaml (secao fora_de_escopo.instituicoes_financeiras); C-04 e C-05 sao
@@ -1309,7 +1309,7 @@ bloco_C_solvencia:
       Nao inventei os dois campos. Um bloco de exclusao com criterio inventado excluiria
       empresas por uma regra que ninguem escolheu, e seria pior que bloco nenhum.
     para_fechar: >
-      Ler auditoria/escopo-campos-de-analise.md na proxima sessao de desktop e
+      Ler docs/auditoria/escopo-campos-de-analise.md na proxima sessao de desktop e
       reconciliar: se C-04/C-05 ja estiverem definidos la, esta secao so os cita; se
       estiverem em aberto, sao decisao do usuario com o mesmo tratamento dos demais
       (corte declarado, sem ancora legal, com custo de discordar).
@@ -2467,7 +2467,7 @@ limitacoes_declaradas:
       Capturar a pagina e conferir o limiar contra a NORMA que o define, nao contra a
       pagina que a resume (5-B.5). E uma captura; ninguem tentou.
     pendencia: P-119
-    fonte: "auditoria/C02-JANELA-2021-2025.md; auditoria/P113-MEDIDO.md"
+    fonte: "docs/auditoria/C02-JANELA-2021-2025.md; docs/auditoria/P113-MEDIDO.md"
 
   itr_da_cvm_comeca_em_2011:
     tipo: FISICA
