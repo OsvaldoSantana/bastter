@@ -40,8 +40,10 @@ def quebrados(md, texto, existe=os.path.exists):
         caminho = unquote(alvo.split("#", 1)[0].split("?", 1)[0])
         if not caminho:
             continue
-        destino = os.path.normpath(os.path.join(RAIZ, caminho.lstrip("/")) if caminho.startswith("/")
-                                   else os.path.join(base, caminho))
+        if caminho.startswith("/"):
+            destino = os.path.normpath(os.path.join(RAIZ, caminho.lstrip("/")))
+        else:
+            destino = os.path.normpath(os.path.join(base, caminho))
         if not existe(destino):
             out.append((md, alvo))
     return out
