@@ -85,9 +85,31 @@ def test_P77_sem_o_dict_de_motivos_nao_quebra():
 ])
 def test_instantaneo_dourado_das_rotas_de_caixa(rid, esperado):
     """Medido ANTES do patch, em 13/09/2026. Se qualquer um mudar, a correcao mexeu
-    em quem nao estava quebrado."""
-    r = [x for x in A.catalogo(C) if x.id == rid][0]
-    assert A.retorno_liquido_aa(r, C, 180, 10000.0) == pytest.approx(esperado, abs=1e-5)
+    em quem nao estava quebrado.
+
+    25/09/2026: o instantaneo prova o CODIGO, nao o insumo. A poupanca foi renovada no
+    custos.yaml (0,6455 -> 0,6654 a.m.) e o teste quebrou sem codigo nenhum mudar --
+    cada renovacao de `expira` o quebraria de novo. O insumo da data da medicao fica
+    fixado aqui, numa copia; o C vivo nao e tocado."""
+    import copy
+    c = copy.deepcopy(C)
+    c["macro"]["poupanca_am"]["valor"] = INSUMO_DE_13_09["poupanca_am"]
+    r = [x for x in A.catalogo(c) if x.id == rid][0]
+    assert A.retorno_liquido_aa(r, c, 180, 10000.0) == pytest.approx(esperado, abs=1e-5)
+
+
+# O valor vigente em 13/09/2026 (BCB/SGS 25, aniversario 28/08), com o qual o
+# instantaneo acima foi medido.
+INSUMO_DE_13_09 = {"poupanca_am": 0.006455}
+
+
+def test_o_instantaneo_depende_do_insumo_fixado():
+    """Controle (B-13): sem o insumo de 13/09, a poupanca de hoje NAO reproduz o numero
+    -- prova que a fixacao acima e necessaria, e nao decoracao."""
+    r = [x for x in A.catalogo(C) if x.id == "poupanca"][0]
+    if C["macro"]["poupanca_am"]["valor"] == INSUMO_DE_13_09["poupanca_am"]:
+        pytest.skip("o insumo vivo voltou a ser o de 13/09")
+    assert A.retorno_liquido_aa(r, C, 180, 10000.0) != pytest.approx(0.08027, abs=1e-5)
 
 
 def test_nenhuma_rota_do_catalogo_e_recusada_hoje():
