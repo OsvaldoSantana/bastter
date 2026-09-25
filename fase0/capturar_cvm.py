@@ -691,8 +691,15 @@ def _tirar_somente_leitura(funcao, caminho, _exc):
     """24/09, na primeira aplicacao real: as pastas extraidas pelo Windows vinham com
     atributo ReadOnly, e `rmdir` de diretorio ReadOnly da "Acesso negado" -- os CSVs de
     dentro sairam e a pasta ficou, vazia. Limpa o atributo e tenta de novo; se falhar
-    outra vez, a excecao sobe."""
-    os.chmod(caminho, stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC)
+    outra vez, a excecao sobe.
+
+    CI-02 (25/09, primeira execucao do workflow no Linux): no POSIX a pasta SEM ESCRITA nao
+    impede apagar a pasta -- impede apagar o que esta DENTRO dela, e o `unlink` do arquivo
+    falha. Liberar so o arquivo nao adianta: a permissao que falta e a da pasta-mae. Libera
+    as duas."""
+    rwx = stat.S_IWRITE | stat.S_IREAD | stat.S_IEXEC
+    os.chmod(os.path.dirname(caminho) or ".", rwx)
+    os.chmod(caminho, rwx)
     funcao(caminho)
 
 

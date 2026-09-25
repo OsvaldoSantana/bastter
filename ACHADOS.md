@@ -2544,6 +2544,21 @@ dele o teste roda e falha alto.
 
 ---
 
+## CI-02 · O conserto do `ReadOnly` da limpeza da CVM só funcionava no Windows
+
+*25/09/2026. Terceira execução do workflow *Testes* (`36143785286`), já com a falha anotada.*
+
+`test_3_pasta_somente_leitura_sai_inteira` falhou no Linux com `PermissionError` no CSV
+**dentro** da pasta. O `_tirar_somente_leitura` (24/09) liberava a permissão do caminho que
+falhou. No Windows, `ReadOnly` na pasta impede o `rmdir` **dela**, e isso bastava. No POSIX, pasta
+sem escrita impede apagar **o que está dentro**, e a permissão que falta é a da pasta-mãe. O teste
+estava certo, e o código só funcionava no sistema em que foi escrito. O conserto libera as duas.
+
+**Por que ninguém viu:** o mesmo da CI-01. O projeto nunca tinha rodado um teste fora desta
+máquina, e **esta máquina é Windows**.
+
+---
+
 ## CV-07 · Captura local sem `--armazem` desincroniza o registro e o R2: o byte nunca sobe
 
 *25/09/2026. Erro meu (Claude Code), achado por mim ao desenhar o job semanal.*
