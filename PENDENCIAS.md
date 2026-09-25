@@ -3074,7 +3074,12 @@ provavelmente mais simples. Declarada em
 >
 > **O que resta é decisão dele — por isso a pendência continua aberta, agora com dono único:**
 >
-> 1. **As duas transcrições de documento da B3** (`SeriesHistoricas_Layout.md`, 394 linhas;
+> 1. **DECIDIDA por ele, 25/09/2026: manter, sem mudança** (opção c). As transcrições ficam
+>    como estão; o risco fica declarado aqui, com a leitura dos termos ao lado. Reabre se a B3
+>    pedir a remoção ou mudar os termos (o sha256 em `docs/fontes/b3-termos-de-uso.md` acusa).
+>    O texto abaixo é o que ele tinha diante de si ao decidir.
+>
+>    **As duas transcrições de documento da B3** (`SeriesHistoricas_Layout.md`, 394 linhas;
 >    `Tarifacao_Equities_V5.0_PT.md`, 182). Os termos autorizam uso "exclusivamente pessoal" e a
 >    proibição de "reprodução […] publicação" é ambígua quanto a "fins comerciais"; nenhuma
 >    leitura torna a transcrição **integral** claramente permitida. Saídas: (a) reduzir a
