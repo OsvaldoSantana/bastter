@@ -60,7 +60,7 @@ SEMPRE = {
     "PLANO.md": "onde queremos chegar e a ordem do que falta",
     # 25/09/2026: o secao 2 do CLAUDE.md virou este arquivo (fonte unica, P2). Fora daqui ele
     # deixaria de ser lido, e as doutrinas sao o projeto.
-    "docs/doutrinas.md": "as sete doutrinas -- sairam do CLAUDE.md e continuam lidas em toda sessao",
+    "docs/doutrinas.md": "as sete doutrinas -- sairam do CLAUDE.md e seguem lidas em toda sessao",
 }
 SOB_DEMANDA = {
     "ACHADOS.md": "historia dos achados -- so quando a tarefa toca a area",

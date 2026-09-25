@@ -149,12 +149,14 @@ def test_P82_a_linha_de_base_nao_guarda_copia_que_ja_saiu():
         + "\n  - ".join(fantasmas))
 
 
-if __name__ == "__main__":
-    sys.exit(pytest.main([__file__, "-v"]))
-
-
 def test_P82_laudo_em_docs_auditoria_nao_e_copia_e_codigo_la_dentro_e():
     """25/09/2026: `docs/auditoria/` recebeu os laudos. Os dois lados da regra 2."""
     assert copias(["auditoria/chaves_orfas.py", "docs/auditoria/C01-FATOR.md"]) == []
-    assert copias(["auditoria/chaves_orfas.py", "docs/auditoria/chaves_orfas.py"]) ==         ["docs/auditoria/chaves_orfas.py"]
-    assert copias(["alocacao/motor.py", "pacote/alocacao/E02-patch.py"]) ==         ["pacote/alocacao/E02-patch.py"]
+    assert copias(["auditoria/chaves_orfas.py", "docs/auditoria/chaves_orfas.py"]) == [
+        "docs/auditoria/chaves_orfas.py"]
+    assert copias(["alocacao/motor.py", "pacote/alocacao/E02-patch.py"]) == [
+        "pacote/alocacao/E02-patch.py"]
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v"]))
