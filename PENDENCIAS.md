@@ -3028,6 +3028,37 @@ provavelmente mais simples. Declarada em
 > LIC-01. **A B3 e a CVM continuam sem leitura.** O NEFIN mostrou que "dado público" e
 > "redistribuível" são perguntas diferentes.
 
+
+> **25/09/2026, noite — a leitura NÃO foi feita, e o motivo é da ferramenta, não da fonte
+> (§5-B.17).** A sessão na nuvem tentou ler as duas fontes primárias e as duas responderam
+> `EGRESS_BLOCKED` na política de rede **deste ambiente**: `www.b3.com.br`
+> (`/pt_br/termos-de-uso-e-protecao-de-dados/termos-de-uso/` e a página de Séries Históricas) e
+> `dados.cvm.gov.br` (`/dataset/cia_aberta-doc-dfp`). Destrava por dois caminhos: liberar os
+> dois hosts em *Network access* do ambiente, ou a sessão local ler as páginas.
+>
+> **O que um buscador devolveu, e NÃO vale como leitura:** que os termos da B3 proíbem
+> *"distribuição, redistribuição, […] publicação […] de todo ou parte"* do Market Data sem
+> consentimento prévio, e que o portal da CVM publica sob **ODbL**. Os dois são resumo de
+> buscador, sem o texto nem a data de vigência na mão — `NAO_CONFIRMADO` até a leitura.
+>
+> **O que foi medido no índice do git, e não depende da licença:**
+> 1. **Nenhum dado de mercado bruto da B3 está no repositório.** `git grep` por registro
+>    COTAHIST (`01` + data + código, 245 posições) e por payload de evento
+>    (`lastDatePrior`, `closingPricePriorExDate`) não acha nenhum arquivo de dado: os acertos
+>    são prosa de laudo e um comentário de código. Os CSVs de `docs/acervo/` guardam **metadado**:
+>    URL, `Last-Modified`, ETag, sha256, tamanho.
+> 2. **A pergunta tem uma segunda metade que ninguém tinha formulado: direito autoral de
+>    DOCUMENTO, não só redistribuição de dado.** `docs/fontes/SeriesHistoricas_Layout.md`
+>    (394 linhas) e `docs/fontes/Tarifacao_Equities_V5.0_PT.md` (182 linhas) transcrevem
+>    publicações da B3 em seções marcadas *"texto literal"*. É a forma que dá procedência ao
+>    projeto — e é também reprodução de documento de terceiro num repositório público. A
+>    leitura dos termos tem de responder as duas.
+> 3. **Os dois arquivos acima carregam `Fonte: NAO_REGISTRADA`**, o primeiro desde 03/09 —
+>    embora a P-06 tenha fechado a fonte do leiaute em 19/09 (a URL está em
+>    `docs/schemas/cotahist-v02.yaml`). Não troquei: provar que o `.md` transcreve **a mesma
+>    revisão** daquele PDF é medição, não suposição (§5-B.1). O URL da V5.0 da tarifação não
+>    está em lugar nenhum do repositório.
+
 ## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
@@ -3440,6 +3471,17 @@ máquina é o que fecha.**
 ---
 
 ## Ao voltar ao desktop
+
+> **25/09/2026, noite — substitui a nota de 24/09 abaixo: a P-57 e a P-135 FECHARAM** (execução
+> agendada `36148547193`). O que fica para a sessão local, em ordem:
+>
+> 1. **P-136 — ler os termos da B3 e a licença da CVM** na fonte, com data de acesso, para
+>    `docs/fontes/`. A nuvem não alcança `www.b3.com.br` nem `dados.cvm.gov.br` (bloqueio da
+>    rede do ambiente, não da fonte). A pergunta tem duas metades: redistribuir **dado** e
+>    reproduzir **documento** (`SeriesHistoricas_Layout.md`, `Tarifacao_Equities_V5.0_PT.md`).
+> 2. **P-147 — conferir o NEFIN no executor** depois do cron de 26/09. O agendamento de 09:15
+>    UTC saiu às 14:35 UTC em 25/09: olhar à noite, não de manhã. Não exige desktop.
+> 3. **`macro.poupanca_am` vence em 28/09.**
 
 > **24/09/2026 — o que vem primeiro agora é a P-57, e são dois passos dele** (a ordem e os
 > comandos estão na própria P-57): a **carga inicial** para o R2
