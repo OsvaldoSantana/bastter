@@ -20,10 +20,35 @@ def test_sem_pasta_de_acervo_PULA(tmp_path):
 
 def test_pasta_presente_e_arquivo_ausente_FALHA(tmp_path):
     """O caso da P-142: o acervo esta na maquina, o teste procura no lugar errado."""
-    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "bronze" / "b3").mkdir(parents=True)
     with pytest.raises(pytest.fail.Exception, match="P-142"):
         exigir_acervo(str(tmp_path / "data" / "bronze" / "b3" / "COTAHIST_A2023.ZIP"),
                       raiz=str(tmp_path / "data"))
+
+
+def test_o_caso_P142_continua_FALHANDO_com_a_pasta_por_acervo(tmp_path):
+    """`data/bronze/b3` existe e o COTAHIST nao esta onde o teste procura: falha."""
+    (tmp_path / "data" / "bronze" / "b3").mkdir(parents=True)
+    with pytest.raises(pytest.fail.Exception, match="P-142"):
+        exigir_acervo(str(tmp_path / "data" / "bronze" / "b3" / "COTAHIST_A2023.ZIP"),
+                      raiz=str(tmp_path / "data"))
+
+
+def test_silver_ausente_numa_maquina_so_com_bronze_PULA(tmp_path):
+    """O job semanal: bronze materializado do armazem, silver nunca existiu ali."""
+    (tmp_path / "data" / "bronze" / "b3" / "cotahist").mkdir(parents=True)
+    with pytest.raises(pytest.skip.Exception, match="NAO RODOU"):
+        exigir_acervo(str(tmp_path / "data" / "silver" / "eventos.csv"),
+                      raiz=str(tmp_path / "data"))
+
+
+def test_pasta_do_acervo():
+    from acervo_de_teste import pasta_do_acervo
+    r = os.path.join("x", "data")
+    assert pasta_do_acervo(os.path.join(r, "bronze", "b3", "cotahist", "A.ZIP"), r) == \
+        os.path.abspath(os.path.join(r, "bronze", "b3"))
+    assert pasta_do_acervo(os.path.join(r, "silver", "e.csv"), r) == \
+        os.path.abspath(os.path.join(r, "silver"))
 
 
 def test_tudo_presente_segue(tmp_path):

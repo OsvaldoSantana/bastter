@@ -9,8 +9,14 @@ acervo" (CI, clone novo: pular e certo) de "o acervo esta aqui e o arquivo esper
 (caminho errado, arquivo renomeado, silver nao gerado: e defeito).
 
 A REGRA, uma so para todo `test_REAL_*`:
-  a pasta do acervo (`data/`) NAO existe  -> pula, dizendo que nao rodou;
-  a pasta existe e falta um arquivo       -> FALHA, nomeando o que falta.
+  a PASTA DO ACERVO do arquivo NAO existe -> pula, dizendo que nao rodou;
+  a pasta existe e falta o arquivo          -> FALHA, nomeando o que falta.
+
+A PASTA DO ACERVO (refinada na tarefa de metricas, 25/09): `data/bronze/<fonte>` para o bronze
+e `data/<camada>` para o resto (`data/silver`). Antes era a raiz `data/`. O motivo e o job
+semanal do GitHub: ele materializa do armazem o bronze que o R2 tem (COTAHIST, CVM), e o silver
+nao esta no R2 -- com a raiz, os testes de silver FALHARIAM por um insumo que aquela maquina
+nunca teve. O caso da P-142 continua falhando: `data/bronze/b3` existia e o arquivo nao.
 
 `fase0/test_acervo_de_teste.py` reprova arquivo de teste com `test_REAL_*` que ainda use
 `skipif`/`pytest.skip` em vez disto.
@@ -22,12 +28,23 @@ import pytest
 RAIZ_DATA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 
 
+def pasta_do_acervo(caminho, raiz=RAIZ_DATA):
+    """`data/bronze/<fonte>` para o bronze, `data/<camada>` para o resto."""
+    partes = os.path.relpath(os.path.abspath(caminho), os.path.abspath(raiz)).split(os.sep)
+    if partes[0] == os.pardir:
+        return os.path.abspath(raiz)
+    n = 2 if partes[0] == "bronze" else 1
+    return os.path.join(os.path.abspath(raiz), *partes[:min(n, len(partes) - 1)])
+
+
 def exigir_acervo(*caminhos, raiz=RAIZ_DATA):
-    """Pula so quando a maquina nao tem acervo; com acervo, arquivo faltando e falha."""
-    if not os.path.isdir(raiz):
-        pytest.skip(f"sem acervo nesta maquina ({raiz} nao existe) -- ESTE TESTE NAO RODOU")
+    """Pula so quando a PASTA DO ACERVO nao existe; com ela, arquivo faltando e falha."""
+    ausentes = sorted({pasta_do_acervo(c, raiz) for c in caminhos
+                       if not os.path.isdir(pasta_do_acervo(c, raiz))})
+    if ausentes:
+        pytest.skip(f"sem acervo nesta maquina ({ausentes} nao existe) -- ESTE TESTE NAO RODOU")
     faltando = [c for c in caminhos if not os.path.exists(c)]
     if faltando:
-        pytest.fail(f"o acervo existe ({raiz}) e falta o que este teste le: {faltando}. "
-                    f"Caminho errado ou arquivo nao gerado e defeito, nao ambiente (P-142).",
+        pytest.fail(f"o acervo existe e falta o que este teste le: {faltando}. Caminho "
+                    f"errado ou arquivo nao gerado e defeito, nao ambiente (P-142).",
                     pytrace=False)

@@ -2526,6 +2526,26 @@ nome contra eles procura Duratex e acha zero.
 
 ---
 
+## CV-07 · Captura local sem `--armazem` desincroniza o registro e o R2: o byte nunca sobe
+
+*25/09/2026. Erro meu (Claude Code), achado por mim ao desenhar o job semanal.*
+
+Na P-132 rodei `py -3.11 fase0/capturar_cvm.py` **sem** `--armazem` para trazer o FCA, e commitei
+o `docs/acervo/cvm/capturas.csv` com 17 linhas `novo`. Os dois modos compartilham o portão HEAD,
+e o estado sai do registro (`estado_do_registro`). A rodada diária do GitHub vai ver o FCA com o
+mesmo `Last-Modified` e marcá-lo `inalterado`: **os bytes nunca sobem ao R2**, e nenhum erro
+aparece. Quem abrir o FCA pelo armazém recebe `VersaoDesconhecida` ou nada.
+
+**O conserto dos bytes é dele** (credencial): `py -3.11 fase0/subir_acervo_local.py --aplicar`,
+que desde a P-132 inclui o `fca`. **O conserto da classe é visibilidade:**
+`fase0/materializar_acervo.py` lista, no job semanal, todo arquivo que o registro diz existir e
+o armazém não entrega, e o job fica vermelho.
+
+**A regra:** onde existe armazém, captura sem armazém é **escrever no registro uma promessa que o
+armazém não cumpre**. Declaração sem execução, a forma de sempre, agora entre o git e o R2.
+
+---
+
 ## CV-01 · A versão de 06/09 da CVM não foi capturada, e não volta
 
 *24/09/2026. FISICA: a CVM serve só a versão corrente de cada arquivo.*

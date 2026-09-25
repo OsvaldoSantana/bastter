@@ -1,0 +1,40 @@
+data;codigo;tipo;autor;quem_achou;regua;commit_introduziu;commit_corrigiu;descricao
+2026-09-16;5-B.12;achado;claude-chat;claude-code;12;desconhecido;desconhecido;CLAUDE.md entregue inteiro desfez duas linhas commitadas pela outra ponta
+2026-09-16;P-82;reincidencia;claude-code;claude-code;desconhecido;desconhecido;desconhecido;git add -A levou uma copia do projeto para o indice -- a regra estava numa lista de nomes (P-80)
+2026-09-16;P-83;achado;desconhecido;claude-code;desconhecido;desconhecido;desconhecido;corretagem zero em nove casas cuja fonte diz custos nao obtidos (F-02 adormecido)
+2026-09-16;P-85;achado;desconhecido;claude-code;desconhecido;desconhecido;desconhecido;saida do corretoras.py mudava de texto entre execucoes (set impresso sem ordem)
+2026-09-16;P-86;achado;desconhecido;claude-code;desconhecido;desconhecido;desconhecido;chaves_orfas deduplicava por nome de folha: 42 de 67 chaves invisiveis
+2026-09-18;5-B.13;retratacao;claude-chat;osvaldo;13;desconhecido;3ee5e97;"nao existe automacao deste download" do COTAHIST -- era um GET aberto
+2026-09-18;P-98;achado;desconhecido;desconhecido;desconhecido;desconhecido;3ee5e97;507 MB de COTAHIST sem extensao fora do .gitignore
+2026-09-18;P-102;achado;desconhecido;desconhecido;desconhecido;desconhecido;desconhecido;guarda acessoria derrubou o manifesto -- testes empurrados vermelhos no primeiro push
+2026-09-19;5-B.14;achado;claude-chat;claude-chat;14;desconhecido;desconhecido;controle de 1,0000 publicado sem o numero de pares
+2026-09-19;CLAUDE-11.4;retratacao;claude-chat;claude-chat;desconhecido;desconhecido;desconhecido;tabela de tokens por sessao sem conta escrita (+48% a +53%)
+2026-09-19;P-99;achado;desconhecido;claude-chat;desconhecido;desconhecido;c6ccf2a;leitor do COTAHIST devolvia zero registro para 16 dos 41 anos
+2026-09-19;P-105;achado;claude-chat;claude-chat;desconhecido;desconhecido;c6ccf2a;posicoes do leiaute do COTAHIST em Python, com a procedencia num comentario (P2)
+2026-09-19;P-106;reincidencia;claude-chat;claude-chat;desconhecido;desconhecido;c6ccf2a;modref_de e conferir_modref so chamadas por teste (P-77 recriada)
+2026-09-21;5-B.15;retratacao;claude-chat;claude-chat;15;desconhecido;c6ccf2a;"95 passed" na arvore de entrega -- 21 vermelhos no repositorio (P-109, P-110)
+2026-09-23;5-B.16;retratacao;desconhecido;desconhecido;16;45405a6;eebcd3c;2026 declarado truncado com o arquivo integro no disco havia 44 h (P-100)
+2026-09-23;A-12;achado;desconhecido;desconhecido;desconhecido;desconhecido;5335f1d;identidade de evento montada com campo derivado: 128 eventos viraram duplicata
+2026-09-23;A-13;achado;desconhecido;desconhecido;desconhecido;desconhecido;b0f494a;o mesmo provento pelas duas esteiras seria aplicado duas vezes
+2026-09-23;P-125;achado;desconhecido;desconhecido;desconhecido;desconhecido;ac37bda;conferir_cabecalho devolvia '.202' como ano de 2026
+2026-09-24;5-B.13;reincidencia;claude-chat;claude-code;13;desconhecido;854d09b;prompt da P-57 repetiu "validacao por imagem" com a retratacao ja escrita
+2026-09-24;5-B.17;retratacao;claude-chat;desconhecido;17;desconhecido;713a2b9;captura da CVM tratada como manual por 18 dias -- o bloqueio era da ferramenta
+2026-09-24;CV-01;achado;fonte;desconhecido;nao_se_aplica;nao_se_aplica;713a2b9;a versao de 06/09 da CVM nao foi capturada e nao volta
+2026-09-24;CV-02;achado;fonte;desconhecido;nao_se_aplica;nao_se_aplica;713a2b9;arquivos "congelados" de 2010-2019 regerados em 08/2024
+2026-09-24;CV-03;achado;fonte;desconhecido;nao_se_aplica;nao_se_aplica;713a2b9;a data da versao esta dentro do ZIP, no relogio de Brasilia
+2026-09-24;CH-01;achado;fonte;desconhecido;nao_se_aplica;nao_se_aplica;7bb670b;o anual do COTAHIST muda de sha256 sem mudar de conteudo
+2026-09-24;CV-04;achado;desconhecido;desconhecido;desconhecido;desconhecido;e45629e;pre-registro v2 promete fundamento desde jan/2010 -- o primeiro chega em 27/01/2011
+2026-09-24;P-131;achado;desconhecido;desconhecido;desconhecido;desconhecido;96ce102;nome certo lido como conteudo certo em nomear_extracoes.plano()
+2026-09-24;B-11;achado;desconhecido;outra-ia;desconhecido;desconhecido;82c90f6;anotacao crua lida como tipo
+2026-09-24;B-12;achado;desconhecido;outra-ia;desconhecido;desconhecido;desconhecido;fixture de sessao protegida so por docstring
+2026-09-24;B-13;achado;desconhecido;outra-ia;desconhecido;desconhecido;desconhecido;guarda por nome escapava por alias e import *
+2026-09-24;B-14;achado;desconhecido;outra-ia;desconhecido;desconhecido;desconhecido;teste chamado "continua bloqueando" nao testava o bloqueio
+2026-09-24;B-15;achado;desconhecido;outra-ia;desconhecido;desconhecido;desconhecido;guarda do E-03 procurava a palavra no fonte
+2026-09-24;B-16;achado;desconhecido;outra-ia;desconhecido;desconhecido;82c90f6;motor.simular divergia ate 17,4% de simular_custo
+2026-09-24;B-17;achado;desconhecido;outra-ia;desconhecido;desconhecido;a7aeb60;custodia_rv_interpretacao so lida no codigo morto
+2026-09-24;B-18;achado;desconhecido;outra-ia;desconhecido;desconhecido;82c90f6;teste de subprocesso reprovava por aviso do cache do pytest
+2026-09-25;P-142;achado;desconhecido;claude-code;desconhecido;desconhecido;fee7607;9 testes do C-02 pulavam em toda rodada: raiz na pasta errada desde a P-114
+2026-09-25;CV-05;achado;fonte;claude-code;nao_se_aplica;nao_se_aplica;61f1ec5;o FCA nao traz codigo de negociacao antes de 2018
+2026-09-25;CV-06;achado;fonte;claude-code;nao_se_aplica;nao_se_aplica;61f1ec5;EMISSOR.TXT descreve o dono atual do codigo -- 4 codigos reaproveitados
+2026-09-25;P-97;reincidencia;claude-code;claude-code;desconhecido;nao_commitado;61f1ec5;isinp.zip gravado no acervo sem origem declarada -- a guarda pegou antes do commit
+2026-09-25;CV-07;achado;claude-code;claude-code;desconhecido;02b41cc;aberto;captura local sem --armazem: o registro anota o FCA e o byte nunca sobe ao R2

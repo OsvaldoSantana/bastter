@@ -3046,6 +3046,19 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
 
+## P-146 · Três passos das métricas que só ele pode dar
+
+**Dono:** Osvaldo · **Gatilho:** nenhum; quanto antes, antes o semanal fica verde ·
+**Classe:** `BLOQUEIA_O_SISTEMA` (o semanal nasce vermelho pelo item 1)
+
+1. **Subir o FCA ao R2** (CV-07): `py -3.11 fase0/subir_acervo_local.py --aplicar`, com as
+   `R2_*` no ambiente. Sem isso, o job semanal lista os 17 FCA como falta e fica vermelho, que é
+   o comportamento certo.
+2. **Primeira execução do semanal:** Actions → *Testes* → *Run workflow*. O `gh` não está
+   instalado nesta máquina, e a §5-A manda pedir.
+3. **A medição de mutação:** Actions → *Mutacao* → *Run workflow*. Até essa execução, a
+   configuração `[tool.mutmut]` é `NAO_CONFIRMADO`. Cada sobrevivente vira achado candidato.
+
 ## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
 
 **Dono:** Claude Code (medir) · Osvaldo (as duas escolhas) · **Gatilho:** antes da primeira

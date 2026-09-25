@@ -135,3 +135,9 @@ docs/fontes/series-historicas-cotahist/
 # extensao (o membro nao tem extensao -- P-98). Casar pelo NOME da B3 fecha esse caso;
 # o portao continua sendo o test_p98, que mede bytes no indice e nao depende de nome.
 docs/fontes/COTAHIST*
+
+# Metricas (25/09/2026): artefatos do pytest-cov e do mutmut. O que fica e docs/metricas/.
+.coverage
+.coverage.*
+coverage.json
+mutants/

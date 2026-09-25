@@ -103,6 +103,16 @@ paralelo = [
   "pytest-xdist==3.8.0",
   "execnet==2.1.2",
 ]
+# Metricas (25/09/2026), fora da impressao pela mesma razao: medem, nao mudam numero.
+metricas = [
+  "pytest-cov==7.1.0",
+  "coverage==7.16.1",
+]
+# So no workflow manual Linux: "To run mutmut on Windows, please use the WSL" (medido
+# nesta maquina em 25/09, e ela nao tem WSL).
+mutacao = [
+  "mutmut==3.8.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["alocacao"]
@@ -223,3 +233,19 @@ warn_redundant_casts = true
 # P-57: o build existe para o `pip install ".[captura]"` do workflow, e nao empacota nada.
 [tool.setuptools]
 packages = []
+
+# Metricas (25/09/2026): cobertura como MEDIDA. `patch = subprocess` porque varias guardas do
+# projeto rodam o modulo em subprocesso (chaves_orfas, corretoras, cenarios): sem isto elas
+# aparecem com 0% e o numero mente -- mediria "chamado por import", nao "executado".
+[tool.coverage.run]
+patch = ["subprocess"]
+
+# Mutacao (25/09/2026): UMA medicao, workflow manual (.github/workflows/mutacao.yml). Os
+# quatro alvos pedidos: o ajuste de precos, a porta de entrada do estado, os portoes da
+# alocacao e o leitor fixado do ML. `also_copy` porque os modulos se importam por caminho.
+[tool.mutmut]
+paths_to_mutate = ["fase0/ajustar.py", "alocacao/estado_io.py", "alocacao/alocacao.py",
+                   "fase0/insumo_ml.py"]
+tests_dir = ["alocacao/", "fase0/"]
+also_copy = ["alocacao/", "fase0/", "auditoria/", "docs/", "pyproject.toml"]
+pytest_add_cli_args = ["-m", "not slow", "-p", "no:cacheprovider"]

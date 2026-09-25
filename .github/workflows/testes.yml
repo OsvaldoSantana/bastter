@@ -1,0 +1,146 @@
+# Portoes de qualidade que rodam sozinhos (P7, 25/09/2026).
+#
+# Ate aqui nenhum portao rodava sem alguem lembrar -- e a regua 15 do CLAUDE.md existe porque
+# "verde" medido numa arvore que ninguem conferiu nao e verde no repositorio.
+#
+#   a cada push em main  -> as tres suites SEM `slow`, em paralelo, mais ruff e mypy (rapido)
+#   semanal e manual     -> a suite COMPLETA com `slow`, lendo o acervo do armazem pelo
+#                           `acervo.abrir` (fase0/materializar_acervo.py), com cobertura
+#                           (docs/metricas/cobertura.csv, commit do bot so se mudar) e o
+#                           aviso de `expira` que vence em ate 7 dias (UMA issue).
+#
+# Job vermelho = e-mail: o GitHub avisa por e-mail a falha de workflow a quem disparou (push)
+# e ao dono do repositorio (agendado), pela configuracao padrao de notificacao da conta.
+#
+# O silver NAO esta no armazem: no semanal os testes dele pulam, visivelmente
+# (`exigir_acervo`, pasta por acervo). O que o registro diz existir e o armazem nao entrega
+# vai para a lista de FALTAS, e o job fica vermelho no fim -- depois dos testes.
+
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 11 * * 1'           # segunda, 08:00 em Brasilia
+  workflow_dispatch:
+
+concurrency:
+  group: testes-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rapido:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      # Mesmos SHAs da captura (v4.4.0 e v5.6.0 em 24/09/2026). Subir e trocar SHA e
+      # comentario juntos, nos dois workflows.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: '3.11'
+      - name: Instalar
+        run: python -m pip install ".[dev,lint,paralelo]"
+      - name: Suites sem slow
+        run: |
+          set -e
+          for s in alocacao fase0 auditoria tools; do
+            python -m pytest "$s" -m "not slow" -n auto --dist loadgroup -p no:cacheprovider
+          done
+      - name: ruff e mypy
+        run: |
+          set -e
+          python -m ruff check alocacao fase0 auditoria tools
+          for d in alocacao fase0 auditoria tools; do (cd "$d" && python -m mypy .); done
+
+  completo:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    permissions:
+      contents: write      # o commit do cobertura.csv
+      issues: write        # a issue de expira
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: '3.11'
+      - name: Instalar
+        run: python -m pip install ".[dev,lint,paralelo,metricas,captura]"
+
+      # Os segredos do R2 existem SO neste passo.
+      - name: Materializar o acervo do armazem
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: python fase0/materializar_acervo.py --faltas faltas.txt
+
+      - name: Suite completa, com slow e cobertura
+        id: suite
+        run: |
+          set +e
+          rc=0
+          for s in alocacao fase0 auditoria tools; do
+            python -m pytest "$s" -n auto --dist loadgroup -p no:cacheprovider -rs \
+              --cov=alocacao --cov=fase0 --cov=auditoria --cov=tools --cov-append --cov-report=
+            r=$?; [ "$r" -ne 0 ] && rc=$r
+          done
+          echo "codigo=$rc" >> "$GITHUB_OUTPUT"
+
+      - name: ruff e mypy
+        id: lint
+        run: |
+          set +e
+          rc=0
+          python -m ruff check alocacao fase0 auditoria tools || rc=1
+          for d in alocacao fase0 auditoria tools; do (cd "$d" && python -m mypy .) || rc=1; done
+          echo "codigo=$rc" >> "$GITHUB_OUTPUT"
+
+      - name: Cobertura por modulo
+        if: always()
+        run: |
+          python -m coverage json -o coverage.json -q
+          python auditoria/cobertura_csv.py coverage.json
+
+      - name: Commitar a cobertura, se mudou
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- docs/metricas/cobertura.csv)" ]; then
+            echo "cobertura inalterada: nada a commitar"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/metricas/cobertura.csv
+          git commit -m "Metricas $(date -u +%Y-%m-%d): cobertura por modulo"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
+
+      # UMA issue: a aberta e atualizada, nunca uma por semana (o padrao da captura).
+      - name: Constantes que vencem em ate 7 dias
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          lista="$(python auditoria/expira_proxima.py --dias 7)"
+          if [ -z "$lista" ]; then echo "nenhuma constante vence em 7 dias"; exit 0; fi
+          titulo="Constantes vencendo (expira em ate 7 dias)"
+          corpo="Medido em $(date -u +%Y-%m-%d) por auditoria/expira_proxima.py. Reconferir na fonte e atualizar o YAML:"$'\n\n'"$lista"
+          n=$(gh issue list --state open --search 'in:title "Constantes vencendo"' --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then gh issue edit "$n" --body "$corpo"; else gh issue create --title "$titulo" --body "$corpo"; fi
+
+      - name: Falhar se algo falhou
+        if: always()
+        run: |
+          faltas=$(grep -c . faltas.txt 2>/dev/null || true)
+          echo "suite=${{ steps.suite.outputs.codigo }} lint=${{ steps.lint.outputs.codigo }} faltas_no_armazem=${faltas:-0}"
+          [ -s faltas.txt ] && { echo "O armazem nao entrega:"; cat faltas.txt; }
+          [ "${{ steps.suite.outputs.codigo }}" = "0" ] && [ "${{ steps.lint.outputs.codigo }}" = "0" ] && [ ! -s faltas.txt ]
