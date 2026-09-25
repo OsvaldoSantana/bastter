@@ -3104,11 +3104,12 @@ provavelmente mais simples. Declarada em
 >    **citação de passagens** com a fonte (Lei 9.610/1998, art. 46, III) — o leiaute como dado já
 >    mora em `docs/schemas/cotahist-v02.yaml`; (b) pedir autorização à B3; (c) manter e declarar
 >    o risco. Recomendação: (a). O histórico do git continua tendo o texto, como no NEFIN.
-> 2. **DECIDIDA por ele, 25/09/2026: "pode ser público".** Desenho em
+> 2. **DECIDIDA por ele, 25/09/2026: "pode ser público", e "pode executar o desenho".**
 >    `docs/decisoes/P-136-cvm-publica.md` — release do GitHub, sem conta nem credencial nova,
->    porque o acesso público do R2 é do bucket inteiro e abriria a B3. **Nada foi publicado:**
->    executa depois do OK dele ao desenho (segunda, 28/09). O texto abaixo é o que ele tinha
->    diante de si.
+>    porque o acesso público do R2 é do bucket inteiro e abriria a B3. **Executado:**
+>    `fase0/publicar_cvm.py` + passo `Publicar CVM` no workflow. **A P-136 fecha quando a
+>    release `cvm-acervo-2026` existir com as 64 versões** (plano medido) — P7: código escrito
+>    não é rotina rodando. O texto abaixo é o que ele tinha diante de si.
 >
 >    **O armazém da CVM pode ser público.** A ODbL permite redistribuir com atribuição e
 >    *share-alike*; as versões que a CVM já substituiu, que hoje só existem no R2, poderiam ser
