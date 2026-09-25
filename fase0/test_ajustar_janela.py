@@ -37,6 +37,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ajustar as A                                                     # noqa: E402
 import calendario                                                       # noqa: E402
 from test_ajustar import _registro, _cotahist, _evento, _silver         # noqa: E402
+from acervo_de_teste import exigir_acervo                               # noqa: E402
 
 RAIZ_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAIZ_COTAHIST = os.path.join(RAIZ_REPO, "data", "bronze", "b3", "cotahist")
@@ -363,26 +364,18 @@ def test_main_com_janela_de_buraco_sai_com_2_e_nao_grava(tmp_path):
 
 # ═══════════════════════════════════════════ contra o acervo real, 2021-2025 ═══
 
-def _janela_no_disco():
-    if not os.path.isfile(SILVER_ACERVO) or not os.path.isdir(RAIZ_COTAHIST):
-        return False
-    return all("COTAHIST_A%d" % a in calendario.arquivos(RAIZ_COTAHIST, JANELA)
-               for a in JANELA)
-
-
 # P-141: a fixture de modulo que le o acervo e POR PROCESSO. Sob `--dist loadgroup`, sem
 # este grupo cada trabalhador que recebe um teste daqui refaz a leitura inteira.
+# P-142: o `skipif(not _janela_no_disco())` que estava aqui saiu; quem decide e o
+# `exigir_acervo` na fixture -- sem `data/` pula, com `data/` e arquivo faltando falha.
 pytestmark = pytest.mark.xdist_group("janela_jan")
-
-acervo = pytest.mark.skipif(not _janela_no_disco(),
-                            reason="COTAHIST 2021-2025 ausente -- ESTES TESTES NAO RODARAM")
 
 
 @pytest.fixture(scope="module")
 def jan():
     """Cinco anos de COTAHIST, 635 mil registros a vista. Uma leitura por modulo."""
-    if not _janela_no_disco():
-        pytest.skip("COTAHIST 2021-2025 ausente -- ESTES TESTES NAO RODARAM")
+    exigir_acervo(SILVER_ACERVO,
+                  *[os.path.join(RAIZ_COTAHIST, f"COTAHIST_A{a}.ZIP") for a in JANELA])
     return A.medir(RAIZ_COTAHIST, SILVER_ACERVO, JANELA)
 
 
@@ -401,7 +394,6 @@ _REPROVOU = {
 }
 
 
-@acervo
 @pytest.mark.parametrize("ano", [
     pytest.param(a, marks=pytest.mark.xfail(strict=True, reason=_REPROVOU[a]))
     if a in _REPROVOU else a for a in JANELA])
@@ -423,7 +415,6 @@ def test_REAL_O_DEGRAU_ENCOLHE_em_CADA_ano(jan, ano):
     assert abs(pa["media_ajustada"]) < abs(pa["media_bruta"]) / 10, (ano, pa)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_CONTROLE_em_cada_ano_o_dia_sem_evento_nao_mudou(jan):
     pa = A.controle_por_ano(jan.acervo, jan.ajustadas, jan.fat)
@@ -433,15 +424,13 @@ def test_REAL_CONTROLE_em_cada_ano_o_dia_sem_evento_nao_mudou(jan):
         assert pior < 1e-24, "%d: %d de %d pares mudaram, pior %.1e" % (ano, div, pares, pior)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_2023_dentro_da_janela_e_o_2023_de_18_09(jan):
     """O instantaneo dourado da MEDICAO: os 293 degraus de 2023 medidos sozinhos em 18/09
     tem de reaparecer na janela, os mesmos, com o mesmo retorno. O retorno ajustado de um
     dia nao depende do nivel -- os eventos de 2024 e 2025 reescalam os dois precos pelo
     mesmo acumulado."""
-    if not os.path.isfile(DEGRAU_2023):
-        pytest.skip("degrau de 2023 ausente")
+    exigir_acervo(DEGRAU_2023)     # P-142: era um skip calado dentro de um test_REAL_
     with open(DEGRAU_2023, encoding="utf-8") as f:
         antes = {(r["ticker"], r["data_ex"]): r for r in csv.DictReader(f)}
     agora = {(g.ticker, g.data_ex.isoformat()): g for g in jan.degraus
@@ -460,7 +449,6 @@ def test_REAL_2023_dentro_da_janela_e_o_2023_de_18_09(jan):
         assert abs(g.retorno_ajustado - float(r["retorno_ajustado"])) < 1e-12, k
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_A08_a_borda_de_2023_FECHOU_na_emenda(jan):
     """Os 8 eventos de 28/12/2023 que o 2023 isolado deixava `NIVEL_INCERTO` (B3SA3,
@@ -470,7 +458,6 @@ def test_REAL_A08_a_borda_de_2023_FECHOU_na_emenda(jan):
         assert (tk, dt.date(2024, 1, 2)) in jan.fat, tk
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_a_rederivacao_nao_contradisse_o_silver_em_2023(jan):
     """Onde o silver ja tinha derivado (2023), a janela derivou o mesmo -- senao `medir`
@@ -488,7 +475,6 @@ def _grandes(gs):
             and (g.fator <= Decimal("0.67") or g.fator >= Decimal("1.5"))]
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_C01_os_eventos_de_QUANTIDADE_encolhem(jan):
     """A ponta que o C-02 deixou aberta: a leitura PERCENTUAL do `factor`, com mais de um
@@ -503,7 +489,6 @@ def test_REAL_C01_os_eventos_de_QUANTIDADE_encolhem(jan):
     assert ma < mb / 5, (ma, mb)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_C01_todo_evento_GRANDE_fica_dentro_de_15pc(jan):
     grandes = _grandes(jan.degraus)
@@ -513,7 +498,6 @@ def test_REAL_C01_todo_evento_GRANDE_fica_dentro_de_15pc(jan):
     assert not fora, fora
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_C01_o_GRUPAMENTO_tem_confirmacao_de_preco(jan):
     """Item 4 do "o que continua aberto" do C-02: os 41 grupamentos eram todos fora de
@@ -525,7 +509,6 @@ def test_REAL_C01_o_GRUPAMENTO_tem_confirmacao_de_preco(jan):
         assert abs(g.retorno_ajustado) < 0.15, (g.ticker, g.data_ex, g.retorno_ajustado)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_C01_MUTACAO_a_leitura_TROCADA_reprova_os_grandes(jan):
     """A alternativa que o C-01 descartou pela distribuicao, agora contra o preco: `factor`
@@ -552,7 +535,6 @@ def test_REAL_C01_MUTACAO_a_leitura_TROCADA_reprova_os_grandes(jan):
         passam, len(grandes_mut))
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_MUTACAO_fator_invertido_nos_PROVENTOS_piora(jan):
     """A mutacao do C-02, restrita a provento em dinheiro: com evento de quantidade a
@@ -564,7 +546,6 @@ def test_REAL_MUTACAO_fator_invertido_nos_PROVENTOS_piora(jan):
     assert m < -0.020 and t < -8, (m, t)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST_na_janela(jan):
     """Em 2023, 352 de 352. Pre-registrado para a janela: nenhum diferente."""
@@ -603,7 +584,6 @@ def res(jan):
     return A.residuo_de_mercado(jan)
 
 
-@acervo
 @pytest.mark.slow
 def test_POSHOC_o_JCP_fecha_descontado_o_mercado(res):
     """Medido: +0,07%, t +1,29, n=819. O JCP e o provento em que o ajuste acerta."""
@@ -612,7 +592,6 @@ def test_POSHOC_o_JCP_fecha_descontado_o_mercado(res):
     assert n > 700 and abs(t) < 2, (n, m, t)
 
 
-@acervo
 @pytest.mark.slow
 def test_POSHOC_o_DIVIDENDO_tira_do_preco_mais_do_que_paga(res):
     """Medido: queda/provento = 1,164 (IC 95% por bootstrap [1,09; 1,24], n=400); no JCP,
@@ -626,7 +605,6 @@ def test_POSHOC_o_DIVIDENDO_tira_do_preco_mais_do_que_paga(res):
     assert 0.86 < q < 1.04, (n, q)
 
 
-@acervo
 @pytest.mark.slow
 def test_POSHOC_o_COTAHIST_declara_bonificacao_que_o_silver_nao_tem(res):
     """A lacuna de eventos de quantidade antigos, vista de dentro do arquivo de preco: o
@@ -637,7 +615,6 @@ def test_POSHOC_o_COTAHIST_declara_bonificacao_que_o_silver_nao_tem(res):
     assert not [g for g in marc if g.data_ex.year == 2025]
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_o_ESPECI_e_testemunha_da_data_ex_em_cada_ano(jan):
     for ano in JANELA:

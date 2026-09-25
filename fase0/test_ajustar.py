@@ -11,10 +11,10 @@ A SUITE TEM DUAS METADES, E ELAS RESPONDEM PERGUNTAS DIFERENTES.
   o CODIGO faz o que diz: o fator nao toca o proprio dia ex, o degrau some quando o fator
   esta certo, e CRESCE quando esta errado. Aqui as igualdades sao exatas.
 
-  contra o acervo -- `skipif` quando nao ha COTAHIST na maquina, e prova o que nenhum
-  dado sintetico pode provar: que a regra do C-01 esta certa CONTRA O MERCADO, em 293
-  datas ex de 2023. Dado inventado nunca refuta uma leitura de campo -- ele so confirma
-  a aritmetica de quem o inventou.
+  contra o acervo -- pula so sem `data/` na maquina (P-142: com acervo, falta e falha), e
+  prova o que nenhum dado sintetico pode provar: que a regra do C-01 esta certa CONTRA O
+  MERCADO, em 293 datas ex de 2023. Dado inventado nunca refuta uma leitura de campo -- ele
+  so confirma a aritmetica de quem o inventou.
 
 O TESTE QUE DECIDE e `test_O_DEGRAU_ENCOLHE_*`, e o par dele e `test_CONTROLE_*`. Um
 sozinho nao vale: uma funcao que multiplicasse a serie inteira por um numero qualquer
@@ -33,9 +33,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ajustar as A                                                     # noqa: E402
 import refinar                                                          # noqa: E402
 import calendario                                                       # noqa: E402
+from acervo_de_teste import exigir_acervo                               # noqa: E402
 
+# P-142: era `data/bronze/b3`, e o COTAHIST mora em `.../cotahist` desde a P-114 -- os oito
+# test_REAL_ abaixo pularam em toda rodada. `ANO_REAL` e a populacao para a qual eles foram
+# escritos em 18/09, quando o acervo tinha UM ano: 2023. Ler os 41 seria outra medicao.
 RAIZ_ACERVO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "data", "bronze", "b3")
+                           "data", "bronze", "b3", "cotahist")
+ANO_REAL = 2023
 SILVER_ACERVO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                              "data", "silver", "eventos_silver_2026-09-11.csv")
 
@@ -498,18 +503,12 @@ def test_a_corrida_inteira_fecha_e_escreve_os_dois_csv(tmp_path):
 # este grupo cada trabalhador que recebe um teste daqui refaz a leitura inteira.
 pytestmark = pytest.mark.xdist_group("ajustar_real")
 
-acervo = pytest.mark.skipif(not os.path.isfile(SILVER_ACERVO),
-                            reason="acervo nao esta neste ambiente")
-
-
 @pytest.fixture(scope="module")
 def real():
     """O COTAHIST tem 557 MB. Uma leitura por MODULO, nao uma por teste."""
-    if not os.path.isfile(SILVER_ACERVO):
-        pytest.skip("acervo nao esta neste ambiente")
-    ac = A.cotacoes(RAIZ_ACERVO)
-    if not ac.precos:
-        pytest.skip("nenhum COTAHIST no acervo -- ESTES TESTES NAO RODARAM")
+    exigir_acervo(SILVER_ACERVO, os.path.join(RAIZ_ACERVO, f"COTAHIST_A{ANO_REAL}.ZIP"))
+    ac = A.cotacoes(RAIZ_ACERVO, {ANO_REAL})
+    assert ac.precos, "o COTAHIST existe e nao devolveu preco nenhum"
     evs, _dup = A.eventos(SILVER_ACERVO)
     casados, fora = A.casar(evs, ac.papeis)
     fat = A.fatores(casados)
@@ -517,7 +516,6 @@ def real():
     return ac, casados, fora, fat, aj, A.degraus(ac, aj, fat)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_O_DEGRAU_ENCOLHE_e_e_isto_que_confirma_o_C01(real):
     """A MEDICAO QUE DECIDE, contra o mercado, em 293 datas ex de 2023.
@@ -538,7 +536,6 @@ def test_REAL_O_DEGRAU_ENCOLHE_e_e_isto_que_confirma_o_C01(real):
     assert abs(ma) < abs(mb) / 10
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_CONTROLE_o_dia_sem_evento_nao_mudou(real):
     """Sem este, o teste acima nao prova nada. 86 mil pares de pregoes, e a unica
@@ -549,7 +546,6 @@ def test_REAL_CONTROLE_o_dia_sem_evento_nao_mudou(real):
     assert pior < 1e-24, "%d de %d pares mudaram de retorno, pior %.1e" % (div, pares, pior)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_o_caso_FLRY_o_unico_evento_de_QUANTIDADE_de_2023(real):
     """O caso que deu origem ao C-01, agora medido pelas duas pontas.
@@ -567,7 +563,6 @@ def test_REAL_o_caso_FLRY_o_unico_evento_de_QUANTIDADE_de_2023(real):
     assert abs(g.fator - Decimal(1) / Decimal("1.05")) < Decimal("1e-9")
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST(real):
     """DUAS FONTES INDEPENDENTES, e este e o teste que prova que o casamento de ticker
@@ -594,7 +589,6 @@ def test_REAL_o_preco_de_vespera_da_B3_bate_com_o_COTAHIST(real):
     assert bate >= 350 and difere == 0, "%d batem, %d diferem" % (bate, difere)
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_o_ESPECI_do_COTAHIST_e_testemunha_da_data_ex(real):
     """O achado lateral, e ele nao custou nada: o COTAHIST escreve a marca de ex na
@@ -628,7 +622,6 @@ def test_REAL_o_ESPECI_do_COTAHIST_e_testemunha_da_data_ex(real):
     assert mudou / len(gs) > 20 * taxa, "o sinal precisa ser muito maior que o fundo"
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_a_data_ex_DESLOCADA_reprova_em_293_casos(real):
     """A PROVA POR MUTACAO da medicao que decide, e ela fecha uma pergunta que em 16/09
@@ -674,7 +667,6 @@ def test_REAL_a_data_ex_DESLOCADA_reprova_em_293_casos(real):
     assert m_v > 0.010 and t_v > 5, "e um degrau falso tinha de nascer na vespera: %.4f" % m_v
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_o_fator_INVERTIDO_dobra_o_degrau(real):
     """A segunda mutacao: trocar o fator por 1/fator -- o erro de SENTIDO, que e o mais
@@ -692,7 +684,6 @@ def test_REAL_o_fator_INVERTIDO_dobra_o_degrau(real):
     assert m < -0.020 and t < -8, "o fator invertido tinha de PIORAR o degrau: %.4f" % m
 
 
-@acervo
 @pytest.mark.slow
 def test_REAL_a_populacao_medida_e_a_que_o_relatorio_diz(real):
     """Guarda de numero publicado: os numeros deste dia estao escritos em

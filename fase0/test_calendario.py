@@ -16,9 +16,11 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import calendario as C                                                   # noqa: E402
+from acervo_de_teste import exigir_acervo                               # noqa: E402
 
+# P-142: era `data/bronze/b3`; o COTAHIST mora em `.../cotahist` desde a P-114.
 RAIZ_ACERVO = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "data", "bronze", "b3")
+                           "data", "bronze", "b3", "cotahist")
 
 
 def _linha(data_aaaammdd, tipreg="01"):
@@ -107,15 +109,13 @@ def test_anos_diferentes_SOMAM(tmp_path):
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(not os.path.isdir(RAIZ_ACERVO), reason="acervo nao esta neste ambiente")
 def test_o_caso_REAL_do_FLRY_contra_o_acervo():
-    """O caso que deu origem ao achado. Se nao houver COTAHIST no acervo, isto SKIPA --
-    e o skip e honesto: sem o arquivo nao ha o que medir."""
-    datas, cob = C.pregoes(RAIZ_ACERVO)
-    if not datas:
-        pytest.skip("nenhum COTAHIST no acervo -- ESTE TESTE NAO RODOU")
-    if not (cob[0] <= dt.date(2023, 6, 12) < cob[1]):
-        pytest.skip("o COTAHIST do acervo nao cobre 06/2023 -- ESTE TESTE NAO RODOU")
+    """O caso que deu origem ao achado. Pula so sem acervo na maquina; com acervo e sem o
+    2023, FALHA (P-142: este teste pulou em toda rodada desde a P-114, com o skip dizendo
+    "honesto" e procurando na pasta errada)."""
+    exigir_acervo(os.path.join(RAIZ_ACERVO, "COTAHIST_A2023.ZIP"))
+    datas, cob = C.pregoes(RAIZ_ACERVO, {2023})
+    assert cob[0] <= dt.date(2023, 6, 12) < cob[1], cob
     assert C.proximo_pregao(dt.date(2023, 6, 12), datas, cob) == dt.date(2023, 6, 13), (
         "a BONIFICACAO da FLRY tem lastDatePrior 12/06/2023, e a maior queda do FLRY3 no "
         "ano inteiro (-7,78%) esta em 13/06 -- o pregao SEGUINTE")

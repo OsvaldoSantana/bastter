@@ -50,6 +50,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ajustar as A  # noqa: E402
+from acervo_de_teste import exigir_acervo  # noqa: E402
 
 RAIZ_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ACERVO = os.path.join(RAIZ_REPO, "data", "bronze", "b3", "cotahist")
@@ -61,9 +62,6 @@ ANOS = set(range(2021, 2026))
 # este grupo cada trabalhador que recebe um teste daqui refaz a leitura inteira.
 pytestmark = pytest.mark.xdist_group("p113_med")
 
-acervo = pytest.mark.skipif(
-    not (os.path.isdir(ACERVO) and os.path.isfile(SILVER)),
-    reason="acervo ou silver ausente -- ESTE TESTE NAO RODOU")
 
 
 # ── numeros medidos em 23/09/2026, janela 2021-2025 ──────────────────────────
@@ -204,10 +202,10 @@ def test_A13_zeros_a_direita_nao_criam_pagamento_novo():
 
 @pytest.fixture(scope="module")
 def med():
+    exigir_acervo(SILVER, *[os.path.join(ACERVO, f"COTAHIST_A{a}.ZIP") for a in sorted(ANOS)])
     return A.medir(ACERVO, SILVER, ANOS)
 
 
-@acervo
 @pytest.mark.slow
 def test_P113_REAL_os_numeros_da_corrida(med):
     """C1 e C7 do pre-registro, corrigidos pela A-13. A previsao de C1 era **172** e
@@ -218,7 +216,6 @@ def test_P113_REAL_os_numeros_da_corrida(med):
     assert len(med.degraus) == DEGRAUS
 
 
-@acervo
 @pytest.mark.slow
 def test_P113_REAL_nenhum_evento_do_paginado_usa_preco_nosso(med):
     """R2 contra o acervo: a B3 ganha em todos os 7.765 casos em que ela tem preco."""
@@ -227,7 +224,6 @@ def test_P113_REAL_nenhum_evento_do_paginado_usa_preco_nosso(med):
     assert not maus, maus[:5]
 
 
-@acervo
 @pytest.mark.slow
 def test_A13_REAL_o_residuo_de_2025_prova_o_colapso(med):
     """A prova do A-13 pelo mesmo instrumento do A-09. 2025 e o ano em que as duas
@@ -238,7 +234,6 @@ def test_A13_REAL_o_residuo_de_2025_prova_o_colapso(med):
         "o residuo de 2025 ficou significativo: %s" % pa[2025])
 
 
-@acervo
 @pytest.mark.slow
 def test_A13_REAL_sem_colapsar_o_ano_quebra_e_o_AGREGADO_melhora(med):
     """A mutacao, e ela carrega a armadilha junto: reintroduzir a duplicata piora 2025
@@ -262,7 +257,6 @@ def test_A13_REAL_sem_colapsar_o_ano_quebra_e_o_AGREGADO_melhora(med):
         "melhor que o da certa (%s vs %s)" % (ma_mau, ma_bom))
 
 
-@acervo
 @pytest.mark.slow
 def test_P113_REAL_as_duas_fontes_concordam_onde_ambas_existem(med):
     """R1 -- a premissa da decisao, remedida a cada corrida. Concordancia medida uma vez
@@ -287,7 +281,6 @@ def test_P113_REAL_as_duas_fontes_concordam_onde_ambas_existem(med):
     assert bate >= 1000 and difere == 0, (bate, difere, exemplos[:10])
 
 
-@acervo
 @pytest.mark.slow
 def test_P113_REAL_a_coluna_de_origem_cobre_todo_degrau_com_fator(med):
     """A coluna nao pode ficar vazia onde ha fator de provento: vazia significa "nenhum

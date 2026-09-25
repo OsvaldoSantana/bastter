@@ -3098,7 +3098,18 @@ conteúdo do ZIP continua `JA_CORRETO`, para a conferência não virar recusa ge
 verde, `ruff` e `mypy` em zero. Custo: a segunda execução passa a ler as cópias inteiras
 para o CRC — é o preço de o status dizer o que mediu.
 
-## P-142 · Nove testes do C-02 contra o acervo real **nunca rodam**: a raiz aponta para a pasta errada
+## ~~P-142~~ · Nove testes do C-02 contra o acervo real **nunca rodam**: a raiz aponta para a pasta errada — **FECHADA em 25/09/2026**
+
+> **Fechada** (pedido dele, 25/09: o alvo do ML é o retorno do `ajustar.py`). Raiz apontada para
+> `data/bronze/b3/cotahist/` **com `anos={2023}`**, que é a população para a qual os testes foram
+> escritos (o acervo de 18/09 tinha um ano). **Os 9 rodaram e passaram**, sem tocar em nenhum
+> número esperado: 454 papéis, 293 degraus, 352/352 preços de véspera, as duas mutações
+> reprovando, FLRY 12/06 → 13/06. Em 9 s. Guarda da classe: `fase0/acervo_de_teste.py` →
+> `exigir_acervo`, com a regra *sem `data/` pula; com `data/` e arquivo faltando, falha*. É usada
+> por todos os `test_REAL_*` (4 arquivos) e achou um décimo skip calado:
+> `test_REAL_2023_dentro_da_janela_*` pulava se o `degrau_datas_ex` não existisse.
+> `test_acervo_de_teste.py` reprova arquivo com `test_REAL_*` que use `skipif`/`skip`
+> (reprovou os 4 arquivos antes do conserto, e reprova a mutação).
 
 **Dono:** Claude Code · **Gatilho:** a próxima tarefa que toque `ajustar.py` ou o C-02 ·
 **Classe:** `BLOQUEIA_O_SISTEMA` (a guarda do C-02 em 2023 está desligada sem ninguém saber)
@@ -3137,6 +3148,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-142** | 9 testes do C-02 contra o acervo real pulavam em toda rodada: raiz em `data/bronze/b3`, e o COTAHIST em `.../cotahist` desde a P-114 | 25/09 — raiz certa com `anos={2023}`; **os 9 passaram sem mudar número**. `exigir_acervo`: sem `data/` pula, com `data/` e arquivo faltando falha; guarda reprova `skipif` em arquivo com `test_REAL_*` |
 | **P-132** | o pré-registro v2 promete fundamento desde jan/2010, e o primeiro `DT_RECEB` é 27/01/2011 (CV-04) | 25/09 — **decisão dele, opção (a):** emenda 1 (início do desenvolvimento = primeiro mês com ≥ 90% do universo coberto), empurrada em `00aa622` antes de medir. O FCA passou a ser capturado (17 anos, 6,6 MB). O mês **não** foi medido: o FCA não tem ticker antes de 2018 (CV-05) → **P-143**; a P-138 não enxerga emenda de desenho → **P-144** |
 | **P-141** | o pytest foi **58% do tempo** dos pedidos de 21–24/09 (268 de 458 min; `tools/analisar_sessoes.py`); o `fase0` sequencial media **537 s**, a 63 s do teto de 10 min do Bash, e 3 rodadas morreram nele sem resultado | 25/09 — **medido antes e depois, mesma máquina:** completa sequencial **34 + 538 + 35 = 607 s** → completa `-n auto --dist loadgroup` **11 + 103 + 21 + 3 (tools) = 138 s**; ciclo `-m "not slow"` **30 + 7 + 8 + 1 = 46 s**. Memo de sessão por sha256 (`fase0/memo_acervo.py`): os dois pares que liam o mesmo acervo, **338 → 202 s** sequenciais (o segundo de cada par: 95 → 1,2 s e 64 → 1,1 s). Fixtures de módulo (`med`, `jan`, `real`) em `xdist_group`, senão cada trabalhador refaz 45–62 s. `pytest-xdist==3.8.0` no grupo **`paralelo`, não no `dev`**: o `dev` entra na impressão `7565df…` gravada em 4 resultados (`test_p141_paralelo.py`, com mutação). Único teste com caminho fixo (`_pyproject_frouxo.toml`) foi para `tmp_path`. 3 guardas novas, as 3 reprovam por mutação. Protocolo na §9 do `CLAUDE.md`. **Achado lateral: P-142** |
 | **P-43** | um terceiro catálogo (`motor.montar_rotas`) e uma segunda simulação (`motor.simular`) só chamados por testes, divergindo até 17,4% da de produção (B-16) | 24/09 — **apagados** (decisão técnica delegada). Antes: `simular_custo` passou a ler `custodia_rv_interpretacao` (B-17), K-06 e K-07 da Vest trazidos para o `test_alocacao`. Instantâneo dourado idêntico. Retratação da recomendação *"migrar e confrontar"* na própria P-43 |
