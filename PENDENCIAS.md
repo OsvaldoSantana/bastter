@@ -3054,19 +3054,6 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
 
-## P-148 · O Dependabot vai propor numpy e pandas, e aceitar muda o número pré-registrado
-
-**Dono:** Osvaldo (decisão) · **Gatilho:** o primeiro PR do Dependabot que suba `numpy` ou
-`pandas` · **Classe:** `DECISAO_DE_DESENHO`
-
-O `.github/dependabot.yml` (25/09) atualiza, toda segunda, os SHAs das ações e os pinos do
-`pyproject.toml`. Para as ações é o que se quer. Para `numpy` e `pandas`, o PR muda a impressão
-do ambiente (`7565df1381e2c1ed`), e o `test_alocacao.py` o reprova **de propósito**: o
-resultado pré-registrado deixaria de ser conferência e viraria número novo (P-15). Três
-saídas, e a escolha é dele: (a) deixar como está, com o vermelho servindo de aviso a cada
-versão; (b) `ignore` para as duas no `dependabot.yml`; (c) aceitar, reconferir os resultados
-pré-registrados e registrar a impressão nova. Até ele decidir, fica (a).
-
 ## P-147 · A captura do NEFIN ainda não rodou no executor
 
 **Dono:** o workflow (ninguém dispara) · **Gatilho:** o cron diário das 09:15 UTC, ou um *Run
@@ -3296,6 +3283,7 @@ validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca 
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-148** | o Dependabot proporia `numpy` e `pandas` toda semana, e aceitar muda o número pré-registrado (P-15) | 25/09 — **decisão dele, opção (b):** `ignore` das duas no `.github/dependabot.yml`, derivado de `pyproject → tool.meol.dependencias.numericas`; `test_P148_…` reprova divergência nos dois sentidos (mutação: sem o `pandas`, reprova). Saída escrita no arquivo: pré-registro ML executado ou aviso de segurança. Os PRs `numpy-2.4.6` e `pandas-3.0.6` fecham |
 | **P-143** | sem ponte ticker ↔ `CD_CVM` antes de 2018, o universo do ML e o mês da emenda 1 não se mediam (CV-05) | 25/09 — banco de ISIN da B3 (achado no JS da página) + ponte manual de 42 emissores conferida à mão (CV-06). **Mês da emenda: mar/2011**, 95,8%, igual nas duas janelas. Resto na P-145 |
 | **P-140** | o pré-registro ML só fixava 2026; os outros anos saíam da versão vigente, sem pin | 25/09 — **2004–2025** fixados pela impressão de conteúdo (2004 derivado da janela de 60 meses do §5.1, com teste). Impressão = pino principal; sha256 = observado. Mesma impressão com sha diferente → aviso e segue; impressão diferente → `InsumoBloqueado`. 23/23 conferem nesta máquina em 53,7 s |
 | **P-142** | 9 testes do C-02 contra o acervo real pulavam em toda rodada: raiz em `data/bronze/b3`, e o COTAHIST em `.../cotahist` desde a P-114 | 25/09 — raiz certa com `anos={2023}`; **os 9 passaram sem mudar número**. `exigir_acervo`: sem `data/` pula, com `data/` e arquivo faltando falha; guarda reprova `skipif` em arquivo com `test_REAL_*` |

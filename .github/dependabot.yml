@@ -4,10 +4,16 @@
 # (auditoria/test_workflows.py exige o SHA). O Dependabot atualiza o SHA e o comentario juntos,
 # e o trabalho manual de `git ls-remote` deixa de existir.
 #
-# pip: os pinos exatos do pyproject.toml. Um PR que suba numpy ou pandas muda a impressao do
-# ambiente, e `test_alocacao.py` o reprova DE PROPOSITO: o numero pre-registrado passaria a
-# ser um numero novo (P-15). Aceitar esse PR e decisao, com os resultados reconferidos -- o
-# vermelho e o aviso, nao um defeito do Dependabot.
+# pip: os pinos exatos do pyproject.toml. As dependencias NUMERICAS (pyproject.toml ->
+# tool.meol.dependencias.numericas) ficam de fora -- P-148, decisao dele, 25/09/2026. Um PR
+# que as suba muda a impressao do ambiente, e o numero pre-registrado passaria a ser numero
+# novo (P-15): o `test_alocacao.py` o reprova de proposito. Na primeira segunda-feira vieram
+# dois PRs assim; deixar o vermelho semanal como aviso e o alarme que dispara sempre (A-08).
+# O `ignore` e derivado da lista do pyproject: `auditoria/test_workflows.py` reprova se os
+# dois divergirem, nos dois sentidos.
+# SAI quando o pre-registro ML for executado e os resultados reconferidos na versao nova, ou
+# quando houver aviso de seguranca -- que continua chegando pelos Dependabot alerts, que nao
+# dependem deste arquivo.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
@@ -24,3 +30,6 @@ updates:
       day: "monday"
     commit-message:
       prefix: "Dependencias"
+    ignore:
+      - dependency-name: "numpy"
+      - dependency-name: "pandas"
