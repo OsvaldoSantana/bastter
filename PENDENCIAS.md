@@ -3059,6 +3059,27 @@ baixada à mão em 18/09 (manifesto de 18/09).
 3. **A medição de mutação:** Actions → *Mutacao* → *Run workflow*. Até essa execução, a
    configuração `[tool.mutmut]` é `NAO_CONFIRMADO`. Cada sobrevivente vira achado candidato.
 
+> **25/09, os itens 2 e 3 rodaram no branch `claude/brave-gates-g4zm6k`, disparados pela sessão
+> na nuvem a pedido dele** (conferir os workflows depois da troca para node24). Dois achados:
+>
+> - **CI-03: a *Mutacao* sai verde sem ter medido nada** (execução `36152691790`, 55 s). Os 4.935
+>   mutantes ficaram `not checked`. A rodada limpa do mutmut falha (`failed to collect stats`)
+>   e o `set +e` do workflow engole o erro. Reproduzido num clone: fora os `privado`, **20 testes**
+>   quebram na cópia `mutants/`. A cópia não leva `.git`, `.github`, `.gitignore` nem `PENDENCIAS.md`
+>   (os de `test_workflow_captura`, `p67`, `p82` e `limitacoes_tipo`), e os testes que varrem o
+>   fonte veem a instrumentação do mutmut (`test_nenhum_literal_de_politica_fixo_no_modulo`
+>   acusa `101`, `1.01`, `366.25`…). **Decisão dele:** restringir os testes da mutação aos
+>   unitários dos quatro módulos mutados, ou marcar os testes de repositório e excluí-los por
+>   marcador. Nos dois casos o workflow passa a falhar quando nenhum mutante é checado.
+> - **CI-04: o job `completo` do *Testes* fica vermelho em dois testes que já falhavam no `main`**
+>   (execução `36152684302`, a primeira do job). (a) `test_P97_nao_sobrou_ZIP_sem_origem_no_acervo`:
+>   os 6 `COTAHIST_D*.ZIP` da P-135 têm origem no `capturas.csv`, não no `origem.csv`. (b)
+>   `test_REAL_todo_ano_fixado_confere_nesta_maquina`: o pin de 2026 (`fb3546ed…`) não é a versão
+>   vigente, a materialização só copia a vigente, e o R2 não tem segredo no passo dos testes.
+>   Propostas no PR osvaldosantana/bastter#1. **Decisão dele** nas duas.
+>
+> A *Captura CVM* (`36152688055`) ficou verde com checkout v7.0.1, e o push do bot funcionou.
+
 ## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
 
 **Dono:** Claude Code (medir) · Osvaldo (as duas escolhas) · **Gatilho:** antes da primeira

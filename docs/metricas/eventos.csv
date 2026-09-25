@@ -42,3 +42,5 @@ data;codigo;tipo;autor;quem_achou;regua;commit_introduziu;commit_corrigiu;descri
 2026-09-25;CI-02;achado;desconhecido;claude-code;15;desconhecido;aberto;_tirar_somente_leitura so liberava o arquivo -- no POSIX falta a escrita da pasta-mae; so funcionava no Windows
 2026-09-25;CLAUDE-11.5;retratacao;claude-chat;desconhecido;17;desconhecido;mesmo-commit;"instrumento que eu nao tenho" -- tools/analisar_sessoes.py le as transcricoes -- e "269 testes, ~8 s" era 607 s
 2026-09-25;P-145;achado;desconhecido;claude-code;desconhecido;2c608c9;mesmo-commit;"3 meses anteriores" e "percentil >= 50" da secao 2 da v2 admitiam duas leituras -- decididas por ele: t-2..t e >= mediana (emenda 1, secao 6)
+2026-09-25;CI-03;achado;desconhecido;claude-code;4;desconhecido;aberto;mutacao sai verde com 4935 mutantes not checked -- a rodada limpa falha em 20 testes na copia mutants/ e o set +e engole
+2026-09-25;CI-04;achado;desconhecido;claude-code;15;desconhecido;aberto;primeira execucao do job completo: P-97 nao le a origem dos COTAHIST diarios e o pin de 2026 nao e materializado
