@@ -1041,6 +1041,40 @@ def test_custo_de_discordar_e_positivo_quando_a_proposta_e_mais_cara():
     assert d["diferenca_pp_aa"] > 0
 
 
+def test_P134_entrada_que_come_o_aporte_e_recusada_com_nome():
+    """Antes: `min(e*aporte, aporte)` e a simulacao devolvia numero. A R$ 4,00 a ordem de
+    R$ 4,50 come o aporte inteiro; nao ha patrimonio a simular, e isso tem nome."""
+    from alocacao import AporteConsumidoPelaEntrada, simular_custo
+    r = {x.id: x for x in catalogo(C)}["acao_450"]
+    with pytest.raises(AporteConsumidoPelaEntrada, match="acao_450"):
+        simular_custo(r, C, 4.0, 1)
+    pat, custo, ap = simular_custo(r, C, 500.0, 1)       # controle: aporte normal simula
+    assert ap == 6000.0 and 0 < custo < ap and pat > 0
+
+
+def test_P134_proposta_com_peso_minimo_de_rota_de_custo_fixo_nao_vira_numero():
+    """O caminho que o G3 nao cobre: a proposta do usuario nao passa por portao, e cada
+    rota e simulada com o aporte DELA. 0,5% de R$ 500 = R$ 2,50 < R$ 4,50 da ordem."""
+    rotas = {x.id: x for x in catalogo(C)}
+    d = custo_de_discordar({"td_selic": 1.0}, {"td_selic": 0.995, "acao_450": 0.005},
+                           C, 500, 20, rotas)
+    assert d["arrasto_proposta_aa"] is None and d["diferenca_pp_aa"] is None
+    assert any("acao_450" in m for m in d["aporte_consumido"])
+    assert d["arrasto_alvo_aa"] is not None
+
+
+def test_P134_com_aporte_zero_a_interacao_g3_g4_nao_cai_nem_vira_NaN():
+    """Aporte R$ 0 dava entrada fixa infinita, e `min(inf*0, 0)` devolvia NaN calado. A
+    interacao G3xG4 comparava NaN e acertava por acidente (NaN < x e falso)."""
+    from alocacao import interacao_g3_g4
+    rotas = {x.id: x for x in catalogo(C)}
+    fora = [(rotas["acao_450"], float("inf"), "FIXO", None)]
+    vivos = [x for x in rotas.values() if x.exposicao == rotas["acao_450"].exposicao
+             and x.id != "acao_450" and x.confiavel]
+    assert vivos, "controle: precisa haver rival de mesma exposicao"
+    assert interacao_g3_g4(fora, vivos, C, 0.0, P, 10) == []
+
+
 def test_fora_de_escopo_viaja_para_o_output_e_nao_contem_ipca_nem_cripto():
     """A objecao do usuario: o que tem regra nao vira ausencia declarada."""
     r = alocar(Estado(**BASE), C, P, teses={}, carregos={})

@@ -3111,7 +3111,7 @@ provavelmente mais simples. Declarada em
 > **Não lido (P5):** a Política Comercial de Market Data da B3 (é ela que diz como se pede o
 > consentimento) e a página de licença do ITR, FCA e CAD na CVM.
 
-## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
+## ~~P-134~~ · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16 — **FECHADA em 25/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
 chamador fora do pipeline usar `custo_pct_aportado`/`arrasto_anualizado` · **Classe:**
@@ -3123,6 +3123,14 @@ come o aporte inteiro **sem dizer nada**. O `motor.simular` alertava (K-08.3) �
 P-43. No pipeline o G3 barra a rota antes, então hoje é inerte; quem chama as duas funções
 direto recebe um número sem o aviso. O conserto é o mesmo desenho do G3: devolver a condição
 em vez de engoli-la, com teste que reprove contra a versão atual.
+
+
+**25/09/2026 — FECHADA.** `AporteConsumidoPelaEntrada`: a simulação recusa com nome. **E a
+premissa "hoje é inerte" estava errada:** o `custo_pct_aportado` do alvo e o `custo_de_discordar`
+simulam com o aporte **da rota** (`aporte × peso`), e a proposta do segundo não passa pelo G3.
+Medido: só `acao_450` (R$ 4,50 a ordem) alcança, com aporte da rota ≤ R$ 4,50. E embaixo havia o
+B-19 (aporte R$ 0 → NaN). Três testes; os caminhos que simulam aporte fracionado viram motivo
+escrito, e a interação G3×G4 deixa a rota fora.
 
 ## P-133 · O acervo da CVM tem 49 arquivos com sha256 e nenhum com origem declarada
 
@@ -3142,6 +3150,20 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 `__v20260913__` de 2024 vieram de `(1).zip` do navegador e **não têm linha no registro**.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
+
+## ~~P-149~~ · `cenarios.py` cai no `main` — `fora_status` mudou de forma — **FECHADA em 25/09/2026**
+
+**Dono:** Claude Code · **Gatilho:** no próximo toque em `cenarios.py` ou em `fase_universo` ·
+**Classe:** `BLOQUEIA_O_SISTEMA` (o `CLAUDE.md` §3 manda rodar `python cenarios.py`)
+
+Medido em 25/09 no `main`, antes da P-134: `for rt,e in u["fora_status"]` →
+`TypeError: cannot unpack non-iterable RotaAloc object`. Desde a F-02 o G5 roda **antes** do G3,
+sobre rotas nuas, e o `fora_status` passou a guardar rota, não par. O `cenarios.py` não foi junto,
+e nenhum teste o roda — é a P-80 (a rotina mede um terço) na forma de um script de exemplo.
+Conserto: ler o `fora_status` como rota, e um teste que rode o `main()` do `cenarios.py`.
+
+**FECHADA no mesmo commit.** `alocacao/test_cenarios.py` roda o script e exige os seis
+cenários; reprova no `main` de antes (conferido com o conserto guardado).
 
 ## P-147 · A captura do NEFIN ainda não rodou no executor
 
@@ -3372,6 +3394,8 @@ validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca 
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-149** | `cenarios.py` caía no `main` (`fora_status` virou lista de rotas) | 25/09 — lê rota nua; `test_cenarios.py` roda o script |
+| **P-134** | custo de entrada maior que o aporte virava `min()` calado | 25/09 — `AporteConsumidoPelaEntrada`; não era inerte (aporte da rota e proposta); achado B-19 (aporte R$ 0 → NaN) |
 | **P-57** | a captura da CVM dependia de alguém lembrar (W-01) | 25/09 — execução agendada `36148547193` verde; regime em `politica.yaml → regimes_de_captura.cvm`; limitação `RESOLVIDA` |
 | **P-135** | o COTAHIST não era capturado na nuvem | 25/09 — mesma execução, passo `captura_b3`; `regimes_de_captura.b3`; limitação `RESOLVIDA`. Conciliação segue na P-137 |
 | **P-148** | o Dependabot proporia `numpy` e `pandas` toda semana, e aceitar muda o número pré-registrado (P-15) | 25/09 — **decisão dele, opção (b):** `ignore` das duas no `.github/dependabot.yml`, derivado de `pyproject → tool.meol.dependencias.numericas`; `test_P148_…` reprova divergência nos dois sentidos (mutação: sem o `pandas`, reprova). Saída escrita no arquivo: pré-registro ML executado ou aviso de segurança. Os PRs `numpy-2.4.6` e `pandas-3.0.6` fecham |

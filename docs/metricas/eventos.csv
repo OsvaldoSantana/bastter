@@ -51,3 +51,4 @@ data;codigo;tipo;autor;quem_achou;regua;commit_introduziu;commit_corrigiu;descri
 2026-09-25;LIC-01;achado;desconhecido;claude-code;desconhecido;8b98028;mesmo-commit;o CSV do NEFIN estava no git (publico desde 11/09) sem os termos lidos -- eles pedem citacao e nao autorizam redistribuir; saiu do git para o armazem com captura
 2026-09-25;CI-05;achado;desconhecido;claude-code;desconhecido;34bac27;mesmo-commit;o testes.yml nao rodava em pull_request -- PR de contribuidor ou do Dependabot chegaria ao main sem suite nenhuma
 2026-09-25;GIT-02;achado;claude-code;claude-code;desconhecido;b3ba3fd;mesmo-commit;o dependabot.yml abriu 4 branches e a guarda do GIT-01 reprovava todo clone com git fetch -- dependabot/ saiu da guarda pelo prefixo, com teste que prende o corte
+2026-09-25;B-19;achado;claude-code;claude-code;desconhecido;desconhecido;mesmo-commit;aporte zero dava entrada infinita e o min() devolvia NaN calado; a interacao G3xG4 acertava por acidente
