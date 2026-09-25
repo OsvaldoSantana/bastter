@@ -50,7 +50,7 @@ destrava. Isso é uma **lacuna com caminho**, não uma recusa — e o caminho es
 | **M1 · decidir o aporte** | dizer quanto entra, para qual classe e por qual rota, com custo e imposto medidos e nove portões nomeados | **pronto**, e ocioso até a reserva existir |
 | **M2 · decidir com dado próprio** | ler balanço e evento societário do acervo dele, sem depender de terceiro nem de tela | **em andamento** — B3 e CVM no disco; falta ler |
 | **M3 · decidir o papel** | aplicar uma régua de empresa **pré-registrada** e medida, com o corte que a família de testes exige | **bloqueado** em M2 |
-| **M4 · fazer isso sozinho** | rodar a captura semanal sem ninguém lembrar, e acusar a falha em vez de a esconder | **desenhado**, não executado (P7 / §11.6) |
+| **M4 · fazer isso sozinho** | rodar a captura semanal sem ninguém lembrar, e acusar a falha em vez de a esconder | **rodando** desde 25/09: primeira execução agendada verde (`36148547193`), CVM e COTAHIST; NEFIN falta (P-147). A falha visível é o `acervo.frescor()` |
 
 **A ordem não é negociável e a razão é de dado, não de gosto:** M3 sem M2 é backtest sobre
 o dado de outra pessoa, que é o desconto D3 da literatura (*look-ahead* contábil) entrando
@@ -276,9 +276,10 @@ não sustenta ordenar as boas (`criterio_nao_e_previsao`).
 `.github/workflows/captura_cvm.yml`, 09:15 UTC, sem a máquina dele: CVM (DFP, ITR, CAD) e,
 no mesmo job, COTAHIST (diário a cada pregão, anual uma vez por mês), para o Cloudflare R2
 com teto de 9 GB no código. Primeiras execuções verdes: `36043565046` (CVM) e `36045126980`
-(com o COTAHIST). **O que sobra é pequeno e está nas pendências:** declarar o regime
-automático para as duas limitações de captura saírem (P-57 passo 3, P-135), e a conciliação
-dos diários contra o anual (P-137, gatilho 01/10).
+(com o COTAHIST), e a primeira **agendada**, `36148547193` (25/09). O regime automático é
+dado desde 25/09 (`politica.yaml → regimes_de_captura`), e as limitações de captura da CVM e
+do COTAHIST ficaram `RESOLVIDA` (P-57 e P-135 fechadas). **O que sobra:** o NEFIN no executor
+(P-147) e a conciliação dos diários contra o anual (P-137, gatilho 01/10).
 
 ### Fora da fila, mas com custo em toda sessão
 
@@ -292,10 +293,9 @@ dos diários contra o anual (P-137, gatilho 01/10).
   rodadas de 16 e 18/09 foram feitas da nuvem mesmo assim — pagando transferência de arquivo
   e sem alcançar o git. A nuvem é para **pesquisa com fonte primária, subagentes e
   processamento de dado pesado**.
-- **16 commits nunca empurrados.** O `PREREGISTRO-EVIDENCIA.md` conclui que todo benefício
-  medido de pré-registro vem de arranjo com **verificador externo**, e que o que salva este
-  desenho é o repositório público com commits datados. **Sem push, esse verificador não
-  existe.**
+- ~~**16 commits nunca empurrados.**~~ *(Resolvido em 18/09: o repositório foi empurrado, e
+  desde 25/09 os marcos têm tags anotadas. O verificador externo que o
+  `PREREGISTRO-EVIDENCIA.md` exige existe.)*
 
 ---
 
@@ -304,8 +304,8 @@ dos diários contra o anual (P-137, gatilho 01/10).
 | # | bloqueio | classe | o que o levanta |
 |---|---|---|---|
 | 1 | ~~CVM não baixada~~ — **levantado em 18/09** | — | o acervo existe; falta o manifesto |
-| 2 | COTAHIST cobre 1 ano, e a janela isolada tem duas bordas | `BLOQUEIA_O_SISTEMA` | baixar **2021 a 2025 contíguos** — ver passo 3 |
-| 3 | bitemporalidade não implementada | `BLOQUEIA_O_SISTEMA` | passo 3 |
+| 2 | ~~COTAHIST cobre 1 ano, e a janela isolada tem duas bordas~~ — **levantado em 21/09** (2021–2025 contíguos; 41 anos no acervo) | — | resolvido |
+| 3 | bitemporalidade não implementada | `BLOQUEIA_O_SISTEMA` | passo 4 |
 | 4 | a segunda esteira — nota explicativa e IPE — **nunca orçada** (X-01) | `BLOQUEIA_O_SISTEMA` | precisa de decisão de escopo antes de código |
 | 5 | ~~duas cópias do projeto na máquina (P-87)~~ — **apagada por ele em 18/09** | — | resolvido |
 

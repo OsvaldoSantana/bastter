@@ -16,6 +16,8 @@ Este README documenta a extração literal realizada sobre os arquivos-fonte bai
 | `cvm-enumeracoes-observadas.md` | Valores de ORDEM_EXERC, ESCALA_MOEDA, MOEDA — contados no dado real (DFP+ITR, 2012/2019/2024, 96 arquivos, 12,8M linhas). Inclui o achado de 04/09/2026: o CONJUNTO de arquivos muda entre safras (`composicao_capital` só existe em 2024) | 04/09/2026 | OBSERVADO (contado no dado, não documentado no dicionário) | Valores possíveis de ORDEM_EXERC e ESCALA_MOEDA (item 10, resolvido) |
 | `cvm-resolucao-175-consolidada.md` | Resolução CVM 175 — Parte Geral (arts. 1-141) | 03/09/2026 | PARCIAL (Anexos I-II, IV-XV e Suplementos não lidos) | Resolução CVM 175 |
 | `cvm-resolucao-175-anexo-iii-fii.md` | Anexo Normativo III — regras específicas de FII | 03/09/2026 | COMPLETO | Anexo Normativo III (FII) |
+| `b3-termos-de-uso.md` | Termos de uso da B3: uso pessoal, vedação de redistribuir dado de mercado, ambiguidade sobre documento | 25/09/2026 20:02 UTC | COMPLETO (as cláusulas de uso) | P-136, metade B3 |
+| `cvm-dados-abertos-licenca.md` | Licença ODbL do DFP e termos do portal (citação obrigatória) | 25/09/2026 20:02 UTC | COMPLETO (DFP; ITR/FCA/CAD não abertos) | P-136, metade CVM |
 | `nefin.md` | Metodologia + estrutura do CSV de fatores NEFIN | 03/09/2026 14:18 | COMPLETO | Séries de fatores do NEFIN |
 | `ishares-ivv-factsheet.md` | Expense ratio IVV | 03/09/2026 15:29 | COMPLETO | Expense ratio de IVV |
 | `vanguard-voo-factsheet.md` | Expense ratio VOO | 03/09/2026 15:30 | COMPLETO | Expense ratio de VOO |

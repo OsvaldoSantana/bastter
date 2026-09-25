@@ -22,6 +22,7 @@ que ganhe rotina automatica continua passando aqui ate alguem tirar o nome da li
 e e por isso que `quando_deixa_de_importar` esta escrito em cada entrada.
 """
 from __future__ import annotations
+import datetime as dt
 import io
 import os
 import sys
@@ -140,6 +141,77 @@ def test_mutacao_arquivo_no_lugar_de_pasta_nao_vira_acervo(tmp_path):
     raiz = _repo_falso(tmp_path, ["cvm"], [["cvm"]])
     (tmp_path / "docs" / "acervo" / "LEIA.md").write_text("x", encoding="utf-8")
     assert m.acervos_sem_regime(raiz) == (set(), set())
+
+
+# ── P-57 passo 3: o regime AUTOMATICO e dado, e a limitacao resolvida nao cobre ──
+
+def test_P57_todo_regime_declarado_esta_inteiro_no_arquivo_real():
+    assert m.defeitos_de_regime(RAIZ) == {}
+
+
+def test_P57_cvm_e_b3_rodam_sozinhas_e_nao_sao_mais_limitacao():
+    """Falha na versao de 25/09 antes deste commit: as duas eram limitacao vigente com a
+    execucao agendada verde ja feita (36148547193)."""
+    P = _politica()
+    assert {"cvm", "b3"} <= set(P["regimes_de_captura"])
+    assert not {"cvm", "b3"} & set(m.acervos_em_limitacao(P))
+
+
+def _com_regime(tmp_path, regimes, limitacoes=None, passos=("captura",)):
+    (tmp_path / "pyproject.toml").write_text("[tool.x]\n", encoding="utf-8")
+    (tmp_path / "alocacao").mkdir()
+    wf = tmp_path / ".github" / "workflows"
+    wf.mkdir(parents=True)
+    (wf / "c.yml").write_text(yaml.safe_dump(
+        {"jobs": {"j": {"steps": [{"id": p} for p in passos]}}}), encoding="utf-8")
+    (tmp_path / "docs" / "acervo" / "cvm").mkdir(parents=True)
+    (tmp_path / "docs" / "acervo" / "cvm" / "capturas.csv").write_text("x", encoding="utf-8")
+    corpo = {"regimes_de_captura": regimes, "limitacoes_declaradas": limitacoes or {}}
+    (tmp_path / "alocacao" / "politica.yaml").write_text(yaml.safe_dump(corpo),
+                                                          encoding="utf-8")
+    return str(tmp_path)
+
+
+def _regime(**muda):
+    r = {"regime": "AUTOMATICO", "executor": ".github/workflows/c.yml", "passo": "captura",
+         "registro": "docs/acervo/cvm/capturas.csv", "primeira_execucao_agendada": 1,
+         "em": dt.date(2026, 9, 25)}
+    r.update(muda)
+    return r
+
+
+def test_mutacao_regime_inteiro_cobre_o_acervo(tmp_path):
+    raiz = _com_regime(tmp_path, {"cvm": _regime()})
+    assert m.acervos_sem_regime(raiz) == (set(), set())
+    assert m.defeitos_de_regime(raiz) == {}
+
+
+@pytest.mark.parametrize("muda, trecho", [
+    ({"regime": "MANUAL"}, "regime"),
+    ({"executor": ".github/workflows/nao.yml"}, "executor"),
+    ({"passo": "captura_nefin"}, "passo"),
+    ({"registro": "docs/acervo/cvm/nao.csv"}, "registro"),
+    ({"primeira_execucao_agendada": None}, "execucao agendada"),
+    ({"em": "2026-09-25"}, "data"),
+])
+def test_mutacao_regime_com_defeito_e_ACUSADO(tmp_path, muda, trecho):
+    raiz = _com_regime(tmp_path, {"cvm": _regime(**muda)})
+    d = m.defeitos_de_regime(raiz)
+    assert list(d) == ["cvm"] and any(trecho in f for f in d["cvm"]), d
+
+
+def test_mutacao_acervo_automatico_E_limitacao_vigente_e_ACUSADO(tmp_path):
+    lim = {"x": {"tipo": "NAO_CONSERTADA", "acervos": ["cvm"]}}
+    d = m.defeitos_de_regime(_com_regime(tmp_path, {"cvm": _regime()}, lim))
+    assert any("limitacao vigente x" in f for f in d["cvm"]), d
+
+
+def test_mutacao_limitacao_RESOLVIDA_nao_cobre_acervo(tmp_path):
+    """Sem o filtro de HISTORICO, a frase que ja caiu continuaria cobrindo o acervo, e
+    apagar o regime passaria calado."""
+    lim = {"x": {"RESOLVIDA": "ja rodou", "acervos": ["cvm"]}}
+    raiz = _com_regime(tmp_path, {}, lim)
+    assert m.acervos_sem_regime(raiz) == ({"cvm"}, set())
 
 
 if __name__ == "__main__":

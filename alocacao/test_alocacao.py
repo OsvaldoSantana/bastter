@@ -378,6 +378,9 @@ REGIME_DAS_SECOES = {
     "armazem":       (OPERACIONAL,   "aviso e teto do bucket do R2 (P-57, cobranca "
                                      "zero); quem le e fase0/armazem.py -- por isso "
                                      "_fontes_do_motor inclui o fase0"),
+    "regimes_de_captura": (OPERACIONAL, "P7: o acervo cuja captura roda sozinha, com o "
+                                     "executor, o passo e a execucao agendada que o "
+                                     "provou; quem le e fase0/manifesto_cvm.py"),
     "bloco_C_solvencia":            (ESPECIFICACAO, "P-30: especificado em 05/09, "
                                      "nenhum modulo aplica"),
     "regime_instituicao_financeira":(ESPECIFICACAO, "P-31: especificado em 05/09, "

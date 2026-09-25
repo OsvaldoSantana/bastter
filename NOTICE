@@ -23,8 +23,12 @@ O QUE NÃO É DESTE PROJETO, e nenhuma das duas licenças alcança:
     Federal e de instituições financeiras. Continuam sendo dos seus autores. O que o
     projeto licencia é a análise em volta deles.
   - Os dados de mercado (COTAHIST e eventos societários da B3; DFP, ITR, FCA e cadastro
-    da CVM). Não estão neste repositório, e a licença de redistribuição da B3 ainda
-    não foi lida (PENDENCIAS.md, P-136).
+    da CVM). Não estão neste repositório. Termos lidos em 25/09/2026:
+      B3: uso exclusivamente pessoal; redistribuir ou publicar dado de mercado exige
+      consentimento prévio e expresso da B3 (docs/fontes/b3-termos-de-uso.md).
+      CVM: Open Database License (ODbL), com citação obrigatória: "Dados acessados pelo
+      Portal de Dados Abertos da CVM, disponível em https://dados.cvm.gov.br/"
+      (docs/fontes/cvm-dados-abertos-licenca.md).
 
 O projeto foi inspirado no método publicado pelo site Bastter.com, e não tem vínculo com
 o site nem com seus autores. O que se adota do método e onde se diverge está em

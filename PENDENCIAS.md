@@ -815,7 +815,7 @@ NAO_CONFIRMADO: o ano exato de entrada da seção.
 
 ---
 
-## P-57 · A captura semanal não pode depender do Osvaldo lembrar — achado W-01
+## ~~P-57~~ · A captura semanal não pode depender do Osvaldo lembrar — achado W-01 — **FECHADA em 25/09/2026**
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Claude. **Gatilho:** antes de considerar a
 Fase 0 concluída.
@@ -933,6 +933,9 @@ cobre — token vazado — está em `limitacoes_declaradas.o_teto_do_armazem_e_d
 Ocupação na carga inicial: **1,64 GB** (soma dos dois `inventario-armazem.csv`).
 
 ---
+
+
+**25/09/2026 — FECHADA.** A execução `36148547193` (evento `schedule`, sem ninguém disparar) rodou os passos `captura` e `captura_b3` verdes, conferido passo a passo pela API do GitHub. O regime virou dado: `politica.yaml → regimes_de_captura` (1.31.0), lido por `manifesto_cvm.defeitos_de_regime()`, e as duas limitações ficaram `RESOLVIDA`. **O que não foi conferido daqui:** o `logs/capturas/<dia>.csv` no bucket (a sessão na nuvem não tem as credenciais do R2). E o cron das 09:15 UTC saiu às 14:35 UTC: o horário do agendamento não é garantido pelo GitHub.
 
 ## P-58 a P-61 · Regimes de leitura de balanço — a pergunta que expôs o defeito
 
@@ -2792,7 +2795,7 @@ usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declara
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
 
-## P-135 · O COTAHIST ainda não é capturado na nuvem
+## ~~P-135~~ · O COTAHIST ainda não é capturado na nuvem — **FECHADA em 25/09/2026**
 
 **Dono:** Claude · **Gatilho:** depois da primeira execução verde da captura da CVM (P-57) ·
 **Classe:** `BLOQUEIA_O_SISTEMA`
@@ -2851,6 +2854,9 @@ status` no lugar do `git diff` funcionou na primeira. **O que resta para fechar 
 passo 3 da P-57:** tirar `b3` de `captura_do_cotahist_ainda_nao_e_rotina` exige declarar o
 regime automático onde o `test_P7_todo_acervo_tem_regime_de_captura_declarado` o leia —
 e o desenho dessa declaração serve às duas fontes de uma vez.
+
+
+**25/09/2026 — FECHADA.** A execução `36148547193` (evento `schedule`, sem ninguém disparar) rodou os passos `captura` e `captura_b3` verdes, conferido passo a passo pela API do GitHub. O regime virou dado: `politica.yaml → regimes_de_captura` (1.31.0), lido por `manifesto_cvm.defeitos_de_regime()`, e as duas limitações ficaram `RESOLVIDA`. **O que não foi conferido daqui:** o `logs/capturas/<dia>.csv` no bucket (a sessão na nuvem não tem as credenciais do R2). E o cron das 09:15 UTC saiu às 14:35 UTC: o horário do agendamento não é garantido pelo GitHub.
 
 ## P-137 · Conciliar os diários do COTAHIST contra o anual do mês
 
@@ -3021,6 +3027,71 @@ provavelmente mais simples. Declarada em
 > (`fase0/capturar_nefin.py`), e o limite ficou declarado em `nefin_fora_do_git`. Achado
 > LIC-01. **A B3 e a CVM continuam sem leitura.** O NEFIN mostrou que "dado público" e
 > "redistribuível" são perguntas diferentes.
+
+
+> **25/09/2026, noite — a leitura NÃO foi feita, e o motivo é da ferramenta, não da fonte
+> (§5-B.17).** A sessão na nuvem tentou ler as duas fontes primárias e as duas responderam
+> `EGRESS_BLOCKED` na política de rede **deste ambiente**: `www.b3.com.br`
+> (`/pt_br/termos-de-uso-e-protecao-de-dados/termos-de-uso/` e a página de Séries Históricas) e
+> `dados.cvm.gov.br` (`/dataset/cia_aberta-doc-dfp`). Destrava por dois caminhos: liberar os
+> dois hosts em *Network access* do ambiente, ou a sessão local ler as páginas.
+>
+> **O que um buscador devolveu, e NÃO vale como leitura:** que os termos da B3 proíbem
+> *"distribuição, redistribuição, […] publicação […] de todo ou parte"* do Market Data sem
+> consentimento prévio, e que o portal da CVM publica sob **ODbL**. Os dois são resumo de
+> buscador, sem o texto nem a data de vigência na mão — `NAO_CONFIRMADO` até a leitura.
+>
+> **O que foi medido no índice do git, e não depende da licença:**
+> 1. **Nenhum dado de mercado bruto da B3 está no repositório.** `git grep` por registro
+>    COTAHIST (`01` + data + código, 245 posições) e por payload de evento
+>    (`lastDatePrior`, `closingPricePriorExDate`) não acha nenhum arquivo de dado: os acertos
+>    são prosa de laudo e um comentário de código. Os CSVs de `docs/acervo/` guardam **metadado**:
+>    URL, `Last-Modified`, ETag, sha256, tamanho.
+> 2. **A pergunta tem uma segunda metade que ninguém tinha formulado: direito autoral de
+>    DOCUMENTO, não só redistribuição de dado.** `docs/fontes/SeriesHistoricas_Layout.md`
+>    (394 linhas) e `docs/fontes/Tarifacao_Equities_V5.0_PT.md` (182 linhas) transcrevem
+>    publicações da B3 em seções marcadas *"texto literal"*. É a forma que dá procedência ao
+>    projeto — e é também reprodução de documento de terceiro num repositório público. A
+>    leitura dos termos tem de responder as duas.
+> 3. **Os dois arquivos acima carregam `Fonte: NAO_REGISTRADA`**, o primeiro desde 03/09 —
+>    embora a P-06 tenha fechado a fonte do leiaute em 19/09 (a URL está em
+>    `docs/schemas/cotahist-v02.yaml`). Não troquei: provar que o `.md` transcreve **a mesma
+>    revisão** daquele PDF é medição, não suposição (§5-B.1). O URL da V5.0 da tarifação não
+>    está em lugar nenhum do repositório.
+
+
+> **25/09/2026, 20:02 UTC — LIDA.** Ele liberou os dois hosts, e a leitura foi feita com `curl`
+> (a ferramenta de leitura de página continuou com o bloqueio antigo). Texto das cláusulas,
+> data de acesso e sha256 em `docs/fontes/b3-termos-de-uso.md` e
+> `docs/fontes/cvm-dados-abertos-licenca.md`. O resumo do buscador estava certo nos dois pontos.
+>
+> - **B3:** "uso exclusivamente pessoal"; redistribuir, publicar, reformatar ou fornecer base
+>   a terceiros a partir de dado de mercado é vedado sem consentimento prévio e expresso —
+>   **sem** o qualificador "para fins comerciais". Virou `limitacoes_declaradas.
+>   redistribuir_dado_da_b3_exige_consentimento` (`FISICA`); a entrada "não lida" ficou
+>   `RESOLVIDA`. Servir um segundo usuário exige contrato com a B3.
+> - **CVM:** ODbL no DFP, e citação obrigatória em todo uso secundário. A frase está no `NOTICE`.
+>
+> **O que resta é decisão dele — por isso a pendência continua aberta, agora com dono único:**
+>
+> 1. **DECIDIDA por ele, 25/09/2026: manter, sem mudança** (opção c). As transcrições ficam
+>    como estão; o risco fica declarado aqui, com a leitura dos termos ao lado. Reabre se a B3
+>    pedir a remoção ou mudar os termos (o sha256 em `docs/fontes/b3-termos-de-uso.md` acusa).
+>    O texto abaixo é o que ele tinha diante de si ao decidir.
+>
+>    **As duas transcrições de documento da B3** (`SeriesHistoricas_Layout.md`, 394 linhas;
+>    `Tarifacao_Equities_V5.0_PT.md`, 182). Os termos autorizam uso "exclusivamente pessoal" e a
+>    proibição de "reprodução […] publicação" é ambígua quanto a "fins comerciais"; nenhuma
+>    leitura torna a transcrição **integral** claramente permitida. Saídas: (a) reduzir a
+>    **citação de passagens** com a fonte (Lei 9.610/1998, art. 46, III) — o leiaute como dado já
+>    mora em `docs/schemas/cotahist-v02.yaml`; (b) pedir autorização à B3; (c) manter e declarar
+>    o risco. Recomendação: (a). O histórico do git continua tendo o texto, como no NEFIN.
+> 2. **O armazém da CVM pode ser público.** A ODbL permite redistribuir com atribuição e
+>    *share-alike*; as versões que a CVM já substituiu, que hoje só existem no R2, poderiam ser
+>    servidas a quem reproduz. É escolha, não exigência — e custa banda do R2.
+>
+> **Não lido (P5):** a Política Comercial de Market Data da B3 (é ela que diz como se pede o
+> consentimento) e a página de licença do ITR, FCA e CAD na CVM.
 
 ## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
 
@@ -3283,6 +3354,8 @@ validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca 
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-57** | a captura da CVM dependia de alguém lembrar (W-01) | 25/09 — execução agendada `36148547193` verde; regime em `politica.yaml → regimes_de_captura.cvm`; limitação `RESOLVIDA` |
+| **P-135** | o COTAHIST não era capturado na nuvem | 25/09 — mesma execução, passo `captura_b3`; `regimes_de_captura.b3`; limitação `RESOLVIDA`. Conciliação segue na P-137 |
 | **P-148** | o Dependabot proporia `numpy` e `pandas` toda semana, e aceitar muda o número pré-registrado (P-15) | 25/09 — **decisão dele, opção (b):** `ignore` das duas no `.github/dependabot.yml`, derivado de `pyproject → tool.meol.dependencias.numericas`; `test_P148_…` reprova divergência nos dois sentidos (mutação: sem o `pandas`, reprova). Saída escrita no arquivo: pré-registro ML executado ou aviso de segurança. Os PRs `numpy-2.4.6` e `pandas-3.0.6` fecham |
 | **P-143** | sem ponte ticker ↔ `CD_CVM` antes de 2018, o universo do ML e o mês da emenda 1 não se mediam (CV-05) | 25/09 — banco de ISIN da B3 (achado no JS da página) + ponte manual de 42 emissores conferida à mão (CV-06). **Mês da emenda: mar/2011**, 95,8%, igual nas duas janelas. Resto na P-145 |
 | **P-140** | o pré-registro ML só fixava 2026; os outros anos saíam da versão vigente, sem pin | 25/09 — **2004–2025** fixados pela impressão de conteúdo (2004 derivado da janela de 60 meses do §5.1, com teste). Impressão = pino principal; sha256 = observado. Mesma impressão com sha diferente → aviso e segue; impressão diferente → `InsumoBloqueado`. 23/23 conferem nesta máquina em 53,7 s |
@@ -3432,6 +3505,15 @@ máquina é o que fecha.**
 ---
 
 ## Ao voltar ao desktop
+
+> **25/09/2026, noite — substitui a nota de 24/09 abaixo: a P-57 e a P-135 FECHARAM** (execução
+> agendada `36148547193`). O que fica para a sessão local, em ordem:
+>
+> 1. ~~P-136 — ler os termos da B3 e a licença da CVM~~ **lidos às 20:02 UTC**, pela nuvem,
+>    depois de ele liberar os hosts. Sobram duas decisões dele, escritas na P-136.
+> 2. **P-147 — conferir o NEFIN no executor** depois do cron de 26/09. O agendamento de 09:15
+>    UTC saiu às 14:35 UTC em 25/09: olhar à noite, não de manhã. Não exige desktop.
+> 3. **`macro.poupanca_am` vence em 28/09.**
 
 > **24/09/2026 — o que vem primeiro agora é a P-57, e são dois passos dele** (a ordem e os
 > comandos estão na própria P-57): a **carga inicial** para o R2

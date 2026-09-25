@@ -98,8 +98,11 @@ def test_5B16_a_leitura_das_pendencias_ve_aberta_e_fechada():
     for achado, toda pendencia vira 'nao existe' -- e o teste acima falharia pelo motivo
     errado. Falhar aqui explica."""
     p = _pendencias()
-    assert p.get("P-57") is True, "P-57 deveria estar aberta"
+    # A ancora aberta era a P-57, que fechou em 25/09. A P-44 e regra permanente de
+    # sessao, e e a que menos tende a fechar; se fechar, troque a ancora, nao o teste.
+    assert p.get("P-44") is True, "P-44 deveria estar aberta"
     assert p.get("P-100") is False, "P-100 fechou em 23/09"
+    assert p.get("P-57") is False, "P-57 fechou em 25/09"
 
 
 # ── prova por mutacao (regra 4 da 5-B) ────────────────────────────────────────
