@@ -65,7 +65,7 @@ def buscar(url):
     ultimo = None
     for tentativa in range(1, TENTATIVAS + 1):
         req = urllib.request.Request(url, headers={
-            "User-Agent": "bastter-fase0/1.0 (coleta pessoal de dado publico)",
+            "User-Agent": "meol-fase0/1.0 (coleta pessoal de dado publico)",
             "Accept": "application/json",
         })
         try:

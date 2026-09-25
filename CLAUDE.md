@@ -363,7 +363,9 @@ alocacao/
   corretoras.py    ranking de corretoras + teste de robustez
   sleeve.py        fração de RV
   cenarios.py      varredura
-  dados/nefin_factors.csv    6.321 sessões, 2001-01-02 a 2026-07-03
+  dados/nefin_factors.csv    6.321 sessões, 2001-01-02 a 2026-07-03. FORA DO GIT desde
+                   25/09: os termos do NEFIN não autorizam redistribuir. Mora no armazém;
+                   o `materializar_acervo.py` põe no lugar a versão fixada no pré-registro
 docs/fontes/       34 .md de fonte primária + README.md com o índice de extração
 docs/schemas/      LEIAUTE COMO DADO (P2). `cotahist-v02.yaml`: posições, escala e a
                    enumeração OBSERVADO do MODREF, com revisão, URL e data de acesso.
@@ -394,6 +396,8 @@ fase0/
                    `docs/aprendizado/preregistro-ml-v2.pins.yaml`), conferida pela impressao
                    de conteudo -- nunca a vigente (P-139, CH-01)
   subir_acervo_local.py  carga inicial do disco dele para o R2; plano por padrão
+  capturar_nefin.py  os fatores do NEFIN no armazém, no workflow diário (25/09). Uma URL,
+                   portão HEAD; 404 é erro
 .github/workflows/captura_cvm.yml   o executor diário da P-57
 tools/analisar_sessoes.py   para onde vai o tempo das sessões do Claude Code: lê
                    `~/.claude/projects`, grava só em `data/analise-sessoes/`. Mediu a P-141
@@ -434,6 +438,10 @@ agosto. Nunca importe de lá.
   campo declarado e nunca lido passaria num teste de atributo.
 - **`REGISTRO-vN.md`** por rodada de mudança, com o achado, o número, o efeito
   medido e o que quebrou.
+- **Commit: título com até 72 caracteres e corpo com o porquê.** Decisão dele, 25/09/2026. O
+  título diz o que mudou, com o código do achado quando houver; o corpo diz **por que**, e o
+  que a mudança mediu ou provou. Vale daqui em diante. O histórico anterior **não** é
+  reescrito para se conformar: os marcos auditáveis valem pelo sha do commit.
 
 ---
 
@@ -904,6 +912,21 @@ Instruções permanentes dele, que valem em toda sessão:
   ver a armadilha registrada na doutrina P6.
 - **O processo é orgânico e sem pressa.** Não force conclusão. Ele tem plano
   limitado do Claude — não gaste turno reexplicando o que já está escrito aqui.
+
+### Valores já publicados — exceção à D-01, decisão dele em 25/09/2026
+
+A D-01 (§7, `ACHADOS.md`) diz que os números financeiros dele **podem** ficar na prosa do
+repositório público, mas só na ordem de grandeza e na natureza de 12/09: patrimônio maior, ou
+dado de outra natureza (corretora, conta, valor de posição), **obriga a revisitar**, nunca a
+herdar. Em 25/09, com o repositório público e renomeado para MEOL, ele decidiu:
+
+- **Os valores exatos já publicados ficam, como exceção.** O histórico do git **não** é
+  reescrito para tirá-los. Reescrever história publicada quebraria os marcos auditáveis (os
+  pré-registros valem pelo commit em que foram empurrados), e o histórico público já anulou
+  o ganho.
+- **A D-01 continua valendo para valor novo.** Cada número novo sobre o dinheiro dele passa
+  pela D-01 inteira, inclusive o gatilho de revisitar. A exceção cobre o que **já** foi
+  publicado, e não serve de precedente.
 
 ### As críticas dele que mudaram o sistema
 

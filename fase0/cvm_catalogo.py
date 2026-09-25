@@ -63,7 +63,7 @@ def chamar(acao, **params):
     if params:
         url += "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={
-        "User-Agent": "bastter-fase0/1.0 (coleta pessoal de dado publico)",
+        "User-Agent": "meol-fase0/1.0 (coleta pessoal de dado publico)",
         "Accept": "application/json",
     })
     try:

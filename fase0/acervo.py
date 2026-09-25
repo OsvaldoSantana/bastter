@@ -56,7 +56,9 @@ FRESCOR_MAXIMO_DIAS = 8
 # Os recursos com rotina automatica e o registro que ela escreve. Recurso fora daqui nao
 # tem frescor a medir. O da B3 entra em 24/09/2026 com a captura do COTAHIST (P-135).
 REGISTROS = {"cvm": os.path.join("docs", "acervo", "cvm", "capturas.csv"),
-             "b3": os.path.join("docs", "acervo", "b3", "capturas.csv")}
+             "b3": os.path.join("docs", "acervo", "b3", "capturas.csv"),
+             # 25/09/2026: o CSV do NEFIN saiu do git e entrou no armazem (fase0/capturar_nefin.py)
+             "nefin": os.path.join("docs", "acervo", "nefin", "capturas.csv")}
 INVENTARIO = "inventario-armazem.csv"
 COLUNAS_INVENTARIO = ("fonte", "recurso", "arquivo", "sha256", "bytes", "chave", "papel",
                       "versao", "origem", "dt_envio")

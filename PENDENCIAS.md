@@ -3014,6 +3014,14 @@ acesso, para `docs/fontes/`; a mesma pergunta vale para a CVM (dados abertos) e 
 provavelmente mais simples. Declarada em
 `limitacoes_declaradas.licenca_de_redistribuicao_da_b3_nao_lida`.
 
+> **25/09/2026 — a mesma leitura, feita para o NEFIN, e ela mudou o repositório.** O CSV de
+> fatores estava no git, e portanto redistribuído, desde 04/09, sem ninguém ter lido os termos.
+> Lidos na fonte (`docs/fontes/nefin.md`): uso livre, citação pedida, *"All rights reserved"*,
+> nada sobre redistribuir. O arquivo saiu do git e foi para o armazém com captura diária
+> (`fase0/capturar_nefin.py`), e o limite ficou declarado em `nefin_fora_do_git`. Achado
+> LIC-01. **A B3 e a CVM continuam sem leitura.** O NEFIN mostrou que "dado público" e
+> "redistribuível" são perguntas diferentes.
+
 ## P-134 · Custo de entrada maior que o aporte vira `min()` calado na alocação — achado B-16
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `simular_custo` ou quando algum
@@ -3045,6 +3053,18 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 `__v20260913__` de 2024 vieram de `(1).zip` do navegador e **não têm linha no registro**.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
+
+## P-147 · A captura do NEFIN ainda não rodou no executor
+
+**Dono:** o workflow (ninguém dispara) · **Gatilho:** o cron diário das 09:15 UTC, ou um *Run
+workflow* da *Captura CVM* · **Classe:** `BLOQUEIA_O_SISTEMA` (o CSV saiu do git e só volta
+ao runner pelo armazém)
+
+O CSV do NEFIN saiu do git em 25/09 (LIC-01). `fase0/capturar_nefin.py` rodou uma vez, na
+máquina dele, e subiu a versão fixada ao R2 (`novo`, `619991c2192c…`). O passo `captura_nefin`
+entrou no `captura_cvm.yml`. **Fecha quando** o passo sair verde no executor. Nesse dia, apagar
+`limitacoes_declaradas.captura_do_nefin_ainda_nao_rodou_no_executor`, e o `test_P7` cobra que o
+regime seja declarado onde ele lê.
 
 ## P-146 · Três passos das métricas que só ele pode dar
 
@@ -3239,6 +3259,25 @@ leiaute rev. 02 descreve o header; transcrevê-lo para o YAML e ler de lá é o 
 feito agora para não misturar mudança de esquema com o conserto de um valor.
 
 ---
+
+## Marcos auditáveis — tags anotadas
+
+*25/09/2026.* Cada pré-registro vale pelo commit em que foi empurrado (P-116). A tag dá nome a
+esse commit, e a mensagem traz o arquivo e o sha256. Conferir:
+`git show <tag>:<arquivo> | sha256sum`. `auditoria/test_tags_citadas.py` reprova tag citada
+aqui que não exista, tag leve e sha256 que não bata.
+
+| tag | commit | arquivo | sha256 |
+|---|---|---|---|
+| `prereg-ml-v1` | `45405a6` | `docs/aprendizado/preregistro-ml-v1.md` | `2b435316136d3029…` |
+| `prereg-ml-v2` | `2c608c9` | `docs/aprendizado/preregistro-ml-v2.md` | `2e2c46d4de72057f…` |
+| `prereg-ml-v2-emenda-1` | `00aa622` | `docs/aprendizado/preregistro-ml-v2-emenda-1.md` | `1aac96023fdc0de9…` |
+| `prereg-ml-v2-esclarecimentos` | `2f939ae` | `docs/aprendizado/preregistro-ml-v2-emenda-1.md` | `71621ba64c899281…` |
+
+**A última aponta para `2f939ae`, não para `53112d6`.** O prompt de 25/09 pedia `53112d6`, mas
+a GIT-01 (P-145, acima) já tinha decidido que vale a primeira §6 publicada no `origin`, e é essa
+versão que está no `main`. Uma tag em `53112d6` marcaria como auditável a versão declarada sem
+validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca mover esta.**
 
 ## Fechadas
 

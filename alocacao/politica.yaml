@@ -13,10 +13,17 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.29.0
+  versao: 1.30.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.30.0: >-
+      25/09/2026. O CSV do NEFIN saiu do git: os termos, lidos na fonte, pedem citacao e
+      reservam os direitos, sem autorizar redistribuir (docs/fontes/nefin.md). O byte mora
+      no armazem, capturado por fase0/capturar_nefin.py no workflow diario; o motor le a
+      versao fixada em `pesquisa.fonte`, posta no lugar pelo materializar_acervo.py. A
+      serie e a mesma (sha256 619991c2192c...), e nenhum numero registrado mudou. Entra
+      `limitacoes_declaradas.nefin_fora_do_git`.
     1.29.0: >-
       24/09/2026. P-138 decidida por ele: o orcamento de variantes BLOQUEIA, e a unica
       saida e uma emenda empurrada ao repositorio. Entram `pesquisa.orcamento`
@@ -2392,6 +2399,44 @@ limitacoes_declaradas:
       publicar alem de 03/07/2026 -- se publicar e ninguem baixar, deixa de ser e vira
       NAO_CONSERTADA, com a pendencia do download.
     fonte: "alocacao/dados/nefin_factors.csv (sha256 em fatores.hash_fonte()); preregistro-ml-v2.md, secao 14"
+
+  captura_do_nefin_ainda_nao_rodou_no_executor:
+    tipo: NAO_CONSERTADA
+    o_que_resolveria: >
+      A primeira execucao verde do .github/workflows/captura_cvm.yml com o passo
+      `captura_nefin` -- o cron diario (09:15 UTC) a produz sem ninguem disparar. Ao sair,
+      `nefin` deixa de ser nomeado aqui, como a CVM e a B3.
+    pendencia: P-147
+    acervos: ["nefin"]
+    o_que_falta: >
+      fase0/capturar_nefin.py existe e rodou UMA vez, na maquina dele, em 25/09/2026
+      (18:20Z, `novo`, sha256 619991c2192c...). Codigo escrito e uma rodada manual nao sao
+      rotina rodando (P7).
+    direcao_do_vies: >
+      Nenhum sobre numero: o motor le a versao fixada, que ja esta no armazem. O que
+      envelhece calado e a OBSERVACAO de versao nova do NEFIN, se o executor falhar.
+    quando_deixa_de_importar: >
+      Na primeira execucao verde do passo `captura_nefin` no workflow.
+    fonte: "fase0/capturar_nefin.py; docs/acervo/nefin/capturas.csv"
+
+  nefin_fora_do_git:
+    tipo: FISICA
+    o_que_falta: >
+      O CSV de fatores do NEFIN nao esta no repositorio desde 25/09/2026. Quem clona nao
+      tem o arquivo; tem o sha256 que o pre-registro fixou (pesquisa.fonte.sha256_12) e o
+      registro de cada captura (docs/acervo/nefin/capturas.csv). O byte mora no armazem,
+      que e privado pelo mesmo motivo (P-136). Um terceiro reproduz baixando do NEFIN e
+      conferindo o hash -- enquanto o NEFIN servir essa versao. Os commits anteriores a
+      25/09 ainda contem o arquivo, porque o historico publicado nao e reescrito (CLAUDE.md
+      secao 6, decisao de 25/09).
+    direcao_do_vies: >
+      Nenhum sobre numero. Afeta so quem reproduz de fora: quando o NEFIN publicar uma
+      versao nova, a antiga deixa de estar disponivel na fonte e so existe no armazem.
+    por_que_fisica: >
+      O limite e dos termos da fonte: o NEFIN disponibiliza o dado livremente e pede
+      citacao, mas reserva os direitos e nao autoriza redistribuir. Deixa de valer se o
+      NEFIN publicar uma licenca que permita, ou autorizar por escrito.
+    fonte: "docs/fontes/nefin.md, termos lidos em 25/09/2026"
 
   composicao_historica_do_indice:
     tipo: FISICA

@@ -240,6 +240,7 @@ def test_politica_de_divergencia_diferente_de_BLOQUEIA_LEVANTA():
 
 
 # ── A execucao real: os numeros registrados em R3/R4 reproduzem ──────────────
+@pytest.mark.acervo   # le o CSV do NEFIN (armazem desde 25/09)
 def test_R3_e_R4_reproduzem_o_que_o_diario_registrou():
     """~2 s. O mesmo papel do `test_h1_h3_reproduzem_o_resultado_registrado`: se a
     serie, a semente ou a algebra mudarem, o diario passa a mentir e alguem precisa
@@ -256,6 +257,7 @@ def test_R3_e_R4_reproduzem_o_que_o_diario_registrou():
         assert R.operativo(P, r["estrategia"], v) == r["veredito"], r["id"]
 
 
+@pytest.mark.acervo   # le o CSV do NEFIN (armazem desde 25/09)
 def test_a_conferencia_do_registro_ACUSA_quando_o_numero_anda():
     """Prova por mutacao da guarda acima: um corte registrado fora do lugar tem de
     aparecer nomeado, e nao sumir num `all(...)` que devolve False sem dizer qual."""
@@ -271,6 +273,7 @@ def test_a_conferencia_do_registro_ACUSA_quando_o_numero_anda():
         and any("veredito_executado" in f for f in fora), fora
 
 
+@pytest.mark.acervo   # le o CSV do NEFIN (armazem desde 25/09)
 def test_o_HML_nao_sobrevive_ao_ORCAMENTO_que_ele_mesmo_pre_registrou():
     """A retratacao presa num teste. O projeto afirmava que o HML "sobrevive ao corte
     mais severo por 0,027 de um t" — e isso valia so sob a suposicao de que o t se

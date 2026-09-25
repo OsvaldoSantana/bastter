@@ -63,11 +63,13 @@ dbt/target/
 dbt/logs/
 
 # ── O QUE FICA DENTRO, de proposito ──────────────────────────────────────────
-# alocacao/dados/nefin_factors.csv (882 KB) — NAO e "dado bruto": e a serie de
-#   benchmark contra a qual o backtest sera julgado. fatores.py publica o sha256
-#   dela (hash_fonte()), e um resultado de backtest so e reproduzivel se a serie
-#   que o produziu estiver versionada junto. Excluir seria quebrar a unica coisa
-#   que o pre-registro promete.
+# alocacao/dados/nefin_factors.csv SAIU em 25/09/2026. O argumento de antes ("um
+#   backtest so se reproduz se a serie estiver versionada junto") continua certo sobre o
+#   que precisa ser fixado, e errado sobre onde: o que o pre-registro fixa e o SHA256
+#   (politica.yaml -> pesquisa.fonte, e o registro docs/acervo/nefin/capturas.csv), e o
+#   byte mora no armazem. Saiu porque os termos do NEFIN, lidos na fonte, nao autorizam
+#   redistribuir (docs/fontes/nefin.md). O limite que isso cria esta declarado em
+#   politica.yaml -> limitacoes_declaradas.nefin_fora_do_git.
 # alocacao/estado.yaml SAIU. Ver o bloco "SEGREDO" no fim deste arquivo.
 # alocacao/teses.yaml — registros K e C, com impressao digital. E o antidoto a
 #   reescrita retroativa de tese; versionar e o ponto.
@@ -141,3 +143,6 @@ docs/fontes/COTAHIST*
 .coverage.*
 coverage.json
 mutants/
+
+# ── NEFIN (25/09/2026): no disco dele e no job semanal, nunca no git ─────────────
+alocacao/dados/nefin_factors.csv

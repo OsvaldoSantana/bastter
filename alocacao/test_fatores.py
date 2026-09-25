@@ -3,10 +3,22 @@
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np, pandas as pd, pytest
+
+# acervo: le o CSV do NEFIN, que saiu do git em 25/09/2026 (docs/fontes/nefin.md). O push
+# exclui pelo marcador; o semanal o materializa do armazem; aqui, sem ele, falha alto.
+pytestmark = pytest.mark.acervo
 from fatores import (carregar_diario, mensal, premios, premio_de_mercado,
                      janelas_moveis, alfa_contra_fatores, hash_fonte, FATORES, FonteAusente)
 
-D = carregar_diario(); M = mensal(D)
+D = M = None
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _serie():
+    """A serie carregada so quando um teste deste modulo RODA. No import ela derrubava a
+    coleta, e o `-m "not acervo"` do push nao tinha como deselecionar nada (25/09/2026)."""
+    global D, M
+    D = carregar_diario(); M = mensal(D)
 
 def test_cobertura_e_integridade_da_serie():
     assert D.Date.is_monotonic_increasing and not D.Date.duplicated().any()

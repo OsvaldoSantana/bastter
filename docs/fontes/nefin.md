@@ -6,6 +6,38 @@ Fecha: Séries de fatores do NEFIN
 Original: nefin_factors.csv e NEFIN_methodology.pdf
 ---
 
+## Endereço atual e termos de uso — acesso em 25/09/2026
+
+**O endereço mudou.** `https://nefin.com.br/resources/risk_factors/nefin_factors.csv` responde
+`404` em 25/09/2026. Os endereços atuais, lidos na página
+[`nefin.com.br/data/risk-factors/`](https://nefin.com.br/data/risk-factors/):
+
+| o quê | endereço | medido em 25/09/2026 |
+|---|---|---|
+| dados | `https://nefin.com.br/nefindata/risk-factors/nefin_factors.csv` | `200`, 882.144 bytes, `Last-Modified: Thu, 17 Sep 2026 14:48:15 GMT`, sha256 `619991c2192c958a…`, **o mesmo arquivo** que o pré-registro usa |
+| metodologia | `https://nefin.com.br/nefindata/methodology/nefin_methodology.pdf` | `200`, 154.508 bytes, 17 páginas |
+
+**Termos de uso — o que a fonte diz, literal:**
+
+- Página inicial e rodapé de toda página: *"We make our data freely available to academics and
+  practitioners."*
+- Página dos fatores, seção *How to cite*: *"Please cite the dataset when you use it in
+  published work. NEFIN (2026). Risk Factors. Center for Research in Financial Economics,
+  University of São Paulo. https://nefin.com.br/data/risk-factors/"*
+- Rodapé: *"© 2026 NEFIN — All rights reserved."*
+- A metodologia (PDF, 17 páginas) não traz termo de uso, licença nem pedido de citação.
+  Medido por busca no texto extraído: nenhuma ocorrência de *license*, *redistribut*,
+  *copyright*, *terms*, *permission*, *cite*, *reproduc*, *rights*.
+
+**Leitura:** o uso é livre e a citação é pedida. **Redistribuir não está autorizado.** A
+fonte não fala nisso, e o rodapé reserva os direitos. Pela regra da P-136, o que não está
+autorizado não se redistribui: o CSV saiu do git em 25/09/2026, mora no armazém, e é capturado
+por `fase0/capturar_nefin.py`. A atribuição fica no `NOTICE`, e o limite está em
+`alocacao/politica.yaml → limitacoes_declaradas.nefin_fora_do_git`.
+
+**O que eu não fiz:** não perguntei ao NEFIN (`nefin@usp.br`). Uma autorização por escrito
+desfaz o limite, e pedir é dele.
+
 ## Estrutura do CSV (texto literal, cabeçalho + 2 linhas de exemplo)
 
 ```

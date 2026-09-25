@@ -1,4 +1,4 @@
-Bastter — sistema de análise e aporte com procedência em cada número
+MEOL — sistema de análise e aporte com procedência em cada número
 Copyright 2026 Osvaldo Santana da Silva Junior
 
 Este repositório tem duas licenças, separadas pelo tipo de conteúdo.
@@ -9,12 +9,15 @@ CÓDIGO: Apache License 2.0 (arquivo LICENSE)
 
 PROSA: Creative Commons Attribution 4.0 International (arquivo LICENSE-DOCS)
   Arquivos .md: doutrina, achados, pendências, plano, laudos, pré-registros e notas
-  de fonte. Atribuição: "Osvaldo Santana da Silva Junior, projeto Bastter,
-  https://github.com/OsvaldoSantana/bastter".
+  de fonte. Atribuição: "Osvaldo Santana da Silva Junior, projeto MEOL,
+  https://github.com/OsvaldoSantana/meol".
 
 O QUE NÃO É DESTE PROJETO, e nenhuma das duas licenças alcança:
-  - alocacao/dados/nefin_factors.csv: fatores de risco do NEFIN (FEA-USP). Os termos
-    de uso são os do NEFIN.
+  - Os fatores de risco do NEFIN (FEA-USP). O arquivo NÃO está neste repositório desde
+    25/09/2026: os termos do NEFIN pedem citação e não autorizam redistribuir
+    (docs/fontes/nefin.md). Citação pedida pela fonte: NEFIN (2026). Risk Factors.
+    Center for Research in Financial Economics, University of São Paulo.
+    https://nefin.com.br/data/risk-factors/
   - Trechos citados de fontes externas em docs/fontes/ e pesquisa-custos-2026-08/:
     leis, regulamentos, leiautes e documentos da B3, da CVM, do BCB, da Receita
     Federal e de instituições financeiras. Continuam sendo dos seus autores. O que o
@@ -23,5 +26,6 @@ O QUE NÃO É DESTE PROJETO, e nenhuma das duas licenças alcança:
     da CVM). Não estão neste repositório, e a licença de redistribuição da B3 ainda
     não foi lida (PENDENCIAS.md, P-136).
 
-O nome "Bastter" refere-se ao site Bastter.com, que inspirou o projeto. Este projeto
-não tem vínculo com o site nem com seus autores.
+O projeto foi inspirado no método publicado pelo site Bastter.com, e não tem vínculo com
+o site nem com seus autores. O que se adota do método e onde se diverge está em
+docs/divergencias-do-metodo.md.

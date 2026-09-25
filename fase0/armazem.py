@@ -49,7 +49,8 @@ import os
 import re
 import shutil
 
-FONTES = ("cvm", "b3")
+# nefin: 25/09/2026, o CSV saiu do git pelos termos da fonte (docs/fontes/nefin.md)
+FONTES = ("cvm", "b3", "nefin")
 VARIAVEIS = ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 # a chave de conteudo: o ultimo segmento e <sha256>.<ext>

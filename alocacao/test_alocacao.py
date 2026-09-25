@@ -2039,6 +2039,7 @@ def test_P15_a_divergencia_numerica_e_separada_da_de_ferramenta():
         "um pacote nao pode estar nas duas listas — a classificacao decide um aviso"
 
 
+@pytest.mark.acervo   # le o CSV do NEFIN (armazem desde 25/09)
 def test_P15_o_resultado_do_backtest_carrega_o_selo_do_ambiente():
     """Ate 05/09/2026 `alfa_contra_fatores()` publicava `fonte_hash` e mais nada. O
     sha256 diz de que DADO o numero saiu; nao dizia em que AMBIENTE foi calculado — e

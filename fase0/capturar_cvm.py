@@ -167,7 +167,7 @@ def requisitar(url, abrir=urllib.request.urlopen, dormir=time.sleep, metodo="GET
     `Accept-Encoding: identity`: o hash tem de ser do byte que a CVM entregou, nao de uma
     descompressao de transporte. `abrir` e `dormir` sao injetaveis para o teste rodar sem
     rede e sem relogio."""
-    h = {"User-Agent": "bastter-captura-cvm/2", "Accept-Encoding": "identity"}
+    h = {"User-Agent": "meol-captura-cvm/2", "Accept-Encoding": "identity"}
     h.update(cabecalhos or {})
     for i in range(tentativas):
         try:

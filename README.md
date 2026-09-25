@@ -1,15 +1,15 @@
 <div align="center">
 
-# Bastter
+# MEOL
 
 **Um sistema de análise e aporte em que cada número diz de onde veio.**
 
-Inspirado no método do [Bastter.com](https://bastter.com), e feito para corrigi-lo:
-o método acerta na disciplina e erra ao apresentar como derivado o que é escolha,
-e como regra o que é preferência.
+Inspirado no método do [Bastter.com](https://bastter.com), sem vínculo com o site.
+Adota a disciplina do método e diverge em pontos documentados, um a um, em
+[O que o MEOL adota e onde diverge](docs/divergencias-do-metodo.md).
 
-[![Testes](https://github.com/OsvaldoSantana/bastter/actions/workflows/testes.yml/badge.svg)](https://github.com/OsvaldoSantana/bastter/actions/workflows/testes.yml)
-[![Captura CVM](https://github.com/OsvaldoSantana/bastter/actions/workflows/captura_cvm.yml/badge.svg)](https://github.com/OsvaldoSantana/bastter/actions/workflows/captura_cvm.yml)
+[![Testes](https://github.com/OsvaldoSantana/meol/actions/workflows/testes.yml/badge.svg)](https://github.com/OsvaldoSantana/meol/actions/workflows/testes.yml)
+[![Captura CVM](https://github.com/OsvaldoSantana/meol/actions/workflows/captura_cvm.yml/badge.svg)](https://github.com/OsvaldoSantana/meol/actions/workflows/captura_cvm.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
 [![Código: Apache-2.0](https://img.shields.io/badge/c%C3%B3digo-Apache--2.0-D22128)](LICENSE)
 [![Prosa: CC BY 4.0](https://img.shields.io/badge/prosa-CC%20BY%204.0-EF9421)](LICENSE-DOCS)
@@ -109,8 +109,8 @@ Requer **Python 3.11**. A faixa é fechada de propósito: um resultado pré-regi
 reproduz no ambiente que o produziu.
 
 ```bash
-git clone https://github.com/OsvaldoSantana/bastter.git
-cd bastter
+git clone https://github.com/OsvaldoSantana/meol.git
+cd meol
 python -m pip install ".[dev,lint,paralelo]"
 ```
 
@@ -128,13 +128,15 @@ python impacto.py <alvo>    # o que alcança uma constante, função ou campo
 Os testes, como o CI roda num clone limpo:
 
 ```bash
-python -m pytest alocacao fase0 auditoria tools -m "not slow and not privado"
+python -m pytest alocacao fase0 auditoria tools -m "not slow and not privado and not acervo"
 ```
 
 **O que um clone sozinho não roda.** Os testes marcados `slow` leem o acervo de dados de
 mercado, com gigabytes do COTAHIST e dos arquivos da CVM. Ele fica num armazém privado e não
-vai para o git. Os marcados `privado` leem a situação financeira real, que também fica fora
-por desenho. O comando acima exclui os dois pelo marcador. Quem rodar os `slow` sem o acervo
+vai para o git. Os marcados `acervo` leem os fatores do NEFIN, que também moram só no armazém:
+os termos do NEFIN não autorizam redistribuir o arquivo ([nota da fonte](docs/fontes/nefin.md)).
+Os marcados `privado` leem a situação financeira real, que também fica fora por desenho. O
+comando acima exclui os três pelo marcador. Quem rodar os `slow` sem o acervo
 vê pulados os que dependem dele, e `pytest -rs` diz o motivo de cada um.
 
 ## Auditar um número
@@ -197,8 +199,8 @@ O protocolo completo de mudança está na [§9 do `CLAUDE.md`](CLAUDE.md#9-o-pro
 
 - **Código** (`.py`, `.yaml`, `.toml`, workflows): [Apache License 2.0](LICENSE).
 - **Prosa** (`.md`: doutrina, achados, laudos, pré-registros): [CC BY 4.0](LICENSE-DOCS).
-  Atribuição: *Osvaldo Santana da Silva Junior, projeto Bastter*.
+  Atribuição: *Osvaldo Santana da Silva Junior, projeto MEOL*.
 - **Dados de terceiros** (fatores do NEFIN, trechos citados de fontes externas) continuam
   sendo dos seus autores. O [`NOTICE`](NOTICE) diz o que cada licença cobre e o que fica de fora.
 
-Este projeto não tem vínculo com o Bastter.com nem com seus autores.
+O MEOL não tem vínculo com o Bastter.com nem com seus autores.

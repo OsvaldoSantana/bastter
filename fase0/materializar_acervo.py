@@ -88,6 +88,44 @@ def materializar_fixados(itens, abrir=None):
     return prontos, faltas
 
 
+# Onde o motor le os fatores do NEFIN (alocacao/fatores.py -> ARQUIVO), e a chave da politica
+# que fixa a versao que o pre-registro usou.
+NEFIN_DESTINO = os.path.join("alocacao", "dados", "nefin_factors.csv")
+NEFIN_RECURSO, NEFIN_ARQUIVO = "risk_factors", "nefin_factors.csv"
+
+
+def nefin_fixado(repo=None):
+    """O prefixo de sha256 da serie do NEFIN que o pre-registro usou:
+    `politica.yaml -> pesquisa.fonte.sha256_12`. Sem ele, levanta: materializar a vigente
+    no lugar da fixada trocaria o insumo do pre-registro em silencio (F-02)."""
+    import yaml
+    repo = repo or acervo.raiz_repo()
+    with open(os.path.join(repo, "alocacao", "politica.yaml"), encoding="utf-8") as f:
+        pol = yaml.safe_load(f)
+    sha = ((pol.get("pesquisa") or {}).get("fonte") or {}).get("sha256_12")
+    if not sha:
+        raise KeyError("politica.yaml -> pesquisa.fonte.sha256_12 ausente")
+    return str(sha)
+
+
+def materializar_nefin(repo=None, abrir=None):
+    """Poe a serie FIXADA do NEFIN onde o motor a le. Devolve (caminho ou None, faltas).
+
+    O CSV saiu do git em 25/09/2026 (termos do NEFIN, docs/fontes/nefin.md): no clone ele
+    nao existe, e este passo o traz do armazem pelo sha256 do pre-registro."""
+    repo = repo or acervo.raiz_repo()
+    abrir = abrir or acervo.abrir
+    destino = os.path.join(repo, NEFIN_DESTINO)
+    try:
+        origem = abrir(NEFIN_RECURSO, NEFIN_ARQUIVO, nefin_fixado(repo), conferir=True)
+    except Exception as e:
+        return None, [f"nefin {NEFIN_ARQUIVO}: {type(e).__name__}: {e}"]
+    if os.path.abspath(origem) != os.path.abspath(destino):
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        shutil.copy2(origem, destino)
+    return destino, []
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--faltas", help="grava aqui a lista do que o armazem nao entregou")
@@ -96,6 +134,8 @@ def main(argv=None):
     copiados, ja, faltas = materializar(conhecidos(repo), repo)
     prontos, faltas_fix = materializar_fixados(fixados(repo))
     faltas += faltas_fix
+    _nefin, faltas_nefin = materializar_nefin(repo)
+    faltas += faltas_nefin
     print(f"materializados {len(copiados)}, ja no lugar {len(ja)}, "
           f"fixados prontos {len(prontos)}, FALTAS {len(faltas)}")
     for f in faltas:

@@ -45,7 +45,7 @@ def test_push_roda_sem_slow_e_o_semanal_roda_tudo():
     assert d["on"]["push"]["branches"] == ["main"] and d["on"]["schedule"]
     rapido = " ".join(p.get("run", "") for p in d["jobs"]["rapido"]["steps"])
     completo = " ".join(p.get("run", "") for p in d["jobs"]["completo"]["steps"])
-    assert '-m "not slow and not privado"' in rapido and "-n auto" in rapido
+    assert '-m "not slow and not privado and not acervo"' in rapido and "-n auto" in rapido
     assert "ruff" in rapido
     assert "not slow" not in completo and "--cov" in completo and "expira_proxima" in completo
     assert '-m "not privado"' in completo, "o estado.yaml nao esta no runner (secao 11.6)"
@@ -53,3 +53,11 @@ def test_push_roda_sem_slow_e_o_semanal_roda_tudo():
 
 def test_mutacao_e_so_manual():
     assert list(_wf("mutacao.yml")["on"]) == ["workflow_dispatch"]
+
+
+def test_testes_clona_com_historico_e_tags():
+    """As tags de marco (prereg-*) so chegam ao runner com fetch-depth: 0."""
+    for job in ("rapido", "completo"):
+        co = [p for p in _wf("testes.yml")["jobs"][job]["steps"]
+              if str(p.get("uses", "")).startswith("actions/checkout@")]
+        assert co and co[0].get("with", {}).get("fetch-depth") == 0, job

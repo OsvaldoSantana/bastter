@@ -73,3 +73,33 @@ def test_CI04_a_fixada_e_pedida_PELA_VERSAO_e_conferida(tmp_path):
          ("cotahist", "COTAHIST_A2025.ZIP", "b" * 64)}, abrir)
     assert ("COTAHIST_A2026.ZIP", "a" * 64, True) in pedidos
     assert len(prontos) == 1 and len(faltas) == 1 and "COTAHIST_A2025.ZIP@bbbbbbbbbbbb" in faltas[0]
+
+
+def test_nefin_o_pin_vem_da_politica():
+    assert M.nefin_fixado() == "619991c2192c"
+
+
+def test_nefin_e_pedido_PELO_PIN_e_copiado_para_onde_o_motor_le(tmp_path):
+    """Pedir a vigente trocaria o insumo do pre-registro quando o NEFIN publicar adiante."""
+    (tmp_path / "alocacao").mkdir()
+    (tmp_path / "alocacao" / "politica.yaml").write_text(
+        "pesquisa:\n  fonte:\n    sha256_12: 'abc123'\n", encoding="utf-8")
+    fonte = tmp_path / "cache.csv"
+    fonte.write_bytes(b"serie")
+    pedidos = []
+
+    def abrir(recurso, arquivo, versao=None, conferir=False):
+        pedidos.append((recurso, arquivo, versao, conferir))
+        return str(fonte)
+
+    destino, faltas = M.materializar_nefin(str(tmp_path), abrir)
+    assert pedidos == [("risk_factors", "nefin_factors.csv", "abc123", True)] and not faltas
+    assert open(destino, "rb").read() == b"serie"
+    assert destino.endswith(os.path.join("alocacao", "dados", "nefin_factors.csv"))
+
+
+def test_nefin_sem_pin_ou_sem_arquivo_e_FALTA(tmp_path):
+    (tmp_path / "alocacao").mkdir()
+    (tmp_path / "alocacao" / "politica.yaml").write_text("pesquisa: {}\n", encoding="utf-8")
+    destino, faltas = M.materializar_nefin(str(tmp_path), lambda *a, **k: "nunca")
+    assert destino is None and "sha256_12" in faltas[0]

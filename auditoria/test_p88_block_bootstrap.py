@@ -44,6 +44,10 @@ import sys
 import numpy as np
 import pytest
 
+# acervo: le o CSV do NEFIN, que saiu do git em 25/09/2026 (docs/fontes/nefin.md). O push
+# exclui pelo marcador; o semanal o materializa do armazem; aqui, sem ele, falha alto.
+pytestmark = pytest.mark.acervo
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import p88_block_bootstrap as P  # noqa: E402
 

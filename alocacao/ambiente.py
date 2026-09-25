@@ -71,7 +71,7 @@ def declarado(path=None):
                 f"`pip install` amanha mude um numero registrado hoje sem aviso.")
         nome, v = linha.split("==", 1)
         versoes[nome.strip()] = v.strip()
-    cls = d.get("tool", {}).get("bastter", {}).get("dependencias", {})
+    cls = d.get("tool", {}).get("meol", {}).get("dependencias", {})
     return dict(versoes=versoes, python=proj["requires-python"],
                 numericas=list(cls.get("numericas", [])),
                 ferramentas=list(cls.get("ferramentas", [])))

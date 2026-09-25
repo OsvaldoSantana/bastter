@@ -2653,6 +2653,33 @@ credenciais (98 no lugar, 23 fixadas, 0 faltas) e as quatro suítes **sem** elas
 
 ---
 
+## LIC-01 · O CSV do NEFIN foi redistribuído por duas semanas sem ninguém ler os termos
+
+*25/09/2026. Achado ao cumprir o item 3 da Sessão A, que pedia a leitura.*
+
+`alocacao/dados/nefin_factors.csv` entrou no git em 10/09 (`8b98028`). O `.gitignore` o mantinha
+**de propósito**, com um argumento de reprodução, e o `NOTICE` dizia só *"os termos de uso são
+os do NEFIN"*, sem que ninguém os tivesse lido. Com o repositório público desde 11/09, isso é
+redistribuição.
+
+**Medido na fonte em 25/09** (`docs/fontes/nefin.md`): *"freely available to academics and
+practitioners"*, *"Please cite the dataset when you use it in published work"* e *"© 2026 NEFIN
+— All rights reserved"*. A metodologia não traz termo nenhum. Nada autoriza redistribuir.
+
+**A causa do erro de método:** "dado público, gratuito" foi lido como "dado redistribuível".
+São perguntas diferentes, e a P-136 já fazia a pergunta certa sobre a B3 sem que ela
+atravessasse para a outra fonte que estava **dentro** do repositório.
+
+**O conserto não perdeu reprodução.** O pré-registro fixa o sha256 (`pesquisa.fonte`), não o
+caminho. O arquivo continua no disco, no mesmo lugar e com o mesmo hash (`619991c2192c`),
+ignorado pelo git. O byte foi para o armazém pela captura nova (`fase0/capturar_nefin.py`,
+diária), e o `materializar_acervo.py` põe a versão **fixada** no lugar no job semanal. Os 30
+testes que leem o arquivo ganharam o marcador `acervo`: o push os exclui por nome, o semanal
+os roda. Os commits anteriores continuam contendo o arquivo, porque o histórico publicado não
+se reescreve (CLAUDE.md §6).
+
+---
+
 ## CV-07 · Captura local sem `--armazem` desincroniza o registro e o R2: o byte nunca sobe
 
 *25/09/2026. Erro meu (Claude Code), achado por mim ao desenhar o job semanal.*

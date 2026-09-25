@@ -132,3 +132,12 @@ def test_imagem_do_runner_e_fixa():
     """`ubuntu-latest` troca de imagem sem commit nenhum (19/10/2026): o ambiente do
     job mudaria sem que o repositorio registrasse -- a P-15 do lado do executor."""
     assert _wf()["jobs"]["captura"]["runs-on"] == "ubuntu-24.04"
+
+
+def test_nefin_no_mesmo_workflow_com_registro_commitado_e_vermelho_proprio():
+    """25/09/2026: o CSV do NEFIN saiu do git e passou a ser capturado aqui."""
+    n = _passo("captura_nefin")
+    assert "fase0/capturar_nefin.py --armazem s3" in n["run"] and "set +e" in n["run"]
+    assert "docs/acervo/nefin/capturas.csv" in _passo("Commitar o registro, se mudou")["run"]
+    falha = [p for p in _passos() if p.get("name") == "Falhar se a captura falhou"][0]
+    assert "steps.captura_nefin.outputs.codigo != '0'" in falha["if"]

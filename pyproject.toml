@@ -31,7 +31,7 @@
 # deste projeto: **ninguem instala este projeto.** `ambiente.comando_de_instalacao()`
 # monta `python -m pip install "numpy==..." "pandas==..."` -- instala as DEPENDENCIAS,
 # nunca o pacote. Os modulos sao importados por caminho, e nenhuma linha faz
-# `import bastter`.
+# `import meol`.
 #
 # Entao `[build-system]` era um arquivo declarando um comportamento que o codigo nao
 # tem -- o defeito recorrente do projeto, na forma mais barata de corrigir: apagar a
@@ -54,7 +54,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 [project]
-name = "bastter"
+name = "meol"
 version = "1.18.0"                 # acompanha politica.yaml -> meta.versao
 description = "Sistema pessoal de analise e aporte — motor de alocacao, custos com procedencia e backtest pre-registrado"
 requires-python = "==3.11.*"
@@ -128,6 +128,7 @@ markers = [
   # levam o mesmo grupo, e `--dist loadgroup` os poe no mesmo trabalhador.
   "xdist_group(nome): mesmo trabalhador sob --dist loadgroup (P-141)",
   "privado: le o alocacao/estado.yaml, fora do git por desenho; o CI exclui com -m \"not privado\"",
+  "acervo: le insumo que so existe no armazem (o CSV do NEFIN, 25/09); o push exclui, o semanal o materializa",
 ]
 
 # ── Classificacao das dependencias por CONSEQUENCIA ─────────────────────────
@@ -136,7 +137,7 @@ markers = [
 #              invalida a reproducao do backtest, e `ambiente.conferir()` avisa.
 #   ferramenta trocar a versao muda como o trabalho e feito, nunca o resultado.
 #              Divergencia aqui nao diz nada sobre a validade de nenhum numero.
-[tool.bastter.dependencias]
+[tool.meol.dependencias]
 numericas = ["numpy", "pandas"]
 ferramentas = ["PyYAML", "pytest"]
 # PyYAML e ferramenta e nao numerica porque ele so transporta valores: um YAML lido
