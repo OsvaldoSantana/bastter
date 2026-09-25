@@ -70,7 +70,7 @@ license = "Apache-2.0"               # a prosa (.md) e CC-BY-4.0: ver NOTICE
 # visivel: o teste do ambiente falha e alguem decide.
 dependencies = [
   "numpy==2.4.4",     # alfa_contra_fatores -> linalg.lstsq. MUDA NUMERO.
-  "pandas==3.0.2",    # mensal(), premios(), janelas_moveis(). MUDA NUMERO.
+  "pandas==3.0.6",    # mensal(), premios(), janelas_moveis(). MUDA NUMERO.
   "PyYAML==6.0.3",    # todo o carregamento de politica/custos/estado/teses.
 ]
 # Atencao ao nome: o pacote se chama PyYAML e o import se chama `yaml`. O teste
