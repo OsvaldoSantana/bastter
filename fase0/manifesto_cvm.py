@@ -222,20 +222,84 @@ def acervos_sem_regime(raiz_repo):
     CVM virar rotina automatica, `cvm` sai de `acervos` e a contagem sobe -- o teste
     reprova, e a atualizacao e cobrada no mesmo minuto em que o mundo muda. Linha de
     base que so encolhe por conserto e a unica que vale (P-86)."""
+    P = _politica(raiz_repo)
+    declarados = set(acervos_em_limitacao(P)) | set(P.get("regimes_de_captura") or {})
+    base = os.path.join(raiz_repo, ACERVO)
+    existem = {n for n in os.listdir(base)
+               if os.path.isdir(os.path.join(base, n))} if os.path.isdir(base) else set()
+    return existem - declarados, declarados - existem
+
+
+def _politica(raiz_repo):
     import yaml
     caminho = os.path.join(raiz_repo, POLITICA)
     if not os.path.exists(caminho):
         raise PoliticaAusente(caminho)
     with io.open(caminho, encoding="utf-8") as f:
-        P = yaml.safe_load(f)
-    declarados = set()
-    for lim in (P.get("limitacoes_declaradas") or {}).values():
-        if isinstance(lim, dict):
-            declarados.update(lim.get("acervos") or ())
-    base = os.path.join(raiz_repo, ACERVO)
-    existem = {n for n in os.listdir(base)
-               if os.path.isdir(os.path.join(base, n))} if os.path.isdir(base) else set()
-    return existem - declarados, declarados - existem
+        return yaml.safe_load(f) or {}
+
+
+# Marcas de entrada que ja nao vale (alocacao/test_limitacoes_tipo.py, HISTORICO). Uma
+# limitacao RESOLVIDA continua escrita, com o que dizia, e nao declara regime nenhum:
+# contar os `acervos` dela faria o acervo parecer coberto por uma frase que ja caiu.
+HISTORICO = ("RETIRADA", "RESOLVIDA")
+REGIMES = ("AUTOMATICO",)
+
+
+def acervos_em_limitacao(P):
+    """{acervo: nome da limitacao} das entradas VIGENTES que o nomeiam."""
+    out = {}
+    for nome, lim in (P.get("limitacoes_declaradas") or {}).items():
+        if isinstance(lim, dict) and not any(h in lim for h in HISTORICO):
+            for a in lim.get("acervos") or ():
+                out[a] = nome
+    return out
+
+
+def defeitos_de_regime(raiz_repo):
+    """{acervo: [defeito]} das entradas de `politica.yaml -> regimes_de_captura`.
+
+    P-57 passo 3 (25/09/2026). A P7 admite duas saidas: a captura roda sozinha, ou e
+    declarada limitacao. Ate aqui so a segunda tinha onde ser escrita -- e as duas
+    limitacoes de captura diziam "sai na primeira execucao verde" com a execucao verde
+    ja feita (36148547193, schedule). Declaracao que o repositorio contradiz.
+
+    O QUE ISTO MEDE (P5): que a entrada nomeia um regime conhecido, um executor que
+    existe, um PASSO que existe nesse executor, um registro que existe, e a execucao
+    agendada que provou o regime. NAO mede que a rotina continue rodando: isso e do
+    `acervo.frescor()` (CapturaParada, 8 dias). E um acervo nao pode estar nos dois
+    lados -- automatico e limitacao vigente ao mesmo tempo e o arquivo se contradizendo."""
+    import yaml
+    P = _politica(raiz_repo)
+    em_limitacao = acervos_em_limitacao(P)
+    out = {}
+    for acervo, r in (P.get("regimes_de_captura") or {}).items():
+        falta = []
+        r = r if isinstance(r, dict) else {}
+        if r.get("regime") not in REGIMES:
+            falta.append(f"regime {r.get('regime')!r} fora de {REGIMES}")
+        executor = os.path.join(raiz_repo, str(r.get("executor") or ""))
+        if not r.get("executor") or not os.path.isfile(executor):
+            falta.append(f"executor inexistente: {r.get('executor')!r}")
+        else:
+            with io.open(executor, encoding="utf-8") as f:
+                wf = yaml.safe_load(f) or {}
+            ids = {s.get("id") for j in (wf.get("jobs") or {}).values()
+                   for s in j.get("steps") or ()}
+            if r.get("passo") not in ids:
+                falta.append(f"passo {r.get('passo')!r} nao existe em {r.get('executor')}")
+        if not r.get("registro") or not os.path.isfile(
+                os.path.join(raiz_repo, str(r.get("registro")))):
+            falta.append(f"registro inexistente: {r.get('registro')!r}")
+        if not isinstance(r.get("primeira_execucao_agendada"), int):
+            falta.append("sem a execucao agendada que provou o regime")
+        if not isinstance(r.get("em"), dt.date):
+            falta.append("sem a data (`em`) como data, nao texto (B-01)")
+        if acervo in em_limitacao:
+            falta.append(f"tambem nomeado na limitacao vigente {em_limitacao[acervo]}")
+        if falta:
+            out[acervo] = falta
+    return out
 
 
 def raiz_do_repositorio(partida):
@@ -406,6 +470,10 @@ def main(argv=None):
                   f"{', '.join(sorted(sem))}.\n  Rotina que depende de alguem lembrar "
                   f"nao e rotina. Ou ela roda sozinha, ou entra em\n  "
                   f"{POLITICA} -> limitacoes_declaradas.*.acervos", file=sys.stderr)
+        if raiz_repo and sem is not None:
+            for acervo, falta in sorted(defeitos_de_regime(raiz_repo).items()):
+                print(f"\nP7: regime de captura de {acervo} com defeito: "
+                      f"{'; '.join(falta)}", file=sys.stderr)
         if orfas:
             print(f"\nP7: {len(orfas)} declaracao(oes) sem acervo: "
                   f"{', '.join(sorted(orfas))}. Declaracao apodrecida.", file=sys.stderr)

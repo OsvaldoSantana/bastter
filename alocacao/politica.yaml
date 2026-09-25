@@ -13,10 +13,18 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.30.0
+  versao: 1.31.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.31.0: >-
+      25/09/2026. P-57 passo 3 e P-135: a captura da CVM e do COTAHIST rodou SEM
+      HUMANO -- execucao 36148547193, evento schedule, passos `captura` e `captura_b3`
+      verdes. Entra `regimes_de_captura` (cvm, b3: AUTOMATICO, com executor, passo,
+      registro e a execucao que provou), lido por fase0/manifesto_cvm.py. As limitacoes
+      `captura_da_cvm_e_manual_e_o_dado_e_perecivel` e
+      `captura_do_cotahist_ainda_nao_e_rotina` ficam RESOLVIDA; o nefin continua
+      limitacao ate o passo `captura_nefin` rodar no executor (P-147).
     1.30.0: >-
       25/09/2026. O CSV do NEFIN saiu do git: os termos, lidos na fonte, pedem citacao e
       reservam os direitos, sem autorizar redistribuir (docs/fontes/nefin.md). O byte mora
@@ -1953,6 +1961,27 @@ armazem:
     decisao do Claude, nao medicao -- o ritmo de crescimento do bucket ainda nao foi
     medido (P-57.md), e quando for, estes valores se revisam com ele.
 
+# ── REGIMES DE CAPTURA ────────────────────────────────────────────────────────
+# P7: todo acervo tem regime escrito. Ou a captura roda sozinha -- e mora aqui, com a
+# execucao agendada que o provou --, ou e limitacao declarada. Nunca os dois: o
+# fase0/manifesto_cvm.py (defeitos_de_regime) acusa acervo nomeado nos dois lados.
+# Que a rotina CONTINUE rodando nao e medido aqui: e o acervo.frescor() (8 dias).
+regimes_de_captura:
+  cvm:
+    regime: AUTOMATICO
+    executor: .github/workflows/captura_cvm.yml
+    passo: captura
+    registro: docs/acervo/cvm/capturas.csv
+    primeira_execucao_agendada: 36148547193
+    em: 2026-09-25
+  b3:
+    regime: AUTOMATICO
+    executor: .github/workflows/captura_cvm.yml
+    passo: captura_b3
+    registro: docs/acervo/b3/capturas.csv
+    primeira_execucao_agendada: 36148547193
+    em: 2026-09-25
+
 # ── SLEEVES ───────────────────────────────────────────────────────────────────
 # Uma rota de renda variavel nao e um ativo: e um RECIPIENTE. O que muda entre
 # elas nao e so custo — e quantos ativos distintos elas entregam por dentro.
@@ -2168,6 +2197,12 @@ limitacoes_declaradas:
     divida_tecnica: "declarar `ordem` em cada portao e o motor iterar por ela"
 
   captura_da_cvm_e_manual_e_o_dado_e_perecivel:
+    RESOLVIDA: >-
+      25/09/2026 (P-57 passo 3). A execucao agendada 36148547193 do captura_cvm.yml
+      (evento schedule, 14:35Z -- o cron de 09:15 UTC saiu 5h20 atrasado) rodou o passo
+      `captura` verde, sem ninguem disparar. O regime passou para
+      `regimes_de_captura.cvm`. A entrada ficou um dia dizendo "sai na primeira execucao
+      verde" depois dela -- a forma da P-118.
     tipo: NAO_CONSERTADA
     o_que_resolveria: >
       O executor: GitHub Actions com cron e registro da ultima corrida (CLAUDE.md 11.6).
@@ -2258,6 +2293,11 @@ limitacoes_declaradas:
       com o erro transcrito. Sem isso, escreve-se "nao sei se da" e mede-se.
 
   captura_do_cotahist_ainda_nao_e_rotina:
+    RESOLVIDA: >-
+      25/09/2026 (P-135). Mesma execucao agendada 36148547193, passo `captura_b3` verde:
+      diario do pregao de 24/09 capturado (`novo`, 14:37:46Z, docs/acervo/b3/capturas.csv).
+      O regime passou para `regimes_de_captura.b3`. A conciliacao diario x anual
+      continua aberta (P-137, gatilho 01/10) e nao e condicao desta saida.
     tipo: NAO_CONSERTADA
     o_que_resolveria: >
       O mesmo executor da CVM: GitHub Actions com cron, o ZIP conferido ate o fim ANTES

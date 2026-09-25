@@ -133,9 +133,12 @@ frescor: mais de 8 dias sem observação levanta o aviso `CapturaParada`, porque
 desliga cron de repositório parado há 60 dias **sem erro nenhum**. `python fase0/acervo.py
 --frescor [--armazem s3]` mede à mão e sai 1 se algo parou.
 
-**A primeira execução verde existe desde 24/09** (execução `36043565046`, 34 `inalterado`); a
-limitação `captura_da_cvm_e_manual_e_o_dado_e_perecivel` sai quando o regime automático for
-declarado onde o `test_P7` o leia (P-57, passo 3).
+**A primeira execução verde existe desde 24/09** (execução `36043565046`, 34 `inalterado`), e a
+primeira **agendada**, sem ninguém disparar, desde 25/09 (`36148547193`; o cron de 09:15 UTC
+saiu às 14:35 UTC — o GitHub não garante o horário). Desde 25/09 o regime é dado:
+`politica.yaml → regimes_de_captura` (cvm, b3), conferido por
+`manifesto_cvm.defeitos_de_regime()`; as limitações de captura da CVM e do COTAHIST ficaram
+`RESOLVIDA` (P-57, P-135). O NEFIN segue limitação até o passo rodar no executor (P-147).
 
 **O COTAHIST roda no mesmo workflow desde 24/09** (P-135): `fase0/capturar_cotahist.py`, pelo
 mesmo armazém, portão e teto. A B3 respondeu `200` ao runner. **Diário a cada pregão**
