@@ -2526,6 +2526,24 @@ nome contra eles procura Duratex e acha zero.
 
 ---
 
+## CI-01 · Dois testes dependiam do `estado.yaml` privado, e ninguém sabia porque nenhum portão rodava fora desta máquina
+
+*25/09/2026. Achado pela primeira execução do workflow *Testes* (`36142833762`, vermelha),
+reproduzido num clone limpo do `origin/main`.*
+
+`test_estado_real_nao_tem_mais_reserva_empenhada_a_denunciar` e
+`test_reserva_e_zero_e_o_deposito_esta_fora_dela` abrem `alocacao/estado.yaml`, que está fora
+do git **por desenho** (§11.6, repositório público). Em qualquer clone eles dão
+`FileNotFoundError`. Passaram verdes semanas a fio porque toda rodada acontecia na única
+máquina que tem o arquivo. É a régua 15 no nível do repositório: *verde numa árvore* não é
+*verde no repositório*, e agora havia um executor para provar isso.
+
+**O conserto não é pular quando falta** (seria a P-142 do avesso: na máquina dele, arquivo
+sumido viraria skip calado). É uma marca explícita `privado`. O CI exclui por nome, e na máquina
+dele o teste roda e falha alto.
+
+---
+
 ## CV-07 · Captura local sem `--armazem` desincroniza o registro e o R2: o byte nunca sobe
 
 *25/09/2026. Erro meu (Claude Code), achado por mim ao desenhar o job semanal.*

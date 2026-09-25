@@ -45,8 +45,10 @@ def test_push_roda_sem_slow_e_o_semanal_roda_tudo():
     assert d["on"]["push"]["branches"] == ["main"] and d["on"]["schedule"]
     rapido = " ".join(p.get("run", "") for p in d["jobs"]["rapido"]["steps"])
     completo = " ".join(p.get("run", "") for p in d["jobs"]["completo"]["steps"])
-    assert '-m "not slow"' in rapido and "-n auto" in rapido and "ruff" in rapido
+    assert '-m "not slow and not privado"' in rapido and "-n auto" in rapido
+    assert "ruff" in rapido
     assert "not slow" not in completo and "--cov" in completo and "expira_proxima" in completo
+    assert '-m "not privado"' in completo, "o estado.yaml nao esta no runner (secao 11.6)"
 
 
 def test_mutacao_e_so_manual():

@@ -9,6 +9,10 @@
 #                           (docs/metricas/cobertura.csv, commit do bot so se mudar) e o
 #                           aviso de `expira` que vence em ate 7 dias (UMA issue).
 #
+# `privado`: le o alocacao/estado.yaml, que nao entra no git (secao 11.6). Fica fora do CI
+# por nome, e roda na maquina dele. Achado na PRIMEIRA execucao deste workflow (36142833762):
+# dois testes dependiam de um arquivo que so existe la, e nenhum portao tinha rodado fora dela.
+#
 # Job vermelho = e-mail: o GitHub avisa por e-mail a falha de workflow a quem disparou (push)
 # e ao dono do repositorio (agendado), pela configuracao padrao de notificacao da conta.
 #
@@ -50,7 +54,7 @@ jobs:
         run: |
           set -e
           for s in alocacao fase0 auditoria tools; do
-            python -m pytest "$s" -m "not slow" -n auto --dist loadgroup -p no:cacheprovider
+            python -m pytest "$s" -m "not slow and not privado" -n auto --dist loadgroup -p no:cacheprovider
           done
       - name: ruff e mypy
         run: |
@@ -88,7 +92,7 @@ jobs:
           set +e
           rc=0
           for s in alocacao fase0 auditoria tools; do
-            python -m pytest "$s" -n auto --dist loadgroup -p no:cacheprovider -rs \
+            python -m pytest "$s" -m "not privado" -n auto --dist loadgroup -p no:cacheprovider -rs \
               --cov=alocacao --cov=fase0 --cov=auditoria --cov=tools --cov-append --cov-report=
             r=$?; [ "$r" -ne 0 ] && rc=$r
           done

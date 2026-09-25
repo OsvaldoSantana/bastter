@@ -1550,6 +1550,10 @@ def test_ausencia_de_informacao_nao_vira_empenho_presumido():
                horizonte_anos=10)
     assert e.reserva_efetiva == 7671.01 and e.reserva_empenhada == 0.0
 
+# P-146 (25/09): le o alocacao/estado.yaml, que e PRIVADO por desenho (fora do git, secao
+# 11.6). O CI exclui `privado` por nome; na maquina dele o teste roda e falha alto se o
+# arquivo sumir -- pular por ausencia reabriria a P-142.
+@pytest.mark.privado
 def test_estado_real_nao_tem_mais_reserva_empenhada_a_denunciar():
     """O aviso de empenho continua no motor e vale para quem empenhar reserva de
     verdade. O estado dele deixou de dispara-lo porque a reserva virou 0,00 e o
@@ -1656,6 +1660,10 @@ def test_limitacao_de_acoplamento_existe_mas_nao_se_aplica_a_ele():
     assert "correlacao -1" in lim["por_que_e_pior_que_iliquidez"]
     assert lim["aplica_se_ao_caso_do_usuario"] is False
 
+# P-146 (25/09): le o alocacao/estado.yaml, que e PRIVADO por desenho (fora do git, secao
+# 11.6). O CI exclui `privado` por nome; na maquina dele o teste roda e falha alto se o
+# arquivo sumir -- pular por ausencia reabriria a P-142.
+@pytest.mark.privado
 def test_reserva_e_zero_e_o_deposito_esta_fora_dela():
     """O modelo do usuario: aquele dinheiro nao e reserva, e caucao de meio de
     pagamento. Nao compete no G2, nao conta meses, nao entra em patrimonio."""

@@ -126,6 +126,7 @@ markers = [
   # P-141: o memo de sessao e por processo. Testes que dividem uma leitura do acervo
   # levam o mesmo grupo, e `--dist loadgroup` os poe no mesmo trabalhador.
   "xdist_group(nome): mesmo trabalhador sob --dist loadgroup (P-141)",
+  "privado: le o alocacao/estado.yaml, fora do git por desenho; o CI exclui com -m \"not privado\"",
 ]
 
 # ── Classificacao das dependencias por CONSEQUENCIA ─────────────────────────

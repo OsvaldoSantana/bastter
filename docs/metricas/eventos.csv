@@ -38,3 +38,4 @@ data;codigo;tipo;autor;quem_achou;regua;commit_introduziu;commit_corrigiu;descri
 2026-09-25;CV-06;achado;fonte;claude-code;nao_se_aplica;nao_se_aplica;61f1ec5;EMISSOR.TXT descreve o dono atual do codigo -- 4 codigos reaproveitados
 2026-09-25;P-97;reincidencia;claude-code;claude-code;desconhecido;nao_commitado;61f1ec5;isinp.zip gravado no acervo sem origem declarada -- a guarda pegou antes do commit
 2026-09-25;CV-07;achado;claude-code;claude-code;desconhecido;02b41cc;aberto;captura local sem --armazem: o registro anota o FCA e o byte nunca sobe ao R2
+2026-09-25;CI-01;achado;desconhecido;claude-code;15;desconhecido;aberto;dois testes liam o estado.yaml privado -- vermelhos em todo clone; achado pela primeira execucao do workflow
