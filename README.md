@@ -78,7 +78,8 @@ flowchart LR
 
     B3 & CVM -->|"captura diária<br/>GitHub Actions"| R2
     R2 --- REG
-    R2 -->|"ajuste por proventos<br/>conferido pelo preço"| PORT
+    R2 --> AJ["Série ajustada<br/>proventos conferidos pelo preço"]
+    AJ --> PORT
     NEFIN --> PORT
     CUSTOS --> PORT
     POL --> PORT
