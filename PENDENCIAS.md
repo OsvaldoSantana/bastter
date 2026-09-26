@@ -70,7 +70,7 @@ Se a sessão anterior fechou uma pendência de engenharia, a próxima proposta �
 
 ---
 
-## P-45 · Migrar o trabalho de repositório para o Claude Code — **decisão sua**
+## ~~P-45~~ · Migrar o trabalho de repositório para o Claude Code — **decisão sua** — **FECHADA em 26/09/2026**
 
 O plano Pro inclui Claude Code no terminal, com **limite compartilhado** com o app. O
 ritual de zip que fazemos toda sessão existe **só** porque seu computador fica
@@ -82,6 +82,8 @@ precisa.
 
 **Gatilho:** terça, depois do push. Não antes — o primeiro passo é ter o repositório
 no GitHub.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. O trabalho de repositório migrou: desde 16/09 as rodadas são feitas direto no repositório pelo Claude Code local (`CLAUDE.md`, *16/09/2026 — a segunda ponta encontrou a primeira*), e a divisão proposta aqui é a da §5-A e da §11.2. O ritual do zip acabou; os bilhetes vencidos estão em `docs/historico/entregas/`.
 
 ---
 
@@ -120,7 +122,7 @@ e colar `impressao: 942c75bae248327b`.
 
 ---
 
-## P-02 · Aporte realizado · `DADO_DE_UM_USUARIO`
+## ~~P-02~~ · Aporte realizado · `DADO_DE_UM_USUARIO` — **FECHADA em 26/09/2026**
 
 Piso planejado R$500/mês; realizado hoje **zero**. É o único número do projeto que
 nenhuma linha de código substitui. Enquanto for zero, a data da reserva completa
@@ -132,15 +134,19 @@ onde o sistema inteiro trabalha hoje, é a de **3**.
 > **Não bloqueia desenvolvimento** (U-01). Um cliente novo de um produto tem aporte
 > zero, e o sistema responde. `test_usuario_novo.py` garante isso.
 
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. O realizado deixou de ser zero em **10/09/2026**: primeiro depósito de R$ 500 no cofrinho (`CLAUDE.md` §7, *o aporte deixou de ser zero*), classificado por ele como **aporte**, não reserva (U-02, 12/09). O valor de cada mês é dado do `estado.yaml`, que não entra no git; que o sistema dependa de alguém digitá-lo é a pergunta da P-128.
+
 ---
 
-## P-04 · `b3.quem_paga_custodia` fura a P1 — **decisão sua**
+## ~~P-04~~ · `b3.quem_paga_custodia` fura a P1 — **decisão sua** — **FECHADA em 26/09/2026**
 
 É `NAO_CONFIRMADO` e **não declara `bloqueia` nada**, ao contrário das outras
 quatro. Insumo não confirmado que nenhum cálculo recusa não está protegido: não
 bloqueia porque ninguém o lê, e se um dia alguém ler, lerá `None`.
 
 Ou ele bloqueia algo e precisa dizer o quê, ou sai do `custos.yaml`.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. A pergunta era *"ou ele bloqueia algo e diz o quê, ou sai"*. Bloqueia e diz: `alocacao/custos.yaml → b3.quem_paga_custodia` declara `bloqueia: ["atribuicao_de_quem_paga_a_custodia"]`, e a `nota_do_bloqueio` (F-05) explica que o valor não entra em conta nenhuma — o motor supõe sempre que quem paga é o investidor, a hipótese conservadora — e que o bloqueado é uma **afirmação** ao usuário, não um cálculo.
 
 ---
 
@@ -616,7 +622,7 @@ uma sleeve dentro de `acao_zero`. Barato de consertar, não é o gargalo.
 
 ---
 
-## P-47 · Eventos societários da B3 — o insumo que faltava no plano inteiro
+## ~~P-47~~ · Eventos societários da B3 — o insumo que faltava no plano inteiro — **FECHADA em 26/09/2026**
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo (rodar) + Claude (processar).
 **Gatilho:** terça, 08/09 — antes de qualquer download da CVM.
@@ -643,6 +649,8 @@ HTTP 200 com listas vazias, **em silêncio**. Gravar isso como "empresa sem even
 escrever ausência de dado no lugar de dado. O coletor acusa em voz alta; o parser, quando
 existir, precisa recusar.
 
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. Rodou em 11/09: carteira do IBOV (76 ativos) e eventos de **74 de 74** emissoras, `dt_captura=2026-09-11`, com sha256 (`CLAUDE.md` §7, item 1; `PLANO.md` §2, *B3 — eventos societários: completo*), e o histórico longo por `--proventos-completos` (132 páginas). O processamento também existe: o silver em `fase0/refinar.py`, que recusa em voz alta valor fora da lista `OBSERVADO` (A-05), e a série ajustada em `fase0/ajustar.py` (C-02). **O que esta pendência não cobria e continua aberto:** a captura foi uma vez só — os eventos não estão no workflow diário nem no armazém. Vai para a **P-150**.
+
 ---
 
 ## P-48 · Viés de sobrevivência na composição de índice — declarado, não resolvido
@@ -666,7 +674,7 @@ a mais importante das duas.
 
 ---
 
-## P-49 · `coletar_b3.py` nunca tocou a rede — e não pode tocar daqui
+## ~~P-49~~ · `coletar_b3.py` nunca tocou a rede — e não pode tocar daqui — **FECHADA em 26/09/2026**
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo. **Gatilho:** terça, primeira coisa.
 
@@ -686,6 +694,8 @@ cd C:\...astter
 python fase0\coletar_b3.py --indice IBOV
 python fase0\coletar_b3.py --eventos          # usa a carteira recém-capturada
 ```
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. Tocou a rede em 11/09, na máquina dele: quebrou três vezes (A-00 a A-02, `CLAUDE.md` §5-A) e fechou em 74/74 em 12/09 pela cascata de nome do B-03 (`ACHADOS.md`, 12/09, marco 3). As três conferências pedidas foram respondidas pela corrida: a regra de emissora é posicional (A-01), e código que muda não traz o histórico junto (A-03, A-04).
 
 ---
 
@@ -754,7 +764,7 @@ mapeamento ticker↔CNPJ↔CD_CVM também precisa ser bitemporal**, senão o joi
 
 ---
 
-## P-54 · A rotina de snapshot da CVM é SEMANAL — e ainda não existe
+## ~~P-54~~ · A rotina de snapshot da CVM é SEMANAL — e ainda não existe — **FECHADA em 26/09/2026**
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo (rodar) + Claude (escrever).
 **Gatilho:** terça, junto do coletor da B3.
@@ -779,6 +789,8 @@ O que falta: uma rotina que rode toda semana e grave
 `data/bronze/cvm/dfp/dt_captura=AAAA-MM-DD/`, com sha256 e manifesto, **sem sobrescrever**.
 O `coletar_b3.py` já tem a forma; falta o equivalente para a CVM, e ele pode reusar
 `cvm_catalogo.py` para ler o `last_modified` de cada recurso e só baixar o que mudou.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. A rotina existe e é **diária**, não semanal: `.github/workflows/captura_cvm.yml`, decidida na P-57 e fechada em 25/09 — primeira execução agendada `36148547193`, sem ninguém disparar; registro em `docs/acervo/cvm/capturas.csv`, byte no R2 por sha256, nunca sobrescrito. Não precisa de ninguém para rodar.
 
 ---
 
@@ -979,7 +991,7 @@ registrada como decisão dele**.
 
 ---
 
-## P-62 · Repositório público — **DECIDIDO em 06/09**, com pré-requisito duro
+## ~~P-62~~ · Repositório público — **DECIDIDO em 06/09**, com pré-requisito duro — **FECHADA em 26/09/2026**
 
 **Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo (decidiu) + Claude (executar).
 **Gatilho:** antes do primeiro `git push`.
@@ -1005,6 +1017,8 @@ quer isso público, podendo não ter?"), respondeu que sim. Fica registrado como
 **`estado.yaml` continua fora**, e isso não é preferência: é o único arquivo que carrega
 patrimônio, aporte e dívida reais. O `.gitignore` precisa listá-lo **antes** do primeiro
 `git add`, e o teste que guarda isso ainda não existe — ver P-67.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. O repositório é público e empurrado desde 18/09 (`b1d06f4..3ee5e97`, `CLAUDE.md`, terceira rodada de 18/09). **O pré-requisito falhou antes de a guarda existir:** o `estado.yaml` foi empurrado em 08/09, e isso está escrito no bloco *SEGREDO* do `.gitignore`. Hoje ele está fora (três padrões no `.gitignore`) e `alocacao/test_p67_segredo.py` mede o índice do git. O histórico público não foi reescrito, por decisão dele de 25/09 (`CLAUDE.md` §6, exceção à D-01).
 
 ---
 
@@ -1105,7 +1119,7 @@ esperança.
 
 ---
 
-## P-68 · O primeiro aporte existe — e a pergunta certa não é quanto, é se está livre
+## ~~P-68~~ · O primeiro aporte existe — e a pergunta certa não é quanto, é se está livre — **FECHADA em 26/09/2026**
 
 **Classe:** `DADO_DE_UM_USUARIO`. **Dono:** Osvaldo. **Gatilho:** antes de rodar qualquer
 projeção de Fase A com número real.
@@ -1182,6 +1196,8 @@ caminho — que é sempre o desfecho melhor.
 > projeto cuja Fase A depende de reserva de verdade, é barato. Mas é decisão dele, não
 > minha, e depende de a hipótese se confirmar. `NAO_CONFIRMADO`.
 
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. **O fechamento de 12/09 nunca chegou a este cabeçalho.** `CLAUDE.md` §7: *"P-68 FECHADA em 12/09"* — do Cofrinho do Cartão, R$ 4.202,12 estão disponíveis para retirada, e dá para desligar o limite sobre o Turbinado. A classificação é dele (U-02): o saldo do cartão **não** é reserva, e os R$ 500 são aporte. O cabeçalho ficou aberto catorze dias: é a fila desatualizada que a §5-A condena, e foi achada por esta revisão.
+
 ---
 
 ## P-74 · K-01 comparou contra a alternativa errada
@@ -1214,7 +1230,7 @@ não reescrever o achado antigo com o dado novo sem entender a diferença.
 
 ---
 
-## P-75 · O ambiente instalado diverge dos pinos, e o Python é outro
+## ~~P-75~~ · O ambiente instalado diverge dos pinos, e o Python é outro — **FECHADA em 26/09/2026**
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo. **Gatilho:** antes de acreditar em
 qualquer número produzido na máquina dele.
@@ -1246,6 +1262,8 @@ e **não** de mensalidade, então a aritmética do K-01 não se aplica a este ca
 R$287,88/ano some, e o Turbinado deixa de perder para o cofrinho comum. **Seria a primeira
 vez que um achado do projeto é derrubado por um fato novo em vez de por um erro.** Não
 presumi: o K-01 fica como está até a captura do app confirmar.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. Mesma medição da P-73: em 12/09 o `ambiente.py`, no 3.11.9, com **numpy 2.4.4, pandas 3.0.2**, PyYAML 6.0.3 e pytest 9.1.1, disse *"O ambiente instalado E o registrado"* (`ACHADOS.md`, 12/09, marco 1). E a divergência não volta calada: o Dependabot ignora numpy e pandas desde 25/09 (P-148).
 
 ---
 
@@ -1302,7 +1320,7 @@ essa descoberta. Some-se o prazo semanal declarado pela própria CVM.
 
 ---
 
-## P-73 · A máquina roda Python 3.13 e o projeto exige 3.11
+## ~~P-73~~ · A máquina roda Python 3.13 e o projeto exige 3.11 — **FECHADA em 26/09/2026**
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **Dono:** Osvaldo. **Gatilho:** antes de acreditar em
 qualquer número produzido lá.
@@ -1318,9 +1336,11 @@ instala o 3.11, ou se reabre **com medição** e se registra em `REGISTRO-vN.md`
 Enquanto isso, um resultado produzido no 3.13 é **número novo**, não conferência de um
 antigo.
 
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. **Fechada em 12/09 no `ACHADOS.md` e nunca aqui.** Python 3.11.9 instalado em 11/09; o `ambiente.py` disse *"O ambiente instalado E o registrado"*, impressão `7565df1381e2c1ed` (`ACHADOS.md`, 12/09, marco 1: *"P-73 fechada"*; `CLAUDE.md` §3). O CI roda 3.11 também.
+
 ---
 
-## P-76 · A F-03 se declarou refutada com um insumo que não autoriza refutação
+## ~~P-76~~ · A F-03 se declarou refutada com um insumo que não autoriza refutação — **FECHADA em 26/09/2026**
 
 **Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo decide a regra; Claude implementa.
 **Gatilho:** quando o regulamento do IMAB11 for baixado (P-05/P-50) — ou antes, se
@@ -1340,11 +1360,13 @@ P1 aplicada ao relato de uma medição, não ao dado.
 Se sim, a F-03 volta a "tendência medida, não refutação" até o regulamento chegar, e a
 linha da F-03 em `## Fechadas` ganha a ressalva. Não mexi em nenhum dos dois registros.
 
----
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. **Fechada em 13/09 no `ACHADOS.md` e nunca aqui** (`docs/auditoria/P76-P78-B04.md`). A regra saiu: uma conclusão **não herda** o status do insumo mais fraco — herda uma **medição de sensibilidade** (sobrevive à faixa → `COMPLETO` com a faixa; inverte dentro dela → `PARCIAL` com a fronteira). É a linha da P-76 no índice da `CLAUDE.md` §7. A F-03 foi remedida depois com a lâmina do gestor e o Tesouro IPCA+ vence em todas as faixas (índice, linha F-03).
 
 ---
 
-## P-80 · A rotina mede um terço do projeto
+---
+
+## ~~P-80~~ · A rotina mede um terço do projeto — **FECHADA em 26/09/2026**
 
 **Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo decide; Claude implementa.
 **Gatilho:** agora — as três suítes estão verdes ao mesmo tempo, e é a janela barata.
@@ -1370,6 +1392,8 @@ mais: a raiz tem **14 violações** em `docs/historico/pesquisa-custos-2026-08/c
 congelada de pesquisa. Ou ela entra em `[tool.ruff] exclude` com o motivo escrito ao
 lado, ou o portão nasce com linha de base — e linha de base conhecida não é barreira
 (é o próprio texto do `test_P40_ruff_esta_em_zero`).
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. **Resolvida por outro caminho.** O defeito era a P7: `fase0` e `auditoria` só rodavam se alguém lembrasse. Desde 25/09 ninguém precisa lembrar: `.github/workflows/testes.yml` roda as **quatro** suítes (`alocacao fase0 auditoria tools`) e `ruff`/`mypy` nas quatro pastas em todo push e em todo PR (`CLAUDE.md` §12), e os PRs de 25/09 foram mesclados com ele verde. O `testpaths = ["alocacao"]` do `pyproject.toml` ficou como estava: `pytest -q` na raiz continua medindo um terço, mas deixou de ser o portão.
 
 ---
 
@@ -1417,7 +1441,7 @@ passar a ser lido, e a linha tem de sair.
 
 ---
 
-## P-78 · Dado de pesquisa coletado e nunca consumido — oito campos de `Instituicao` e um utilitário
+## ~~P-78~~ · Dado de pesquisa coletado e nunca consumido — oito campos de `Instituicao` e um utilitário — **FECHADA em 26/09/2026**
 
 **Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo decide por campo; Claude executa.
 **Gatilho:** a próxima vez que `corretoras.py` for tocado.
@@ -1438,6 +1462,8 @@ A guarda achou 10 além dos quatro da auditoria; um é a P-77. Os outros nove:
   propósito (P-71), e para um utilitário isso pode ser rigor demais.
 
 Nada foi removido: o LIMITE do prompt era parar acima de cinco e mostrar a lista.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. **Fechada em 13/09 no `ACHADOS.md` e nunca aqui** (`docs/auditoria/P76-P78-B04.md`). Os campos eram três naturezas: procedência (`bc_procedentes`, `bc_clientes`, reclassificados), ausência de critério declarada (`home_broker_web`, `exporta_csv`, que `regras()` recusa pontuar) e custo por operação fora do `pontuar()`. A terceira seguiu: o defeito fechou na P-83 e a decisão de peso é a **P-84**, que continua aberta.
 
 ---
 
@@ -1638,7 +1664,7 @@ mutação.
 
 ---
 
-## P-87 · Existe uma SEGUNDA cópia do projeto na máquina, com `.git` próprio
+## ~~P-87~~ · Existe uma SEGUNDA cópia do projeto na máquina, com `.git` próprio — **FECHADA em 26/09/2026**
 
 **Dono:** Osvaldo · **Gatilho:** nenhum — antes do próximo pacote ou sessão de nuvem ·
 **Classe:** `BLOQUEIA_O_SISTEMA`
@@ -1667,6 +1693,8 @@ completo, com `.git` próprio, no caminho que a nuvem recebeu como pasta conecta
 para algo que não se confunda (`Bastter-ARQUIVO-09set`), ou o `Desktop\Bastter` passa a ser
 o único caminho aceito. Enquanto houver duas, toda sessão de nuvem precisa conferir qual
 recebeu — e **P7: conferência que depende de alguém lembrar não é conferência.**
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. A cópia do OneDrive foi **apagada por ele em 18/09** (`PLANO.md` §4, item 5, e §5, decisão A).
 
 ---
 
@@ -1797,7 +1825,7 @@ sobrevive a uma mudança de separador ou de codificação, e é a mais cara.
 
 ---
 
-## P-92 · O acervo tem UM ano de preço, e ele é a régua de todo o resto
+## ~~P-92~~ · O acervo tem UM ano de preço, e ele é a régua de todo o resto — **FECHADA em 26/09/2026**
 
 **Dono:** Osvaldo (download) · **Gatilho:** antes de qualquer execução do pré-registro ·
 **Classe:** `BLOQUEIA_O_SISTEMA` · ⚙ **exige o desktop**
@@ -1822,6 +1850,8 @@ o que estiver na pasta.
 
 **A regra que vale a pena carregar:** ordem por evento de quantidade, não por
 proximidade — 2025 antes de 2024.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. O acervo tem os **41 anos**, 1986–2026, desde 18/09 (`CLAUDE.md`, terceira rodada de 18/09), o leitor enxerga todos desde 19/09 (P-99), e desde 24/09 eles estão no armazém: `docs/acervo/b3/inventario-armazem.csv` lista 41 `COTAHIST_A*.ZIP`, e o anual do ano corrente é recapturado todo mês pelo workflow (P-135). 2021–2025 deram ao C-01 **54** eventos de quantidade com preço em 21/09 (`PLANO.md`, passo 3).
 
 ---
 
@@ -2299,7 +2329,7 @@ instrumento do C-03.
 
 ---
 
-## P-107 · O pré-registro de ML herdou `L = 3` de uma amostra quatro vezes maior — e não tem teste de poder
+## ~~P-107~~ · O pré-registro de ML herdou `L = 3` de uma amostra quatro vezes maior — e não tem teste de poder — **FECHADA em 26/09/2026**
 
 **Dono:** Osvaldo (decidir) · **Gatilho:** **antes do primeiro commit de
 `preregistro-ml-v1.md`** — ele vale *"a partir do commit que o contém"*; depois disso, cada
@@ -2325,6 +2355,8 @@ Mais quatro menores na tabela §5 da auditoria. **P-100 passa a bloquear a famí
 
 **Também retratado aqui:** a minha recusa do ML em 19/09 (`AUDITORIA-PLANO-DE-TOKENS.md`
 §4.5) citou DeMiguel fora do alcance dele.
+
+**FECHADA em 26/09/2026.** Revisão das pendências com dono Osvaldo, 26/09, na nuvem: conferida no repositório, vencida. Decidida por ele antes do commit e aplicada: `docs/aprendizado/preregistro-ml-v1.md` e `-v2.md`, seção *Feitas por decisão dele (P-107)* — corte = **máximo entre L ∈ {1, 2, 3}** e o **nono teste**, poder com sinal plantado. A condição *"P-100 bloqueia a família"* também caiu: a P-100 fechou em 23/09.
 
 ---
 
@@ -3158,6 +3190,49 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
 
+## P-151 · O job `completo` do *Testes* fica vermelho sempre que houver branch de sessão aberta
+
+**Dono:** Claude Code · **Gatilho:** antes da rodada agendada de segunda, 28/09, 11:00 UTC, ou
+na primeira em que uma branch de sessão estiver à frente do `main` · **Classe:**
+`BLOQUEIA_O_SISTEMA` (um portão que acende sem defeito esconde o que acende com defeito)
+
+Medido em 26/09 pela nuvem, lendo o log: a única execução do job `completo` pedida pela P-146
+(*Testes #16*, `36178274615`, disparo manual de 25/09 19:12Z) saiu **vermelha por um teste só**,
+`auditoria/test_git01_branches_integradas.py::test_git01_toda_branch_do_origin_esta_no_head`,
+com `['origin/claude/ecstatic-planck-wgbd03', 'origin/wip/sessao-b']`. Todo o resto passou: 555
+em `alocacao`, 470 em `fase0` (39 pulados por falta de acervo local), 73 em `auditoria`, 6 em
+`tools`; `ruff` e `mypy` em zero; armazém com 0 faltas.
+
+**A causa:** os dois jobs fazem `fetch-depth: 0` (para as tags), então enxergam todas as
+branches do `origin`. A guarda do GIT-01 foi escrita para a **sessão** (*"leia antes de
+trabalhar"*); no runner, uma branch de PR aberto é o estado normal, não outra sessão fazendo a
+tarefa. O GIT-02 já tirou o Dependabot pelo mesmo motivo. Com o semanal vermelho por isso, um
+vermelho de verdade passa sem ninguém olhar (A-08: alarme que dispara sempre é alarme desligado).
+
+**Hoje (26/09, 10:30Z) nenhuma branch fora do Dependabot está à frente do `main`**, então a rodada
+de segunda passa se nada abrir até lá. **Proposta:** a guarda pula quando `GITHUB_ACTIONS` está
+definido, com um controle que prove que fora do CI ela ainda reprova. A pergunta da guarda é de
+sessão, e o CI já tem a sua: o PR roda contra o `main` de verdade.
+
+## P-150 · Os eventos societários da B3 foram capturados uma vez e não têm rotina nem armazém
+
+**Dono:** Claude Code (escrever) · o desktop (subir o acervo de 11/09) · **Gatilho:** nenhum — a
+fonte pode sumir sem aviso (V-01) · **Classe:** `BLOQUEIA_O_SISTEMA`
+
+Achada ao fechar a P-47 e a P-49, em 26/09. A captura de 11/09 (74 emissoras, 132 páginas de
+proventos) mora **só no disco dele**: `docs/acervo/b3/inventario-armazem.csv` lista apenas os 41
+COTAHIST, e o `captura_cvm.yml` não tem passo de eventos. No CI, os três testes de
+`fase0/test_coletar_b3.py` que leem o acervo são pulados (*"nao ha acervo de eventos neste
+disco"*, execução `36178274615`).
+
+É o insumo que o V-01 chamou de **mais perecível** do projeto — endpoint não documentado, sem
+SLA, sem espelho — e é a mesma forma da P-57: uma captura que depende de alguém lembrar. O que
+falta: (1) subir o acervo de 11/09 ao R2 — conferir antes se o `subir_acervo_local.py` cobre a
+pasta de eventos; ⚙ exige o desktop; (2) um passo no workflow que rode o `coletar_b3.py` numa
+cadência declarada em `politica.yaml → regimes_de_captura.b3`, com o mesmo portão, o mesmo teto
+e o mesmo registro. Os termos da B3 permitem capturar para uso pessoal e vedam publicar
+(P-136): o armazém é privado, e os eventos não entram na release da CVM.
+
 ## ~~P-149~~ · `cenarios.py` cai no `main` — `fora_status` mudou de forma — **FECHADA em 25/09/2026**
 
 **Dono:** Claude Code · **Gatilho:** no próximo toque em `cenarios.py` ou em `fase_universo` ·
@@ -3233,9 +3308,16 @@ regime seja declarado onde ele lê.
 > - **Falta (dele):** *Run workflow* em **Testes** (espera-se verde) e em **Mutacao**
 >   (espera-se vermelho, com `gerados=… testados=0` na anotação).
 
+> **26/09, medido pela nuvem no log:** o item 2 **rodou** — *Testes #16* (`36178274615`), disparo
+> manual de 25/09 19:12Z — e saiu vermelho por **um** teste, a guarda do GIT-01 vendo duas branches
+> de sessão abertas naquele minuto. Não é dele: é a **P-151**. A próxima rodada do semanal é a
+> agendada de segunda, 28/09, 11:00 UTC, e não precisa de clique. **Sobra dele:** a escolha do CI-03
+> e o *Run workflow* da *Mutacao* depois dela — os dois na `docs/decisoes/fila-do-osvaldo.md`.
+
 ## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
 
-**Dono:** Claude Code (medir) · Osvaldo (as duas escolhas) · **Gatilho:** antes da primeira
+**Dono:** Claude Code (medir) · ~~Osvaldo (as duas escolhas)~~ decididas por ele em 25/09 ·
+**Gatilho:** antes da primeira
 variável da ML-3 · **Classe:** `DECISAO_DE_DESENHO`
 
 A P-143 fechou a ponte para **2010–2012** (a janela da emenda). O desenvolvimento vai até 2019:
@@ -3401,6 +3483,22 @@ validade. **Se ele quiser a outra, é uma tag nova e uma linha nova aqui, nunca 
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-45** | migrar o trabalho de repositório para o Claude Code | 26/09 — vencida: 16/09 — em uso desde então (`CLAUDE.md`, rodada de 16/09) |
+| **P-02** | aporte realizado era zero | 26/09 — vencida: 10/09 — primeiro depósito; classificado como aporte (U-02) |
+| **P-04** | `b3.quem_paga_custodia` não bloqueava nada | 26/09 — vencida: F-05 — o bloqueio foi nomeado no `custos.yaml` |
+| **P-47** | eventos societários da B3 não existiam no plano | 26/09 — vencida: 11/09 — 74/74 emissoras, silver e série ajustada; a rotina que falta é a P-150 |
+| **P-49** | `coletar_b3.py` nunca tinha tocado a rede | 26/09 — vencida: 11–12/09 — rodou; 74/74 (A-00 a A-04, B-03) |
+| **P-54** | a rotina semanal da CVM não existia | 26/09 — vencida: 25/09 — superada pela captura diária da P-57 |
+| **P-62** | repositório público, com `estado.yaml` fora | 26/09 — vencida: 18/09 — público; `estado.yaml` fora e guardado por `test_p67_segredo.py` |
+| **P-68** | o primeiro aporte estava livre ou empenhado? | 26/09 — vencida: 12/09 — quanto sai medido; a classificação é dele (U-02). Cabeçalho corrigido em 26/09 |
+| **P-75** | numpy e pandas divergiam dos pinos | 26/09 — vencida: 12/09 — pinos instalados; `ambiente.py` igual ao registrado |
+| **P-73** | a máquina rodava Python 3.13 | 26/09 — vencida: 12/09 — 3.11.9; `ambiente.py` igual ao registrado |
+| **P-76** | a F-03 se declarou refutada com insumo `PARCIAL` | 26/09 — vencida: 13/09 — o status de uma conclusão é medição de sensibilidade, não herança |
+| **P-80** | a rotina media um terço do projeto | 26/09 — vencida: 25/09 — o CI roda as quatro suítes e o lint em todo push; `testpaths` intocado |
+| **P-78** | oito campos de `Instituicao` coletados e nunca lidos | 26/09 — vencida: 13/09 — três naturezas; o que sobra é a P-84 |
+| **P-87** | segunda cópia do projeto na máquina | 26/09 — vencida: 18/09 — apagada por ele |
+| **P-92** | o acervo tinha um ano de preço | 26/09 — vencida: 18/09 — 41 anos; no armazém desde 24/09 |
+| **P-107** | o pré-registro de ML herdou `L = 3` e não tinha teste de poder | 26/09 — vencida: 23/09 — máximo entre L ∈ {1,2,3} e o nono teste, no v1 e no v2 |
 | **P-149** | `cenarios.py` caía no `main` (`fora_status` virou lista de rotas) | 25/09 — lê rota nua; `test_cenarios.py` roda o script |
 | **P-134** | custo de entrada maior que o aporte virava `min()` calado | 25/09 — `AporteConsumidoPelaEntrada`; não era inerte (aporte da rota e proposta); achado B-19 (aporte R$ 0 → NaN) |
 | **P-57** | a captura da CVM dependia de alguém lembrar (W-01) | 25/09 — execução agendada `36148547193` verde; regime em `politica.yaml → regimes_de_captura.cvm`; limitação `RESOLVIDA` |
@@ -3554,6 +3652,19 @@ máquina é o que fecha.**
 ---
 
 ## Ao voltar ao desktop
+
+> **26/09/2026, nuvem — substitui a nota de 25/09 abaixo.** A revisão das pendências dele fechou
+> 16 vencidas; o que é decisão dele está em **`docs/decisoes/fila-do-osvaldo.md`**, 15 blocos
+> para responder pelo celular. Em ordem:
+>
+> 1. **As respostas da fila** viram o trabalho da sessão seguinte, a começar pela 1 (P-115) e
+>    pela 2 (P-117), que vêm antes de qualquer janela nova da série ajustada.
+> 2. **P-151 antes de segunda, 28/09, 11:00 UTC.** Não exige desktop.
+> 3. **P-150 — subir ao R2 o acervo de eventos de 11/09.** ⚙ **exige o desktop**; conferir antes
+>    se o `subir_acervo_local.py` cobre a pasta de eventos.
+> 4. **P-147 (NEFIN) e a release `cvm-acervo-2026`:** conferir depois do cron de 26/09. Não
+>    exige desktop.
+> 5. ~~`macro.poupanca_am` vence em 28/09~~ — renovada em 25/09; vence em **24/10**.
 
 > **25/09/2026, noite — substitui a nota de 24/09 abaixo: a P-57 e a P-135 FECHARAM** (execução
 > agendada `36148547193`). O que fica para a sessão local, em ordem:
