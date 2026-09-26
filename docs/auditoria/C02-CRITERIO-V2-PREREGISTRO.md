@@ -412,3 +412,14 @@ Além deles, ficam fora da proteção:
 - **N-D1d · viés de seleção declarado.** O universo é o silver (emissoras capturadas), e o
   pulo por documento não achado favorece companhias grandes e listadas. O D1 passa a dizer do
   que ele fala: JCPs com documento acessível, não todos os JCPs da janela.
+
+---
+
+## Decisão
+
+- **26/09/2026:** "pode empurrar" do Osvaldo em 26/09/2026 (claude.ai), com o teto combinado de
+  ~19% (linha 231) à vista. Merge só depois do sha256 do silver na §2 e da lista do D1
+  empurrada. A linha 231 é a do cenário "σ no teto" da tabela de probabilidades (§4): com σ no
+  teto nos dois testes, a janela reprova um ajuste perfeito em até 19,0% (`1 − 0,9²`). Esta
+  seção fica no fim para que a linha citada continue sendo a mesma. As alternativas estão
+  em [`docs/decisoes/fila-do-osvaldo.md`](../decisoes/fila-do-osvaldo.md).
