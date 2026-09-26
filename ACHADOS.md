@@ -2967,3 +2967,31 @@ versão antiga** — o NaN dava a resposta certa. Ele guarda contra a queda que 
 poderia trazer, não contra o defeito antigo. Os dois que reprovam na versão antiga são os da
 recusa e o da proposta com peso mínimo.
 
+
+---
+
+## G-07 · O G8 libera peso a um carrego em `REGRA_DECIDIDA`, e o validador diz que não
+
+*26/09/2026, medido ao preparar a assinatura da P-01 (decisão dele: `01b`).*
+
+O validador do carrego (`tese.py`, `validar_carrego`) avisa, em todo registro em
+`REGRA_DECIDIDA`: *"O G8 NAO libera peso neste estado — ele libera quando virar
+COMPROMISSO_ATIVO, no dia da compra"*. O mapa do `CLAUDE.md` repete: *"REGRA_DECIDIDA (G8 NAO
+libera peso)"*. **O `g8_compromisso_de_carrego` não lê o estado**: confere só `valida` e
+`duracao_anos`.
+
+**Medido** com o cenário sintético dos testes (`test_alocacao.BASE`: despesa 4.500, reserva
+27.000, aporte 500, horizonte 25) e os dois registros de `teses.yaml` assinados **em memória**
+(nada gravado): hoje, `protecao_real = 0`; assinados, `protecao_real = 0,15`, com `td_ipca` no
+bloco — um carrego cuja posição não existe, cujo juro real não foi contratado (`C02:
+AGUARDA_COMPRA`), recebendo 15% do patrimônio.
+
+**Por que ninguém viu:** nenhum carrego estava assinado, então a bandeira nunca foi testada
+contra o motor. O teste do G-01 (`test_regra_decidida_aceita_c02_e_c04_adiados`) prova que o
+**validador** aceita o estado e **avisa** — e é o aviso que o motor não honra. É o E-01/E-03
+outra vez: *a bandeira estava levantada e ninguém a honrava*, e o arquivo que declarava era o
+teste.
+
+**Não consertado nesta sessão, de propósito:** a instrução dele foi preparar a assinatura
+*"sem mexer nos portões"*, e fazer o G8 honrar o estado muda o que um portão faz. O conserto
+proposto está na P-152; a assinatura do `td_ipca` espera a decisão.

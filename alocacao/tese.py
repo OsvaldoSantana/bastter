@@ -370,10 +370,13 @@ def relatorio_bloco_L(t):
             f"falsificacao: {t.get('K04_falsificacao')}\n"
             f"perda maxima aceita: {(t.get('K01_perda_maxima_aceita') or 0)*100:.0f}%")
 
-if __name__ == "__main__":
-    import yaml as _y
-    P = _y.safe_load(open(os.path.join(AQUI, "politica.yaml"), encoding="utf-8"))
-    teto = P["compromissos"]["maximo_anos"]
+def main(perfil=None):
+    # P-01 (26/09/2026): este e o comando que o teses.yaml manda rodar para calcular a
+    # impressao, e ele caia desde a L-01 (05/09) -- `compromissos` saiu do politica.yaml
+    # para o perfil.yaml. Le do perfil, onde a chave mora; importar `carregar_politica`
+    # fecharia um ciclo alocacao -> tese -> alocacao (test_impacto o reprova).
+    with open(perfil or os.path.join(AQUI, "perfil.yaml"), encoding="utf-8") as f:
+        teto = yaml.safe_load(f)["compromissos"]["maximo_anos"]
     ts, cs = carregar_registros(compromisso_maximo_anos=teto)
     print(f"teto de compromisso declarado: {teto} anos\n")
     for rot, d, imp_f in (("TESES", ts, impressao), ("CARREGOS", cs, impressao_carrego)):
@@ -387,3 +390,7 @@ if __name__ == "__main__":
             print(f"   impressao a registrar: {imp_f(reg)}")
             if r.get("duracao_anos") is not None:
                 print(f"   duracao do carrego: {r['duracao_anos']:.1f} anos")
+
+
+if __name__ == "__main__":
+    main()
