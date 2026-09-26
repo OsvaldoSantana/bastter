@@ -19,6 +19,14 @@ Nao sao outra sessao fazendo a tarefa do projeto: sao propostas que so entram po
 portao do CI-05. Deixa-las reprovar seria o alarme que dispara sempre (A-08). O corte e pelo
 PREFIXO que so o Dependabot usa, e `test_git02_...` prende que ele nao alarga.
 
+P-151 (26/09/2026): NO CI a guarda nao roda. O job `completo` do semanal de 25/09
+(execucao 36178274615) saiu vermelho so por ela, vendo duas branches de sessao abertas
+naquele minuto: com `fetch-depth: 0` o runner ve todo o `origin`, e ali uma branch de PR
+aberto e o estado normal, nao outra sessao fazendo a tarefa. A pergunta da guarda e da
+SESSAO ("leia antes de trabalhar"); o CI ja tem a dele (o PR roda contra o `main` de
+verdade). Um portao que acende sem defeito esconde o que acende com defeito (A-08).
+Fora do CI ela reprova como sempre -- `test_P151_...` prova as duas metades.
+
 `origin/medir/*` (26/09/2026, CLAUDE.md 5-A.11): a branch de medicao nunca e mesclada por
 desenho -- o resultado vive nela, commitado pelo `medir.yml`. Mas ela so fica de fora ENQUANTO
 o que ela tem a mais que o HEAD for so `medicoes/resultados/`: um script ou uma regra que more
@@ -75,7 +83,15 @@ def _repositorio_git() -> bool:
 pytestmark = pytest.mark.skipif(not _repositorio_git(), reason="fora de um clone git")
 
 
+def no_ci(env=None) -> bool:
+    """P-151: o runner do GitHub define GITHUB_ACTIONS=true. So isso decide."""
+    env = os.environ if env is None else env
+    return env.get("GITHUB_ACTIONS") == "true"
+
+
 def test_git01_toda_branch_do_origin_esta_no_head():
+    if no_ci():
+        pytest.skip("P-151: no CI branch aberta de PR e o estado normal; a guarda e de sessao")
     pendentes = nao_integradas()
     assert not pendentes, (
         f"GIT-01: {pendentes} tem commits que o HEAD nao contem. Leia antes de trabalhar "
@@ -110,3 +126,22 @@ def test_medir_so_fica_de_fora_com_resultado_e_nada_mais():
     assert not so_resultado_de_medicao(["medicoes/resultados/p145.txt", "medicoes/p145.py"])
     assert not so_resultado_de_medicao(["CLAUDE.md"])
     assert not so_resultado_de_medicao([]), "sem arquivo nenhum nao e resultado"
+
+
+def test_P151_so_o_CI_pula_e_fora_dele_a_guarda_ainda_reprova():
+    """Controle das duas metades. (1) So o valor exato do runner pula: variavel ausente,
+    vazia ou outra coisa, a guarda roda. (2) Fora do CI ela continua vendo branch fora do
+    HEAD -- este teste NAO pula no CI, entao o mecanismo e provado em todo push."""
+    assert no_ci({"GITHUB_ACTIONS": "true"})
+    for env in ({}, {"GITHUB_ACTIONS": ""}, {"GITHUB_ACTIONS": "false"}, {"CI": "true"}):
+        assert not no_ci(env), env
+    if _git("rev-list", "--count", "HEAD").strip() == "1":
+        pytest.skip("historico de um commit so")
+    # o pai do HEAD nao contem o HEAD: uma ref local temporaria em refs/remotes/origin/
+    # apontando para o HEAD tem de aparecer como pendente contra HEAD~1
+    ref = "refs/remotes/origin/_controle_p151"
+    _git("update-ref", ref, "HEAD")
+    try:
+        assert "origin/_controle_p151" in nao_integradas("HEAD~1")
+    finally:
+        _git("update-ref", "-d", ref)
