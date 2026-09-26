@@ -243,6 +243,13 @@ para impedir, e na fase A o motor de aporte está ocioso de qualquer jeito.
 
 ## Conferência de um minuto, com data
 
+- **Token do R2 somente leitura (P-145, destrava toda medição na nuvem):** no Cloudflare, R2 →
+  *Manage API tokens* → permissão **Object Read only**, só neste bucket. No GitHub, *Settings →
+  Secrets and variables → Actions*, quatro segredos: `R2_LEITURA_ACCOUNT_ID`,
+  `R2_LEITURA_ACCESS_KEY_ID`, `R2_LEITURA_SECRET_ACCESS_KEY`, `R2_LEITURA_BUCKET`. **Não
+  reaproveite o token de escrita da captura**: o `medir.yml` foi desenhado para não conseguir
+  apagar nada. Junto, no desktop: `py -3.11 fase0/subir_acervo_local.py --aplicar`.
+
 - **Até 05/10:** as missões de outubro do cofrinho Turbinado, no app. É o que isenta a
   mensalidade, e `custos.yaml → cofrinho.turbinado_condicao_de_isencao` vence nesse dia. Basta
   mandar um print.

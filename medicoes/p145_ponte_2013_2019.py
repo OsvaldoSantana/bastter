@@ -208,6 +208,8 @@ def main(argv=None):
         print("INSUMO AUSENTE do registro e do inventario do acervo:", file=sys.stderr)
         for f in faltas:
             print(f"  {f}", file=sys.stderr)
+            if os.environ.get("GITHUB_ACTIONS"):      # vira anotacao na pagina da execucao
+                print(f"::error title=insumo ausente::{f}")
         return 1
     if a.conferir_insumos:
         print(f"insumos: {len(INSUMOS) + len(ANOS_COTAHIST)} conhecidos pelo acervo")
