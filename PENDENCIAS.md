@@ -1634,6 +1634,18 @@ sobre a CVM 19 que só existe no chat**: não está no `ACHADOS.md` nem em `docs
 dispositivos que se aplicam, e a tese **confirmada** (as notas N-CVM saem, com a citação) ou
 **retirada** (a promessa sai da fundação de marca, como retratação, não apagada).
 
+## P-160 · Telas sem campo no contrato de saída da F0
+
+**Dono:** Osvaldo (decidir o que entra) · Claude Code (especificar) · **Gatilho:** antes de
+desenhar qualquer uma destas telas · **Classe:** `DECISAO_DE_DESENHO`
+
+A especificação da F0 ([`docs/ux/F0-contrato-de-saida.md`](docs/ux/F0-contrato-de-saida.md),
+§5) aplicou a regra do mapa de telas: tela sem campo não se constrói. Cinco ficaram sem campo:
+a O5 (escolhas declaradas, com o porquê), a aba "e se" da T3 (que é contrato de chamada, não
+de campo), as empresas da T4 (o motor decide rota, não papel), o aviso de queda do RI-04 e a
+comparação líquido contra líquido do RI-11. Cada uma ganha campo na especificação, ou sai do
+mapa com o motivo escrito.
+
 ---
 
 ## Ao voltar ao desktop
