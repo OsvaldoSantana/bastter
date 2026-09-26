@@ -33,15 +33,21 @@ LINHA_DE_BASE = os.path.join(AQUI, "codigos_linha_de_base.txt")
 REGUA = re.compile(r"5-B\.(\d{1,2})\b")
 
 
-def codigos(raiz=RAIZ):
-    """{codigo: ocorrencias} em toda a arvore, com a mesma exclusao do achados_ancorados."""
+def codigos(raiz=RAIZ, excluir=()):
+    """{codigo: ocorrencias} em toda a arvore, com a mesma exclusao do achados_ancorados.
+
+    `excluir` sao prefixos de caminho relativo ("docs/marca/") deixados de fora -- para medir
+    o que uma pasta ACRESCENTA ao conjunto com o mesmo contador, e nao com uma copia dele."""
     out = {}
     for caminho in A.arquivos(raiz):
+        rel = os.path.relpath(caminho, raiz).replace("\\", "/")
+        if any(rel.startswith(p) for p in excluir):
+            continue
         with io.open(caminho, encoding="utf-8", errors="replace") as f:
             s = f.read()
         for m in A.REF.finditer(s):
             c = f"{m.group(1)}-{m.group(2)}"
-            if c not in A.NAO_SAO_ACHADOS:
+            if A.conta_como_codigo(c):
                 out[c] = out.get(c, 0) + 1
         for m in REGUA.finditer(s):
             c = f"5-B.{m.group(1)}"

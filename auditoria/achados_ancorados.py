@@ -64,6 +64,26 @@ NAO_SAO_ACHADOS = {
     "Z-99": "codigo ficticio da prova por mutacao deste proprio modulo",
 }
 
+
+
+# ── PREFIXOS DE OUTRO DOMINIO: a mesma forma `LETRA-NUMERO`, numeracao propria, e nenhum
+# e achado. Decisao dele, 26/09/2026: a pesquisa de marca chegou com prefixos C (01 a 29) e R (01 a
+# 21), e os achados de fator, proventos, moeda e ordem dos portoes ja usavam esses numeros. Os
+# documentos foram renomeados, e os prefixos novos entram aqui com o motivo, prefixo INTEIRO
+# (`MC-02` sai, `C-02` fica). Guardado por `test_codigos_de_marca.py`.
+PREFIXOS_DE_OUTRO_DOMINIO = {
+    "MC": "livro de codigos de marca (docs/marca/, pesquisa de marcas)",
+    "RI": "requisito de interface (docs/marca/requisitos-interface-v1.md)",
+}
+
+
+def conta_como_codigo(cod, ignorar=None):
+    """O codigo `LETRA-NUMERO` e um nome deste projeto? Regra unica para este modulo e para o
+    `codigos_preservados`, que antes repetiam o filtro cada um a seu modo."""
+    ignorar = NAO_SAO_ACHADOS if ignorar is None else ignorar
+    return cod not in ignorar and cod.split("-", 1)[0] not in PREFIXOS_DE_OUTRO_DOMINIO
+
+
 # ── CANDIDATOS, nao achados (P3 aplicada a propria auditoria).
 # Em 19/09 o modulo acusou 25 codigos citados SO em codigo, sem nenhum `.md`. Parte deles
 # provavelmente NAO e achado -- `K-04` aparece com as teses (`teses.yaml`, `tese.py`), e os
@@ -110,7 +130,7 @@ def varrer(raiz, ignorar=None):
             s = f.read()
         for m in REF.finditer(s):
             cod = f"{m.group(1)}-{m.group(2)}"
-            if cod in ignorar:
+            if not conta_como_codigo(cod, ignorar):
                 continue
             refs[cod][nome] += 1
         if nome.endswith(".md"):

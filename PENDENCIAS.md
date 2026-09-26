@@ -1550,6 +1550,90 @@ num registro vizinho — e foi exatamente numa fatia escrita à mão que o erro 
 leiaute rev. 02 descreve o header; transcrevê-lo para o YAML e ler de lá é o conserto. Não foi
 feito agora para não misturar mudança de esquema com o conserto de um valor.
 
+## P-153 · Ranking de reclamações do BC na fonte, e o Reclame Aqui atualizado · era P-A9
+
+**Dono:** sessão de pesquisa (nuvem) · **Gatilho:** antes de usar reclamação de cliente como
+argumento de marca ou de produto · **Classe:** `DECISAO_DE_DESENHO`
+
+Aberta pela [pesquisa de fundação](docs/marca/pesquisa-fundacao-2026-09.md) (A9) e não fechada
+pela [rodada do Pix](docs/marca/pesquisa-pix-e-pendencias-2026-09.md) (§2.3): o ranking do
+Banco Central foi lido por imprensa, com duas fontes divergindo sobre o 2º trimestre de 2026, e
+o único dado do Reclame Aqui sobre investimentos é de 2017. O que fecha: a consulta no site do
+BC, transcrita em `docs/fontes/` com data, e o ranking da categoria "Corretoras e Bancos de
+Investimentos" do Reclame Aqui com a data da leitura.
+
+## P-154 · Medir a fatia de quem investe sem segurança na decisão (H-A1) · era P-A1
+
+**Dono:** Osvaldo (decide se, como e com quanto dinheiro) · Claude (desenho do questionário) ·
+**Gatilho:** antes de dimensionar o público de entrada em qualquer texto comercial ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+A rodada 1 estima ~28,6 milhões no perfil "Diversifica" (`PARCIAL`, derivado da ANBIMA), mas
+**ninguém mediu** quantos deles se sentem inseguros ao decidir. A hipótese H-A1 propõe três
+sinais: paralisia, dependência e arrependimento. Sem essa medição, "o público é grande" é
+ordem de grandeza do perfil, não do público.
+
+## P-155 · Ler a WCAG na fonte: contraste, alvo de toque e daltonismo · era P-WCAG
+
+**Dono:** sessão de pesquisa (nuvem) · **Gatilho:** antes do brandbook e da primeira tela
+desenhada · **Classe:** `DECISAO_DE_DESENHO`
+
+O capítulo de acessibilidade do Pix é recomendação e não cobre contraste, tamanho de alvo nem
+daltonismo ([Pix v7.4](docs/marca/pesquisa-pix-e-pendencias-2026-09.md), §1.1). Os requisitos
+de interface declaram a lacuna (§5, item 2). O que fecha: a WCAG lida na fonte, com os critérios
+que viram requisito novo (RI-22 em diante) e a verificação de cada um.
+
+## P-156 · Teste com pessoas das hipóteses de interface e de marca
+
+**Dono:** Osvaldo (recrutamento e custo) · Claude (roteiro, estímulos e pré-registro do
+critério) · **Gatilho:** quando a especificação da F0 existir (`PLANO.md` §3-F0) ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+Nenhum requisito foi validado com o público ([requisitos de
+interface](docs/marca/requisitos-interface-v1.md), §4 e §5). Entram no teste: H-A1 e H-A2
+(rodada 1), H-C1 (a camada 1 é entendida sem ajuda), H-C2 (a faixa numérica não custa
+confiança, replicação no Brasil), RI-15 (a pergunta de intenção é respondida sem ajuda) e as
+hipóteses H1 a H4 do teste de marca. O critério de cada uma é gravado antes de olhar (P4).
+As H1 a H4 vêm de um pré-registro do teste de marca de 20/09 que **não está no repositório**
+(a rodada 1 o cita e diz que o atualiza); trazê-lo do Projeto no claude.ai é o primeiro passo
+desta pendência, antes de qualquer estímulo ser mostrado a alguém.
+
+## P-157 · Importação de carteira: quais formatos são viáveis
+
+**Dono:** sessão de pesquisa (nuvem) · **Gatilho:** antes de desenhar a tela O4 do [mapa de
+telas](docs/ux/mapa-de-telas-v1.md) além do "digitar as posições" · **Classe:**
+`DECISAO_DE_DESENHO`
+
+O mapa prevê três caminhos (importar arquivo, digitar, começar do zero) e não sabe quais
+arquivos existem. Candidatos a levantar na fonte: extrato da área do investidor da B3, nota de
+corretagem, exportação das corretoras e o Open Finance (que a P-128 pesquisa). Critério: o
+formato traz posição e custo com procedência, e o dado fica no aparelho (é dado de usuário).
+
+## P-158 · Parecer jurídico sobre o enquadramento do MEOL
+
+**Dono:** Osvaldo (contratar) · **Gatilho:** antes de qualquer usuário além dele, ou de
+qualquer texto comercial público · **Classe:** `DECISAO_DE_DESENHO`
+
+Nenhum documento de marca é parecer: todos o declaram. As perguntas abertas: se a decisão
+mensal com procedência é recomendação de investimento no sentido da regulação; como os bancos
+com agente de IA que recomenda e executa se enquadram ([rodada
+2](docs/marca/pesquisa-marcas-rodada2-2026-09.md), §4.1, `NAO_CONFIRMADO`); e se "padrão é
+recomendação" (RI-07) se sustenta. Depende da P-159: o parecer começa pela norma lida.
+
+## P-159 · Ler a Resolução CVM 19/2021 na fonte primária e confirmar ou retirar a tese de independência
+
+**Dono:** sessão de pesquisa (nuvem), com a transcrição em `docs/fontes/` · **Gatilho:** antes
+da P-158 e antes de qualquer texto público que prometa independência · **Classe:**
+`DECISAO_DE_DESENHO`
+
+A pesquisa de fundação apoia a tese de independência ("não distribui produto, não recebe
+comissão, não aceita anúncio") e a leitura de que "padrão é recomendação" num **achado de 20/09
+sobre a CVM 19 que só existe no chat**: não está no `ACHADOS.md` nem em `docs/fontes/`. Em
+26/09 toda afirmação que se apoia nele passou a `NAO_CONFIRMADO` (nota N-CVM nos documentos de
+`docs/marca/`). O que fecha: o texto da resolução transcrito da fonte primária, com os
+dispositivos que se aplicam, e a tese **confirmada** (as notas N-CVM saem, com a citação) ou
+**retirada** (a promessa sai da fundação de marca, como retratação, não apagada).
+
 ---
 
 ## Ao voltar ao desktop
