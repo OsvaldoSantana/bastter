@@ -1987,10 +1987,42 @@ sem atualizar este registro.
 
 **FECHADA em 26/09/2026.** Decisão dele (`12a`), com o casamento de vencimento junto. `funcoes.DATADO.liquidez_ou_vencimento_casado: true`: o G6 não reprova a rota ilíquida que tem vencimento conhecido, e `casa_duracao` exige que ela vença até o **menor** prazo dos objetivos (V-07). **A armadilha que a medição achou:** `duracao_anos` é duração de JURO (0,0 na LCI pós-fixada), não prazo até o vencimento — casar por ela deixaria passar a LCI de 9999 dias. Nasceu o campo `vencimento_anos`, vazio em todo o catálogo: sem ele a rota ilíquida continua fora (P1), e nenhuma alocação mudou (instantâneos verdes). Limitação `datado_cobra_liquidez_onde_deveria_cobrar_vencimento` `RESOLVIDA`; política 1.33.0; `test_P12_DATADO_aceita_vencimento_casado_no_lugar_da_liquidez`, com três mutações.
 
+## ~~P-117~~ · O silver passou a ter dois arquivos para a mesma captura, e quem escolhe é o `sorted()` — **FECHADA em 26/09/2026**
+
+**Dono:** Osvaldo decide · **Gatilho:** antes da próxima corrida do `refinar.py` ·
+**Classe:** `DECISAO_DE_DESENHO`
+
+A P-114 criou `eventos_silver_2026-09-11_cal-1986-2026.csv` ao lado de
+`eventos_silver_2026-09-11.csv` — por instrução dele, para não sobrescrever o de 11/09. São
+**duas tabelas da mesma captura**, diferindo só no calendário que derivou a `data_ex`.
+
+`ajustar.ultimo_silver()` escolhe **o último em ordem alfabética**, e por sorte isso é o
+arquivo com o calendário largo. **Sorte não é regra.** Um `eventos_silver_2026-09-11_antigo.csv`
+inverteria a escolha sem que nada reclamasse, e a corrida seguinte mediria a série com 383
+datas ex em vez de 9.271 — sem erro, sem aviso, e com número plausível na saída.
+
+**A raiz do problema é o nome:** o silver é função de **dois** insumos (a captura e o
+calendário) e o nome só carregava um. A decisão é qual das três:
+
+1. o `refinar.py` passa a nomear a saída com os dois insumos (`_cal-<ini>-<fim>`), sempre —
+   é o mais honesto e mexe em testes que hoje esperam o nome curto;
+2. `ultimo_silver()` ganha regra explícita (maior cobertura para a captura mais recente) e
+   um teste — mais barato, mantém a convenção;
+3. o silver de 11/09 é aposentado e fica um arquivo só — mais simples, e perde o lado a
+   lado que a P-114 usou como instantâneo dourado.
+
+**Hoje a corrida imprime qual silver leu**, então nada está oculto — mas *"está escrito na
+saída"* é a defesa que a P7 recusa: depende de alguém ler.
+
+> **Decisão dele, 26/09/2026: `117a`** (recomendada) — o nome do silver passa a carregar os dois insumos (captura + calendário), sempre. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+**FECHADA em 26/09/2026.** Decisão dele (`117a`). `refinar.nome_do_silver` grava `eventos_silver_<captura>_cal-<AAAAMMDD>-<AAAAMMDD>.csv` (ou `_cal-nenhum`), sempre: datas completas, porque dois calendários que terminam em dias diferentes do mesmo ano colidiriam. `ajustar.ultimo_silver` deixa o `sorted()` e passa a ter regra escrita: a captura mais nova; dentro dela, o maior calendário lido do nome (o legado `_cal-1986-2026` do P-114 é lido como ano inteiro); o nome sem calendário só vale se for o único; empate levanta `SilverAmbiguo`. O caso da P-117 (um `_antigo` que o `sorted()` poria por último) está no teste e não inverte mais a escolha. Os silvers já gravados no disco dele continuam legíveis.
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-117** | o silver tinha dois arquivos para a mesma captura e quem escolhia era o sorted() | 26/09 — 117a: nome com captura e calendário; escolha por regra, empate levanta |
 | **P-12** | DATADO cobrava liquidez onde deveria cobrar vencimento (H-01) | 26/09 — 12a: vencimento casado via campo novo `vencimento_anos`; política 1.33.0 |
 | **P-81** | o chaves_orfas.py não separava decisão registrada de parâmetro órfão | 26/09 — 81a: `_registros` no YAML, lido pelo instrumento |
 | **P-84** | a corretagem de ETF no ranking de corretoras | 26/09 — 84a: já implementada em 16/09 (pior caso ação × ETF); pendência estava desatualizada |

@@ -1217,36 +1217,6 @@ distinguir critério de resultado: **"pré-registrado" não é verificável pela
 processo que evita a repetição: critério em um commit, **empurrado**, e só então a corrida
 — o hash do commit do critério é a impressão digital.
 
-## P-117 · O silver passou a ter dois arquivos para a mesma captura, e quem escolhe é o `sorted()`
-
-**Dono:** Osvaldo decide · **Gatilho:** antes da próxima corrida do `refinar.py` ·
-**Classe:** `DECISAO_DE_DESENHO`
-
-A P-114 criou `eventos_silver_2026-09-11_cal-1986-2026.csv` ao lado de
-`eventos_silver_2026-09-11.csv` — por instrução dele, para não sobrescrever o de 11/09. São
-**duas tabelas da mesma captura**, diferindo só no calendário que derivou a `data_ex`.
-
-`ajustar.ultimo_silver()` escolhe **o último em ordem alfabética**, e por sorte isso é o
-arquivo com o calendário largo. **Sorte não é regra.** Um `eventos_silver_2026-09-11_antigo.csv`
-inverteria a escolha sem que nada reclamasse, e a corrida seguinte mediria a série com 383
-datas ex em vez de 9.271 — sem erro, sem aviso, e com número plausível na saída.
-
-**A raiz do problema é o nome:** o silver é função de **dois** insumos (a captura e o
-calendário) e o nome só carregava um. A decisão é qual das três:
-
-1. o `refinar.py` passa a nomear a saída com os dois insumos (`_cal-<ini>-<fim>`), sempre —
-   é o mais honesto e mexe em testes que hoje esperam o nome curto;
-2. `ultimo_silver()` ganha regra explícita (maior cobertura para a captura mais recente) e
-   um teste — mais barato, mantém a convenção;
-3. o silver de 11/09 é aposentado e fica um arquivo só — mais simples, e perde o lado a
-   lado que a P-114 usou como instantâneo dourado.
-
-**Hoje a corrida imprime qual silver leu**, então nada está oculto — mas *"está escrito na
-saída"* é a defesa que a P7 recusa: depende de alguém ler.
-
-> **Decisão dele, 26/09/2026: `117a`** (recomendada) — o nome do silver passa a carregar os dois insumos (captura + calendário), sempre. Registro em `docs/decisoes/fila-do-osvaldo.md`.
-
-
 ## P-122 · `lightgbm` e `tabpfn` nunca foram medidos contra a faixa fechada
 
 **Dono:** Claude Code (sessão local) · **Gatilho:** antes da ML-1 · **Classe:**
