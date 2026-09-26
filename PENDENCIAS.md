@@ -1623,6 +1623,25 @@ emenda não precisou fazer, porque o mês saiu igual nas duas:
 `c4654dbd…`. Para 2010–2017 isso basta (o passado não muda), mas a ponte de um ano novo precisa
 de captura, ou de limitação declarada.
 
+> **26/09/2026 — a medição existe e roda sem o desktop; falta insumo e token, os dois dele.**
+> `medicoes/p145_ponte_2013_2019.py`, pelo `.github/workflows/medir.yml` (CLAUDE.md §5-A.11), na
+> branch `medir/p145_ponte_2013_2019`, com as duas leituras fixadas (`t-2..t`, `≥ mediana`
+> inclusiva). Classifica cada emissor de 2013–2019 em `MANUAL`, `LIGADO_NOME_CONFERE`,
+> `LIGADO_NOME_DIVERGE`, `CNPJ_SEM_CVM` (a forma dos 4 reaproveitados da CV-06) e
+> `AUSENTE_DO_ISIN`, e lista os três últimos para a conferência à mão.
+>
+> **Resultado da primeira execução** (`36246813373`, 13:56Z): parou em *Conferir insumos*, sem
+> segredo nenhum no ambiente — `isin/isinp.zip: nenhum registro nem inventario`. Medido também
+> aqui, pelo mesmo comando: é o **único** insumo ausente; os oito COTAHIST fixados (2012–2019),
+> o cadastro, os DFP de 2010–2019 e os ITR de 2011–2019 o acervo conhece. **Nenhum número da
+> ponte existe ainda.** Para rodar faltam dois passos dele, na ordem:
+> 1. ⚙ **desktop:** `py -3.11 fase0/subir_acervo_local.py --aplicar` — agora cobre o banco de
+>    ISIN e sobe o `isinp.zip` de 25/09 (sha256 `c4654dbd…`) com o inventário;
+> 2. **Cloudflare + GitHub:** um token do R2 **somente leitura** e os quatro segredos
+>    `R2_LEITURA_ACCOUNT_ID`, `R2_LEITURA_ACCESS_KEY_ID`, `R2_LEITURA_SECRET_ACCESS_KEY`,
+>    `R2_LEITURA_BUCKET`.
+>
+> Depois, a sessão empurra de novo a branch e o resultado volta commitado nela.
 ## P-144 · Emenda de desenho não tem mecanismo que a leia — a P-138 só enxerga emenda de orçamento
 
 **Dono:** Claude Code · **Gatilho:** ao escrever a montagem da ML que decide o início do
@@ -1664,3 +1683,6 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 > 4. **P-147 (NEFIN) e a release `cvm-acervo-2026`:** conferir depois do cron de 26/09. Não
 >    exige desktop.
 > 5. ~~`macro.poupanca_am` vence em 28/09~~ — renovada em 25/09; vence em **24/10**.
+> 6. **P-145 — dois passos dele destravam a medição na nuvem:** ⚙ **desktop:**
+>    `py -3.11 fase0/subir_acervo_local.py --aplicar` (sobe o `isinp.zip`); e, de qualquer
+>    lugar, o token do R2 **somente leitura** com os quatro segredos `R2_LEITURA_*`.

@@ -7,7 +7,10 @@ O QUE SOBE. Tudo o que o acervo bruto tem de versao:
     `data/bronze/cvm/<recurso>/_snapshots/<stem>__v<AAAAMMDD>__<sha12>.<ext>` (as
     deslocadas -- inclusive as duas de 2024 de 13/09, que vieram dos `(1).zip` do
     navegador e sao a UNICA copia daquela versao, CV-01);
-  - B3: `data/bronze/b3/cotahist/COTAHIST_A<ANO>.ZIP`.
+  - B3: `data/bronze/b3/cotahist/COTAHIST_A<ANO>.ZIP` e o banco de ISIN,
+    `data/bronze/b3/isin/dt_captura=<AAAA-MM-DD>/isinp.zip` (P-145, 26/09: a ponte
+    ticker -> CD_CVM le o EMISSOR.TXT dele, e sem ele no armazem a medicao da P-145 so
+    rodaria no desktop). A captura mais recente e a canonica; as outras, snapshot.
 Cada uma vira `<fonte>/<recurso>/<arquivo>/<sha256>.<ext>`, e o snapshot volta ao nome
 canonico: a versao e o sha256, o nome do disco era so onde ele cabia.
 
@@ -46,6 +49,7 @@ SNAPSHOT = re.compile(r"^(?P<stem>.+)__v(?P<versao>\d{8}|DESCONHECIDA)__(?P<sha1
                       r"(?P<ext>\.\w+)$")
 COTAHIST = re.compile(r"^COTAHIST_A\d{4}\.ZIP$", re.IGNORECASE)
 RECURSOS_CVM = ("dfp", "itr", "fca", "cad")   # fca: P-132, 25/09
+ISIN_CAPTURA = re.compile(r"^dt_captura=(?P<data>\d{4}-\d{2}-\d{2})$")
 
 
 def _item(fonte, recurso, arquivo, caminho, papel, versao=""):
@@ -88,6 +92,18 @@ def plano(repo):
             else:
                 out.append(dict(_item("b3", "cotahist", a, p, ""), acao=DESCONHECIDO,
                                 motivo="nao e COTAHIST_A<ANO>.ZIP"))
+    pasta = os.path.join(base, "b3", "isin")
+    if os.path.isdir(pasta):
+        capturas = sorted(d for d in os.listdir(pasta) if ISIN_CAPTURA.match(d)
+                          and os.path.isfile(os.path.join(pasta, d, "isinp.zip")))
+        for d in capturas:
+            out.append(_item("b3", "isin", "isinp.zip", os.path.join(pasta, d, "isinp.zip"),
+                             "canonico" if d == capturas[-1] else "snapshot",
+                             ISIN_CAPTURA.match(d)["data"].replace("-", "")))
+        for d in sorted(set(os.listdir(pasta)) - set(capturas)):
+            out.append(dict(_item("b3", "isin", d, os.path.join(pasta, d), ""),
+                            acao=DESCONHECIDO,
+                            motivo="nao e dt_captura=<AAAA-MM-DD>/isinp.zip"))
     for it in out:
         if it["acao"] != SUBIR:
             continue

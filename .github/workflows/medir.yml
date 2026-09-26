@@ -1,0 +1,99 @@
+# Medicoes sobre o acervo, sem a maquina dele -- decisao dele, 26/09/2026.
+#
+# O PROBLEMA. Medir sobre o acervo (a P-145, por exemplo) exige o byte que so o armazem tem,
+# e as credenciais do R2 moram so nos segredos do Actions. Sem isto, toda medicao esperava o
+# desktop ligado.
+#
+# O FLUXO. Um push numa branch `medir/<nome>` roda `medicoes/<nome>.py`. O script abre o
+# acervo por `acervo.abrir` e escreve o resultado no stdout; o workflow commita a saida em
+# `medicoes/resultados/<nome>.txt` na PROPRIA branch e publica as linhas `RESUMO:` como
+# `::notice`. O push do resultado e feito com o GITHUB_TOKEN, e push feito com ele nao
+# dispara workflow: nao ha laco.
+#
+# O TOKEN E SO DE LEITURA, e isso e o desenho, nao detalhe. Segredos R2_LEITURA_* (um token
+# do R2 com permissao Object Read, que ele cria), e nunca os R2_* de escrita da captura: um
+# script de medicao nao pode ter como apagar uma versao da CVM, que a CVM nao guarda mais
+# (CV-01). Eles entram no ambiente de UM passo. Sem eles, o job falha dizendo o que criar.
+#
+# CLAUDE.md secao 5-A, regra 11: o push numa branch de medicao e o fluxo normal do agente --
+# nao e uso de credencial dele. Guardado por auditoria/test_workflows.py.
+
+name: Medir
+
+on:
+  push:
+    branches: ['medir/**']
+
+concurrency:
+  group: medir-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write     # o commit do resultado na propria branch; e nada alem disso
+
+jobs:
+  medir:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      # Mesmos SHAs dos outros workflows (checkout v7.0.1, setup-python v7.0.0, node24).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Instalar
+        run: python -m pip install ".[dev,captura]"
+
+      - name: Qual medicao
+        id: nome
+        run: |
+          nome="${GITHUB_REF_NAME#medir/}"
+          if ! [[ "$nome" =~ ^[a-z0-9_]+$ ]]; then
+            echo "::error::branch medir/$nome: o nome so pode ter [a-z0-9_]"; exit 1
+          fi
+          if [ ! -f "medicoes/$nome.py" ]; then
+            echo "::error::medicoes/$nome.py nao existe nesta branch"; exit 1
+          fi
+          echo "nome=$nome" >> "$GITHUB_OUTPUT"
+
+      # Sem rede e sem segredo: o registro e o inventario do acervo dizem se cada versao que a
+      # medicao pede existe. Insumo ausente falha aqui, antes de qualquer credencial entrar.
+      - name: Conferir insumos
+        run: python "medicoes/${{ steps.nome.outputs.nome }}.py" --conferir-insumos
+
+      - name: Medir (token de leitura)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_LEITURA_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_LEITURA_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_LEITURA_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_LEITURA_BUCKET }}
+        run: |
+          falta=""
+          for v in R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET; do
+            [ -n "${!v}" ] || falta="$falta ${v/R2_/R2_LEITURA_}"
+          done
+          if [ -n "$falta" ]; then
+            echo "::error::faltam os segredos do repositorio:$falta. Crie no Cloudflare um token do R2 com permissao SOMENTE LEITURA (Object Read) neste bucket e grave os quatro em Settings > Secrets and variables > Actions. Nunca reaproveite o token de escrita da captura."
+            exit 1
+          fi
+          mkdir -p medicoes/resultados
+          python "medicoes/${{ steps.nome.outputs.nome }}.py" \
+            > "medicoes/resultados/${{ steps.nome.outputs.nome }}.txt"
+
+      - name: Resumo
+        run: |
+          grep '^RESUMO: ' "medicoes/resultados/${{ steps.nome.outputs.nome }}.txt" \
+            | sed 's/^RESUMO: /::notice title=${{ steps.nome.outputs.nome }}::/' || true
+
+      - name: Commitar o resultado na propria branch
+        run: |
+          set -euo pipefail
+          saida="medicoes/resultados/${{ steps.nome.outputs.nome }}.txt"
+          if [ -z "$(git status --porcelain -- "$saida")" ]; then
+            echo "resultado identico ao ja commitado"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$saida"
+          git commit -m "Medicao ${{ steps.nome.outputs.nome }}: resultado de $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push origin "HEAD:$GITHUB_REF_NAME"

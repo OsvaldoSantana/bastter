@@ -18,6 +18,11 @@ quatro branches na primeira rodada, e todo `git fetch` passou a reprovar esta gu
 Nao sao outra sessao fazendo a tarefa do projeto: sao propostas que so entram por PR, com o
 portao do CI-05. Deixa-las reprovar seria o alarme que dispara sempre (A-08). O corte e pelo
 PREFIXO que so o Dependabot usa, e `test_git02_...` prende que ele nao alarga.
+
+`origin/medir/*` (26/09/2026, CLAUDE.md 5-A.11): a branch de medicao nunca e mesclada por
+desenho -- o resultado vive nela, commitado pelo `medir.yml`. Mas ela so fica de fora ENQUANTO
+o que ela tem a mais que o HEAD for so `medicoes/resultados/`: um script ou uma regra que more
+so nela e trabalho de sessao, e reprova como qualquer outra branch.
 """
 from __future__ import annotations
 
@@ -36,11 +41,26 @@ def _git(*args: str) -> str:
                           check=True).stdout
 
 
+MEDIR, RESULTADOS = "origin/medir/", "medicoes/resultados/"
+
+
+def so_resultado_de_medicao(arquivos: list[str]) -> bool:
+    """O que a branch de medicao tem a mais e so a saida que o workflow commita."""
+    return bool(arquivos) and all(a.startswith(RESULTADOS) for a in arquivos)
+
+
 def nao_integradas(alvo: str = "HEAD") -> list[str]:
     """Refs de origin/ que `alvo` nao contem. `origin/HEAD` e apelido, nao branch."""
     saida = _git("branch", "-r", "--no-merged", alvo, "--format=%(refname:short)")
-    return sorted(r for r in saida.split() if r.startswith("origin/") and r != "origin/HEAD"
-                  and not r.startswith(FORA))
+    out = []
+    for r in saida.split():
+        if not r.startswith("origin/") or r == "origin/HEAD" or r.startswith(FORA):
+            continue
+        if r.startswith(MEDIR) and so_resultado_de_medicao(
+                _git("log", f"{alvo}..{r}", "--name-only", "--format=").split()):
+            continue
+        out.append(r)
+    return sorted(out)
 
 
 def _repositorio_git() -> bool:
@@ -81,3 +101,12 @@ def test_git02_so_o_dependabot_fica_de_fora():
     assert "origin/dependabot/pip/numpy-2.4.6".startswith(FORA)
     for r in ("origin/main", "origin/claude/x", "origin/wip/sessao-b", "origin/dependabotx"):
         assert not r.startswith(FORA), r
+
+
+def test_medir_so_fica_de_fora_com_resultado_e_nada_mais():
+    """A branch de medicao carrega a saida, e so ela. Um script que more so na branch
+    reprova: e trabalho que outra sessao nao veria."""
+    assert so_resultado_de_medicao(["medicoes/resultados/p145.txt"])
+    assert not so_resultado_de_medicao(["medicoes/resultados/p145.txt", "medicoes/p145.py"])
+    assert not so_resultado_de_medicao(["CLAUDE.md"])
+    assert not so_resultado_de_medicao([]), "sem arquivo nenhum nao e resultado"

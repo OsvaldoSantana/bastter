@@ -160,6 +160,8 @@ auditoria/         os INSTRUMENTOS; os laudos moram em docs/auditoria/
   tamanho_do_contexto.py   quanto custa ler este projeto
   achados_ancorados.py     todo achado citado tem onde ser lido
   codigos_preservados.py   nenhum codigo (P-, A-, 5-B.n) some do repositorio
+medicoes/          scripts de medicao sobre o acervo; push em `medir/<nome>` roda
+                   `<nome>.py` no Actions, com o token de LEITURA (5-A.11); saida em resultados/
 tools/analisar_sessoes.py  tempo e tokens das sessoes, na maquina dele
 docs/
   doutrinas.md     as sete doutrinas
@@ -172,7 +174,7 @@ docs/
   historico/       REGISTRO, nunca instrucao: este arquivo ate 26/09, as pendencias
                    fechadas, os bilhetes vencidos, a pesquisa de agosto
   referencia/      laudos e desenhos que sairam da raiz
-.github/workflows/ testes.yml (portao), captura_cvm.yml (capturas), mutacao.yml
+.github/workflows/ testes.yml (portao), captura_cvm.yml (capturas), medir.yml, mutacao.yml
 ```
 
 ---
@@ -224,6 +226,7 @@ Decididas por ele; valem em toda sessão sem ele precisar pedir.
 7. **Credencial fora do fluxo do git não se extrai para chamar API**, e **sessão logada de
    navegador é credencial**: não se usa para agir em conta nenhuma. Disparar workflow, criar
    issue, mexer em segredo: ou pede a ele, ou usa o `gh`/conector que ele autorizou para aquilo.
+   A única via automática é a da regra 11 (medição), e ela não abre exceção a esta.
    `.claude/settings.json` nega as ferramentas do Chrome, e `test_navegador_negado.py` reprova
    se a negação sair.
 8. **Registrar o que fazer ao voltar ao desktop**: seção `## Ao voltar ao desktop` no fim do
@@ -234,6 +237,17 @@ Decididas por ele; valem em toda sessão sem ele precisar pedir.
    antes de declarar algo manual, pergunte se um script na máquina dele faz (§5-B.17).
 10. **Leitura larga vai para subagente**, com a proibição de inventar URL, número e versão e a
     ordem de marcar `NAO_CONFIRMADO` no prompt dele. Trabalho que decide o projeto fica na sessão.
+11. **Medir sobre o acervo é empurrar uma branch `medir/<nome>`** com `medicoes/<nome>.py` — o
+    `.github/workflows/medir.yml` roda o script com o token do R2 **somente leitura** e commita a
+    saída na própria branch. **Esse push é o fluxo normal do agente, não uso de credencial
+    dele**: o agente não vê, não extrai e não escolhe credencial nenhuma; quem as usa é o
+    workflow, com os segredos `R2_LEITURA_*` que ele criou para isso. E por isso **não é
+    brecha para a regra 7**, em três cercas: o workflow só tem `contents: write`; o token não
+    apaga nem escreve no armazém; e `auditoria/test_workflow_medir.py` reprova permissão a mais,
+    segredo fora do passo que mede, ou token de escrita. Qualquer coisa que **não** seja medir
+    (disparar outro workflow, mexer em segredo, escrever no armazém) continua na regra 7: pede.
+    A saída vai para o repositório público: **nada de preço, volume ou dado de negociação da B3**
+    nela (P-136) — só contagem, código e rótulo.
 
 ---
 
@@ -338,7 +352,7 @@ começou.
 com a árvore parada, antes do commit:
 
 ```bash
-for s in alocacao fase0 auditoria tools; do py -3.11 -m pytest $s -n auto --dist loadgroup -p no:cacheprovider; done
+for s in alocacao fase0 auditoria tools medicoes; do py -3.11 -m pytest $s -n auto --dist loadgroup -p no:cacheprovider; done
 ```
 
 - **`--dist loadgroup` não é opcional:** o memo de sessão e a fixture de módulo são por
