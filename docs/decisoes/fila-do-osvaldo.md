@@ -33,6 +33,27 @@ redigido e **para**, e só é empurrado depois do "pode empurrar".
 | os prints do Gorila e do Bastter são contas dele? | **não**: contas de terceiros ou de demonstração | procedência declarada na rodada 1 (nota N-PRINTS) |
 | a F0 entra no `PLANO.md`? | **sim, agora, como trilha paralela** de produto | [`docs/decisoes/F0-trilha-de-produto.md`](F0-trilha-de-produto.md); `PLANO.md` §3-F0 |
 
+### Resposta dele, 26/09/2026, sobre o critério v2 do degrau (P-115)
+
+**"Pode empurrar", dado no claude.ai**, com o teto combinado de ~19% à vista: a linha 231 do
+critério v2 (`docs/auditoria/C02-CRITERIO-V2-PREREGISTRO.md`), que está no rascunho do PR #27
+e só chega ao `main` com o merge dele (por isso o caminho vai sem link). Com σ no teto nos dois testes, a janela reprova um ajuste
+perfeito em até 19,0% (`1 − 0,9²`). **O merge fica condicionado a duas coisas:** o sha256 do
+silver preenchido na §2, pela sessão local, e a lista do D1 empurrada antes de abrir
+qualquer documento.
+
+| alternativa | o que acontecia | por que não |
+|---|---|---|
+| **10% por teste, ~19% na janela** (escolhida) | σ_max 0,0416 no JCP e 0,0463 no dividendo. Com o σ iid de 2021–2025, o JCP já sairia `NAO_CONFIRMADO` por falta de poder em 22% das vezes | — |
+| 5% por teste, ~9,75% na janela | σ_max cai para 0,0383 no JCP e 0,0416 no dividendo (mesmo script, `alvo=0,05`, 26/09). O σ iid de 2021–2025 no JCP (0,0472) já passa dos dois tetos, e com um teto mais baixo o `NAO_CONFIRMADO` por falta de poder fica mais provável numa janela com menos JCP | troca uma reprovação à toa, que é visível, por um "sem poder" mais frequente, que não decide nada |
+| ler antes, sem decidir agora | o critério fica parado até uma nova leitura dele | o texto e os números já estavam à vista, e o que falta para o merge (silver e D1) não depende desta escolha |
+
+### Resposta dele, 26/09/2026, sobre o app do Claude no GitHub
+
+**Não instalar** (menor privilégio; os check-ins agendados cobrem). Revisitar se um aviso
+perdido causar erro. Desenho e alternativas em
+[`app-claude-github-nao-instalado.md`](app-claude-github-nao-instalado.md).
+
 ---
 
 ## 1 · Critério da série ajustada antes da próxima janela · P-115

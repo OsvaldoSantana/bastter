@@ -415,6 +415,13 @@ Mesma família: **backtest anterior a 2026 é reconstrução, não observação.
 ponto-no-tempo começa no primeiro dia de captura. Isto também é limitação declarada, e é
 a mais importante das duas.
 
+> **26/09/2026 — a captura dos eventos da B3 (P-150) herda este viés.** O universo dela é o
+> IBOV do dia: quem sai do índice para de ser capturado. Está em
+> `limitacoes_declaradas.universo_da_captura_de_eventos_e_o_ibov_do_dia`, com esta pendência.
+> O que resolve é uma decisão de desenho: pedir também quem já passou pela carteira, ou todo
+> o COTAHIST. Do lado bom, o retrato semanal da carteira gravado pela mesma captura é a
+> composição observada daqui para frente.
+
 ---
 
 ## P-50 · P-05 estava mal formulada — não é número ausente, é campo errado
@@ -1415,6 +1422,14 @@ dia, `b3_eventos` entra em `regimes_de_captura` com a execução e a limitação
 nuvem; reusar `capturar_eventos_b3.arquivos_do_coletor`, para que o 11/09 caia nas mesmas chaves
 que o cron) antes de ⚙ o desktop rodar o `--aplicar`.
 
+**O universo é o IBOV do dia (26/09, registro).** A captura lê a carteira do dia e pede eventos
+só de quem está nela. Quem sai do índice deixa de ser capturado na segunda seguinte: o que já
+subiu fica no armazém, e o evento novo não entra mais. É o viés da P-48, com direção
+**otimista** no universo. Na série de quem saiu, o erro não tem sinal conhecido: um grupamento
+perdido vira alta no ajuste, e um provento perdido vira queda. Declarado em
+`limitacoes_declaradas.universo_da_captura_de_eventos_e_o_ibov_do_dia`, ligado à P-48 e não a
+esta, porque não acaba quando esta fechar.
+
 ## P-147 · A captura do NEFIN ainda não rodou no executor
 
 **Dono:** o workflow (ninguém dispara) · **Gatilho:** o cron diário das 09:15 UTC, ou um *Run
@@ -1639,8 +1654,10 @@ recomendação" (RI-07) se sustenta. Depende da P-159: o parecer começa pela no
 
 > **26/09/2026 — a P-159 fechou, e deixa três perguntas para cá.** A Resolução CVM 19 está
 > transcrita em [`docs/fontes/cvm-resolucao-19-consolidada.md`](docs/fontes/cvm-resolucao-19-consolidada.md).
-> (1) O art. 1º exige prestação "de forma profissional" a um cliente: o uso pessoal dele está
-> fora, e a partir de qual momento o MEOL passa a ser serviço? (2) O art. 2º, parágrafo único, I, e
+> (1) O art. 1º exige prestação "de forma profissional" a um cliente. O uso pessoal dele fica
+> fora? A partir de qual momento o MEOL passa a ser serviço? *(26/09/2026: a transcrição dava
+> "o uso pessoal não é prestação de serviço" como confirmado. Virou `INFERENCIA`, nota
+> N-PESSOAL na transcrição: o texto lido não diz isso, e a resposta é do parecer.)* (2) O art. 2º, parágrafo único, I, e
 > o art. 16, II, remetem à norma de adequação ao perfil do cliente, que não foi lida. (3) As
 > Resoluções CVM 21 e 35, citadas pela pesquisa, não foram lidas. Nenhuma das três se resolve
 > por leitura: é parecer.
@@ -1656,6 +1673,30 @@ a O5 (escolhas declaradas, com o porquê), a aba "e se" da T3 (que é contrato d
 de campo), as empresas da T4 (o motor decide rota, não papel), o aviso de queda do RI-04 e a
 comparação líquido contra líquido do RI-11. Cada uma ganha campo na especificação, ou sai do
 mapa com o motivo escrito.
+
+## P-161 · A versão do `pyproject.toml` diverge da do `politica.yaml`, e nada as prende
+
+**Dono:** Osvaldo (decidir qual é a fonte) · Claude Code (o teste que prende) · **Gatilho:** a
+próxima subida de versão do `politica.yaml` · **Classe:** `DECISAO_DE_DESENHO`
+
+O `pyproject.toml` diz `version = "1.18.0"`, com o comentário *"acompanha politica.yaml ->
+meta.versao"*. O `politica.yaml` está em **1.35.0**. Medido em 26/09 no clone raso da nuvem
+(113 commits visíveis): as duas já divergem no primeiro commit visível, `b0f494a` de 23/09
+(1.18.0 contra 1.22.0), e a política subiu treze versões depois disso sem o `pyproject`
+acompanhar. Antes de 23/09, este clone não mostra. Nenhum código lê a versão do `pyproject`
+(`grep` em `alocacao/`, `fase0/`, `auditoria/` e `tools/`). A da política vai na procedência de
+todo resultado (`politica_versao`, lida três vezes em `alocacao/alocacao.py`). **Nenhum teste
+compara as duas.** O comentário declara um comportamento que o código não tem.
+
+As perguntas: **qual das duas é a fonte**, e **qual teste as prende**.
+- **(a)** A política é a fonte, e um teste reprova quando `[project].version` ≠
+  `meta.versao`. É o que o comentário promete. O custo é subir dois arquivos a cada mudança
+  de regra.
+- **(b)** As versões são de coisas diferentes: o `pyproject` versiona o ambiente e as
+  dependências, e a política versiona as regras. O comentário sai, e um teste reprova quando
+  alguém escrever de novo que uma acompanha a outra.
+- **(c)** O `pyproject` deixa de ter versão própria (`dynamic`), lida do `politica.yaml`.
+  Exige ferramenta de build, e o projeto não é pacote (B-04).
 
 ---
 
