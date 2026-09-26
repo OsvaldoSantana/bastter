@@ -53,6 +53,7 @@ def test_P40_ruff_esta_em_zero():
     assert r.returncode == 0, f"ruff encontrou violacoes:\n{r.stdout[-3000:]}"
 
 
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_P40_mypy_nao_encontra_erro_real():
     """Nao e `strict`, e isso esta declarado no pyproject: tipagem completa custaria um
     diff enorme para um ganho que este projeto ja tem de outra forma (dataclasses

@@ -28,9 +28,10 @@ import yaml
 
 # chaves que descrevem o dado, nao o comportamento: procedencia, prosa, metadado.
 # Nao sao promessas ao codigo, entao nao entram na conta.
+REGISTROS = "_registros"
 META = {"valor", "status", "fonte", "acesso", "expira", "nota", "motivo", "bloqueia",
         "revisar_se", "descricao", "obs", "meta", "_hash", "trecho_conferido",
-        "pergunta", "custo_de_ignorar", "por_que", "titulo", "comentario"}
+        "pergunta", "custo_de_ignorar", "por_que", "titulo", "comentario", REGISTROS}
 
 
 def folhas(no, cam=()):
@@ -42,6 +43,36 @@ def folhas(no, cam=()):
     elif isinstance(no, list):
         for x in no:
             yield from folhas(x, cam)
+
+
+def registros(doc):
+    """P-81 (decisao dele, 81a, 26/09/2026): os caminhos que o PROPRIO YAML declara como
+    registro de um julgamento tomado, e nao como parametro. Um no declara as irmas:
+
+        _registros: [nenhum_corte_tem_ancora_legal]
+        nenhum_corte_tem_ancora_legal: true
+
+    Parametro orfao e defeito (E-03); decisao registrada e procedencia. A declaracao mora
+    no dado (P2), ao lado da chave -- uma lista de nomes aqui dentro seria a lista que
+    alguem precisa lembrar de estender (P-82). Nome declarado que nao existe como irmao
+    e erro: o registro nao pode apontar para o vazio."""
+    out = set()
+    for cam, v in folhas(doc):
+        if cam[-1] != REGISTROS:
+            continue
+        pai = cam[:-1]
+        irmaos = _no(doc, pai)
+        for nome in v or []:
+            if nome not in irmaos:
+                raise ValueError(f"{'.'.join(cam)} declara {nome!r}, que nao existe ali")
+            out.add(pai + (nome,))
+    return out
+
+
+def _no(doc, cam):
+    for k in cam:
+        doc = doc[k]
+    return doc
 
 
 def lidas_por_yaml(yamls):
@@ -214,11 +245,14 @@ def main(argv=None):
         # Dedupe por CAMINHO. O motivo original era ruido no relatorio; o preco era
         # cobertura, e cobertura vale mais.
         vistos = set()
+        decisoes = registros(doc)
         for cam, v in folhas(doc):
             k = cam[-1]
             if cam in vistos:
                 continue
             vistos.add(cam)
+            if cam in decisoes:
+                continue
             if not a.incluir_meta and k in META:
                 continue
             if k in so_teste and not isinstance(v, (dict, list)):
@@ -249,6 +283,11 @@ def main(argv=None):
         print("=" * 78)
         for o in sorted(orfas):
             print("   " + o)
+        if decisoes:
+            print("\n   -- DECISAO REGISTRADA (%d) -- o proprio YAML declara em `_registros`:"
+                  "\n      procedencia, nao promessa ao codigo (P-81)" % len(decisoes))
+            for c in sorted(decisoes):
+                print("   [registro] " + ".".join(c))
         if apenas_teste:
             total_so_teste += len(apenas_teste)
             print("\n   -- LIDA SO POR TESTE (%d) -- pior que orfa: o teste prova o"

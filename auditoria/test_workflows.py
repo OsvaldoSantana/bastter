@@ -91,3 +91,18 @@ def test_P148_dependabot_ignora_exatamente_as_dependencias_numericas():
     assert ignorados == numericas, (sorted(ignorados), sorted(numericas))
     acoes = [u for u in d["updates"] if u["package-ecosystem"] == "github-actions"]
     assert acoes and not acoes[0].get("ignore"), "as acoes nao mudam numero: nada a ignorar"
+
+
+def test_146b_a_mutacao_exclui_o_que_le_o_repositorio_e_o_marcador_existe():
+    """146b (decisao dele, 26/09): a copia `mutants/` nao leva .git, .github nem a raiz, e
+    instrumenta o fonte. Sem a exclusao por marcador, a rodada limpa falha e nenhum
+    mutante e testado (CI-03). O marcador tem de estar registrado, senao `-m` o ignora
+    calado e a exclusao nao exclui nada."""
+    import tomllib
+    with open(os.path.join(RAIZ, "pyproject.toml"), "rb") as f:
+        t = tomllib.load(f)
+    args = " ".join(t["tool"]["mutmut"]["pytest_add_cli_args"])
+    for m in ("not slow", "not repositorio", "not privado", "not acervo"):
+        assert m in args, m
+    marcadores = " ".join(t["tool"]["pytest"]["ini_options"]["markers"])
+    assert "repositorio:" in marcadores

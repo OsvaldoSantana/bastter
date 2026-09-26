@@ -1899,10 +1899,102 @@ sessão, e o CI já tem a sua: o PR roda contra o `main` de verdade.
 
 **FECHADA em 26/09/2026.** A guarda do GIT-01 pula quando `GITHUB_ACTIONS=true` (`auditoria/test_git01_branches_integradas.py::no_ci`), porque no runner branch aberta de PR ou de medição é o estado normal. Controle: `test_P151_so_o_CI_pula_e_fora_dele_a_guarda_ainda_reprova`, que **não** pula no CI, prova que só o valor exato do runner pula e que, fora dele, uma ref em `refs/remotes/origin/` fora do HEAD ainda é acusada. Medido nos dois modos: sem a variável, 5 passam; com `GITHUB_ACTIONS=true`, a guarda pula e o controle passa.
 
+## ~~P-124~~ · A custódia do Tesouro é descontada por mês, e a B3 cobra por semestre — **FECHADA em 26/09/2026**
+
+**Dono:** Osvaldo (decidir) · **Gatilho:** nenhum · **Classe:** `DECISAO_DE_DESENHO`
+
+Também declarada sem pendência. Ordem de grandeza: centavos por ano a R$ 500/mês, e erra
+**contra** o Tesouro. A decisão é se a aproximação fica (escrita como escolha) ou se o motor
+passa a descontar por netting pro rata. Entrada `periodicidade_da_custodia_do_tesouro`.
+
+> **Decisão dele, 26/09/2026: `124a`** (recomendada) — a custódia mensal fica, escrita como escolha. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+**FECHADA em 26/09/2026.** Decisão dele (`124a`): a aproximação mensal fica, **escrita como escolha**. A entrada `limitacoes_declaradas.periodicidade_da_custodia_do_tesouro` ficou `RESOLVIDA` com o motivo (erra centavos por ano, contra o Tesouro, sem mudar ordenação), e a escolha está escrita no ponto do motor que a aplica (`alocacao.py`, `simular_custo`, bloco `custodia_td`). Política 1.33.0.
+
+## ~~P-84~~ · A dimensão de custo por operação — o que a decisão 1 ainda precisa — **FECHADA em 26/09/2026**
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo. **Gatilho:** agora; nada trava.
+
+Com a P-83 corrigida, sobra a pergunta de desenho, e ela é sua porque envolve **peso**,
+que é política declarada:
+
+- `corretagem_fii` e `exercicio_opcao_pct` são **constantes**. O projeto já tem o
+  mecanismo certo para isso e o precedente escrito: `reclame_aqui` é **exibido e nunca
+  pontuado** (`politica.yaml → pontua: false, exibe: true`). Eles saem de campo morto sem
+  fingir que discriminam.
+- `mesa_minimo` varia (20/25/50) mas só 4 de 24 declaram, e **não dá para separar "não
+  tem mesa" de "não pesquisei"**. Pontuá-lo penalizaria 20 casas pela ausência de um
+  produto, não pela falta de transparência.
+- `corretagem_etf_pct` é o único com cobertura real depois da P-83 (15 casas) e com um
+  valor que separa: **os 0,50% da XP em ETF.** É também o que mais importa para quem
+  compra ETF — e ele **não estava** nos três que você autorizou.
+
+**A pergunta:** a corretagem de ETF entra como segunda parcela da dimensão `corretagem`
+que já existe (sem inventar peso novo), ou como dimensão própria com peso declarado por
+você no `politica.yaml`?
+
+> **Decisão dele, 26/09/2026: `84a`** (recomendada) — a corretagem de ETF entra como segunda parcela da dimensão `corretagem`; `corretagem_fii` e `exercicio_opcao_pct` viram "exibe, não pontua". Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+**FECHADA em 26/09/2026.** Decisão dele (`84a`), e **já estava implementada desde 16/09**: `corretoras.py` pontua a dimensão `corretagem` pelo pior caso entre ação e ETF (`max(custo_acao, corretagem_etf_pct)`), sem peso novo, e `custo_por_operacao.exibidos` lista `corretagem_fii`, `exercicio_opcao_pct` e `mesa_minimo` como exibidos e nunca pontuados. Teste: `test_P84_o_PIOR_CASO_entre_acao_e_ETF_e_o_que_pontua`. A pendência ficou dez dias aberta com a resposta no código — reincidência da fila desatualizada, em `eventos.csv`.
+
+## ~~P-81~~ · O `chaves_orfas.py` não separa decisão registrada de parâmetro órfão — **FECHADA em 26/09/2026**
+
+**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Claude, com sua confirmação.
+**Gatilho:** a próxima vez que a linha de base crescer.
+
+Reconferindo a linha de base em 16/09, dez chaves entraram de uma vez — e não porque
+alguém escreveu chave nova: o instrumento passou a contar **"LIDA SÓ POR TESTE"** como
+órfã. A mudança é deliberada e vem da P-77 (*campo que só o teste toca é campo que o
+motor não usa*).
+
+Mas as dez **não são da mesma espécie**, e a diferença decide o que fazer com cada uma:
+
+- **parâmetro órfão** — `portoes.G3_atrito.ativo` prometia comportamento e não
+  entregava. É defeito, e foi o E-03.
+- **decisão registrada** — `corretora.promocional.e_uma_decisao_nao_uma_omissao: true`
+  não promete comportamento nenhum: ela **registra um julgamento**, e o teste a lê para
+  fixar o registro. Isso é procedência, não dívida.
+
+Cinco das dez são do segundo tipo. Hoje elas convivem na mesma lista, e uma lista que
+mistura duas espécies faz a próxima pessoa tratar procedência como dívida — ou, pior,
+tratar dívida como procedência. O instrumento precisa de um terceiro rótulo, ou o YAML
+precisa de uma convenção que ele reconheça.
+
+> **Decisão dele, 26/09/2026: `81a`** (recomendada) — o YAML declara a chave de registro, e o instrumento lê. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+**FECHADA em 26/09/2026.** Decisão dele (`81a`): o YAML declara, o instrumento lê. `_registros: [nome]` ao lado da chave marca registro de julgamento; `auditoria/chaves_orfas.py` (`registros()`) tira essas chaves das órfãs e as lista à parte (`DECISAO REGISTRADA`), e recusa declaração que aponte para chave inexistente. Dez chaves marcadas no `politica.yaml`; saíram da linha de base as cinco da P-81 e as duas espécies (`*.tem_piso_legal`, `corretora.*.e_uma_decisao_nao_uma_omissao`). Teste com mutação: `test_P81_decisao_registrada_sai_das_orfas_e_aparece_a_parte`.
+
+## ~~P-12~~ · `DATADO` cobra liquidez onde deveria cobrar vencimento — **decisão sua** — **FECHADA em 26/09/2026**
+
+Achado H-01, ao catalogar LCI/LCA. A função `DATADO` exige `exige_liquidez_dias: 30`.
+Isso trata um problema de **duração** com critério de **liquidez**.
+
+Simulei a chegada da carência sem tocar no YAML: com 270 dias a rota perde **todas**
+as funções; com 90, idem; com 30, só sobra `DATADO`. Uma LCI isenta de IR, coberta
+pelo FGC e que **vence exatamente na data do objetivo** seria eliminada por uma
+iliquidez que o objetivo não precisa.
+
+A regra correta seria "vence até a data do objetivo **ou** é líquida em 30 dias" — o
+mesmo padrão que o G8/CARREGO já usa para `PROTECAO_REAL`. Não mudei porque afrouxar
+`exige_liquidez_dias` sozinho deixa entrar também coisa ilíquida que não vence em data
+nenhuma; a mudança precisa vir com o casamento de vencimento junto.
+
+**Efeito hoje: zero** — LCI/LCA estão bloqueadas no G5 e o G6 nem as vê. Morde no dia
+em que a carência for confirmada. Há um teste que falha se alguém mexer no `DATADO`
+sem atualizar este registro.
+
+> **Decisão dele, 26/09/2026: `12a`** (recomendada) — DATADO aceita "vence até a data do objetivo **ou** líquida em 30 dias", junto com o casamento de vencimento. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+**FECHADA em 26/09/2026.** Decisão dele (`12a`), com o casamento de vencimento junto. `funcoes.DATADO.liquidez_ou_vencimento_casado: true`: o G6 não reprova a rota ilíquida que tem vencimento conhecido, e `casa_duracao` exige que ela vença até o **menor** prazo dos objetivos (V-07). **A armadilha que a medição achou:** `duracao_anos` é duração de JURO (0,0 na LCI pós-fixada), não prazo até o vencimento — casar por ela deixaria passar a LCI de 9999 dias. Nasceu o campo `vencimento_anos`, vazio em todo o catálogo: sem ele a rota ilíquida continua fora (P1), e nenhuma alocação mudou (instantâneos verdes). Limitação `datado_cobra_liquidez_onde_deveria_cobrar_vencimento` `RESOLVIDA`; política 1.33.0; `test_P12_DATADO_aceita_vencimento_casado_no_lugar_da_liquidez`, com três mutações.
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-12** | DATADO cobrava liquidez onde deveria cobrar vencimento (H-01) | 26/09 — 12a: vencimento casado via campo novo `vencimento_anos`; política 1.33.0 |
+| **P-81** | o chaves_orfas.py não separava decisão registrada de parâmetro órfão | 26/09 — 81a: `_registros` no YAML, lido pelo instrumento |
+| **P-84** | a corretagem de ETF no ranking de corretoras | 26/09 — 84a: já implementada em 16/09 (pior caso ação × ETF); pendência estava desatualizada |
+| **P-124** | custódia do Tesouro mensal no motor e semestral na B3 | 26/09 — 124a: fica mensal, como escolha declarada (política 1.33.0) |
 | **P-151** | o semanal ficava vermelho por branch de sessão aberta (GIT-01 no CI) | 26/09 — a guarda pula no CI; o controle que roda no CI prova que fora dele ela reprova |
 | **P-118** | `politica.yaml` citava a P-96 como aberta | 23/09 — fechada no corpo; cabeçalho riscado em 26/09 |
 | **P-45** | migrar o trabalho de repositório para o Claude Code | 26/09 — vencida: 16/09 — em uso desde então (`CLAUDE.md`, rodada de 16/09) |

@@ -62,6 +62,9 @@ e colar `impressao: 942c75bae248327b`.
 > as rotas que exigem registro viram pendência com o motivo escrito, e as outras
 > recebem peso. Isto bloqueia **a sua carteira**, não o projeto.
 
+> **Decisão dele, 26/09/2026: `01b`** (**diverge da recomendada (01a)**) — **assinar as duas teses** (HASH11 e Tesouro IPCA+), com impressão digital, sem mexer nos portões; o texto final vai a ele antes de gravar. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+
 ---
 
 ## P-05 · Quatro `NAO_CONFIRMADO` esperando download
@@ -392,27 +395,6 @@ enumeração nunca foi contada no dado real, como foi feito com `ORDEM_EXERC` e
 
 ---
 
-## P-12 · `DATADO` cobra liquidez onde deveria cobrar vencimento — **decisão sua**
-
-Achado H-01, ao catalogar LCI/LCA. A função `DATADO` exige `exige_liquidez_dias: 30`.
-Isso trata um problema de **duração** com critério de **liquidez**.
-
-Simulei a chegada da carência sem tocar no YAML: com 270 dias a rota perde **todas**
-as funções; com 90, idem; com 30, só sobra `DATADO`. Uma LCI isenta de IR, coberta
-pelo FGC e que **vence exatamente na data do objetivo** seria eliminada por uma
-iliquidez que o objetivo não precisa.
-
-A regra correta seria "vence até a data do objetivo **ou** é líquida em 30 dias" — o
-mesmo padrão que o G8/CARREGO já usa para `PROTECAO_REAL`. Não mudei porque afrouxar
-`exige_liquidez_dias` sozinho deixa entrar também coisa ilíquida que não vence em data
-nenhuma; a mudança precisa vir com o casamento de vencimento junto.
-
-**Efeito hoje: zero** — LCI/LCA estão bloqueadas no G5 e o G6 nem as vê. Morde no dia
-em que a carência for confirmada. Há um teste que falha se alguém mexer no `DATADO`
-sem atualizar este registro.
-
----
-
 ## P-41 · Carregamento de YAML domina o custo multiusuário
 
 `carregar_politica()` custa **82 ms** e `carregar()` **42 ms**, contra 2,75 ms do motor.
@@ -507,6 +489,9 @@ diariamente, ou aceita não ter a série.
 A decisão é de desenho porque muda o escopo: sem IMA-B não há comparação direta de um ETF
 de inflação com o índice que ele segue. Hoje o projeto usa Tesouro direto como referência,
 e isso pode bastar. **Não decidi por ele.**
+
+> **Decisão dele, 26/09/2026: `52a`** (recomendada) — capturar IMA-B/IRF-M/ETTJ no workflow diário **se** os termos da ANBIMA permitirem; se não, vale 52b. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
 
 ---
 
@@ -611,6 +596,9 @@ e isso precisa ser dito. Duas saídas, ambas defensáveis:
 
 Decidir por omissão aqui seria deixar o código escolher, que é exatamente o que a P2 proíbe.
 
+> **Decisão dele, 26/09/2026: `63a`** (recomendada) — nível, tendência ou híbrido é declarado **por métrica** no YAML. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+
 ---
 
 ## P-64 · Portão × dossiê — uma camada de desenho que o projeto não tem
@@ -654,6 +642,9 @@ grandeza diferente do que o projeto orçou.
 vêm em XML estruturado ou em texto livre; volume do IPE; e se existe alguma padronização
 que torne a extração determinística em vez de heurística. **Se for heurística, ela produz
 número sem procedência — e aí a P1 manda não fazer.**
+
+> **Decisão dele, 26/09/2026: `65b`** (**diverge da recomendada (65a)**) — a segunda esteira entra **já como construção**, com a condição dele: só extração **determinística** — todo número carrega o trecho, a posição e o sha256 do arquivo de origem, e número sem trecho é recusado (P1). Começa medindo o formato. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
 
 ---
 
@@ -716,31 +707,6 @@ não reescrever o achado antigo com o dado novo sem entender a diferença.
 
 ---
 
-## P-81 · O `chaves_orfas.py` não separa decisão registrada de parâmetro órfão
-
-**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Claude, com sua confirmação.
-**Gatilho:** a próxima vez que a linha de base crescer.
-
-Reconferindo a linha de base em 16/09, dez chaves entraram de uma vez — e não porque
-alguém escreveu chave nova: o instrumento passou a contar **"LIDA SÓ POR TESTE"** como
-órfã. A mudança é deliberada e vem da P-77 (*campo que só o teste toca é campo que o
-motor não usa*).
-
-Mas as dez **não são da mesma espécie**, e a diferença decide o que fazer com cada uma:
-
-- **parâmetro órfão** — `portoes.G3_atrito.ativo` prometia comportamento e não
-  entregava. É defeito, e foi o E-03.
-- **decisão registrada** — `corretora.promocional.e_uma_decisao_nao_uma_omissao: true`
-  não promete comportamento nenhum: ela **registra um julgamento**, e o teste a lê para
-  fixar o registro. Isso é procedência, não dívida.
-
-Cinco das dez são do segundo tipo. Hoje elas convivem na mesma lista, e uma lista que
-mistura duas espécies faz a próxima pessoa tratar procedência como dívida — ou, pior,
-tratar dívida como procedência. O instrumento precisa de um terceiro rótulo, ou o YAML
-precisa de uma convenção que ele reconheça.
-
----
-
 ## P-82 · O repositório guardou uma cópia de si mesmo, e a suíte continuou verde
 
 **Classe:** `BLOQUEIA_O_SISTEMA`. **FECHADA em 16/09/2026**, no mesmo dia em que abriu —
@@ -784,30 +750,6 @@ atrás sem nada no arquivo avisar. Mover para `docs/historico/` ou renomear os a
 resolveria de vez — e isso é decisão sua.
 
 ---
-
----
-
-## P-84 · A dimensão de custo por operação — o que a decisão 1 ainda precisa
-
-**Classe:** `DECISAO_DE_DESENHO`. **Dono:** Osvaldo. **Gatilho:** agora; nada trava.
-
-Com a P-83 corrigida, sobra a pergunta de desenho, e ela é sua porque envolve **peso**,
-que é política declarada:
-
-- `corretagem_fii` e `exercicio_opcao_pct` são **constantes**. O projeto já tem o
-  mecanismo certo para isso e o precedente escrito: `reclame_aqui` é **exibido e nunca
-  pontuado** (`politica.yaml → pontua: false, exibe: true`). Eles saem de campo morto sem
-  fingir que discriminam.
-- `mesa_minimo` varia (20/25/50) mas só 4 de 24 declaram, e **não dá para separar "não
-  tem mesa" de "não pesquisei"**. Pontuá-lo penalizaria 20 casas pela ausência de um
-  produto, não pela falta de transparência.
-- `corretagem_etf_pct` é o único com cobertura real depois da P-83 (15 casas) e com um
-  valor que separa: **os 0,50% da XP em ETF.** É também o que mais importa para quem
-  compra ETF — e ele **não estava** nos três que você autorizou.
-
-**A pergunta:** a corretagem de ETF entra como segunda parcela da dimensão `corretagem`
-que já existe (sem inventar peso novo), ou como dimensão própria com peso declarado por
-você no `politica.yaml`?
 
 ---
 
@@ -1234,6 +1176,9 @@ basta: o que torna o "antes" verificável (P4) é o histórico **público** data
 externo do laudo `docs/auditoria/PREREGISTRO-EVIDENCIA.md`. Sem o push anterior à corrida, o
 critério corrigido repete o defeito da P-116.
 
+> **Decisão dele, 26/09/2026: `115a`** (recomendada) — empurrar o critério corrigido do degrau como pré-registro antes de medir 2016–2020. O Claude Code redige; ele responde "pode empurrar" antes de qualquer medição. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+
 ## P-116 · O critério da janela entrou no mesmo commit que os resultados
 
 **Dono:** Claude Code · **Gatilho:** toda medição nova contra o acervo · **Classe:**
@@ -1273,6 +1218,9 @@ calendário) e o nome só carregava um. A decisão é qual das três:
 **Hoje a corrida imprime qual silver leu**, então nada está oculto — mas *"está escrito na
 saída"* é a defesa que a P7 recusa: depende de alguém ler.
 
+> **Decisão dele, 26/09/2026: `117a`** (recomendada) — o nome do silver passa a carregar os dois insumos (captura + calendário), sempre. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+
 ## P-122 · `lightgbm` e `tabpfn` nunca foram medidos contra a faixa fechada
 
 **Dono:** Claude Code (sessão local) · **Gatilho:** antes da ML-1 · **Classe:**
@@ -1293,14 +1241,6 @@ Era limitação declarada desde 04/09 **sem pendência** — o portão da §5-B.
 favorece o ETF (a isenção de R$ 20 mil/mês é só da ação), que é exatamente a decisão A05.
 Efeito zero na acumulação sem venda. Entrada `ir_na_venda_de_renda_variavel`.
 
-## P-124 · A custódia do Tesouro é descontada por mês, e a B3 cobra por semestre
-
-**Dono:** Osvaldo (decidir) · **Gatilho:** nenhum · **Classe:** `DECISAO_DE_DESENHO`
-
-Também declarada sem pendência. Ordem de grandeza: centavos por ano a R$ 500/mês, e erra
-**contra** o Tesouro. A decisão é se a aproximação fica (escrita como escolha) ou se o motor
-passa a descontar por netting pro rata. Entrada `periodicidade_da_custodia_do_tesouro`.
-
 ## P-127 · Oráculo externo do preço ajustado — **decisão sua**
 
 **Dono:** Osvaldo (decidir) · **Gatilho:** antes de usar a série ajustada na ML-3 ·
@@ -1313,6 +1253,9 @@ amostra — mesmo papel, mesmo período, medir a divergência — e **nunca de f
 P1). Exige pré-registro (P-116): o critério de "concordam" empurrado antes de olhar. A decisão
 é se vale o custo, e qual fornecedor (os nomes são dos relatórios, `NAO_CONFIRMADO`).
 
+> **Decisão dele, 26/09/2026: `127a`** (recomendada) — oráculo externo como **controle** numa amostra, depois da P-115, com o critério de "concordam" gravado antes de olhar e os termos do fornecedor lidos na fonte. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+
 ## P-128 · Open Finance para posições e aporte — **decisão sua**
 
 **Dono:** Osvaldo (decidir) · **Gatilho:** nenhum · **Classe:** `DECISAO_DE_DESENHO`
@@ -1322,6 +1265,9 @@ caminho crítico todo mês (U-01, P7). É **candidata a pesquisa, não a integra
 custo e o que fica guardado com o terceiro estão `NAO_CONFIRMADO`, e é o dado mais sensível do
 projeto — o mesmo que o `estado.yaml` protege ficando fora do git. A pergunta de privacidade
 vem antes da técnica.
+
+> **Decisão dele, 26/09/2026: `128b`** (**diverge da recomendada (128a)**) — **pesquisar** Open Finance (cobertura, custo, o que fica com o terceiro), sem integrar nada. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
 
 ## P-129 · Macro sem vintage — **decisão sua**
 
@@ -1333,6 +1279,9 @@ backtest seria o valor de hoje, não o publicado em `t`. Hoje não morde (o pré
 usa macro). No dia em que usar, a proposta é uma entrada em `limitacoes_declaradas`, `tipo:
 FISICA` — a fonte não publica as versões —, ou buscar vintage em outra fonte (ALFRED cobre
 EUA, não BCB). A decisão é qual das duas.
+
+> **Decisão dele, 26/09/2026: `129b`** (recomendada) — começar agora a guardar a versão própria das séries do SGS no armazém; para o passado, `FISICA` quando entrar num pré-registro. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
 
 ## P-137 · Conciliar os diários do COTAHIST contra o anual do mês
 
@@ -1571,6 +1520,20 @@ regime seja declarado onde ele lê.
 > de sessão abertas naquele minuto. Não é dele: é a **P-151**. A próxima rodada do semanal é a
 > agendada de segunda, 28/09, 11:00 UTC, e não precisa de clique. **Sobra dele:** a escolha do CI-03
 > e o *Run workflow* da *Mutacao* depois dela — os dois na `docs/decisoes/fila-do-osvaldo.md`.
+
+> **Decisão dele, 26/09/2026: `146b`** (recomendada) — marcador `repositorio` nos testes que leem o repositório, excluído na mutação; depois ele dispara a *Mutacao*. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+> **26/09/2026 — 146b aplicada, e ela revelou a segunda causa do CI-03.** Marcador
+> `repositorio` em 17 testes (os que leem `.git`, `.github`, a raiz ou o próprio fonte) e a
+> mutação passa a rodar `-m "not slow and not repositorio and not privado and not acervo"`;
+> `auditoria/test_workflows.py::test_146b_...` prende a configuração. **Medido aqui com o
+> mutmut 3.8.0 pinado:** a rodada limpa, que falhava, agora **passa** — 1017 testes verdes
+> dentro da cópia `mutants/`. E o mutmut para em outra coisa: *"tests recorded trampoline hits
+> but none match any mutant key"* — os testes importam `ajustar` (por `sys.path`) e o mutmut
+> espera `fase0.ajustar`. **Nenhum mutante casa.** Disparar a *Mutacao* agora daria vermelho por
+> esse motivo, previsto. O conserto é de engenharia e é do Claude Code: rodar o mutmut por
+> pacote (com `cwd` em `alocacao/` e `fase0/`) ou fazer os testes importarem pelo caminho do
+> pacote. **Só depois dele o *Run workflow* é pedido ao Osvaldo.**
 
 ## P-145 · A ponte e o universo do ML depois de 2012, e duas escolhas que a §2 não fez
 

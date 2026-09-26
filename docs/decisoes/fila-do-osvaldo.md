@@ -11,6 +11,22 @@ a pendência reabre.
 
 ---
 
+## Respostas dele, 26/09/2026
+
+`115a 117a 63a 65b 127a 146b 84a 81a 12a 52a 129b 124a 128b dep-a 01b` — todas registradas na
+pendência de cada uma. **Três divergem da recomendação**, e a decisão é dele:
+
+| bloco | resposta | o que muda em relação à recomendação |
+|---|---|---|
+| 4 · P-65 | **65b** — construir já | com a condição dele: **só extração determinística**, número com trecho, posição e sha256 da origem, e número sem trecho recusado |
+| 13 · P-128 | **128b** — pesquisar | só pesquisa, em `docs/pesquisa/open-finance.md`; nada integrado |
+| 15 · P-01 | **01b** — assinar as duas | a assinatura é preparada com impressão digital, sem mexer nos portões; o texto final de cada tese vai a ele **antes** de gravar |
+
+As outras doze seguem a recomendação. A 115a tem um portão dele no meio: o critério é
+redigido e **para**, e só é empurrado depois do "pode empurrar".
+
+---
+
 ## 1 · Critério da série ajustada antes da próxima janela · P-115
 
 **Pergunta:** empurramos o critério corrigido do degrau como pré-registro **antes** de medir

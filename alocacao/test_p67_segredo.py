@@ -104,6 +104,7 @@ def test_P67_copia_congelada_do_projeto_nao_esta_rastreada(indice):
     )
 
 
+@pytest.mark.repositorio   # 146b: le o repositorio, a mutacao exclui
 def test_P67_o_gitignore_cobre_o_estado_antes_de_alguem_esquecer():
     """Guarda do guarda. Os dois testes acima medem o INDICE; este mede a REGRA.
 
