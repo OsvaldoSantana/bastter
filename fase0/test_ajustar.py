@@ -698,3 +698,41 @@ def test_REAL_a_populacao_medida_e_a_que_o_relatorio_diz(real):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+# ── P-117 (117a, 26/09/2026): o nome carrega os dois insumos, e a escolha e regra ──
+def test_P117_o_nome_do_silver_carrega_captura_e_calendario():
+    import refinar as R
+    c = (dt.date(1986, 1, 2), dt.date(2026, 9, 18))
+    assert R.nome_do_silver("2026-09-11", c) == \
+        "eventos_silver_2026-09-11_cal-19860102-20260918.csv"
+    assert R.nome_do_silver("2026-09-11", (None, None)) == \
+        "eventos_silver_2026-09-11_cal-nenhum.csv"
+
+
+def test_P117_a_escolha_e_a_captura_mais_nova_e_o_maior_calendario(tmp_path):
+    """O caso que a P-117 descreve: um `_antigo` ou qualquer nome que o sorted() pusesse
+    por ultimo ja nao inverte a escolha -- a regra le o calendario no nome."""
+    for n in ("eventos_silver_2026-09-11.csv",                        # legado, sem calendario
+              "eventos_silver_2026-09-11_cal-1986-2026.csv",           # legado do P-114
+              "eventos_silver_2026-09-11_cal-20230102-20231228.csv",   # so 2023
+              "eventos_silver_2026-09-10_cal-19860102-20260918.csv"):  # captura mais velha
+        (tmp_path / n).write_text("x\n")
+    assert os.path.basename(A.ultimo_silver(str(tmp_path))) == \
+        "eventos_silver_2026-09-11_cal-1986-2026.csv"
+    (tmp_path / "eventos_silver_2026-09-11_zzz_antigo.csv").write_text("x\n")
+    assert os.path.basename(A.ultimo_silver(str(tmp_path))) == \
+        "eventos_silver_2026-09-11_cal-1986-2026.csv", "nome fora do padrao nao conta"
+
+
+def test_P117_empate_levanta_em_vez_de_escolher(tmp_path):
+    for n in ("eventos_silver_2026-09-11_cal-19860102-20231228.csv",
+              "eventos_silver_2026-09-11_cal-19890102-20261228.csv"):
+        (tmp_path / n).write_text("x\n")
+    with pytest.raises(A.SilverAmbiguo):
+        A.ultimo_silver(str(tmp_path))
+
+
+def test_P117_so_o_legado_sem_calendario_ainda_vale_se_for_o_unico(tmp_path):
+    (tmp_path / "eventos_silver_2026-09-11.csv").write_text("x\n")
+    assert A.ultimo_silver(str(tmp_path)).endswith("eventos_silver_2026-09-11.csv")

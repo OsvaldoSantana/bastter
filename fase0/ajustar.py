@@ -84,7 +84,7 @@ USO
 So biblioteca padrao, como o resto da Fase 0.
 """
 
-import argparse, collections, csv, datetime as dt, math, os, sys
+import argparse, collections, csv, datetime as dt, math, os, re, sys
 from decimal import Decimal, InvalidOperation
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -814,12 +814,55 @@ def gravar_degraus(lista, caminho, captura):
 
 # ─────────────────────────────────────────────────────────────── a corrida
 
+NOME_SILVER = re.compile(r"^eventos_silver_(?P<dia>\d{4}-\d{2}-\d{2})"
+                         r"(?:_cal-(?P<ini>\d{4}(?:\d{4})?)-(?P<fim>\d{4}(?:\d{4})?)"
+                         r"|_cal-nenhum)?\.csv$")
+
+
+class SilverAmbiguo(RuntimeError):
+    pass
+
+
+def _cobertura_do_nome(m):
+    """(ini, fim) como AAAAMMDD; o nome legado do P-114 so tem o ano (`_cal-1986-2026`),
+    e vale do primeiro ao ultimo dia dele. Sem calendario no nome: None."""
+    if not m["ini"]:
+        return None
+    ini = m["ini"] if len(m["ini"]) == 8 else m["ini"] + "0101"
+    fim = m["fim"] if len(m["fim"]) == 8 else m["fim"] + "1231"
+    return ini, fim
+
+
 def ultimo_silver(saida):
+    """P-117 (117a): a regra, escrita, no lugar do `sorted()`. A captura mais recente; dentro
+    dela, o silver cujo calendario cobre mais (o nome diz qual e); nome sem calendario --
+    o legado de antes da P-117 -- so vale se for o unico da captura. Empate entre nomes
+    diferentes levanta `SilverAmbiguo`: escolher um seria a sorte de volta."""
     if not os.path.isdir(saida):
         return None
-    nomes = sorted(n for n in os.listdir(saida)
-                   if n.startswith("eventos_silver_") and n.endswith(".csv"))
-    return os.path.join(saida, nomes[-1]) if nomes else None
+    cands = []
+    for n in os.listdir(saida):
+        m = NOME_SILVER.match(n)
+        if m:
+            cands.append((m["dia"], _cobertura_do_nome(m), n))
+    if not cands:
+        return None
+    dia = max(c[0] for c in cands)
+    da_captura = [c for c in cands if c[0] == dia]
+    com_cal = [c for c in da_captura if c[1]]
+    if not com_cal:
+        if len(da_captura) > 1:
+            raise SilverAmbiguo(f"captura {dia}: {sorted(c[2] for c in da_captura)} "
+                                "sem calendario no nome")
+        return os.path.join(saida, da_captura[0][2])
+
+    def extensao(c):
+        return int(c[1][1]) - int(c[1][0])
+    maior = max(extensao(c) for c in com_cal)
+    melhores = [c for c in com_cal if extensao(c) == maior]
+    if len(melhores) > 1:
+        raise SilverAmbiguo(f"captura {dia}: {sorted(c[2] for c in melhores)} cobrem o mesmo tanto")
+    return os.path.join(saida, melhores[0][2])
 
 
 def medir(raiz, silver, anos=None):

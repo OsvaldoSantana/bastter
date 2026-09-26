@@ -116,7 +116,7 @@ def test_P114_o_calendario_vem_da_raiz_de_COTAHIST_e_nao_da_de_eventos(tmp_path)
     assert R.refinar(str(b3), "2026-09-11", str(saida), str(cot)) == 0
 
     import csv
-    with open(saida / "eventos_silver_2026-09-11.csv", encoding="utf-8") as f:
+    with open(_o_silver(saida), encoding="utf-8") as f:
         linhas = list(csv.DictReader(f))
     assert len(linhas) == 1
     # ultimo dia COM direito 04/12; a data ex e o pregao SEGUINTE observado.
@@ -137,7 +137,7 @@ def test_P114_sem_COTAHIST_na_raiz_dele_a_linha_diz_que_NAO_SABE(tmp_path):
     assert R.refinar(str(b3), "2026-09-11", str(saida), str(vazia)) == 0
 
     import csv
-    with open(saida / "eventos_silver_2026-09-11.csv", encoding="utf-8") as f:
+    with open(_o_silver(saida), encoding="utf-8") as f:
         linhas = list(csv.DictReader(f))
     assert linhas[0]["data_ex"] == ""
     assert linhas[0]["data_ex_status"] == R.SEM_CALENDARIO
@@ -158,11 +158,19 @@ def test_P114_a_raiz_de_eventos_nao_e_usada_como_calendario(tmp_path):
     R.refinar(str(b3), "2026-09-11", str(saida), str(vazia))
 
     import csv
-    with open(saida / "eventos_silver_2026-09-11.csv", encoding="utf-8") as f:
+    with open(_o_silver(saida), encoding="utf-8") as f:
         linhas = list(csv.DictReader(f))
     assert linhas[0]["data_ex_status"] == R.SEM_CALENDARIO, (
         "o COTAHIST que esta na raiz de EVENTOS foi lido como calendario -- as duas "
         "raizes voltaram a ser uma so")
+
+
+
+def _o_silver(saida):
+    """P-117: o nome carrega o calendario; o teste pega o unico silver gravado."""
+    nomes = [n for n in os.listdir(saida) if n.startswith("eventos_silver_")]
+    assert len(nomes) == 1, nomes
+    return os.path.join(saida, nomes[0])
 
 
 # ── o acervo real ─────────────────────────────────────────────────────────────

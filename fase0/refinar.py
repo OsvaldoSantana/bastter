@@ -463,7 +463,7 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO, cotahist=None):
         ln["data_ex_status"] = (DERIVADA if d else
                                 (SEM_CALENDARIO if not datas else FORA_DA_COBERTURA))
 
-    destino = os.path.join(saida, "eventos_silver_%s.csv" % dia)
+    destino = os.path.join(saida, nome_do_silver(dia, cobertura))
     gravar_csv(linhas, destino)
 
     porc, pdat = {}, {}
@@ -521,6 +521,17 @@ def refinar(raiz=RAIZ_PADRAO, dia=None, saida=SAIDA_PADRAO, cotahist=None):
     # O codigo de saida e o resumo honesto da corrida: zero so quando nada ficou
     # pendurado. `multiplos` NAO entra -- ele e informacao para conferir, nao defeito.
     return 1 if (desconhecidos or nao_objeto) else 0
+
+
+def nome_do_silver(dia, cobertura):
+    """P-117 (decisao dele, 117a, 26/09/2026): o silver e funcao de DOIS insumos -- a
+    captura dos eventos e o calendario que derivou a `data_ex` -- e o nome carrega os dois,
+    sempre. Ate aqui carregava so a captura, e quem escolhia entre dois silvers da mesma
+    captura era o `sorted()`, acertando por sorte. Datas completas, nao anos: dois
+    calendarios que terminam em dias diferentes do mesmo ano colidiriam."""
+    ini, fim = cobertura if cobertura else (None, None)
+    cal = "%s-%s" % (ini.strftime("%Y%m%d"), fim.strftime("%Y%m%d")) if ini else "nenhum"
+    return "eventos_silver_%s_cal-%s.csv" % (dia, cal)
 
 
 def main(argv=None):
