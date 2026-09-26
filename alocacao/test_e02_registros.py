@@ -101,17 +101,17 @@ def test_yaml_valido_que_nao_e_objeto_tambem_levanta(tmp_path):
 # ── o que NAO pode ter mudado ────────────────────────────────────────────────
 
 def test_arquivo_real_do_projeto_continua_lendo_igual():
-    """Instantaneo dourado: o `teses.yaml` do repositorio traz um exemplo de tese e um
-    de carrego, os dois marcados `exemplo: true` e portanto INVALIDOS. Se esta leitura
-    mudar, a correcao mexeu em quem nao estava quebrado."""
+    """Instantaneo dourado: o `teses.yaml` do repositorio traz uma tese e um carrego,
+    ASSINADOS por ele em 26/09/2026 (P-01) -- ate essa data eram modelos com
+    `exemplo: true`. Se esta leitura mudar, a correcao mexeu em quem nao estava quebrado."""
     real = os.path.join(os.path.dirname(os.path.abspath(T.__file__)), "teses.yaml")
     if not os.path.exists(real):
         pytest.skip("teses.yaml nao esta ao lado do tese.py neste ambiente")
     teses, carregos = T.carregar_registros(compromisso_maximo_anos=10)
     assert set(teses) == {"hash11"} and set(carregos) == {"td_ipca"}
-    assert teses["hash11"]["valida"] is False
-    assert carregos["td_ipca"]["valida"] is False
-    assert "exemplo" in teses["hash11"]["motivo"]
+    assert teses["hash11"]["valida"] is True
+    assert carregos["td_ipca"]["valida"] is True
+    assert teses["hash11"]["motivo"] == "" and carregos["td_ipca"]["motivo"] == ""
 
 
 def test_carregar_teses_repassa_a_permissao(tmp_path):

@@ -2034,10 +2034,63 @@ defeito fica sem efeito até lá.
 
 **FECHADA em 26/09/2026.** Decisão dele (26/09, sessão G-07): *"G-07 é defeito, não política"* — a regra está escrita no validador e no `CLAUDE.md`, e o portão a ignorava. `g8_compromisso_de_carrego` agora lê o estado (`_estado_do_carrego`, com o mesmo default do validador) e manda `REGRA_DECIDIDA` para `sem_carrego` com a pendência "na compra, preencher C02 e C04 e mudar para COMPROMISSO_ATIVO". **Teste que falha na versão anterior:** `test_G07_regra_decidida_nao_libera_peso_no_g8` (2 de 3 reprovam no G8 antigo). **Instantâneo dourado** (9 cenários, `alocar()` inteiro, campo a campo): só mudam os 3 cenários com o registro assinado em memória — `td_ipca` 15% → 0, `protecao_real` 0,15 → 0, `lastro` +15 p.p. para `td_selic`, uma pendência `G8_carrego:td_ipca` a mais, o alerta de PROTECAO_REAL sem rota viável. Sem assinatura (o `teses.yaml` do repositório) e em `COMPROMISSO_ATIVO`: **zero diferenças**.
 
+## ~~P-01~~ · Assinatura dos dois registros · `DADO_DE_UM_USUARIO` — **FECHADA em 26/09/2026**
+
+Os dois rascunhos estão prontos em `alocacao/teses.yaml` e passam em todas as
+verificações de conteúdo. Faltam três edições, e nenhuma delas eu posso fazer.
+
+**HASH11** — apagar `exemplo: true` e colar `impressao: 31a31607f3c60e62`.
+**Tesouro IPCA+** — apagar `exemplo: true`, trocar `C06_reconhecimento` para `true`
+e colar `impressao: 942c75bae248327b`.
+
+> Antes de assinar o HASH11, responda a pergunta anterior: **você quer a posição?**
+> Ela reprova ou é inaplicável em todos os portões do catálogo buy & hold, custa
+> 1,30% a.a. e a perda máxima aceita é 100%. "Não compro" é uma resolução completa
+> e custa zero. Assinar o rascunho porque ele está pronto é o erro que o
+> pré-registro existe para impedir.
+
+**Gatilho:** nenhum. Depende só de você decidir.
+
+> **Não bloqueia desenvolvimento** (U-01). O sistema aloca sem nenhuma tese assinada —
+> as rotas que exigem registro viram pendência com o motivo escrito, e as outras
+> recebem peso. Isto bloqueia **a sua carteira**, não o projeto.
+
+> **Decisão dele, 26/09/2026: `01b`** (**diverge da recomendada (01a)**) — **assinar as duas teses** (HASH11 e Tesouro IPCA+), com impressão digital, sem mexer nos portões; o texto final vai a ele antes de gravar. Registro em `docs/decisoes/fila-do-osvaldo.md`.
+
+> **26/09/2026 — assinatura preparada, NÃO gravada; e ela achou dois defeitos.**
+> 1. `python tese.py`, o comando que calcula a impressão, **caía** com `KeyError: 'compromissos'`
+>    desde a L-01. Consertado (`main()` usa `carregar_politica`), com teste que falha na versão
+>    anterior. As impressões batem com as escritas aqui: `hash11` **`31a31607f3c60e62`**,
+>    `td_ipca` **`942c75bae248327b`**.
+> 2. **G-07:** assinado em `REGRA_DECIDIDA`, o `td_ipca` **recebe 15% em PROTECAO_REAL** no
+>    cenário sintético — o G8 não lê o estado, embora o validador diga que não libera peso.
+>    Conserto na **P-152** — feito em 26/09, decisão dele: *"G-07 é defeito, não política"*.
+>
+> **Medido, o que assinar muda** (cenário sintético `test_alocacao.BASE`, registros assinados em
+> memória): `aposta` 0 → **3%** (`hash11`), `protecao_real` 0 → **15%** (`td_ipca`, pelo G-07),
+> `lastro` 35% → 19%, `rv` 65% → 63%. O texto final das duas foi mostrado a ele no chat; a
+> gravação espera o OK dele e a decisão da P-152.
+>
+> **26/09/2026 — G-07 consertado (P-152 fechada).** O G8 agora lê o estado: assinado em
+> `REGRA_DECIDIDA`, o `td_ipca` fica em **0%** até a compra, e o efeito da assinatura passa a
+> ser só o do `hash11`. A gravação espera o **"assino"** dele sobre o texto final.
+>
+> **26/09/2026 — respostas dele ao texto.** HASH11: sai a regra de desuso do K02 e sai o
+> K04(c); o resto fica. Tesouro IPCA+: o C03 mantém "9 meses" fixo, com um **alarme**. O alarme
+> está no motor (`pendencias_de_premissa`): lê os meses do texto assinado do C03 e, se a meta da
+> reserva que o G2 calcula (6 × estabilidade + 0,5 por dependente, com teto) não for esses
+> meses, abre a pendência *"tese td_ipca desatualizada, reassinar?"*. A meta não é um campo do
+> `perfil.yaml`, é conta (política × EST01 × dependentes do estado), e o alarme usa a mesma conta.
+> Impressões dos textos finais: `hash11` **`ea8c8769bbf021e2`** (nova), `td_ipca`
+> **`942c75bae248327b`** (texto inalterado). A gravação espera o **"assino"**.
+
+**FECHADA em 26/09/2026.** Assinada por ele no chat em 26/09/2026 ("Assinar"), sobre o texto final mostrado antes de gravar. Mudanças dele no texto: no HASH11, sai a regra de desuso do K02 e sai o K04(c); no Tesouro IPCA+, o C03 mantém "9 meses" fixo, com o alarme `pendencias_de_premissa` (PR #22). Impressões gravadas: `hash11` **`ea8c8769bbf021e2`**, `td_ipca` **`942c75bae248327b`** (texto inalterado). O `td_ipca` fica em `REGRA_DECIDIDA`: válido, sem peso até a compra (G-07, PR #21). **Efeito medido** (cenário sintético, estabilidade baixa, reserva cheia): aposta 0 → 3% (`hash11`), RV 56% → 54,32%, lastro 44% → 42,68%, `td_ipca` 0%, sem pendência de reassinar. Os dois testes que exigiam "só modelos no repositório" viraram `test_repositorio_assinado_libera_so_o_que_a_assinatura_diz`, que fixa as impressões e o estado.
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-01** | assinar os dois registros (HASH11 e Tesouro IPCA+) | 26/09 — hash11 ea8c8769bbf021e2, td_ipca 942c75bae248327b; td_ipca sem peso até a compra |
 | **P-152** | G8 tem de honrar REGRA_DECIDIDA (G-07) | 26/09 — G8 lê o estado; td_ipca 15% → 0% assinado em REGRA_DECIDIDA |
 | **P-117** | o silver tinha dois arquivos para a mesma captura e quem escolhia era o sorted() | 26/09 — 117a: nome com captura e calendário; escolha por regra, empate levanta |
 | **P-12** | DATADO cobrava liquidez onde deveria cobrar vencimento (H-01) | 26/09 — 12a: vencimento casado via campo novo `vencimento_anos`; política 1.33.0 |
