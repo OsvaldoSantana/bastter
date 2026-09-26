@@ -161,9 +161,20 @@ da régua (§5-B do `CLAUDE.md`): a cláusula citada cobre o item de que se fala
 
 | tese do projeto (em `docs/marca/`) | dispositivo | o que a cláusula cobre | resultado |
 |---|---|---|---|
-| o padrão do MEOL é recomendação e responde à CVM 19 | art. 1º, caput e § 1º, I e II; art. 2º; art. 17 | orientação ou recomendação **individualizada** sobre classes de ativos e valores mobiliários, prestada **de forma profissional** a um cliente, é consultoria e é privativa de consultor autorizado; fazê-la por algoritmo não muda isso (art. 17). O texto não fala de "padrão"; fala de orientação individualizada, e o padrão do MEOL é aplicado ao perfil de cada usuário | **CONFIRMADA com escopo:** vale para o MEOL oferecido a terceiros como serviço; o uso pessoal dele não é prestação de serviço a cliente |
+| o padrão do MEOL é recomendação e responde à CVM 19 | art. 1º, caput e § 1º, I e II; art. 2º; art. 17 | orientação ou recomendação **individualizada** sobre classes de ativos e valores mobiliários, prestada **de forma profissional** a um cliente, é consultoria e é privativa de consultor autorizado; fazê-la por algoritmo não muda isso (art. 17). O texto não fala de "padrão"; fala de orientação individualizada, e o padrão do MEOL é aplicado ao perfil de cada usuário | **CONFIRMADA com escopo:** vale para o MEOL oferecido a terceiros como serviço. ~~o uso pessoal dele não é prestação de serviço a cliente~~ → **INFERENCIA** (nota N-PESSOAL, abaixo) |
 | a CVM veda garantir rentabilidade | art. 18, III | vedação expressa **ao consultor** | **CONFIRMADA** |
 | a independência verificável é não distribuir, não receber comissão e não aceitar anúncio, e esse é o critério da CVM | art. 1º, caput; art. 16, V e XII; art. 18, I, V e § 2º | a norma exige independência (art. 1º, 16, V) e veda remuneração que a prejudique (18, V) e comissão por indicar prestador (16, XII). **Mas não veda distribuir:** permite, com segregação de atividades (18, I e § 2º). E **não fala de anúncio** | **RETIRADA como critério da CVM.** "Não receber comissão" tem base na norma; "não distribuir" é mais estrito que ela; "não aceitar anúncio" não está nela. As três ficam como **escolha do MEOL**, não como exigência da CVM |
+
+> **N-PESSOAL · 26/09/2026, retratação parcial.** A primeira versão desta tabela dizia, na
+> coluna do resultado, que "o uso pessoal dele não é prestação de serviço a cliente", como
+> parte do que foi confirmado. **O texto transcrito não diz isso.** O art. 1º define
+> consultoria como orientação prestada "de forma profissional" a um cliente, mas nenhum
+> dispositivo lido diz o que não é profissional, nem se quem usa a própria ferramenta é
+> cliente dela. A frase é **INFERENCIA** tirada da ausência de um cliente, e não leitura. A
+> pergunta foi para a [P-158](../../PENDENCIAS.md), que é parecer. A parte confirmada (o MEOL
+> oferecido a terceiros como serviço) não muda. **Causa do erro:** a coluna de resultado
+> juntou numa célula só o que a cláusula cobre e o que se concluiu dela. A pergunta 5 da régua
+> (§5-B) foi aplicada à tese, mas não à ressalva que ia junto.
 
 ## Dois dispositivos que o projeto já atende sem ter citado
 
