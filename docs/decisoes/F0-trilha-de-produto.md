@@ -25,6 +25,10 @@ Onde a F0 entra, e com que prioridade?
 | B · esperar a P-115 fechar | a F0 fica em `DECISAO_DE_DESENHO` até o critério C-02 v2 ser medido | nada de produto anda enquanto o motor espera a sessão local; os requisitos e o mapa envelhecem sem contrato |
 | C · a F0 no caminho crítico, como o mapa propunha | a F0 vira `BLOQUEIA_O_SISTEMA` | falso: o motor decide sem ela. A F0 bloqueia a **interface**, não o sistema (U-01: um cliente novo precisa do motor antes da tela) |
 
+> **Nota de 26/09/2026.** O formulário que ele respondeu teve **duas opções, A e B**. A
+> opção C não foi oferecida a ele: é uma alternativa técnica, registrada aqui para completar
+> o desenho, e **rejeitada pelo claude.ai** antes da pergunta, pelo motivo da última coluna.
+
 ## A decisão, e as regras que vêm com ela
 
 1. **A F0 é trilha de produto paralela** (`PLANO.md` §3-F0), e **não bloqueia o motor**.

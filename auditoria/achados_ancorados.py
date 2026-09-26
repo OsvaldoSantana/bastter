@@ -84,6 +84,16 @@ def conta_como_codigo(cod, ignorar=None):
     return cod not in ignorar and cod.split("-", 1)[0] not in PREFIXOS_DE_OUTRO_DOMINIO
 
 
+def titulos_em_outro_dominio(texto):
+    """[codigo] dos titulos de achado (`## XX-nn`) cujo prefixo e de outro dominio.
+
+    O custo da exclusao por prefixo: um achado com titulo `## MC-01` ficaria fora das
+    referencias e fora do `codigos_preservados` -- poderia sumir sem nada reprovar (medido em
+    26/09). O ACHADOS.md nao usa esses prefixos, e `test_codigos_de_marca.py` cobra isso."""
+    return [f"{m.group(1)}-{m.group(2)}" for m in DEF_CABECALHO.finditer(texto)
+            if m.group(1) in PREFIXOS_DE_OUTRO_DOMINIO]
+
+
 # ── CANDIDATOS, nao achados (P3 aplicada a propria auditoria).
 # Em 19/09 o modulo acusou 25 codigos citados SO em codigo, sem nenhum `.md`. Parte deles
 # provavelmente NAO e achado -- `K-04` aparece com as teses (`teses.yaml`, `tese.py`), e os
