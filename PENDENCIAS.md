@@ -1417,10 +1417,24 @@ armazém local: 5m44s, 207 arquivos, 4,3 MB, saída 0 com uma ressalva (MBRF sem
 A-03). **Fecha quando** o passo sair verde no cron de uma segunda (a primeira é 28/09); nesse
 dia, `b3_eventos` entra em `regimes_de_captura` com a execução e a limitação sai.
 
-**A parte 1 não roda como está:** `subir_acervo_local.py` só lê `data/bronze/b3/cotahist` e
+~~**A parte 1 não roda como está:** `subir_acervo_local.py` só lê `data/bronze/b3/cotahist` e
 `…/isin`, e não as pastas `indices`, `eventos` e `proventos`. Falta estendê-lo (Claude Code, na
 nuvem; reusar `capturar_eventos_b3.arquivos_do_coletor`, para que o 11/09 caia nas mesmas chaves
-que o cron) antes de ⚙ o desktop rodar o `--aplicar`.
+que o cron) antes de ⚙ o desktop rodar o `--aplicar`.~~ **Estendido em 26/09.** O
+`subir_acervo_local.py` agora planeja `data/bronze/b3/{indices,eventos,proventos}/dt_captura=…`.
+O recurso e o nome vêm das mesmas funções do passo do cron (`capturar_eventos_b3.RECURSOS` e
+`nome_no_armazem`), e um teste compara as chaves do plano com as que o passo daria para os
+mesmos arquivos. O inventário vai para `docs/acervo/b3_eventos/`. A versão é o dia da captura,
+e o dia mais recente é o canônico. O `manifesto.jsonl` do coletor sobe como log, fora do teto.
+Fora de `dt_captura=…/*.json`, o arquivo sai `DESCONHECIDO` e não sobe. O padrão continua sendo
+o plano. **Falta só a parte do desktop** (roteiro em `## Ao voltar ao desktop`).
+
+**Achado lateral (26/09):** `fase0/acervo.py → REGISTROS` não lista o registro
+`docs/acervo/b3_eventos/capturas.csv`. Com isso, o `abrir()` enxerga as versões dos eventos pelo
+inventário da carga, mas não as que o cron registrar, e o `frescor()` não vigia essa captura.
+**No dia em que a P-150 fechar**, junto com a entrada em `regimes_de_captura`, o registro entra
+em `REGISTROS`. Antes disso não entra, porque o `frescor` acusaria `NUNCA_OBSERVADO` enquanto o
+cron não roda.
 
 **O universo é o IBOV do dia (26/09, registro).** A captura lê a carteira do dia e pede eventos
 só de quem está nela. Quem sai do índice deixa de ser capturado na segunda seguinte: o que já
@@ -1709,9 +1723,12 @@ As perguntas: **qual das duas é a fonte**, e **qual teste as prende**.
 > 1. **As respostas da fila** viram o trabalho da sessão seguinte, a começar pela 1 (P-115) e
 >    pela 2 (P-117), que vêm antes de qualquer janela nova da série ajustada.
 > 2. ~~**P-151 antes de segunda, 28/09, 11:00 UTC.**~~ **Fechada em 26/09** (a guarda do GIT-01 pula no CI).
-> 3. **P-150 — subir ao R2 o acervo de eventos de 11/09.** ⚙ **exige o desktop**. Conferido em
->    26/09: o `subir_acervo_local.py` **não** cobre a pasta de eventos; precisa ser estendido
->    antes (na nuvem), e só então o `--aplicar`. E conferir o cron de segunda, 28/09.
+> 3. **P-150 — subir ao R2 o acervo de eventos de 11/09.** ⚙ **exige o desktop**. O script
+>    cobre as pastas desde 26/09. Primeiro `py -3.11 fase0/subir_acervo_local.py` (só o plano):
+>    conferir que os eventos aparecem como `SUBIR` em `b3/indice_carteira|eventos_suplemento|
+>    proventos/…` e que não há `PARAR`. Um `DESCONHECIDO` em pasta de eventos se lê antes de
+>    seguir. Depois, com as `R2_*` no ambiente, `--aplicar`, e commitar
+>    `docs/acervo/b3_eventos/inventario-armazem.csv`. E conferir o cron de segunda, 28/09.
 > 4. **P-147 (NEFIN) e a release `cvm-acervo-2026`:** conferir depois do cron de 26/09. Não
 >    exige desktop.
 > 5. ~~`macro.poupanca_am` vence em 28/09~~ — renovada em 25/09; vence em **24/10**.
