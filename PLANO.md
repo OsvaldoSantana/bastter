@@ -281,6 +281,26 @@ dado desde 25/09 (`politica.yaml → regimes_de_captura`), e as limitações de 
 do COTAHIST ficaram `RESOLVIDA` (P-57 e P-135 fechadas). **O que sobra:** o NEFIN no executor
 (P-147) e a conciliação dos diários contra o anual (P-137, gatilho 01/10).
 
+### F0 · O contrato de saída — trilha paralela de produto · nuvem
+
+**Decisão dele, 26/09/2026** ([`docs/decisoes/F0-trilha-de-produto.md`](docs/decisoes/F0-trilha-de-produto.md)).
+Fora da fila numerada acima, de propósito: é produto, não motor.
+
+**O que é:** o esquema do relatório de decisão, com os campos que o [mapa de telas
+v1](docs/ux/mapa-de-telas-v1.md) lista na §6. É o contrato entre o motor e qualquer tela, e
+parte dos [requisitos de interface v1](docs/marca/requisitos-interface-v1.md).
+
+**As regras da trilha:**
+
+- **Não disputa o caminho crítico com a P-115.** Se as duas couberem numa sessão, a P-115 vai
+  primeiro, e a F0 nunca é motivo para adiar a sessão local que a P-115 pede.
+- **O primeiro entregável é uma especificação em `docs/ux/`, não código:** cada campo com o
+  tipo, a origem no motor e a tela que o usa. Código de esquema só depois de ele ler.
+- **Não bloqueia o motor.** O motor decide sem ela; ela destrava a interface.
+
+**O que destrava:** a construção de qualquer tela, e o teste com pessoas (P-156), cujos
+estímulos dependem de campos reais. **O que a impede hoje:** nada; é escrita, na nuvem.
+
 ### Fora da fila, mas com custo em toda sessão
 
 - **`CLAUDE.md` tem 2.270 linhas / ~40 mil tokens**, e `PENDENCIAS.md` outros ~29 mil. A

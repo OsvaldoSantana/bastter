@@ -1,0 +1,54 @@
+# Marca e interface — índice
+
+*26/09/2026. Os quatro documentos desta pasta e o mapa de telas em `docs/ux/` foram escritos
+em sessões de chat de 20/09 e trazidos do Projeto no claude.ai para o repositório em 26/09.*
+
+## O que vale hoje
+
+| documento | papel |
+|---|---|
+| **[requisitos de interface v1](requisitos-interface-v1.md)** | o contrato: RI-01 a RI-21, cada um com a sua verificação (teste, revisão ou pesquisa) |
+| **[mapa de telas v1](../ux/mapa-de-telas-v1.md)** | as telas, os fluxos, os estados e os campos que a F0 (contrato de saída do motor) precisa emitir |
+
+Os três documentos de pesquisa abaixo são a **origem** desses dois: explicam de onde cada
+requisito veio, mas não se editam para mudar um requisito. Requisito novo, revogado ou
+reescrito muda o documento de requisitos, com nova versão (regra da §6 dele).
+
+## Ordem de leitura
+
+1. [pesquisa de fundação (rodada 1)](pesquisa-fundacao-2026-09.md) — o público, o mercado
+   brasileiro, o design para leigo e a primeira fundação de marca; RI-01 a RI-10.
+2. [pesquisa de marcas, rodada 2](pesquisa-marcas-rodada2-2026-09.md) — 20 marcas, o livro de
+   códigos MC-01 a MC-24, e RI-11 a RI-16.
+3. [Pix v7.4 e pendências](pesquisa-pix-e-pendencias-2026-09.md) — o manual de experiência do
+   Banco Central, MC-25 a MC-29, RI-17 a RI-21, e o bloco de marcas encerrado por decisão.
+4. [requisitos de interface v1](requisitos-interface-v1.md) — a consolidação.
+5. [mapa de telas v1](../ux/mapa-de-telas-v1.md) — a etapa de UX.
+
+A trilha de produto que continua daqui é a F0, paralela ao motor: ver `PLANO.md` §3-F0 e a
+decisão em [`docs/decisoes/F0-trilha-de-produto.md`](../decisoes/F0-trilha-de-produto.md).
+
+## Os códigos
+
+Os documentos chegaram com os prefixos C (livro de códigos) e R (requisitos), que já eram
+usados por achados do projeto. Foram renomeados para **MC** (código de marca) e **RI**
+(requisito de interface), mantendo o número. A tabela de/para está no cabeçalho de cada
+documento, e `auditoria/test_codigos_de_marca.py` reprova se um código desta pasta voltar a
+colidir com um achado.
+
+## Apelido
+
+`pesquisa-fundacao-marca-2026-09.md` é o **mesmo documento** que
+[`pesquisa-fundacao-2026-09.md`](pesquisa-fundacao-2026-09.md): é o nome com que ele existia no
+Projeto do claude.ai, e é o nome citado em `docs/auditoria/AUDITORIA-PREREGISTRO-ML-V1.md`
+(§ das limitações), que fica como está por ser registro datado. O nome no repositório é o que
+o próprio documento declara como destino.
+
+## O que estes documentos não são
+
+- **Não são decisão de marca tomada.** A fundação de marca (rodada 1, bloco D) é síntese,
+  `NAO_CONFIRMADO`, a testar com pessoas.
+- **Não são parecer jurídico.** As afirmações que se apoiam na Resolução CVM 19 estão
+  `NAO_CONFIRMADO` até a leitura da resolução na fonte primária (`PENDENCIAS.md`).
+- **Não carregam dado do autor.** Os prints da auditoria visual de 20/09 são de contas de
+  terceiros ou de demonstração, e não estão no repositório.

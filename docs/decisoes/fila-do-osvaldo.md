@@ -25,6 +25,14 @@ pendência de cada uma. **Três divergem da recomendação**, e a decisão é de
 As outras doze seguem a recomendação. A 115a tem um portão dele no meio: o critério é
 redigido e **para**, e só é empurrado depois do "pode empurrar".
 
+### Respostas dele, 26/09/2026, sobre os documentos de marca e UX
+
+| pergunta | resposta | onde ficou |
+|---|---|---|
+| códigos C/R dos documentos colidem com achados | **(A) renomear** para MC-/RI-, só nesses documentos | tabela de/para no cabeçalho de cada um; `auditoria/test_codigos_de_marca.py` |
+| os prints do Gorila e do Bastter são contas dele? | **não**: contas de terceiros ou de demonstração | procedência declarada na rodada 1 (nota N-PRINTS) |
+| a F0 entra no `PLANO.md`? | **sim, agora, como trilha paralela** de produto | [`docs/decisoes/F0-trilha-de-produto.md`](F0-trilha-de-produto.md); `PLANO.md` §3-F0 |
+
 ---
 
 ## 1 · Critério da série ajustada antes da próxima janela · P-115
