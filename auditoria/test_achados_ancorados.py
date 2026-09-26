@@ -60,12 +60,14 @@ MOVIDOS = ("X-01", "Y-01", "A-01", "A-02", "A-03", "A-04", "A-05", "A-06", "A-07
 # na maquina dele o numero real aparece, e e ELE que vem para ca -- baixando o teto, nunca
 # subindo. Teto que sobe para o teste passar e a linha de base apodrecendo (P-86).
 TETO_ORFAOS = 46
+# 26/09/2026: o indice saiu do CLAUDE.md com a historia, inteiro, para este arquivo.
+INDICE = os.path.join(RAIZ, "docs", "historico", "claude-md-ate-2026-09.md")
 
 
-def test_o_indice_de_achados_existe_no_CLAUDE_md():
+def test_o_indice_de_achados_existe_no_historico_do_CLAUDE_md():
     """Vacuidade primeiro: sem o indice, todos os outros passam sem ter medido nada --
     o modo de falha que o A-06 ensinou a temer."""
-    with io.open(os.path.join(RAIZ, "CLAUDE.md"), encoding="utf-8") as f:
+    with io.open(INDICE, encoding="utf-8") as f:
         s = f.read()
     assert "ÍNDICE DE ACHADOS" in s
     assert "| achado | a regra que ele deixou |" in s
@@ -85,7 +87,7 @@ def test_DECISAO_C_nenhum_achado_movido_perdeu_o_ENDERECO():
 def test_o_indice_e_legivel_pela_MAQUINA_e_nao_so_por_humano():
     """A segunda coisa que o instrumento pegou de si mesmo. Uma celula com dois codigos
     (`A-03 / A-04`) e lida como um. O teste prende a forma, nao a boa intencao."""
-    with io.open(os.path.join(RAIZ, "CLAUDE.md"), encoding="utf-8") as f:
+    with io.open(INDICE, encoding="utf-8") as f:
         linhas = [x for x in f.read().splitlines() if x.lstrip(">").strip().startswith("| **")]
     combinadas = [x for x in linhas if x.count("-") >= 2 and ("/" in x.split("|")[1]
                                                               or "," in x.split("|")[1])]

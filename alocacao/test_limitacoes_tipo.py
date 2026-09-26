@@ -41,8 +41,12 @@ def _pendencias():
     """{"P-57": aberta?} lido dos cabecalhos `## P-NN` do PENDENCIAS.md. Fechada e a que
     tem o numero riscado (`~~P-NN~~`) ou FECHADA/CONSERTADA no titulo -- as duas
     convencoes que o arquivo usa."""
-    with io.open(os.path.join(RAIZ, "PENDENCIAS.md"), encoding="utf-8") as f:
-        texto = f.read()
+    # 26/09: as fechadas moram no historico; as duas pontas contam (sem a segunda, toda
+    # pendencia fechada viraria "inexistente", e a ancora P-57/P-100 deixaria de medir).
+    texto = ""
+    for nome in ("PENDENCIAS.md", os.path.join("docs", "historico", "pendencias-fechadas.md")):
+        with io.open(os.path.join(RAIZ, nome), encoding="utf-8") as f:
+            texto += f.read() + "\n"
     estado = {}
     for linha in texto.splitlines():
         if not linha.startswith("## "):

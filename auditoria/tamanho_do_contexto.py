@@ -55,8 +55,9 @@ TOKENS_POR_LINHA_MEDIDO = 19.0
 # do projeto -- e esse buraco foi achado na auditoria de 19/09: **o projeto nunca
 # declarou qual e o conjunto de leitura inicial**. A lista e a declaracao.
 SEMPRE = {
-    "CLAUDE.md": "instrucao, doutrina e historia -- lido inteiro em toda sessao",
-    "PENDENCIAS.md": "registro vivo do que esta aberto",
+    "CLAUDE.md": ("so o que muda o que alguem faz -- lido inteiro em toda sessao; a "
+                  "historia saiu para docs/historico/ em 26/09"),
+    "PENDENCIAS.md": "so as abertas; as fechadas em docs/historico/pendencias-fechadas.md",
     "PLANO.md": "onde queremos chegar e a ordem do que falta",
     # 25/09/2026: o secao 2 do CLAUDE.md virou este arquivo (fonte unica, P2). Fora daqui ele
     # deixaria de ser lido, e as doutrinas sao o projeto.
