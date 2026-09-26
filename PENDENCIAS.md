@@ -1398,6 +1398,23 @@ cadência declarada em `politica.yaml → regimes_de_captura.b3`, com o mesmo po
 e o mesmo registro. Os termos da B3 permitem capturar para uso pessoal e vedam publicar
 (P-136): o armazém é privado, e os eventos não entram na release da CVM.
 
+**26/09, parte 2 feita (esta sessão, na nuvem).** `fase0/capturar_eventos_b3.py` roda o
+`coletar_b3` numa pasta temporária e sobe cada arquivo ao armazém pela chave de conteúdo
+(`b3/indice_carteira|eventos_suplemento|proventos/…`), com o teto e o registro da CVM
+(`docs/acervo/b3_eventos/capturas.csv`). O passo `captura_eventos_b3` entrou no
+`captura_cvm.yml`; a cadência é dado (`politica.yaml → cadencias_de_captura.b3_eventos`,
+segunda-feira, com motivo), e fora dela o script sai 0 sem pedir nada à B3. O acervo fica em
+`limitacoes_declaradas.captura_de_eventos_b3_ainda_nao_rodou_no_executor` até o cron provar:
+`regimes_de_captura` exige a execução, e a chave `b3` já é do COTAHIST. Rodada real daqui, com
+armazém local: 5m44s, 207 arquivos, 4,3 MB, saída 0 com uma ressalva (MBRF sem evento nenhum —
+A-03). **Fecha quando** o passo sair verde no cron de uma segunda (a primeira é 28/09); nesse
+dia, `b3_eventos` entra em `regimes_de_captura` com a execução e a limitação sai.
+
+**A parte 1 não roda como está:** `subir_acervo_local.py` só lê `data/bronze/b3/cotahist` e
+`…/isin`, e não as pastas `indices`, `eventos` e `proventos`. Falta estendê-lo (Claude Code, na
+nuvem; reusar `capturar_eventos_b3.arquivos_do_coletor`, para que o 11/09 caia nas mesmas chaves
+que o cron) antes de ⚙ o desktop rodar o `--aplicar`.
+
 ## P-147 · A captura do NEFIN ainda não rodou no executor
 
 **Dono:** o workflow (ninguém dispara) · **Gatilho:** o cron diário das 09:15 UTC, ou um *Run
@@ -1651,8 +1668,9 @@ mapa com o motivo escrito.
 > 1. **As respostas da fila** viram o trabalho da sessão seguinte, a começar pela 1 (P-115) e
 >    pela 2 (P-117), que vêm antes de qualquer janela nova da série ajustada.
 > 2. ~~**P-151 antes de segunda, 28/09, 11:00 UTC.**~~ **Fechada em 26/09** (a guarda do GIT-01 pula no CI).
-> 3. **P-150 — subir ao R2 o acervo de eventos de 11/09.** ⚙ **exige o desktop**; conferir antes
->    se o `subir_acervo_local.py` cobre a pasta de eventos.
+> 3. **P-150 — subir ao R2 o acervo de eventos de 11/09.** ⚙ **exige o desktop**. Conferido em
+>    26/09: o `subir_acervo_local.py` **não** cobre a pasta de eventos; precisa ser estendido
+>    antes (na nuvem), e só então o `--aplicar`. E conferir o cron de segunda, 28/09.
 > 4. **P-147 (NEFIN) e a release `cvm-acervo-2026`:** conferir depois do cron de 26/09. Não
 >    exige desktop.
 > 5. ~~`macro.poupanca_am` vence em 28/09~~ — renovada em 25/09; vence em **24/10**.
