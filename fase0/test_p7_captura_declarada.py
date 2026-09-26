@@ -296,3 +296,19 @@ def test_P102_politica_ausente_NAO_e_lida_como_nada_declarado(tmp_path):
     (tmp_path / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
     with pytest.raises(m.PoliticaAusente):
         m.acervos_sem_regime(str(tmp_path))
+
+
+def test_P150_eventos_b3_tem_cadencia_com_motivo_e_limitacao_ate_o_cron_provar():
+    """26/09/2026, P-150. Falha na versao anterior: a politica nao declarava cadencia nenhuma
+    para os eventos da B3. O acervo fica em limitacao (NAO_CONSERTADA, P-150) ate a primeira
+    execucao verde; so entao entra em `regimes_de_captura`, que exige a execucao."""
+    P = _politica()
+    c = P["cadencias_de_captura"]["b3_eventos"]
+    assert c["dia_da_semana"] in ("segunda", "terca", "quarta", "quinta", "sexta")
+    assert len(c["motivo"].split()) >= 20
+    cobre = [lim for lim in P["limitacoes_declaradas"].values()
+             if "b3_eventos" in (lim.get("acervos") or [])]
+    assert len(cobre) == 1 and cobre[0]["pendencia"] == "P-150"
+    assert cobre[0]["tipo"] == "NAO_CONSERTADA"
+    assert "b3_eventos" not in P["regimes_de_captura"]
+    assert os.path.isfile(os.path.join(RAIZ, "docs", "acervo", "b3_eventos", "capturas.csv"))
