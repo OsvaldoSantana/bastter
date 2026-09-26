@@ -1620,19 +1620,13 @@ com agente de IA que recomenda e executa se enquadram ([rodada
 2](docs/marca/pesquisa-marcas-rodada2-2026-09.md), §4.1, `NAO_CONFIRMADO`); e se "padrão é
 recomendação" (RI-07) se sustenta. Depende da P-159: o parecer começa pela norma lida.
 
-## P-159 · Ler a Resolução CVM 19/2021 na fonte primária e confirmar ou retirar a tese de independência
-
-**Dono:** sessão de pesquisa (nuvem), com a transcrição em `docs/fontes/` · **Gatilho:** antes
-da P-158 e antes de qualquer texto público que prometa independência · **Classe:**
-`DECISAO_DE_DESENHO`
-
-A pesquisa de fundação apoia a tese de independência ("não distribui produto, não recebe
-comissão, não aceita anúncio") e a leitura de que "padrão é recomendação" num **achado de 20/09
-sobre a CVM 19 que só existe no chat**: não está no `ACHADOS.md` nem em `docs/fontes/`. Em
-26/09 toda afirmação que se apoia nele passou a `NAO_CONFIRMADO` (nota N-CVM nos documentos de
-`docs/marca/`). O que fecha: o texto da resolução transcrito da fonte primária, com os
-dispositivos que se aplicam, e a tese **confirmada** (as notas N-CVM saem, com a citação) ou
-**retirada** (a promessa sai da fundação de marca, como retratação, não apagada).
+> **26/09/2026 — a P-159 fechou, e deixa três perguntas para cá.** A Resolução CVM 19 está
+> transcrita em [`docs/fontes/cvm-resolucao-19-consolidada.md`](docs/fontes/cvm-resolucao-19-consolidada.md).
+> (1) O art. 1º exige prestação "de forma profissional" a um cliente: o uso pessoal dele está
+> fora, e a partir de qual momento o MEOL passa a ser serviço? (2) O art. 2º, parágrafo único, I, e
+> o art. 16, II, remetem à norma de adequação ao perfil do cliente, que não foi lida. (3) As
+> Resoluções CVM 21 e 35, citadas pela pesquisa, não foram lidas. Nenhuma das três se resolve
+> por leitura: é parecer.
 
 ## P-160 · Telas sem campo no contrato de saída da F0
 
