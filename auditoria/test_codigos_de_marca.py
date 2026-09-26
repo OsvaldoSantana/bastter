@@ -106,3 +106,20 @@ def test_os_prefixos_de_outro_dominio_nao_escondem_achado():
     """A exclusao e por PREFIXO inteiro: `MC-02` fica de fora, `C-02` continua contando."""
     assert not A.conta_como_codigo("MC-02") and not A.conta_como_codigo("RI-10")
     assert A.conta_como_codigo("C-02") and A.conta_como_codigo("R-01")
+
+
+def test_nenhum_titulo_de_achado_usa_prefixo_de_outro_dominio():
+    """A exclusao de MC/RI e por prefixo, e por isso tem um custo: um achado do projeto que
+    nascesse com titulo `## MC-01` ou `## RI-02` sumiria calado dos dois instrumentos -- nem
+    orfao no `achados_ancorados`, nem preservado no `codigos_preservados`. O ACHADOS.md nao
+    pode usar esses prefixos em titulo."""
+    with io.open(os.path.join(RAIZ, "ACHADOS.md"), encoding="utf-8") as f:
+        assert A.titulos_em_outro_dominio(f.read()) == []
+
+
+def test_mutacao_titulo_MC_no_ACHADOS_reprova(tmp_path):
+    achados = tmp_path / "ACHADOS.md"
+    achados.write_text("## A-01 · um achado\n\n## " + "MC" + "-01 · um achado com prefixo "
+                       "de marca\n\n> ### RI-" + "02 · em citacao tambem\n", encoding="utf-8")
+    assert A.titulos_em_outro_dominio(achados.read_text(encoding="utf-8")) == ["MC-01",
+                                                                             "RI-02"]
