@@ -1873,10 +1873,37 @@ rodada.
 > **26/09/2026:** fechada no corpo em 23/09/2026 e com o cabeçalho aberto até hoje; riscada e movida para cá no corte do `PENDENCIAS.md`.
 
 
+## ~~P-151~~ · O job `completo` do *Testes* fica vermelho sempre que houver branch de sessão aberta — **FECHADA em 26/09/2026**
+
+**Dono:** Claude Code · **Gatilho:** antes da rodada agendada de segunda, 28/09, 11:00 UTC, ou
+na primeira em que uma branch de sessão estiver à frente do `main` · **Classe:**
+`BLOQUEIA_O_SISTEMA` (um portão que acende sem defeito esconde o que acende com defeito)
+
+Medido em 26/09 pela nuvem, lendo o log: a única execução do job `completo` pedida pela P-146
+(*Testes #16*, `36178274615`, disparo manual de 25/09 19:12Z) saiu **vermelha por um teste só**,
+`auditoria/test_git01_branches_integradas.py::test_git01_toda_branch_do_origin_esta_no_head`,
+com `['origin/claude/ecstatic-planck-wgbd03', 'origin/wip/sessao-b']`. Todo o resto passou: 555
+em `alocacao`, 470 em `fase0` (39 pulados por falta de acervo local), 73 em `auditoria`, 6 em
+`tools`; `ruff` e `mypy` em zero; armazém com 0 faltas.
+
+**A causa:** os dois jobs fazem `fetch-depth: 0` (para as tags), então enxergam todas as
+branches do `origin`. A guarda do GIT-01 foi escrita para a **sessão** (*"leia antes de
+trabalhar"*); no runner, uma branch de PR aberto é o estado normal, não outra sessão fazendo a
+tarefa. O GIT-02 já tirou o Dependabot pelo mesmo motivo. Com o semanal vermelho por isso, um
+vermelho de verdade passa sem ninguém olhar (A-08: alarme que dispara sempre é alarme desligado).
+
+**Hoje (26/09, 10:30Z) nenhuma branch fora do Dependabot está à frente do `main`**, então a rodada
+de segunda passa se nada abrir até lá. **Proposta:** a guarda pula quando `GITHUB_ACTIONS` está
+definido, com um controle que prove que fora do CI ela ainda reprova. A pergunta da guarda é de
+sessão, e o CI já tem a sua: o PR roda contra o `main` de verdade.
+
+**FECHADA em 26/09/2026.** A guarda do GIT-01 pula quando `GITHUB_ACTIONS=true` (`auditoria/test_git01_branches_integradas.py::no_ci`), porque no runner branch aberta de PR ou de medição é o estado normal. Controle: `test_P151_so_o_CI_pula_e_fora_dele_a_guarda_ainda_reprova`, que **não** pula no CI, prova que só o valor exato do runner pula e que, fora dele, uma ref em `refs/remotes/origin/` fora do HEAD ainda é acusada. Medido nos dois modos: sem a variável, 5 passam; com `GITHUB_ACTIONS=true`, a guarda pula e o controle passa.
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-151** | o semanal ficava vermelho por branch de sessão aberta (GIT-01 no CI) | 26/09 — a guarda pula no CI; o controle que roda no CI prova que fora dele ela reprova |
 | **P-118** | `politica.yaml` citava a P-96 como aberta | 23/09 — fechada no corpo; cabeçalho riscado em 26/09 |
 | **P-45** | migrar o trabalho de repositório para o Claude Code | 26/09 — vencida: 16/09 — em uso desde então (`CLAUDE.md`, rodada de 16/09) |
 | **P-02** | aporte realizado era zero | 26/09 — vencida: 10/09 — primeiro depósito; classificado como aporte (U-02) |

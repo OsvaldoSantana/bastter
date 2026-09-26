@@ -1486,30 +1486,6 @@ no `manifesto_cvm.py`, que também serve ao acervo da B3.
 A origem deles, declarada aqui para quando a P-133 for feita, é a mesma URL do canônico,
 baixada à mão em 18/09 (manifesto de 18/09).
 
-## P-151 · O job `completo` do *Testes* fica vermelho sempre que houver branch de sessão aberta
-
-**Dono:** Claude Code · **Gatilho:** antes da rodada agendada de segunda, 28/09, 11:00 UTC, ou
-na primeira em que uma branch de sessão estiver à frente do `main` · **Classe:**
-`BLOQUEIA_O_SISTEMA` (um portão que acende sem defeito esconde o que acende com defeito)
-
-Medido em 26/09 pela nuvem, lendo o log: a única execução do job `completo` pedida pela P-146
-(*Testes #16*, `36178274615`, disparo manual de 25/09 19:12Z) saiu **vermelha por um teste só**,
-`auditoria/test_git01_branches_integradas.py::test_git01_toda_branch_do_origin_esta_no_head`,
-com `['origin/claude/ecstatic-planck-wgbd03', 'origin/wip/sessao-b']`. Todo o resto passou: 555
-em `alocacao`, 470 em `fase0` (39 pulados por falta de acervo local), 73 em `auditoria`, 6 em
-`tools`; `ruff` e `mypy` em zero; armazém com 0 faltas.
-
-**A causa:** os dois jobs fazem `fetch-depth: 0` (para as tags), então enxergam todas as
-branches do `origin`. A guarda do GIT-01 foi escrita para a **sessão** (*"leia antes de
-trabalhar"*); no runner, uma branch de PR aberto é o estado normal, não outra sessão fazendo a
-tarefa. O GIT-02 já tirou o Dependabot pelo mesmo motivo. Com o semanal vermelho por isso, um
-vermelho de verdade passa sem ninguém olhar (A-08: alarme que dispara sempre é alarme desligado).
-
-**Hoje (26/09, 10:30Z) nenhuma branch fora do Dependabot está à frente do `main`**, então a rodada
-de segunda passa se nada abrir até lá. **Proposta:** a guarda pula quando `GITHUB_ACTIONS` está
-definido, com um controle que prove que fora do CI ela ainda reprova. A pergunta da guarda é de
-sessão, e o CI já tem a sua: o PR roda contra o `main` de verdade.
-
 ## P-150 · Os eventos societários da B3 foram capturados uma vez e não têm rotina nem armazém
 
 **Dono:** Claude Code (escrever) · o desktop (subir o acervo de 11/09) · **Gatilho:** nenhum — a
@@ -1677,7 +1653,7 @@ feito agora para não misturar mudança de esquema com o conserto de um valor.
 >
 > 1. **As respostas da fila** viram o trabalho da sessão seguinte, a começar pela 1 (P-115) e
 >    pela 2 (P-117), que vêm antes de qualquer janela nova da série ajustada.
-> 2. **P-151 antes de segunda, 28/09, 11:00 UTC.** Não exige desktop.
+> 2. ~~**P-151 antes de segunda, 28/09, 11:00 UTC.**~~ **Fechada em 26/09** (a guarda do GIT-01 pula no CI).
 > 3. **P-150 — subir ao R2 o acervo de eventos de 11/09.** ⚙ **exige o desktop**; conferir antes
 >    se o `subir_acervo_local.py` cobre a pasta de eventos.
 > 4. **P-147 (NEFIN) e a release `cvm-acervo-2026`:** conferir depois do cron de 26/09. Não
