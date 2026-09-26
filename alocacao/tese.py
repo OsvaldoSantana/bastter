@@ -88,6 +88,19 @@ def impressao_carrego(c):
     return _hash(c.get("C01_horizonte_de_carrego",""), c.get("C02_compromisso",""),
                  c.get("C03_condicao_de_venda_antecipada",""))
 
+# O C03 do td_ipca (decisao dele, 26/09/2026) mantem "reserva de emergencia de 9 meses"
+# FIXO no texto assinado. O numero mora no texto, que a impressao sela; o alarme o le de la
+# em vez de um campo paralelo, que poderia discordar do texto sem ninguem ver.
+PREMISSA_RESERVA = re.compile(r"reserva de emergencia de (\d+) meses")
+
+
+def meses_de_reserva_no_texto(c):
+    """Os meses de reserva que o C03 assinado supoe, ou None se o texto nao os cita."""
+    m = PREMISSA_RESERVA.search(" ".join((c.get("C03_condicao_de_venda_antecipada") or "")
+                                         .split()))
+    return int(m.group(1)) if m else None
+
+
 def _achados(termos, texto):
     return [v for v in termos if re.search(rf"\b{re.escape(v)}", texto)]
 

@@ -81,6 +81,15 @@ e colar `impressao: 942c75bae248327b`.
 > **26/09/2026 — G-07 consertado (P-152 fechada).** O G8 agora lê o estado: assinado em
 > `REGRA_DECIDIDA`, o `td_ipca` fica em **0%** até a compra, e o efeito da assinatura passa a
 > ser só o do `hash11`. A gravação espera o **"assino"** dele sobre o texto final.
+>
+> **26/09/2026 — respostas dele ao texto.** HASH11: sai a regra de desuso do K02 e sai o
+> K04(c); o resto fica. Tesouro IPCA+: o C03 mantém "9 meses" fixo, com um **alarme**. O alarme
+> está no motor (`pendencias_de_premissa`): lê os meses do texto assinado do C03 e, se a meta da
+> reserva que o G2 calcula (6 × estabilidade + 0,5 por dependente, com teto) não for esses
+> meses, abre a pendência *"tese td_ipca desatualizada, reassinar?"*. A meta não é um campo do
+> `perfil.yaml`, é conta (política × EST01 × dependentes do estado), e o alarme usa a mesma conta.
+> Impressões dos textos finais: `hash11` **`ea8c8769bbf021e2`** (nova), `td_ipca`
+> **`942c75bae248327b`** (texto inalterado). A gravação espera o **"assino"**.
 
 ---
 
