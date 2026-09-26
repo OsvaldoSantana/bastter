@@ -393,6 +393,74 @@ Além deles, ficam fora da proteção:
 - **Os sha256 cobrem o insumo, não a fonte.** Se a B3 tiver publicado um valor errado em
   2016, o ajuste aplica o erro fielmente e o critério não vê.
 
+## 9. A janela, escolhida pelo n antes de qualquer preço (revisão 4, 26/09/2026)
+
+**Escrita antes de qualquer contagem.** Nenhum silver foi aberto para escrever esta seção: o
+silver mora no disco dele, e a sessão da nuvem não o alcança.
+
+**Por quê.** Pela tabela da §4, o K2 do JCP tem σ_max = 0,0416, e o σ iid de 2021–2025 foi
+0,0472 com n = 819. Com um n desse tamanho, o JCP sai `NAO_CONFIRMADO` por falta de poder em
+22,3% das vezes, e em 2016–2020 há menos JCP (linhas 232 e 240). Uma janela maior aumenta o n.
+A escolha do tamanho não pode ver preço, senão vira escolha pelo resultado.
+
+**As candidatas, na ordem:** 2016–2020, 2015–2020, 2014–2020 e 2013–2020.
+
+**A regra.** Vale a **menor** janela candidata em que
+
+> 0,0472 × √(819 / n_JCP) ≤ 0,8 × 0,0416, ou seja, **n_JCP ≥ 1.648**
+> (819 × (0,0472 / 0,03328)² = 1.647,4, arredondado para cima).
+
+Se nenhuma candidata atender, a janela é **2016–2020**. Nesse caso, o `NAO_CONFIRMADO`
+provável do K2 fica declarado no resultado **antes** da corrida, com o n contado ao lado.
+
+**O que é o n_JCP.** É a mesma unidade dos 819 de 2021–2025, até onde o silver sozinho
+consegue dizer. Conta-se o **papel-dia** (`cod` + `type_stock` + data) que tem
+`JRS CAP PROPRIO` e **não** tem, no mesmo papel e dia, `DIVIDENDO` (o "só JCP") nem evento de
+quantidade (o "dia limpo"). A data é a `data_ex`; onde ela falta, o ano sai do
+`ultimo_dia_com_direito`, e a saída diz quantos eventos caíram nesse caso. O papel-dia junta a
+mesma linha vinda das duas origens, suplemento e paginado (A-13).
+
+**Quem conta.** O `auditoria/c02_contar_n.py`, que lê do silver **só** `cod`, `type_stock`,
+`tipo`, `data_ex` e `ultimo_dia_com_direito`. Nenhuma coluna de valor, preço ou fator é lida,
+e um teste com essas colunas envenenadas prova isso.
+
+**O limite da contagem (P5).** O n do silver é um **teto** do n que entra no K2. Os 819
+contaram só papel-dia com preço no dia e na véspera, e o silver não sabe quem tem preço sem
+ler o COTAHIST. A regra, portanto, é **otimista**: uma janela escolhida por ela ainda pode
+sair sem poder. O que corrige isso sem ler preço está na fila do Osvaldo (a calibração pela
+razão de 2021–2025) e **só entra se ele decidir antes da contagem**.
+
+**A ordem, na sessão local:**
+1. Gerar o silver com calendário que cubra **2013-01-01 a 2020-12-31**. O nome vira
+   `cal-2013…-2020…` (P-117). Sem isso, os eventos de 2013–2015 saem sem `data_ex`.
+2. Rodar `auditoria/c02_contar_n.py` sobre ele. A saída tem só contagens, sem preço (P-136).
+3. Aplicar a regra e gravar, **num commit só e antes de abrir qualquer preço**: a contagem, a
+   janela escolhida e o sha256 do silver na §2.
+4. A janela escolhida substitui "2016–2020" em todo o texto:
+   - o COTAHIST dos anos acrescentados entra na tabela da §2, com as versões fixadas em
+     `docs/aprendizado/preregistro-ml-v2.pins.yaml`, que já tem 2013, 2014 e 2015;
+   - o universo do sorteio do D1 passa a ser a janela escolhida;
+   - os critérios ano a ano (§4.2) valem para cada ano;
+   - o H-FISCAL usa 15% de IR no JCP até 31/12/2015 (a alíquota de 18% vale só de 01/01 a
+     08/03/2016).
+5. Sortear e empurrar o D1, e só então seguir a §3.1.
+
+**Conferência de contaminação: nenhum ano de 2013–2015 sai das candidatas.** Varredura de
+26/09 por `2013`, `2014` e `2015` em `docs/auditoria/` e no `ACHADOS.md`. Nenhuma medição do
+degrau, da série ajustada ou de razão de provento nesses anos. O que apareceu:
+- literatura citada (Harvey e Liu 2015, Bailey e López de Prado 2014, e outras) e o período
+  2005–2015 de um estudo do Insper, que é de terceiros;
+- as alíquotas de IR do JCP no `ACHADOS.md`, que são lei e não medição;
+- o cabeçalho do FCA medido em 2014 (`ACHADOS.md`, seguimento da P-143), que é leiaute da
+  CVM, sem preço e sem evento.
+
+Fora das duas pastas (régua, pergunta 2):
+- a medição da P-145 (`medicoes/p145_ponte_2013_2019.py`) **não rodou**: a branch
+  `medir/p145_ponte_2013_2019` não tem commit de resultado (o último, `d0bff2c`, é o do
+  próprio `medir.yml`);
+- ela usaria volume, e não degrau, e cobre 2016–2019 do mesmo jeito que 2013–2015. Se
+  contaminasse os primeiros, contaminaria também a janela original.
+
 ---
 
 ## Notas de revisão
@@ -423,3 +491,5 @@ Além deles, ficam fora da proteção:
   teto nos dois testes, a janela reprova um ajuste perfeito em até 19,0% (`1 − 0,9²`). Esta
   seção fica no fim para que a linha citada continue sendo a mesma. As alternativas estão
   em [`docs/decisoes/fila-do-osvaldo.md`](../decisoes/fila-do-osvaldo.md).
+  Antes do merge: contar os JCPs por ano no silver, sem ler preço, e escolher a janela pela
+  regra da §9 (revisão 4).
