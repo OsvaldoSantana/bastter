@@ -2018,10 +2018,27 @@ saída"* é a defesa que a P7 recusa: depende de alguém ler.
 
 **FECHADA em 26/09/2026.** Decisão dele (`117a`). `refinar.nome_do_silver` grava `eventos_silver_<captura>_cal-<AAAAMMDD>-<AAAAMMDD>.csv` (ou `_cal-nenhum`), sempre: datas completas, porque dois calendários que terminam em dias diferentes do mesmo ano colidiriam. `ajustar.ultimo_silver` deixa o `sorted()` e passa a ter regra escrita: a captura mais nova; dentro dela, o maior calendário lido do nome (o legado `_cal-1986-2026` do P-114 é lido como ano inteiro); o nome sem calendário só vale se for o único; empate levanta `SilverAmbiguo`. O caso da P-117 (um `_antigo` que o `sorted()` poria por último) está no teste e não inverte mais a escolha. Os silvers já gravados no disco dele continuam legíveis.
 
+## ~~P-152~~ · O G8 tem de honrar o `REGRA_DECIDIDA` que o validador anuncia (G-07) — **FECHADA em 26/09/2026**
+
+**Dono:** Osvaldo (decidir) · Claude Code (implementar) · **Gatilho:** antes de gravar a
+assinatura do `td_ipca` (P-01) · **Classe:** `DECISAO_DE_DESENHO`
+
+O defeito é do motor, não do registro: `g8_compromisso_de_carrego` libera peso a qualquer
+carrego válido, e `validar_carrego` anuncia que em `REGRA_DECIDIDA` ele não libera. **Proposta:**
+o G8 passa a mandar o carrego em `REGRA_DECIDIDA` para `sem_compromisso`, com o motivo *"regras
+seladas, posição não existe; libera no dia da compra"*, e um teste que aloca com o registro
+assinado e exige `protecao_real = 0` — reprovando na versão de hoje. É apertar o portão para
+ele fazer o que declara; como a instrução de 26/09 foi *"sem mexer nos portões"*, a decisão é
+dele. Alternativa: gravar o `td_ipca` só no dia da compra, já em `COMPROMISSO_ATIVO`, e o
+defeito fica sem efeito até lá.
+
+**FECHADA em 26/09/2026.** Decisão dele (26/09, sessão G-07): *"G-07 é defeito, não política"* — a regra está escrita no validador e no `CLAUDE.md`, e o portão a ignorava. `g8_compromisso_de_carrego` agora lê o estado (`_estado_do_carrego`, com o mesmo default do validador) e manda `REGRA_DECIDIDA` para `sem_carrego` com a pendência "na compra, preencher C02 e C04 e mudar para COMPROMISSO_ATIVO". **Teste que falha na versão anterior:** `test_G07_regra_decidida_nao_libera_peso_no_g8` (2 de 3 reprovam no G8 antigo). **Instantâneo dourado** (9 cenários, `alocar()` inteiro, campo a campo): só mudam os 3 cenários com o registro assinado em memória — `td_ipca` 15% → 0, `protecao_real` 0,15 → 0, `lastro` +15 p.p. para `td_selic`, uma pendência `G8_carrego:td_ipca` a mais, o alerta de PROTECAO_REAL sem rota viável. Sem assinatura (o `teses.yaml` do repositório) e em `COMPROMISSO_ATIVO`: **zero diferenças**.
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-152** | G8 tem de honrar REGRA_DECIDIDA (G-07) | 26/09 — G8 lê o estado; td_ipca 15% → 0% assinado em REGRA_DECIDIDA |
 | **P-117** | o silver tinha dois arquivos para a mesma captura e quem escolhia era o sorted() | 26/09 — 117a: nome com captura e calendário; escolha por regra, empate levanta |
 | **P-12** | DATADO cobrava liquidez onde deveria cobrar vencimento (H-01) | 26/09 — 12a: vencimento casado via campo novo `vencimento_anos`; política 1.33.0 |
 | **P-81** | o chaves_orfas.py não separava decisão registrada de parâmetro órfão | 26/09 — 81a: `_registros` no YAML, lido pelo instrumento |

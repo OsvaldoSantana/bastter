@@ -1135,6 +1135,16 @@ def g7_tese_registrada(pares, P, teses):
         else: sem.append((r, (t or {}).get("motivo", "nenhuma tese registrada para esta rota")))
     return com, sem
 
+MOTIVO_REGRA_DECIDIDA = ("REGRA_DECIDIDA: as regras estao seladas, a posicao nao existe; "
+                         "libera no dia da compra, quando o registro virar COMPROMISSO_ATIVO")
+
+
+def _estado_do_carrego(c):
+    """O estado do registro validado. Ausente vale COMPROMISSO_ATIVO -- o mesmo default de
+    `tese.validar_carrego`, para que o portao e o validador nao possam discordar."""
+    return (c.get("carrego") or {}).get("estado", "COMPROMISSO_ATIVO")
+
+
 def g8_compromisso_de_carrego(pares, P, carregos):
     """Gemeo do G7, para o outro modo de falha: quebra de compromisso.
 
@@ -1148,7 +1158,11 @@ def g8_compromisso_de_carrego(pares, P, carregos):
         exige = any(P["funcoes"][f].get("exige_compromisso_de_carrego") for f in r.funcoes)
         if not exige: com.append(p); continue
         c = (carregos or {}).get(r.id)
-        if c and c["valida"] and c["duracao_anos"] is not None:
+        # G-07: REGRA_DECIDIDA sela as regras, mas a posicao nao existe -- o validador
+        # anuncia que o G8 nao libera peso neste estado, e o portao tem de honrar isso.
+        if c and c["valida"] and _estado_do_carrego(c) == "REGRA_DECIDIDA":
+            sem.append((r, MOTIVO_REGRA_DECIDIDA))
+        elif c and c["valida"] and c["duracao_anos"] is not None:
             r2 = replace(r, duracao_anos=c["duracao_anos"])
             com.append((r2,) + tuple(p[1:]))
         else:
@@ -1476,6 +1490,17 @@ def _pendencias_de_registro(rejeitados, P, teto_comp):
             f"pode ser dimensionada. Motivo atual: {motivo}",
             bloqueia=f"alocacao_de_{r.id}"))
     for r, motivo in rejeitados.get("sem_carrego", []):
+        if motivo == MOTIVO_REGRA_DECIDIDA:
+            # G-07: o registro existe e esta assinado; pedir para "registrar" seria mandar
+            # refazer o que ja foi feito. O que falta e a compra.
+            out.append(Pendencia(
+                f"G8_carrego:{r.id}",
+                f"Na compra de {r.nome}, preencher C02 (papel e juro real travado) e C04 "
+                f"(custo de quebrar) e mudar o estado para COMPROMISSO_ATIVO.",
+                f"As regras estao seladas em REGRA_DECIDIDA; o peso so vem quando a "
+                f"posicao existir. Motivo atual: {motivo}",
+                bloqueia=f"alocacao_de_{r.id}"))
+            continue
         out.append(Pendencia(
             f"G8_carrego:{r.id}",
             f"Registrar o compromisso de carrego de {r.nome} em teses.yaml: C01 "
