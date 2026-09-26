@@ -15,6 +15,7 @@ abaixo. Nenhum deles é copiado para o `CLAUDE.md` (§8: número que envelhece s
 | mutação (mutmut) em `ajustar.py`, `estado_io.py`, `alocacao.py`, `insumo_ml.py` | `.github/workflows/mutacao.yml`, artefato `mutmut-resultados` | **manual, uma vez** | ele dispara |
 | erros do processo: achado, retratação, reincidência | `docs/metricas/eventos.csv` | a cada achado, no mesmo commit | quem registra |
 | resumo semanal do processo | `python auditoria/metricas_processo.py` | quando se quer ler | à mão |
+| o que toda sessão lê, antes e depois de cada corte | `docs/metricas/contexto-de-sessao.md`, por `auditoria/tamanho_do_contexto.py` | a cada corte | quem corta |
 | tempo e tokens por pedido das sessões | `py -3.11 tools/analisar_sessoes.py` → `data/analise-sessoes/` | quando se quer ler | à mão, na máquina dele |
 
 **Job vermelho vira e-mail** pela notificação padrão do GitHub: falha de workflow avisa quem
