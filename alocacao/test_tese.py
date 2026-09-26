@@ -174,12 +174,30 @@ def test_c02_sem_numero_invalida():
 
 
 # ══ o arquivo do repositorio ═════════════════════════════════════════════════
-def test_repositorio_traz_apenas_modelos_e_nao_libera_nada():
-    """Se um dia liberar sozinho, este teste cai."""
+def test_repositorio_assinado_libera_so_o_que_a_assinatura_diz():
+    """Ate 26/09/2026 este teste exigia que o repositorio trouxesse so modelos invalidos.
+    A P-01 (decisao `01b`) assinou os dois registros. O que ele guarda agora: as duas
+    assinaturas validas, com as impressoes que ele aprovou, e o td_ipca em REGRA_DECIDIDA
+    -- valido, mas sem peso ate a compra (G-07). Se alguem editar o texto sem reassinar, a
+    impressao nao bate e o registro deixa de valer; se o estado virar COMPROMISSO_ATIVO sem
+    a compra, o `estado` abaixo cai."""
+    import alocacao as A
+    from motor import carregar as cc
     teses, carregos = carregar_registros(compromisso_maximo_anos=TETO)
-    assert teses and carregos, "os dois modelos tem de existir no arquivo versionado"
-    for aid, r in list(teses.items()) + list(carregos.items()):
-        assert not r["valida"], f"{aid}: o modelo do repositorio nao pode ser valido"
+    assert set(teses) == {"hash11"} and set(carregos) == {"td_ipca"}
+    assert teses["hash11"]["valida"], teses["hash11"]["motivo"]
+    assert carregos["td_ipca"]["valida"], carregos["td_ipca"]["motivo"]
+    assert teses["hash11"]["tese"]["impressao"] == "ea8c8769bbf021e2"
+    assert carregos["td_ipca"]["carrego"]["impressao"] == "942c75bae248327b"
+    assert carregos["td_ipca"]["carrego"]["estado"] == "REGRA_DECIDIDA"
+    P = A.carregar_politica()
+    e = A.Estado(despesa_mensal=4500, reserva_atual=40500, aporte_mensal=500,
+                 horizonte_anos=25, estabilidade_renda="baixa")
+    r = A.alocar(e, cc(), P, teses=teses, carregos=carregos)
+    assert r["alvo"]["pesos"].get("hash11", 0) > 0
+    assert "td_ipca" not in r["alvo"]["pesos"]
+    assert not [p for p in r["pendencias"] if p.id.startswith("reassinar:")], \
+        "com a meta de 9 meses o C03 assinado nao pode pedir reassinatura"
 
 
 def test_o_modelo_do_repositorio_cabe_no_teto_de_compromisso():

@@ -28,7 +28,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: "1.1.0"
+  versao: "1.2.0"
   emissao: 2026-09-03
   regra: >
     Pre-registro. A condicao de encerramento e escrita antes de a posicao existir,
@@ -38,7 +38,6 @@ meta:
 # ══ TESES — posicao especulativa (G7) ═══════════════════════════════════════
 teses:
   hash11:
-    exemplo: true          # <- APAGUE quando o conteudo for seu
     ativo_id: hash11
     funcao: APOSTA
     catalogo: ESPECULATIVO
@@ -58,14 +57,14 @@ teses:
     # A forma C e a mais honesta para quem NAO tem tese de conteudo: ela declara que
     # a posicao e um experimento com prazo, e isso e uma tese valida. Inventar
     # conviccao que voce nao tem e pior que assumir que a posicao e um experimento.
-    # RASCUNHO de 05/09/2026, forma C. Nao e sua tese ate voce apagar o
-    # `exemplo: true` — assentimento e o que separa tese de texto.
+    # ASSINADA em 26/09/2026 (P-01, decisao `01b`), forma C. Na assinatura ele tirou a
+    # regra de desuso ("3 revisoes sem aporte novo encerram a tese"): com a posicao no
+    # teto, o motor nao manda aporte a ela, e a regra encerraria a tese por dar certo.
     K02_tese: >
       A exposicao maxima de 3% do patrimonio investido em HASH11 se justifica ate
       31/12/2031 como aposta assimetrica de perda limitada a 100% do alocado e
       ganho nao limitado, e nao como reserva de valor. A posicao e revisada todo
-      mes de janeiro contra o custo de 1,30% a.a. do veiculo; se em 3 revisoes
-      consecutivas nao houver aporte novo, a tese esta encerrada por desuso.
+      mes de janeiro contra o custo de 1,30% a.a. do veiculo.
 
     K03_prazo: 2031-12-31
     # Curto demais (2 anos) transforma a aposta em trade e faz 1,30% a.a. de taxa
@@ -82,17 +81,15 @@ teses:
     #   disciplina  a exposicao passar de X% por N revisoes seguidas sem novo aporte
     # O terceiro e o menos obvio e o mais util: encerra a posicao quando ela da
     # certo demais, que e o cenario para o qual ninguem tem regra pronta.
-    # RASCUNHO. Tres eventos, nenhum deles de preco — os tres tipos que o
-    # comentario acima descreve: estrutura, regime e disciplina.
+    # ASSINADA em 26/09/2026. Dois eventos, nenhum de preco: estrutura e regime. O
+    # terceiro (disciplina: exposicao acima de 3% em 3 revisoes sem aporte) saiu na
+    # assinatura, pelo mesmo motivo da regra de desuso do K02.
     K04_falsificacao: >
       A tese esta invalidada se ocorrer qualquer um: (a) surgir na B3 veiculo de
       exposicao equivalente a cripto com taxa total igual ou inferior a 0,65% a.a.,
       metade da atual, e a posicao nao migrar para ele em 90 dias; (b) mudanca
       tributaria ou regulatoria que elimine a negociacao do veiculo em bolsa ou
-      altere sua tributacao acima de 20% sobre o ganho; (c) a exposicao ultrapassar
-      3% do patrimonio investido em 3 revisoes anuais seguidas sem aporte novo —
-      encerramento por a posicao ter dado certo demais, cenario para o qual ninguem
-      tem regra pronta.
+      altere sua tributacao acima de 20% sobre o ganho.
 
     K05_liquidez_saida_dias: 2
     K06_insiders: NAO_APLICAVEL   # e um ETF, nao uma empresa: nao ha lock-up nem FRE
@@ -108,12 +105,11 @@ teses:
       nota: >
         Reprova ou e inaplicavel em todos os portoes do catalogo buy & hold. Isso NAO
         impede a compra — impede que ela seja reclassificada como investimento depois.
-    impressao: PENDENTE
+    impressao: ea8c8769bbf021e2
 
 # ══ CARREGOS — compromisso de carrego ate o vencimento (G8) ═════════════════
 carregos:
   td_ipca:
-    exemplo: true          # <- APAGUE quando o conteudo for seu
     ativo_id: td_ipca
     funcao: PROTECAO_REAL
     catalogo: BUY_AND_HOLD
@@ -143,8 +139,9 @@ carregos:
     # C03 — o modo de falha desta funcao e vender quando a marcacao abre. Uma condicao
     # de PRECO aqui autoriza exatamente o erro que o registro existe para impedir; o
     # validador a rejeita. Tem de ser um EVENTO.
-    # RASCUNHO, decidivel hoje porque e regra sobre o comportamento dele, nao
-    # sobre o mercado. Dois eventos, nenhum de preco.
+    # ASSINADO em 26/09/2026. Dois eventos, nenhum de preco. Os "9 meses" ficam FIXOS
+    # no texto (decisao dele): se a meta da reserva que o G2 calcula deixar de ser 9,
+    # `alocacao.pendencias_de_premissa` abre "tese td_ipca desatualizada, reassinar?".
     C03_condicao_de_venda_antecipada: >
       A venda antes do vencimento fica autorizada apenas em dois eventos, ambos
       verificaveis por fato consumado e nenhum deles por cotacao: (a) necessidade
@@ -168,10 +165,10 @@ carregos:
                                     # aceita travar. Marcacao a mercado exige limite, e o
                                     # limite e seu, nao da politica: quem assume a trava
                                     # declara quanto dela aceita.
-    # DEIXADO EM false DE PROPOSITO. E o unico campo que eu nao posso preencher
-    # por voce: e assinatura. Trocar para true significa "entendo que a marcacao
-    # pode abrir e que isso nao e perda se eu carregar ate o vencimento".
-    C06_reconhecimento: false
-    impressao: PENDENTE
+    # ASSINADO por ele em 26/09/2026: "entendo que a marcacao pode abrir e que isso
+    # nao e perda se eu carregar ate o vencimento". Em REGRA_DECIDIDA o G8 nao libera
+    # peso (G-07): o td_ipca so recebe peso quando o estado virar COMPROMISSO_ATIVO.
+    C06_reconhecimento: true
+    impressao: 942c75bae248327b
 
 historico: []   # registros substituidos entram aqui, com a impressao antiga preservada
