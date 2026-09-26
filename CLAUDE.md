@@ -29,6 +29,9 @@ Onde o projeto está e a ordem do que falta: **`PLANO.md`** (ganha de qualquer f
 aqui). O que está aberto: **`PENDENCIAS.md`**. As decisões que esperam o Osvaldo:
 **`docs/decisoes/fila-do-osvaldo.md`**.
 
+As instruções do Projeto no claude.ai são cópia de **`docs/ia/instrucoes-projeto-claude.md`**:
+mudar uma exige mudar a outra no mesmo dia, com a linha no changelog de lá.
+
 ---
 
 ## 2. As sete doutrinas
