@@ -77,6 +77,46 @@ def test_ipca_volta_ao_universo_com_compromisso_registrado():
     assert com["alvo"]["pesos"]["td_ipca"] <= 0.15 + 1e-9, "o teto vem do C05 do registro"
 
 
+def carrego_regra_decidida(rid="td_ipca"):
+    """O mesmo registro de `carrego_valido`, em REGRA_DECIDIDA: C02 e C04 esperam a compra."""
+    c = dict(carrego_valido(rid)[rid]["carrego"], estado="REGRA_DECIDIDA",
+             C02_compromisso="AGUARDA_COMPRA", C04_custo_de_quebrar="AGUARDA_COMPRA")
+    c["impressao"] = impressao_carrego(c)
+    ok, probs, av, dur = validar_carrego(c, dt.date(2026, 9, 3), TETO_COMP)
+    assert ok, probs
+    assert any("G8 NAO libera peso" in a for a in av), "o validador tem de anunciar"
+    return {rid: dict(valida=True, motivo="", avisos=av, duracao_anos=dur, carrego=c)}
+
+
+def test_G07_regra_decidida_nao_libera_peso_no_g8():
+    """G-07: o validador anuncia que o G8 NAO libera peso em REGRA_DECIDIDA, e o G8 liberava
+    -- conferia so `valida` e `duracao_anos`. Com o registro valido e selado, a versao
+    anterior dava 15% a `td_ipca`, uma posicao que nao existe. Agora: zero, e a pendencia
+    diz o que falta (a compra), nao para registrar de novo o que ja foi registrado."""
+    r = alocar(Estado(**BASE), C, P, teses={}, carregos=carrego_regra_decidida())
+    assert "td_ipca" not in r["alvo"]["pesos"]
+    assert r["alvo"]["blocos"]["protecao_real"] == 0
+    pend = [p for p in r["pendencias"] if p.id == "G8_carrego:td_ipca"]
+    assert len(pend) == 1, "a rota espera a compra -- nao pode sumir (P6)"
+    assert "COMPROMISSO_ATIVO" in pend[0].pergunta and "Registrar" not in pend[0].pergunta
+
+
+def test_G07_o_mesmo_registro_ativo_continua_liberando():
+    """O conserto le o estado, nao a presenca do registro: o mesmo carrego, em
+    COMPROMISSO_ATIVO, recebe o peso do C05 como antes."""
+    r = alocar(Estado(**BASE), C, P, teses={}, carregos=carrego_valido())
+    assert r["alvo"]["pesos"]["td_ipca"] == pytest.approx(0.15)
+
+
+def test_G07_portao_e_validador_tem_o_mesmo_default_de_estado():
+    """Registro sem `estado` vale COMPROMISSO_ATIVO nos dois lados; se um mudasse o default
+    sozinho, o portao e o validador voltariam a discordar calados."""
+    from alocacao import _estado_do_carrego
+    import inspect, tese as T
+    assert _estado_do_carrego({"carrego": {}}) == "COMPROMISSO_ATIVO"
+    assert 'c.get("estado", "COMPROMISSO_ATIVO")' in inspect.getsource(T.validar_carrego)
+
+
 def test_cripto_volta_ao_universo_com_tese_registrada():
     com = alocar(Estado(**BASE), C, P, teses=tese_valida(), carregos={})
     assert com["alvo"]["pesos"].get("hash11", 0) > 0

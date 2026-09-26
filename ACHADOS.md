@@ -2995,3 +2995,15 @@ teste.
 **Não consertado nesta sessão, de propósito:** a instrução dele foi preparar a assinatura
 *"sem mexer nos portões"*, e fazer o G8 honrar o estado muda o que um portão faz. O conserto
 proposto está na P-152; a assinatura do `td_ipca` espera a decisão.
+
+**Consertado em 26/09/2026** (decisão dele: *"G-07 é defeito, não política"* — a regra é dele e
+está escrita; o portão é que a ignorava). `g8_compromisso_de_carrego` lê o estado por
+`_estado_do_carrego`, com o **mesmo default** de `validar_carrego` (ausente =
+`COMPROMISSO_ATIVO`), e um teste prende os dois defaults juntos. `REGRA_DECIDIDA` vai para
+`sem_carrego` e vira pendência com o que falta — a compra —, não com "registrar", que mandaria
+refazer o que já está assinado. **Mudança de comportamento, medida por instantâneo dourado**
+(`alocar()` inteiro, 9 cenários, campo a campo): com o registro assinado em memória, `td_ipca`
+**15% → 0%**, os 15 p.p. voltam ao `lastro` (`td_selic`), e aparecem a pendência
+`G8_carrego:td_ipca` e o alerta de PROTECAO_REAL sem rota viável. Com o `teses.yaml` do
+repositório (não assinado) e com o carrego em `COMPROMISSO_ATIVO`: **zero diferenças**.
+Teste: `test_G07_regra_decidida_nao_libera_peso_no_g8`, que reprova no G8 anterior.

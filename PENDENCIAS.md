@@ -71,28 +71,19 @@ e colar `impressao: 942c75bae248327b`.
 >    `td_ipca` **`942c75bae248327b`**.
 > 2. **G-07:** assinado em `REGRA_DECIDIDA`, o `td_ipca` **recebe 15% em PROTECAO_REAL** no
 >    cenário sintético — o G8 não lê o estado, embora o validador diga que não libera peso.
->    Conserto na **P-152**, que depende dele (a instrução foi não mexer nos portões).
+>    Conserto na **P-152** — feito em 26/09, decisão dele: *"G-07 é defeito, não política"*.
 >
 > **Medido, o que assinar muda** (cenário sintético `test_alocacao.BASE`, registros assinados em
 > memória): `aposta` 0 → **3%** (`hash11`), `protecao_real` 0 → **15%** (`td_ipca`, pelo G-07),
 > `lastro` 35% → 19%, `rv` 65% → 63%. O texto final das duas foi mostrado a ele no chat; a
 > gravação espera o OK dele e a decisão da P-152.
+>
+> **26/09/2026 — G-07 consertado (P-152 fechada).** O G8 agora lê o estado: assinado em
+> `REGRA_DECIDIDA`, o `td_ipca` fica em **0%** até a compra, e o efeito da assinatura passa a
+> ser só o do `hash11`. A gravação espera o **"assino"** dele sobre o texto final.
 
 ---
 
-## P-152 · O G8 tem de honrar o `REGRA_DECIDIDA` que o validador anuncia (G-07)
-
-**Dono:** Osvaldo (decidir) · Claude Code (implementar) · **Gatilho:** antes de gravar a
-assinatura do `td_ipca` (P-01) · **Classe:** `DECISAO_DE_DESENHO`
-
-O defeito é do motor, não do registro: `g8_compromisso_de_carrego` libera peso a qualquer
-carrego válido, e `validar_carrego` anuncia que em `REGRA_DECIDIDA` ele não libera. **Proposta:**
-o G8 passa a mandar o carrego em `REGRA_DECIDIDA` para `sem_compromisso`, com o motivo *"regras
-seladas, posição não existe; libera no dia da compra"*, e um teste que aloca com o registro
-assinado e exige `protecao_real = 0` — reprovando na versão de hoje. É apertar o portão para
-ele fazer o que declara; como a instrução de 26/09 foi *"sem mexer nos portões"*, a decisão é
-dele. Alternativa: gravar o `td_ipca` só no dia da compra, já em `COMPROMISSO_ATIVO`, e o
-defeito fica sem efeito até lá.
 ## P-05 · Quatro `NAO_CONFIRMADO` esperando download
 
 | chave | bloqueia | o que fecha |
