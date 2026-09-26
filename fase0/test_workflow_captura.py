@@ -12,7 +12,11 @@ from __future__ import annotations
 import os
 import sys
 
+import pytest
 import yaml
+
+# 146b: o modulo inteiro le `.github/`, que a copia `mutants/` da mutacao nao leva.
+pytestmark = pytest.mark.repositorio
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, AQUI)

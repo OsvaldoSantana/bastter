@@ -145,6 +145,7 @@ def test_mutacao_arquivo_no_lugar_de_pasta_nao_vira_acervo(tmp_path):
 
 # ── P-57 passo 3: o regime AUTOMATICO e dado, e a limitacao resolvida nao cobre ──
 
+@pytest.mark.repositorio   # 146b: le o repositorio, a mutacao exclui
 def test_P57_todo_regime_declarado_esta_inteiro_no_arquivo_real():
     assert m.defeitos_de_regime(RAIZ) == {}
 

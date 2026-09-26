@@ -13,10 +13,18 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 meta:
-  versao: 1.32.0
+  versao: 1.33.0
   emissao: 2026-09-05
   base_de_custos: "custos.yaml"      # os numeros vem de la, com procedencia
   changelog:
+    1.33.0: >-
+      26/09/2026, decisoes dele da fila (docs/decisoes/fila-do-osvaldo.md). 12a: `funcoes
+      .DATADO.liquidez_ou_vencimento_casado` -- a rota iliquida casa com o objetivo pelo
+      VENCIMENTO (campo novo `vencimento_anos` da rota, que nasce vazio), nunca pela duracao;
+      a limitacao `datado_cobra_liquidez_onde_deveria_cobrar_vencimento` fica RESOLVIDA.
+      124a: a custodia mensal do Tesouro fica como escolha declarada (RESOLVIDA). 81a:
+      `_registros` declara, ao lado da chave, o que e registro de julgamento e nao
+      parametro; o `chaves_orfas.py` le a declaracao (P-81).
     1.32.0: >-
       25/09/2026. P-136, leitura feita na fonte (docs/fontes/b3-termos-de-uso.md,
       docs/fontes/cvm-dados-abertos-licenca.md). `licenca_de_redistribuicao_da_b3_nao_lida`
@@ -380,6 +388,10 @@ funcoes:
     regra: "duracao_do_instrumento <= prazo_do_objetivo"
     exige_objetivo: true             # A-04: sem objetivo datado, o bloco fica VAZIO
     exige_liquidez_dias: 30
+    # P-12 (decisao dele, 12a, 26/09/2026): "vence ate a data do objetivo OU e liquida em
+    # 30 dias". A liquidez era criterio de LIQUIDEZ aplicado a um problema de DURACAO.
+    # Casa pelo `vencimento_anos` da rota (nao pela duracao), contra o MENOR prazo (V-07).
+    liquidez_ou_vencimento_casado: true
     exige_perda_maxima: "limitada"
     prioridade: 2
   PROTECAO_REAL:
@@ -785,9 +797,11 @@ corretora:
       A quarta parcela, `corretagem_etf_pct`, NAO esta aqui: ela varia (a XP cobra
       0,50%) e PONTUA, como segunda parcela de `corretagem`.
     exibidos: ["corretagem_fii", "exercicio_opcao_pct", "mesa_minimo"]
+    _registros: [e_uma_decisao_nao_uma_omissao]   # P-81: registra um julgamento, nao e parametro
     e_uma_decisao_nao_uma_omissao: true
   promocional:
     peso: 0
+    _registros: [e_uma_decisao_nao_uma_omissao]   # P-81: registra um julgamento, nao e parametro
     e_uma_decisao_nao_uma_omissao: true
     justificativa: >
       Num horizonte de 120 meses, uma taxa promocional com validade vale
@@ -1140,6 +1154,7 @@ fase_A_recalculada:
   reserva_inicial: 0.00
   antes_dizia: {meses: 42, conclusao: "mar/2030", premissa_de_reserva: 7671.01}
   verdade:     {meses: 56, conclusao: "mai/2031", premissa_de_reserva: 0.00}
+  _registros: [atraso_em_meses]   # P-81: registra um julgamento, nao e parametro
   atraso_em_meses: 14
 
   ACHADO_M01_o_portao_ativo_e_o_que_menos_importa: >
@@ -1201,6 +1216,7 @@ bloco_C_solvencia:
 
   # ── 2. O QUE OS CORTES SAO, e o que eles nao sao ──────────────────────────
   natureza_dos_cortes:
+    _registros: [nenhum_corte_tem_ancora_legal]   # P-81: registra um julgamento, nao e parametro
     nenhum_corte_tem_ancora_legal: true
     comparacao_com_o_bloco_de_banco: 'O regime de instituicao financeira tem UMA metrica com
       piso LEGAL: o indice de Basileia. Reprovar nele e reprovar contra a autoridade. O bloco
@@ -1350,6 +1366,7 @@ regime_instituicao_financeira:
   bloco_substituto:
     B01_indice_de_basileia:
       mede: capital regulatorio sobre ativos ponderados pelo risco
+      _registros: [tem_piso_legal]   # P-81: registra um julgamento, nao e parametro
       tem_piso_legal: true
       piso:
         valor: null
@@ -1368,6 +1385,7 @@ regime_instituicao_financeira:
         '
     B02_indice_de_inadimplencia:
       mede: operacoes vencidas acima de 90 dias sobre carteira total
+      _registros: [tem_piso_legal]   # P-81: registra um julgamento, nao e parametro
       tem_piso_legal: false
       corte:
         valor: null
@@ -1375,14 +1393,17 @@ regime_instituicao_financeira:
         motivo: convencao, nao norma — e escolha do usuario, nao dado
     B03_custo_do_credito:
       mede: despesa de provisao sobre carteira media
+      _registros: [tem_piso_legal]   # P-81: registra um julgamento, nao e parametro
       tem_piso_legal: false
       nota: e o B02 visto pelo resultado em vez do balanco; os dois juntos separam banco que
         provisiona cedo de banco que adia
     B04_indice_de_eficiencia:
       mede: despesa operacional sobre receita operacional
+      _registros: [tem_piso_legal]   # P-81: registra um julgamento, nao e parametro
       tem_piso_legal: false
     B05_roe_ajustado_a_risco:
       mede: retorno sobre patrimonio confrontado com a alavancagem que o produziu
+      _registros: [tem_piso_legal]   # P-81: registra um julgamento, nao e parametro
       tem_piso_legal: false
       nota: 'ROE alto em banco pode ser eficiencia ou alavancagem. Sozinho ele nao separa
         as duas, e e por isso que entra AJUSTADO e depois do B01 na ordem.
@@ -2043,7 +2064,13 @@ limitacoes_declaradas:
     fonte: "IN RFB 1.585/2015, arts. 57 e 59 — docs/fontes/in-rfb-1585-2015-normaslegais.md"
 
   periodicidade_da_custodia_do_tesouro:
-    tipo: NAO_CONSERTADA
+    RESOLVIDA: >-
+      26/09/2026, decisao dele (124a): a aproximacao MENSAL fica, e passa a ser ESCOLHA
+      declarada, nao limitacao. Motivo, medido na propria entrada: erra centavos por ano a
+      R$500/mes, e erra CONTRA o Tesouro, que ainda assim vence (F-03) -- a direcao
+      conservadora, que nao muda ordenacao nenhuma. O netting pro rata semestral seria
+      codigo novo por centavos. A escolha esta escrita tambem no ponto do motor que a aplica
+      (alocacao.py, `simular_custo`, bloco `custodia_td`).
     o_que_resolveria: >
       Descontar a custodia por netting pro rata, semestral e no resgate, como a OC
       014/2024-VPC descreve. Ou decidir, por escrito, que a aproximacao mensal fica.
@@ -2060,7 +2087,12 @@ limitacoes_declaradas:
     fonte: "OC 014/2024-VPC — docs/fontes/b3-tarifas-tesouro-direto-oc014-2024.md"
 
   datado_cobra_liquidez_onde_deveria_cobrar_vencimento:
-    tipo: NAO_CONSERTADA
+    RESOLVIDA: >-
+      26/09/2026, decisao dele (12a): `funcoes.DATADO.liquidez_ou_vencimento_casado`. O G6
+      nao reprova a rota iliquida que tem `vencimento_anos`, e `casa_duracao` exige que ela
+      venca ate o menor prazo dos objetivos. O campo e NOVO e nasce vazio em todo o
+      catalogo: a LCI/LCA so casa quando o vencimento vier da fonte -- ate la, fora, como
+      antes. `test_P12_...` em alocacao/test_alocacao.py.
     o_que_resolveria: "a regra 'vence ate a data do objetivo OU liquida em 30 dias', com o casamento de vencimento junto"
     pendencia: P-12
     o_que_falta: >
@@ -2127,6 +2159,7 @@ limitacoes_declaradas:
 
       '
     efeito_hoje: nenhum — reserva_atual e 0,00 e nao ha reserva a empenhar
+    _registros: [aplica_se_ao_caso_do_usuario]   # P-81: registra um julgamento, nao e parametro
     aplica_se_ao_caso_do_usuario: false
     por_que_nao: 'Corrigido em 05/09/2026: o valor dele nao e reserva, e caucao de meio de pagamento.
       A limitacao continua REAL e vale para quem empenhar reserva de verdade — mas nao descreve

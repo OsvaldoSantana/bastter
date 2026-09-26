@@ -129,6 +129,10 @@ markers = [
   "xdist_group(nome): mesmo trabalhador sob --dist loadgroup (P-141)",
   "privado: le o alocacao/estado.yaml, fora do git por desenho; o CI exclui com -m \"not privado\"",
   "acervo: le insumo que so existe no armazem (o CSV do NEFIN, 25/09); o push exclui, o semanal o materializa",
+  # 146b (decisao dele, 26/09): a copia `mutants/` do mutmut nao leva .git, .github nem a
+  # raiz, e instrumenta o fonte. Teste que le o REPOSITORIO (e nao so o comportamento do
+  # modulo) quebra la sem mutante nenhum; a mutacao o exclui por este marcador.
+  "repositorio: le o repositorio (.git, .github, raiz, fonte cru); a mutacao exclui (CI-03)",
 ]
 
 # ── Classificacao das dependencias por CONSEQUENCIA ─────────────────────────
@@ -251,4 +255,5 @@ paths_to_mutate = ["fase0/ajustar.py", "alocacao/estado_io.py", "alocacao/alocac
                    "fase0/insumo_ml.py"]
 tests_dir = ["alocacao/", "fase0/"]
 also_copy = ["alocacao/", "fase0/", "auditoria/", "docs/", "pyproject.toml"]
-pytest_add_cli_args = ["-m", "not slow", "-p", "no:cacheprovider"]
+pytest_add_cli_args = ["-m", "not slow and not repositorio and not privado and not acervo",
+                       "-p", "no:cacheprovider"]

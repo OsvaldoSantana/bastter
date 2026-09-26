@@ -5,6 +5,7 @@ Um mapa de dependencias errado e pior que nenhum: quem confia nele para decidir 
 "ninguem le esta constante" toma a decisao com falsa seguranca. Estes testes existem
 para que o mapa nao possa mentir em silencio."""
 import os, sys
+import pytest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import impacto
 from alocacao import catalogo, carregar_catalogo
@@ -81,6 +82,7 @@ def test_o_relatorio_de_alvo_inexistente_nao_afirma_que_nada_depende():
     assert "NADA ENCONTRADO" in r and "NAO significa que nada depende" in r
 
 
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_o_alcance_de_funcao_e_transitivo_e_nao_so_direto():
     """A pergunta util nao e "quem me chama" — e "o que quebra se eu mudar o contrato".
     `simular_custo` e chamada por duas funcoes e alcancada por oito."""

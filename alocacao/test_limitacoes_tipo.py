@@ -20,6 +20,7 @@ passa aqui. O que segura isso e o `por_que_fisica` escrito e a leitura de quem r
 """
 from __future__ import annotations
 import io
+import pytest
 import os
 import re
 
@@ -87,6 +88,7 @@ def defeitos(lims, pendencias):
 
 # ── o portao sobre o arquivo real ─────────────────────────────────────────────
 
+@pytest.mark.repositorio   # 146b: le o repositorio, a mutacao exclui
 def test_5B16_toda_limitacao_diz_se_e_do_mundo_ou_nossa():
     assert defeitos(_limitacoes(), _pendencias()) == {}
 
@@ -97,6 +99,7 @@ def test_5B16_os_dois_tipos_estao_em_uso():
     assert set(TIPOS) <= tipos
 
 
+@pytest.mark.repositorio   # 146b: le o repositorio, a mutacao exclui
 def test_5B16_a_leitura_das_pendencias_ve_aberta_e_fechada():
     """O portao depende de ler PENDENCIAS.md; se o formato do cabecalho mudar e ninguem
     for achado, toda pendencia vira 'nao existe' -- e o teste acima falharia pelo motivo

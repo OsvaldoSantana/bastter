@@ -222,6 +222,11 @@ class RotaAloc:
     liquidez_dias: int = 1
     perda_maxima: str = "limitada"     # nominal_zero | limitada | total
     duracao_anos: Optional[float] = 0.0   # 0 = pos-fixado; None = vem do registro CARREGO
+    # P-12 (12a, 26/09/2026): PRAZO ATE O VENCIMENTO, que NAO e a duracao acima. A duracao
+    # de uma LCI pos-fixada e 0,0 -- a do juro --, e o vencimento dela pode ser 2 anos.
+    # Casar vencimento com objetivo pela duracao deixaria passar a LCI de 9999 dias de
+    # carencia. None = nao se sabe o vencimento, e sem ele a rota iliquida nao casa (P1).
+    vencimento_anos: Optional[float] = None
     indexador: str = "cdi"             # para o retorno liquido do G2
     rendimento_fator: float = 1.0      # fracao do indexador que a rota entrega
     # P-13: dois campos, nao um. `isento_ir` era booleano e o FII nao cabia nele —
@@ -489,6 +494,10 @@ def simular_custo(r, C, aporte, anos):
         if r.custodia_rv:
             t = custodia_rv_aa(pat, FX, ISEN, INTERP)/12; pat -= t; custo += t
         if r.custodia_td:
+            # P-124 (124a, escolha dele de 26/09): mensal por decisao, nao por engano. A B3
+            # cobra por netting pro rata, semestral e no resgate (OC 014/2024-VPC); o mensal
+            # erra centavos por ano CONTRA o Tesouro. `politica.yaml -> limitacoes_declaradas
+            # .periodicidade_da_custodia_do_tesouro`.
             base = max(0.0, pat-TDI) if r.td_isento else pat
             t = base*((1+TDC)**(1/12)-1); pat -= t; custo += t
     s = custo_saida_pct(r, B3V); custo += pat*s; pat -= pat*s
@@ -1092,7 +1101,12 @@ def g6_coerencia_funcao(rotas, P):
             lim_p = spec.get("exige_perda_maxima")
             falhas = []
             if lim_d is not None and lim_d is not False and r.liquidez_dias > lim_d:
-                falhas.append(f"resgate em {r.liquidez_dias}d > exige_liquidez_dias={lim_d}")
+                # P-12 (12a): a funcao que aceita vencimento casado no lugar da liquidez
+                # nao reprova aqui a rota que TEM vencimento conhecido -- o G6 nao sabe o
+                # prazo do objetivo, e quem casa e o `casa_duracao`, na alocacao.
+                if not (spec.get("liquidez_ou_vencimento_casado")
+                        and r.vencimento_anos is not None):
+                    falhas.append(f"resgate em {r.liquidez_dias}d > exige_liquidez_dias={lim_d}")
             if lim_p is not None and ordem.index(r.perda_maxima) > ordem.index(lim_p):
                 falhas.append(f"perda_maxima={r.perda_maxima} pior que exige_perda_maxima={lim_p}")
             if falhas: ruins.append((r, f, falhas))
@@ -1191,7 +1205,17 @@ def casa_duracao(r, objetivos, P):
     if regra != "duracao_do_instrumento <= prazo_do_objetivo":
         raise ValueError(f"regra de DATADO nao implementada: {regra}")
     if not objetivos or r.duracao_anos is None: return False
-    return r.duracao_anos <= min(o.prazo_anos for o in objetivos) + 1e-9
+    prazo = min(o.prazo_anos for o in objetivos)
+    spec = P["funcoes"]["DATADO"]
+    lim_d = spec.get("exige_liquidez_dias")
+    if lim_d is not None and r.liquidez_dias > lim_d:
+        # P-12 (12a): iliquida so casa se VENCE ate o objetivo -- o mesmo menor prazo do
+        # V-07. Sem vencimento conhecido, nao casa: insumo ausente nao vira casamento.
+        if not spec.get("liquidez_ou_vencimento_casado") or r.vencimento_anos is None:
+            return False
+        if r.vencimento_anos > prazo + 1e-9:
+            return False
+    return r.duracao_anos <= prazo + 1e-9
 
 def ordem_dos_portoes(P, fase=None):
     """A sequencia vem do YAML (P-07). Ate 05/09/2026 ela vivia no corpo de `alocar`.

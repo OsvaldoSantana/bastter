@@ -13,6 +13,7 @@ from alocacao import (simular_custo as al_simular, Estado, Divida, Objetivo,
                       alocar, catalogo, reserva_alvo, fracao_rv, arrasto_anualizado,
                       custo_pct_aportado, custo_de_discordar, g3_atrito, g4_dominancia,
                       g6_coerencia_funcao, g5_status, retorno_liquido_aa, aliquota_ir_rf,
+                      casa_duracao,
                       motor_aporte, vencimento_maximo, AQUI, g2_reserva,
                       compor_reserva, segmentos_de_capacidade, InsumoBloqueado,
                       carregar_catalogo, _resolve, _conferir_invariantes,
@@ -205,6 +206,7 @@ def test_k_max_vem_do_yaml():
     assert len(r2["ordens"]) > len(r1["ordens"])
 
 
+@pytest.mark.repositorio   # 146b: le o repositorio, a mutacao exclui
 def test_nenhum_literal_de_politica_fixo_no_modulo():
     """V-03, o caminho inverso do teste de cobertura: a cobertura garante que toda
     chave do YAML e lida; este garante que nao ha constante de politica fixa no
@@ -1372,15 +1374,40 @@ def test_lci_lca_fii_estao_no_catalogo_e_bloqueadas_com_motivo():
             "F-05: a consequencia tem de viajar junto com o motivo"
 
 def test_lci_perde_todas_as_funcoes_quando_a_carencia_chegar():
-    """H-01, preso antes de morder. Com carencia de 9 meses a rota nao serve nem
-    LASTRO nem DATADO — e a causa seria um criterio de LIQUIDEZ aplicado a um
-    problema de DURACAO. Se alguem consertar o DATADO, este teste falha e avisa."""
+    """H-01. Com carencia de 9 meses e SEM vencimento conhecido, a rota nao serve nem
+    LASTRO nem DATADO. Desde a 12a (26/09) o DATADO aceita vencimento casado, mas so
+    com `vencimento_anos` declarado: sem ele, a regra nova nao tem o que casar."""
     import dataclasses
     rotas = {r.id: r for r in catalogo(C)}
     lci = dataclasses.replace(rotas["lci"], liquidez_dias=270, bloqueios=[])
     ok, _ruins = g6_coerencia_funcao([lci], P)
     assert not ok or not ok[0].funcoes, \
-        "o DATADO passou a aceitar vencimento casado — atualize a limitacao declarada"
+        "rota iliquida SEM vencimento conhecido nao pode ficar com o DATADO (P1)"
+
+def test_P12_DATADO_aceita_vencimento_casado_no_lugar_da_liquidez():
+    """12a, decisao dele de 26/09: "vence ate a data do objetivo OU e liquida em 30 dias".
+    Casa pelo VENCIMENTO, contra o menor prazo -- nunca pela duracao, que na LCI
+    pos-fixada e 0,0 e deixaria passar qualquer carencia. Tres mutacoes: sem o
+    vencimento, vencimento alem do objetivo, e a chave desligada no YAML."""
+    import copy
+    import dataclasses
+    rotas = {r.id: r for r in catalogo(C)}
+    lci = dataclasses.replace(rotas["lci"], liquidez_dias=270, bloqueios=[],
+                              vencimento_anos=1.0)
+    ok, _ = g6_coerencia_funcao([lci], P)
+    assert ok and "DATADO" in ok[0].funcoes, "com vencimento conhecido, o G6 deixa casar"
+    dois = [Objetivo("carro", 10_000, 2)]
+    assert casa_duracao(ok[0], dois, P), "vence em 1 ano, objetivo em 2: casa"
+    assert not casa_duracao(ok[0], [Objetivo("x", 1, 0.5)], P), "vence depois do objetivo"
+    sem = dataclasses.replace(lci, vencimento_anos=None)
+    assert not casa_duracao(sem, dois, P), "sem vencimento, iliquida nao casa"
+    P2 = copy.deepcopy(P)
+    P2["funcoes"]["DATADO"]["liquidez_ou_vencimento_casado"] = False
+    ok2, _ = g6_coerencia_funcao([lci], P2)
+    assert not ok2 or "DATADO" not in ok2[0].funcoes, "desligado no YAML, volta a reprovar"
+    liquida = dataclasses.replace(rotas["lci"], liquidez_dias=1, bloqueios=[])
+    assert casa_duracao(liquida, dois, P), "a liquida continua casando pela duracao"
+
 
 def test_regime_de_banco_esta_especificado_e_declara_a_lacuna_de_dado():
     r = P["regime_instituicao_financeira"]
@@ -1938,6 +1965,7 @@ def test_P24_o_veredito_diz_quantas_rotas_porque_uma_so_deixou_de_ser_verdade():
 
 
 # ══ P-15 · procedencia do AMBIENTE, nao so do dado ═══════════════════════════
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_P15_toda_dependencia_de_terceiro_esta_declarada():
     """O "funciona na minha maquina" em forma testavel, e nos DOIS sentidos.
 
@@ -2104,6 +2132,7 @@ def test_P15_o_que_a_impressao_do_ambiente_NAO_promete():
 
 
 # ══ P-36 · o catalogo saiu do Python ═════════════════════════════════════════
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_P36_nenhuma_rota_e_construida_por_literal_no_python():
     """O teste que define a pendencia. A P2 dizia "regras como dados" e valia so para
     as regras: 25 rotas com todos os parametros viviam como literais dentro de
@@ -2532,6 +2561,7 @@ def test_S02_o_memo_por_conteudo_nao_cresce_sem_limite():
 
 
 # ══ P-38 · a disciplina virou garantia ═══════════════════════════════════════
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_P38_a_guarda_acusa_o_teste_que_suja_o_estado_compartilhado(tmp_path):
     """O teste que prova a guarda. Ele roda um pytest SEPARADO sobre um arquivo que
     muta `P` de proposito, e exige que o resultado seja vermelho COM O NOME do objeto.
@@ -2562,6 +2592,7 @@ def test_P38_a_guarda_acusa_o_teste_que_suja_o_estado_compartilhado(tmp_path):
     assert "error" in r.stdout
 
 
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_P38_a_guarda_restaura_para_que_so_o_culpado_falhe(tmp_path):
     """Detectar sozinho nao basta: se o teste A muta e ninguem restaura, todos os
     seguintes falham por causa do A e o rastro se perde. A guarda restaura DEPOIS de
@@ -2604,6 +2635,7 @@ def test_P38_as_fixtures_entregam_copia_e_nao_a_original(custos, politica,
     assert politica_original["tetos"]["aposta_pct"] != 0.99
 
 
+@pytest.mark.repositorio   # 146b: le ou roda o fonte, que a mutacao instrumenta
 def test_B12_a_guarda_vigia_as_fixtures_de_sessao(tmp_path):
     """B-12: `custos_originais` e `politica_original` eram protegidas so pela docstring
     "NAO altere". Mesmo desenho do teste da P-38: um pytest SEPARADO sobre um arquivo

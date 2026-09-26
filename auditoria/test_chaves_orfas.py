@@ -87,13 +87,9 @@ CONHECIDAS = {
     # uma. O E-03 era PARAMETRO: `ativo: true` prometia comportamento e nao entregava.
     # As cinco booleanas abaixo sao DECLARACAO DE DECISAO -- registram um julgamento
     # tomado, e o teste as le para fixar o registro. Um parametro orfao e defeito; uma
-    # decisao registrada e procedencia. Que o instrumento nao saiba separar as duas e
-    # limitacao DELE, e esta registrada como pendencia de desenho.
-    "bloco_C_solvencia.natureza_dos_cortes.nenhum_corte_tem_ancora_legal",
-    "corretora.promocional.e_uma_decisao_nao_uma_omissao",
-    "fase_A_recalculada.atraso_em_meses",
-    "limitacoes_declaradas.reserva_e_divida_tratadas_como_independentes.aplica_se_ao_caso_do_usuario",
-    "regime_instituicao_financeira.bloco_substituto.B01_indice_de_basileia.tem_piso_legal",
+    # decisao registrada e procedencia. Que o instrumento nao soubesse separar as duas era
+    # limitacao DELE (P-81). Desde 26/09 (81a) o YAML declara `_registros` ao lado da
+    # chave e o instrumento as lista a parte -- as cinco sairam daqui por conserto.
     # P-78, dado de pesquisa coletado e nunca pontuado -- decisao por campo, do Osvaldo.
     # `mesa_minimo` e o unico que ainda separa: `corretagem_fii` (11/24 declaram, todos
     # 0,0) e `exercicio_opcao_pct` (4/24, todos 0,005) ja sairam por leitura do codigo.
@@ -139,10 +135,6 @@ ESPECIES = (
     ("instituicoes.*.facilidade.home_broker_web", "P-78"),
     # `exporta_csv` NAO entra: nenhuma casa o declara no YAML hoje, e a guarda nova
     # de "especie que nao casa com nada" me pegou tentando por o glob por simetria.
-    # P-81 -- declaracao de DECISAO, nao parametro: registra um julgamento tomado, e o
-    # teste a le para fixar o registro. Procedencia, nao divida.
-    ("*.tem_piso_legal", "P-81"),
-    ("corretora.*.e_uma_decisao_nao_uma_omissao", "P-81"),
     # M-01 -- numeros historicos guardados para comparacao. Nao sao entrada.
     ("fase_A_recalculada.*.premissa_de_reserva", "M-01"),
 )
@@ -256,3 +248,30 @@ def test_a_ferramenta_NAO_deduplica_por_nome_de_folha(tmp_path):
         "invisivel.\n%s" % (len(achadas), r.stdout[-800:]))
     assert "um.nunca_lida_por_ninguem" in r.stdout
     assert "dois.nunca_lida_por_ninguem" in r.stdout
+
+
+def test_P81_decisao_registrada_sai_das_orfas_e_aparece_a_parte(tmp_path):
+    """81a: o YAML declara, o instrumento le. Mutacao: sem a declaracao, a mesma chave
+    volta a ser orfa; declaracao que aponta para chave inexistente e erro."""
+    import yaml as _y
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "m.py").write_text("x = 1\n", encoding="utf-8")
+    doc = {"bloco": {"_registros": ["decidido"], "decidido": True, "parametro": 3}}
+    y = tmp_path / "p.yaml"
+    y.write_text(_y.safe_dump(doc), encoding="utf-8")
+    r = subprocess.run([sys.executable, SCRIPT, str(pkg), str(y)], capture_output=True,
+                       text=True)
+    assert r.returncode == 0, r.stderr
+    assert "bloco.parametro" in r.stdout and "[registro] bloco.decidido" in r.stdout
+    assert "bloco.decidido " not in r.stdout.split("DECISAO REGISTRADA")[0]
+    del doc["bloco"]["_registros"]
+    y.write_text(_y.safe_dump(doc), encoding="utf-8")
+    r = subprocess.run([sys.executable, SCRIPT, str(pkg), str(y)], capture_output=True,
+                       text=True)
+    assert "bloco.decidido" in r.stdout and "[registro]" not in r.stdout
+    doc["bloco"]["_registros"] = ["nao_existe"]
+    y.write_text(_y.safe_dump(doc), encoding="utf-8")
+    r = subprocess.run([sys.executable, SCRIPT, str(pkg), str(y)], capture_output=True,
+                       text=True)
+    assert r.returncode != 0 and "nao_existe" in r.stderr
