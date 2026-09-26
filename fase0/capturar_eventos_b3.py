@@ -69,10 +69,17 @@ def cadencia(raiz_repo):
     return DIAS.index(dia), c["motivo"]
 
 
+def nome_no_armazem(partes):
+    """O nome do arquivo no armazem a partir do caminho relativo a pasta do recurso,
+    `[dt_captura=DIA, ...]`. A chave nao aceita barra no nome: `PETR/pagina-001.json`
+    vira `PETR__pagina-001.json`, e o dia sai -- a versao e o sha256. E a UNICA regra de
+    nome: a carga inicial (`subir_acervo_local.py`) usa esta mesma funcao (N-01)."""
+    return "__".join(partes[1:])
+
+
 def arquivos_do_coletor(raiz):
-    """[(recurso, nome no armazem, caminho)] do que o `coletar_b3` gravou. A chave do
-    armazem nao aceita barra no nome: `proventos/<dia>/PETR/pagina-001.json` vira
-    `PETR__pagina-001.json`. O `manifesto.jsonl` nao entra aqui: ele e log."""
+    """[(recurso, nome no armazem, caminho)] do que o `coletar_b3` gravou. O
+    `manifesto.jsonl` nao entra aqui: ele e log."""
     out = []
     for pasta, recurso in RECURSOS.items():
         base = os.path.join(raiz, pasta)
@@ -81,8 +88,8 @@ def arquivos_do_coletor(raiz):
                 if not n.endswith(".json"):
                     continue
                 cam = os.path.join(dirpath, n)
-                partes = os.path.relpath(cam, base).replace("\\", "/").split("/")[1:]
-                out.append((recurso, "__".join(partes), cam))
+                partes = os.path.relpath(cam, base).replace("\\", "/").split("/")
+                out.append((recurso, nome_no_armazem(partes), cam))
     return sorted(out)
 
 
