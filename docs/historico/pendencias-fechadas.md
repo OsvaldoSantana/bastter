@@ -2086,10 +2086,27 @@ e colar `impressao: 942c75bae248327b`.
 
 **FECHADA em 26/09/2026.** Assinada por ele no chat em 26/09/2026 ("Assinar"), sobre o texto final mostrado antes de gravar. Mudanças dele no texto: no HASH11, sai a regra de desuso do K02 e sai o K04(c); no Tesouro IPCA+, o C03 mantém "9 meses" fixo, com o alarme `pendencias_de_premissa` (PR #22). Impressões gravadas: `hash11` **`ea8c8769bbf021e2`**, `td_ipca` **`942c75bae248327b`** (texto inalterado). O `td_ipca` fica em `REGRA_DECIDIDA`: válido, sem peso até a compra (G-07, PR #21). **Efeito medido** (cenário sintético, estabilidade baixa, reserva cheia): aposta 0 → 3% (`hash11`), RV 56% → 54,32%, lastro 44% → 42,68%, `td_ipca` 0%, sem pendência de reassinar. Os dois testes que exigiam "só modelos no repositório" viraram `test_repositorio_assinado_libera_so_o_que_a_assinatura_diz`, que fixa as impressões e o estado.
 
+## ~~P-159~~ · Ler a Resolução CVM 19/2021 na fonte primária e confirmar ou retirar a tese de independência — **FECHADA em 26/09/2026**
+
+**Dono:** sessão de pesquisa (nuvem), com a transcrição em `docs/fontes/` · **Gatilho:** antes
+da P-158 e antes de qualquer texto público que prometa independência · **Classe:**
+`DECISAO_DE_DESENHO`
+
+A pesquisa de fundação apoia a tese de independência ("não distribui produto, não recebe
+comissão, não aceita anúncio") e a leitura de que "padrão é recomendação" num **achado de 20/09
+sobre a CVM 19 que só existe no chat**: não está no `ACHADOS.md` nem em `docs/fontes/`. Em
+26/09 toda afirmação que se apoia nele passou a `NAO_CONFIRMADO` (nota N-CVM nos documentos de
+`docs/marca/`). O que fecha: o texto da resolução transcrito da fonte primária, com os
+dispositivos que se aplicam, e a tese **confirmada** (as notas N-CVM saem, com a citação) ou
+**retirada** (a promessa sai da fundação de marca, como retratação, não apagada).
+
+**FECHADA em 26/09/2026.** A Resolução CVM 19/2021 foi lida na fonte primária (site da CVM, texto consolidado até a 179/2023) e transcrita em `docs/fontes/cvm-resolucao-19-consolidada.md`, com URL, data de acesso e sha256 do PDF e do DOCX. **Confirmadas com escopo:** o padrão individualizado é recomendação (art. 1º, § 1º, I e II) e a atividade é privativa de consultor (art. 2º), para o MEOL oferecido a terceiros; a vedação de garantir rentabilidade (art. 18, III). **Retirada:** "não distribuir, não receber comissão e não aceitar anúncio" como critério da CVM — a norma permite distribuir com segregação (art. 18, I e § 2º) e não fala de anúncio; as três ficam como escolha do MEOL. Retratação em `eventos.csv`. O enquadramento do MEOL segue na P-158. Não é parecer.
+
 ## Fechadas
 
 | # | o que era | fechada em |
 |---|---|---|
+| **P-159** | ler a Resolução CVM 19/2021 e confirmar ou retirar a tese de independência | 26/09 — duas teses confirmadas com escopo, uma retirada |
 | **P-01** | assinar os dois registros (HASH11 e Tesouro IPCA+) | 26/09 — hash11 ea8c8769bbf021e2, td_ipca 942c75bae248327b; td_ipca sem peso até a compra |
 | **P-152** | G8 tem de honrar REGRA_DECIDIDA (G-07) | 26/09 — G8 lê o estado; td_ipca 15% → 0% assinado em REGRA_DECIDIDA |
 | **P-117** | o silver tinha dois arquivos para a mesma captura e quem escolhia era o sorted() | 26/09 — 117a: nome com captura e calendário; escolha por regra, empate levanta |

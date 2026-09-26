@@ -48,7 +48,9 @@ o próprio documento declara como destino.
 
 - **Não são decisão de marca tomada.** A fundação de marca (rodada 1, bloco D) é síntese,
   `NAO_CONFIRMADO`, a testar com pessoas.
-- **Não são parecer jurídico.** As afirmações que se apoiam na Resolução CVM 19 estão
-  `NAO_CONFIRMADO` até a leitura da resolução na fonte primária (`PENDENCIAS.md`).
+- **Não são parecer jurídico.** As afirmações sobre a Resolução CVM 19 foram conferidas no
+  texto dela em 26/09/2026 ([transcrição](../fontes/cvm-resolucao-19-consolidada.md)): duas
+  confirmadas com escopo, uma retirada, com a retratação ao lado do texto original. O
+  enquadramento do MEOL é da P-158.
 - **Não carregam dado do autor.** Os prints da auditoria visual de 20/09 são de contas de
   terceiros ou de demonstração, e não estão no repositório.

@@ -81,7 +81,7 @@ Cada requisito traz:
 *Verificação:* **revisão** — cada texto de confirmação é lido contra a pergunta: "isto afirma mais do que aconteceu?".
 
 **RI-07 — todo padrão é escolha declarada, com procedência e responsável.**
-*Por quê:* na adesão automática estudada por Madrian e Shea, parte dos participantes manteve o padrão por tomá-lo como conselho de investimento da empresa `[F08]`; e o percentual padrão de 2% a 3% virou padrão de mercado por acidente `[F09]`. Juridicamente, no MEOL, padrão é recomendação `NAO_CONFIRMADO` *(revisão de 26/09/2026, nota N-CVM)*. `COMPLETO` para a evidência de comportamento; a leitura jurídica não.
+*Por quê:* na adesão automática estudada por Madrian e Shea, parte dos participantes manteve o padrão por tomá-lo como conselho de investimento da empresa `[F08]`; e o percentual padrão de 2% a 3% virou padrão de mercado por acidente `[F09]`. Juridicamente, no MEOL, padrão é recomendação *(confirmada em 26/09/2026: [Res. CVM 19](../fontes/cvm-resolucao-19-consolidada.md), art. 1º, caput e § 1º, I e II, e art. 2º — para o MEOL oferecido a terceiros como serviço; nota N-CVM)*. `COMPLETO`
 *Verificação:* **teste** — todo valor padrão vem de chave declarada em YAML, com fonte; nenhum número padrão nasce no código da interface.
 
 ### C. Proteção contra o próprio impulso
@@ -174,7 +174,7 @@ Estes requisitos vêm de estudos feitos fora do Brasil ou de síntese minha, e c
 
 1. **O capítulo de acessibilidade do Pix é recomendação, não obrigação** `[H01]`. Os requisitos daqui não substituem a lei de acessibilidade.
 2. **WCAG não foi lida.** Contraste, tamanho de alvo e daltonismo ainda não têm fonte própria neste documento. Fica a pendência P-WCAG.
-3. **Nenhuma verificação jurídica.** As menções à ANBIMA descrevem o que as regras dizem `[H07]`. As menções à CVM 19 se apoiam no achado de 20/09, que não está no repositório, e estão `NAO_CONFIRMADO` (nota N-CVM). Nenhuma substitui parecer.
+3. **Nenhuma verificação jurídica.** As menções à ANBIMA descrevem o que as regras dizem `[H07]`. As menções à CVM 19 foram conferidas no texto da resolução em 26/09/2026 ([Res. CVM 19](../fontes/cvm-resolucao-19-consolidada.md); nota N-CVM). Nenhuma substitui parecer (P-158).
 4. **Os requisitos foram derivados sem nenhum teste com pessoas.** Nenhum deles foi validado com o público-alvo.
 5. **Números de mercado envelhecem** (§8 do `CLAUDE.md`). Os deste documento valem para setembro de 2026.
 
@@ -196,4 +196,4 @@ Estes requisitos vêm de estudos feitos fora do Brasil ou de síntese minha, e c
 
 - **N-COD.** C-nn → MC-nn e R-nn → RI-nn, só neste documento (tabela no cabeçalho). Motivo: os achados do projeto sobre o fator, o ajuste de proventos, a moeda e a ordem dos portões já usavam esses mesmos números com os prefixos C- e R-, e outros C/R já existiam em outros arquivos com outro sentido; os instrumentos `achados_ancorados` e `codigos_preservados` contariam todos como achados. Guardado por `auditoria/test_codigos_de_marca.py`.
 - **N-GORILA.** No RI-02, o Gorila deixou de contar como erro de formato: é valor incompatível com quantidade × preço (45 × 25,60 = 1.152 contra 4.159.382,64), `NAO_CONFIRMADO` sem o print. Os prints são de contas de terceiros ou de demonstração, não do autor.
-- **N-CVM.** "Padrão é recomendação" (RI-07) e as menções à CVM 19 se apoiam num achado de 20/09 que não está no repositório: passaram a `NAO_CONFIRMADO`, até a leitura da Resolução CVM 19/2021 na fonte primária.
+- **N-CVM.** "Padrão é recomendação" (RI-07) se apoiava num achado de 20/09 que não estava no repositório e passou a `NAO_CONFIRMADO` em 26/09/2026. No mesmo dia, a Resolução CVM 19/2021 foi lida na fonte primária ([Res. CVM 19](../fontes/cvm-resolucao-19-consolidada.md)): a tese foi **confirmada com escopo** (art. 1º, caput e § 1º, I e II; art. 2º), valendo para o MEOL oferecido a terceiros como serviço. Não é parecer (P-158).
