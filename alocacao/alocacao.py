@@ -38,7 +38,7 @@ import yaml
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from motor import val, custodia_rv_aa, InsumoBloqueado
-from tese import carregar_registros
+from tese import carregar_registros, meses_de_reserva_no_texto
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
@@ -850,11 +850,39 @@ def g1_divida(estado, rotas, C, P):
                               "deixava passar divida entre 0,84% e 1,09% ao mes"))
     return None
 
-def reserva_alvo(estado, P):
+def meses_de_reserva_alvo(estado, P):
+    """A meta da reserva em MESES: G2 x estabilidade + dependentes, limitada ao teto."""
     g = P["portoes"]["G2_reserva"]
     meses = g["meses_base"] * g["ajuste_estabilidade"][estado.estabilidade_renda]
     meses += g["ajuste_dependentes_por_pessoa"] * estado.dependentes
-    return min(meses, g["teto_meses"]) * estado.despesa_mensal
+    return min(meses, g["teto_meses"])
+
+def reserva_alvo(estado, P):
+    return meses_de_reserva_alvo(estado, P) * estado.despesa_mensal
+
+def pendencias_de_premissa(estado, P, carregos):
+    """Registro assinado que cita a meta da reserva e ja nao bate com ela.
+
+    Decisao dele (26/09/2026): o C03 do td_ipca fica com "9 meses" fixo, e o sistema avisa
+    se a meta deixar de ser 9. A meta nao e um campo do perfil: sai do G2 do politica.yaml,
+    da estabilidade (EST01 do perfil.yaml) e dos dependentes do estado -- por isso a
+    comparacao usa a mesma conta do G2, e nao um numero copiado."""
+    meta = meses_de_reserva_alvo(estado, P)
+    out = []
+    for aid, reg in sorted((carregos or {}).items()):
+        if not reg.get("valida"):
+            continue
+        n = meses_de_reserva_no_texto(reg.get("carrego") or {})
+        if n is None or abs(n - meta) < 1e-9:
+            continue
+        out.append(Pendencia(
+            f"reassinar:{aid}",
+            f"tese {aid} desatualizada, reassinar? O C03 foi assinado com reserva de "
+            f"emergencia de {n} meses; a meta vigente e {meta:g} meses.",
+            "A condicao de venda antecipada cita um numero que o sistema ja nao usa. Para "
+            "mudar o texto, mova o registro para `historico` e assine outro.",
+            bloqueia=""))
+    return out
 
 def g2_reserva(estado, rotas, C, P):
     """B-08: escolhe por retorno liquido e verifica o teto do FGC por conglomerado.
@@ -1753,6 +1781,7 @@ def alocar(estado, C, P, anos=None, teses=None, carregos=None):
     (P-07), e este corpo apenas as executa."""
     anos, teto_comp, teses, carregos, rotas, saida = _preparar(
         estado, C, P, anos, teses, carregos)
+    saida["pendencias"].extend(pendencias_de_premissa(estado, P, carregos))
 
     estado, rotas, encerrou = fase_aporte(estado, rotas, C, P, saida)
     if encerrou:

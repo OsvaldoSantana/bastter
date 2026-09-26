@@ -117,6 +117,67 @@ def test_G07_portao_e_validador_tem_o_mesmo_default_de_estado():
     assert 'c.get("estado", "COMPROMISSO_ATIVO")' in inspect.getsource(T.validar_carrego)
 
 
+def _td_ipca_do_repositorio_assinado():
+    """O registro real de teses.yaml, assinado EM MEMORIA (nada gravado): sem `exemplo`,
+    C06 verdadeiro e a impressao recalculada."""
+    import yaml
+    with open(os.path.join(AQUI, "teses.yaml"), encoding="utf-8") as f:
+        c = dict(yaml.safe_load(f)["carregos"]["td_ipca"])
+    c.pop("exemplo", None)
+    c["C06_reconhecimento"] = True
+    c["impressao"] = impressao_carrego(c)
+    ok, probs, av, dur = validar_carrego(c, dt.date(2026, 9, 26), TETO_COMP)
+    assert ok, probs
+    return {"td_ipca": dict(valida=True, motivo="", avisos=av, duracao_anos=dur, carrego=c)}
+
+
+def _reassinar(r):
+    return [p for p in r["pendencias"] if p.id == "reassinar:td_ipca"]
+
+
+def test_premissa_o_c03_do_repositorio_cita_9_meses():
+    """Vacuidade: se o texto deixasse de citar a reserva, o alarme ficaria mudo."""
+    from tese import meses_de_reserva_no_texto
+    assert meses_de_reserva_no_texto(_td_ipca_do_repositorio_assinado()["td_ipca"]
+                                     ["carrego"]) == 9
+
+
+def test_premissa_meta_de_9_meses_nao_alarma():
+    """Estabilidade baixa, sem dependente: 6 x 1,5 = 9 -- a meta que o C03 assinou."""
+    e = Estado(**{**BASE, "estabilidade_renda": "baixa"})
+    r = alocar(e, C, P, teses={}, carregos=_td_ipca_do_repositorio_assinado())
+    assert _reassinar(r) == []
+
+
+@pytest.mark.parametrize("mudanca, meta", [({"estabilidade_renda": "media"}, "6"),
+                                           ({"estabilidade_renda": "baixa",
+                                             "dependentes": 1}, "9.5")])
+def test_premissa_meta_diferente_de_9_pede_reassinar(mudanca, meta):
+    """Decisao dele, 26/09: o C03 fica com "9 meses" fixo e o sistema avisa quando a meta
+    da reserva deixar de ser 9. Falha na versao anterior: nao havia pendencia nenhuma."""
+    r = alocar(Estado(**{**BASE, **mudanca}), C, P, teses={},
+               carregos=_td_ipca_do_repositorio_assinado())
+    p = _reassinar(r)
+    assert len(p) == 1
+    assert p[0].pergunta.startswith("tese td_ipca desatualizada, reassinar?")
+    assert f"meta vigente e {meta} meses" in p[0].pergunta
+
+
+def test_premissa_alarma_mesmo_quando_o_g2_encerra():
+    """Com a reserva curta o pipeline para na diretiva do G2 -- e e exatamente quando a
+    reserva importa. O alarme nasce antes da fase de aporte para nao sumir ai."""
+    r = alocar(Estado(**{**BASE, "reserva_atual": 9000}), C, P, teses={},
+               carregos=_td_ipca_do_repositorio_assinado())
+    assert r["alvo"] is None and len(_reassinar(r)) == 1
+
+
+def test_premissa_registro_nao_assinado_nao_alarma():
+    """Rascunho nao e tese: sem assinatura nao ha o que reassinar."""
+    c = _td_ipca_do_repositorio_assinado()
+    c["td_ipca"]["valida"] = False
+    assert _reassinar(alocar(Estado(**BASE), C, P, teses={}, carregos=c)) == []
+
+
 def test_cripto_volta_ao_universo_com_tese_registrada():
     com = alocar(Estado(**BASE), C, P, teses=tese_valida(), carregos={})
     assert com["alvo"]["pesos"].get("hash11", 0) > 0
