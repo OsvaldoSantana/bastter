@@ -231,3 +231,14 @@ def test_estado_desconhecido_e_rejeitado():
     c["impressao"] = impressao_carrego(c)
     ok, pr, _, _ = validar_carrego(c, hoje=dt.date(2026,9,5), compromisso_maximo_anos=10)
     assert not ok and any("desconhecido" in x for x in pr)
+
+
+def test_P01_o_comando_que_calcula_a_impressao_roda(capsys):
+    """`python tese.py` e o que o teses.yaml manda rodar antes de assinar, e ele caia com
+    KeyError desde a L-01: `compromissos` mora no perfil.yaml, e so `carregar_politica`
+    funde os dois. Sem este teste, a P-01 ficaria sem o instrumento da propria assinatura."""
+    import tese as _t
+    _t.main()
+    out = capsys.readouterr().out
+    assert "teto de compromisso declarado:" in out
+    assert "impressao a registrar: " in out and "hash11" in out and "td_ipca" in out
