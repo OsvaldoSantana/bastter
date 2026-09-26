@@ -31,11 +31,11 @@ python -m pytest <pasta> -m "not slow and not privado and not acervo" -n auto --
 Antes de abrir o PR, as quatro suítes, e o lint e os tipos em zero:
 
 ```bash
-for s in alocacao fase0 auditoria tools; do
+for s in alocacao fase0 auditoria tools medicoes; do
   python -m pytest $s -m "not privado and not acervo" -n auto --dist loadgroup -p no:cacheprovider
 done
-python -m ruff check alocacao fase0 auditoria tools
-for d in alocacao fase0 auditoria tools; do (cd $d && python -m mypy .); done
+python -m ruff check alocacao fase0 auditoria tools medicoes
+for d in alocacao fase0 auditoria tools medicoes; do (cd $d && python -m mypy .); done
 ```
 
 Três marcadores ficam fora de um clone. `acervo` e `slow` leem o dado de mercado, que mora num

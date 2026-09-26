@@ -88,3 +88,27 @@ def test_snapshot_cujo_nome_mente_para_o_plano_inteiro(tmp_path):
     assert arm.objetos == {} and not os.path.exists(S.inventario(repo, "cvm"))
     with pytest.raises(SystemExit):
         S.aplicar(S.plano(repo), arm, repo)
+
+
+def test_P145_o_banco_de_ISIN_sobe_e_a_captura_mais_recente_e_a_canonica(tmp_path):
+    """Sem o isinp.zip no armazem, a ponte da P-145 so roda no desktop. Duas capturas: a
+    mais nova e a vigente, a outra fica como versao anterior; pasta fora da convencao nao
+    sobe."""
+    repo = _acervo(tmp_path)
+    isin = tmp_path / "data" / "bronze" / "b3" / "isin"
+    for d, b in (("dt_captura=2026-09-25", b"isin 25"), ("dt_captura=2026-10-01", b"isin 01")):
+        (isin / d).mkdir(parents=True)
+        (isin / d / "isinp.zip").write_bytes(b)
+    (isin / "rascunho").mkdir()
+    itens = [x for x in S.plano(repo) if x["recurso"] == "isin"]
+    subir = {x["papel"]: x for x in itens if x["acao"] == S.SUBIR}
+    assert subir["canonico"]["sha256"] == _sha(b"isin 01")
+    assert subir["snapshot"]["sha256"] == _sha(b"isin 25")
+    assert subir["canonico"]["chave"].startswith("b3/isin/isinp.zip/")
+    assert [x["arquivo"] for x in itens if x["acao"] == S.DESCONHECIDO] == ["rascunho"]
+    arm = A.ArmazemMemoria()
+    assert S.main(["--aplicar"], armazem=arm, repo=repo) == 0
+    caminho = V.abrir("isin", "isinp.zip", repo=repo, armazem=arm,
+                      cache=str(tmp_path / "cache"))
+    with open(caminho, "rb") as f:
+        assert f.read() == b"isin 01"

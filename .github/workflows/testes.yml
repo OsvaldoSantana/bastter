@@ -64,7 +64,7 @@ jobs:
         run: |
           set -o pipefail
           rc=0
-          for s in alocacao fase0 auditoria tools; do
+          for s in alocacao fase0 auditoria tools medicoes; do
             python -m pytest "$s" -m "not slow and not privado and not acervo" -n auto --dist loadgroup \
               -p no:cacheprovider -rfE 2>&1 | tee "saida_$s.txt" || rc=1
             grep -E "^(FAILED|ERROR) " "saida_$s.txt" | sed 's/^/::error::/' || true
@@ -73,8 +73,8 @@ jobs:
       - name: ruff e mypy
         run: |
           set -e
-          python -m ruff check alocacao fase0 auditoria tools
-          for d in alocacao fase0 auditoria tools; do (cd "$d" && python -m mypy .); done
+          python -m ruff check alocacao fase0 auditoria tools medicoes
+          for d in alocacao fase0 auditoria tools medicoes; do (cd "$d" && python -m mypy .); done
 
   completo:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -107,9 +107,9 @@ jobs:
         run: |
           set +e
           rc=0
-          for s in alocacao fase0 auditoria tools; do
+          for s in alocacao fase0 auditoria tools medicoes; do
             python -m pytest "$s" -m "not privado" -n auto --dist loadgroup -p no:cacheprovider -rs \
-              --cov=alocacao --cov=fase0 --cov=auditoria --cov=tools --cov-append --cov-report=
+              --cov=alocacao --cov=fase0 --cov=auditoria --cov=tools --cov=medicoes --cov-append --cov-report=
             r=$?; [ "$r" -ne 0 ] && rc=$r
           done
           echo "codigo=$rc" >> "$GITHUB_OUTPUT"
@@ -119,8 +119,8 @@ jobs:
         run: |
           set +e
           rc=0
-          python -m ruff check alocacao fase0 auditoria tools || rc=1
-          for d in alocacao fase0 auditoria tools; do (cd "$d" && python -m mypy .) || rc=1; done
+          python -m ruff check alocacao fase0 auditoria tools medicoes || rc=1
+          for d in alocacao fase0 auditoria tools medicoes; do (cd "$d" && python -m mypy .) || rc=1; done
           echo "codigo=$rc" >> "$GITHUB_OUTPUT"
 
       - name: Cobertura por modulo
