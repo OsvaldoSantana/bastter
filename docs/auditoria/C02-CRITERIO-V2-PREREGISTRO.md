@@ -224,7 +224,7 @@ no máximo 0,025, sem correção. A divisão por m entra para o lado que a corre
 não reprovar à toa.
 
 **A probabilidade de reprovar um ajuste perfeito, calculada** (aproximação normal; script
-em [`C02-CRITERIO-V2-poder.py`](C02-CRITERIO-V2-poder.py), no mesmo PR):
+em [`auditoria/c02_criterio_v2_poder.py`](../../auditoria/c02_criterio_v2_poder.py), com teste que prende os números citados aqui):
 
 | cenário | K2 JCP | K3 dividendo | janela |
 |---|---|---|---|
